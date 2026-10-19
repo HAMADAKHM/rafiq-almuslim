@@ -33,7 +33,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 export async function showNotification(title: string, body: string, tag?: string) {
   if (!notificationsSupported() || Notification.permission !== 'granted') return
   const reg = await navigator.serviceWorker?.getRegistration?.()
-  if (reg) await reg.showNotification(title, { body, tag, icon: '/icon-192.png', lang: 'ar', dir: 'rtl' })
+  if (reg) await reg.showNotification(title, { body, tag, icon: import.meta.env.BASE_URL + 'icon-192.png', lang: 'ar', dir: 'rtl' })
   else new Notification(title, { body, tag, lang: 'ar', dir: 'rtl' })
 }
 

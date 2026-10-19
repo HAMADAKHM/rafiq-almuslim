@@ -40,7 +40,7 @@ const NAV: { group: StringKey; items: { to: string; key: StringKey; icon: typeof
 function Brand() {
   return (
     <Link to="/" className="brand" aria-label="رفيق المسلم — الصفحة الرئيسية">
-      <img src="/icon.svg" alt="" />
+      <img src={import.meta.env.BASE_URL + 'icon.svg'} alt="" />
       <span>
         <strong>رفيق المسلم</strong>
         <small>Islamic Companion</small>

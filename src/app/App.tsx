@@ -1,4 +1,7 @@
-import { BrowserRouter, Route, Routes, Link } from 'react-router-dom'
+import { BrowserRouter, HashRouter, Route, Routes, Link } from 'react-router-dom'
+
+// نسخة المعاينة المستضافة (Artifact) لا تدعم مسارات الخادم، فتستخدم التوجيه عبر #
+const Router = import.meta.env.VITE_HASH_ROUTER === '1' ? HashRouter : BrowserRouter
 import { Layout } from './Layout'
 import { SettingsProvider } from '../state/SettingsContext'
 import { HomePage } from '../features/home/HomePage'
@@ -50,9 +53,9 @@ export function AppRoutes() {
 export function App() {
   return (
     <SettingsProvider>
-      <BrowserRouter>
+      <Router>
         <AppRoutes />
-      </BrowserRouter>
+      </Router>
     </SettingsProvider>
   )
 }

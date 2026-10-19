@@ -11,7 +11,7 @@ import { App } from './app/App'
 import { registerSW } from 'virtual:pwa-register'
 
 // عامل الخدمة: يتيح العمل دون إنترنت (الواجهة والمصحف والأذكار وبيانات المستخدم)
-if ('serviceWorker' in navigator && import.meta.env.PROD) registerSW({ immediate: true })
+if ('serviceWorker' in navigator && import.meta.env.PROD && import.meta.env.VITE_HASH_ROUTER !== '1') registerSW({ immediate: true })
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
