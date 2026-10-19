@@ -1,0 +1,20 @@
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import '@fontsource/ibm-plex-sans-arabic/400.css'
+import '@fontsource/ibm-plex-sans-arabic/600.css'
+import '@fontsource/ibm-plex-sans-arabic/700.css'
+import '@fontsource/amiri/400.css'
+import '@fontsource/amiri/700.css'
+import '@fontsource/amiri-quran/400.css'
+import './styles/global.css'
+import { App } from './app/App'
+import { registerSW } from 'virtual:pwa-register'
+
+// عامل الخدمة: يتيح العمل دون إنترنت (الواجهة والمصحف والأذكار وبيانات المستخدم)
+if ('serviceWorker' in navigator && import.meta.env.PROD) registerSW({ immediate: true })
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)
