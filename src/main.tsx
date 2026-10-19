@@ -10,6 +10,8 @@ import './styles/global.css'
 import { App } from './app/App'
 import { registerSW } from 'virtual:pwa-register'
 
+if (import.meta.env.VITE_STANDALONE === '1') await import('./standalone')
+
 // عامل الخدمة: يتيح العمل دون إنترنت (الواجهة والمصحف والأذكار وبيانات المستخدم)
 if ('serviceWorker' in navigator && import.meta.env.PROD && import.meta.env.VITE_HASH_ROUTER !== '1') registerSW({ immediate: true })
 

@@ -10,6 +10,7 @@ import { FOOTER_LINE } from '../content/dedication'
 import { MiniPlayer } from '../components/MiniPlayer'
 import { useOnline, useToastMessage } from '../hooks'
 import { startReminderLoop } from '../services/notifications'
+import iconUrl from '../assets/icon.svg'
 
 const NAV: { group: StringKey; items: { to: string; key: StringKey; icon: typeof House }[] }[] = [
   { group: 'groupDaily', items: [
@@ -40,7 +41,7 @@ const NAV: { group: StringKey; items: { to: string; key: StringKey; icon: typeof
 function Brand() {
   return (
     <Link to="/" className="brand" aria-label="رفيق المسلم — الصفحة الرئيسية">
-      <img src={import.meta.env.BASE_URL + 'icon.svg'} alt="" />
+      <img src={iconUrl} alt="" />
       <span>
         <strong>رفيق المسلم</strong>
         <small>Islamic Companion</small>
