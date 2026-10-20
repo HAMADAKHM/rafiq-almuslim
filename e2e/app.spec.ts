@@ -796,3 +796,37 @@ test.describe('جهاز بمنطقة زمنية مختلفة', () => {
     await expect(page.getByLabel('الوقت المتبقي')).toHaveText(/^00:00:[0-3]\d$/)
   })
 })
+
+test.describe('المساجد القريبة', () => {
+  test.use({ geolocation: { latitude: 32.2211, longitude: 35.2544 }, permissions: ['geolocation'], serviceWorkers: 'block' })
+  const OSM = { elements: [
+    { type: 'node', id: 11, lat: 32.2290, lon: 35.2544, tags: { name: 'المسجد البعيد' } },
+    { type: 'way', id: 22, center: { lat: 32.2221, lon: 35.2544 }, tags: { 'name:ar': 'المسجد القريب', name: 'Near Mosque' } },
+  ] }
+
+  test('البحث حول الموقع: ترتيب بالمسافة والاتجاه ورابط المسار ومصدر البيانات', async ({ page }) => {
+    let query = ''
+    await page.route(/overpass/, (r) => { query = decodeURIComponent(r.request().url()); return r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } }) })
+    await page.goto('/mosques')
+    await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
+    const list = page.getByRole('list', { name: 'المساجد' })
+    await expect(list.getByRole('listitem')).toHaveCount(2)
+    await expect(list.getByRole('listitem').first()).toContainText('المسجد القريب')
+    await expect(list.getByRole('listitem').first()).toContainText('110 م • باتجاه الشمال')
+    await expect(list.getByRole('link', { name: 'المسار إلى المسجد القريب' })).toHaveAttribute('href', /google\.com\/maps\/dir\/\?api=1&destination=32\.2221,35\.2544/)
+    expect(query).toContain('"religion"="muslim"')
+    await expect(page.getByText(/مساهمي OpenStreetMap/)).toBeVisible()
+    await expect(page.getByText(/لا تتضمن أوقات فتح المساجد/)).toBeVisible()
+    // النتيجة الأخيرة محفوظة للعرض دون اتصال
+    await page.reload()
+    await expect(page.getByText(/نتائج محفوظة من/)).toBeVisible()
+  })
+
+  test('فشل الخادمين: رسالة واضحة دون نتائج مختلقة', async ({ page }) => {
+    await page.route(/overpass/, (r) => r.fulfill({ status: 503, body: 'busy' }))
+    await page.goto('/mosques')
+    await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
+    await expect(page.getByRole('alert')).toContainText('تعذر الوصول إلى خادم بيانات الخرائط')
+    await expect(page.getByRole('list', { name: 'المساجد' })).toHaveCount(0)
+  })
+})

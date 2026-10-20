@@ -355,3 +355,4 @@ button.voice-hit { font: inherit; text-align: start; cursor: pointer; width: 100
 .seg { display: inline-flex; padding: 2px; border-radius: 10px; background: var(--surface-2); }
 .seg button { border: 0; background: none; padding: 0.15rem 0.6rem; border-radius: 8px; font: inherit; font-size: 0.8rem; color: var(--text-muted); cursor: pointer; }
 .seg button[aria-checked='true'] { background: var(--surface); color: var(--primary); font-weight: 700; box-shadow: var(--shadow); }
+.mosque-row .btn { flex-shrink: 0; }

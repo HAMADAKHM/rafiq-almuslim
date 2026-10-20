@@ -16,6 +16,7 @@ const STRINGS = {
   tasbih: { ar: 'المسبحة', en: 'Tasbih' },
   myAdhkar: { ar: 'أذكاري الشخصية', en: 'My Adhkar' },
   studio: { ar: 'استوديو التصاميم', en: 'Ayah Studio' },
+  mosques: { ar: 'المساجد القريبة', en: 'Nearby Mosques' },
   calendar: { ar: 'التقويم الإسلامي', en: 'Islamic Calendar' },
   reminders: { ar: 'إعدادات التذكير', en: 'Reminders' },
   journey: { ar: 'ابدأ رحلتك', en: 'Start your journey' },

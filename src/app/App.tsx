@@ -32,6 +32,7 @@ const RemindersPage = page(() => import('../features/reminders/RemindersPage'), 
 const MorePage = page(() => import('../features/more/MorePage'), 'MorePage')
 const MyAdhkarPage = page(() => import('../features/adhkar/MyAdhkarPage'), 'MyAdhkarPage')
 const StudioPage = page(() => import('../features/studio/StudioPage'), 'StudioPage')
+const MosquesPage = page(() => import('../features/mosques/MosquesPage'), 'MosquesPage')
 const LearnPage = page(() => import('../features/learn/LearnPage'), 'LearnPage')
 const LessonPage = page(() => import('../features/learn/LearnPage'), 'LessonPage')
 
@@ -66,6 +67,7 @@ export function AppRoutes() {
         <Route path="more" element={<MorePage />} />
         <Route path="my-adhkar" element={<MyAdhkarPage />} />
         <Route path="studio" element={<StudioPage />} />
+        <Route path="mosques" element={<MosquesPage />} />
         <Route path="*" element={<Empty>الصفحة غير موجودة. <Link to="/">العودة إلى الرئيسية</Link></Empty>} />
       </Route>
     </Routes>
