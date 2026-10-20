@@ -49,7 +49,7 @@ export function RemindersPage() {
         <section className="card">
           <div className="spread">
             <h2 style={{ margin: 0 }}>{n.enabled ? <Bell size={18} /> : <BellOff size={18} />} التذكيرات</h2>
-            <label className="check switch"><input type="checkbox" checked={n.enabled} onChange={(e) => enable(e.target.checked)} disabled={!notificationsSupported()} aria-label="تفعيل التذكيرات" /> {n.enabled ? 'مفعّلة' : 'متوقفة'}</label>
+            <label className="check switch"><input type="checkbox" className="switch-input" checked={n.enabled} onChange={(e) => enable(e.target.checked)} disabled={!notificationsSupported()} aria-label="تفعيل التذكيرات" /> {n.enabled ? 'مفعّلة' : 'متوقفة'}</label>
           </div>
           {!notificationsSupported() && <p className="alert alert-gold small">هذا المتصفح لا يدعم الإشعارات.</p>}
           {perm === 'denied' && <p className="alert alert-error small">الإشعارات محظورة من إعدادات الجهاز أو المتصفح لهذا التطبيق. فعّلها من هناك ثم عد إلى هذه الصفحة.</p>}
@@ -65,11 +65,11 @@ export function RemindersPage() {
           <h2>مواقيت الصلاة</h2>
           <div className="row" style={{ marginBottom: 8 }}>
             {(Object.keys(n.perPrayer) as (keyof typeof n.perPrayer)[]).map((p) => (
-              <label key={p} className="check"><input type="checkbox" checked={n.perPrayer[p]} onChange={(e) => set({ perPrayer: { ...n.perPrayer, [p]: e.target.checked } })} /> {PRAYER_LABELS[p]}</label>
+              <label key={p} className="check"><input type="checkbox" className="switch-input" checked={n.perPrayer[p]} onChange={(e) => set({ perPrayer: { ...n.perPrayer, [p]: e.target.checked } })} /> {PRAYER_LABELS[p]}</label>
             ))}
           </div>
           <div className="grid grid-2" style={{ gap: '0.75rem' }}>
-            <label className="check"><input type="checkbox" checked={n.atAdhan} onChange={(e) => set({ atAdhan: e.target.checked })} /> إشعار عند دخول الوقت</label>
+            <label className="check"><input type="checkbox" className="switch-input" checked={n.atAdhan} onChange={(e) => set({ atAdhan: e.target.checked })} /> إشعار عند دخول الوقت</label>
             <label className="field"><span>تنبيه قبل الأذان</span>
               <select className="select" value={n.minutesBefore} onChange={(e) => set({ minutesBefore: Number(e.target.value) })}>
                 {[0, 5, 10, 15, 20, 30, 45].map((m) => <option key={m} value={m}>{m === 0 ? 'بدون' : `${m} دقيقة`}</option>)}
@@ -87,7 +87,7 @@ export function RemindersPage() {
               return (
                 <div key={t.key} className="spread reminder-row">
                   <label className="check" style={{ minWidth: 0 }}>
-                    <input type="checkbox" checked={!!v} onChange={(e) => set({ [t.key]: e.target.checked ? t.def : null } as Partial<NotificationSettings>)} />
+                    <input type="checkbox" className="switch-input" checked={!!v} onChange={(e) => set({ [t.key]: e.target.checked ? t.def : null } as Partial<NotificationSettings>)} />
                     <span>{t.label}{t.hint && <span className="small muted"> — {t.hint}</span>}</span>
                   </label>
                   {v && <input className="input" type="time" style={{ width: 130 }} value={v} aria-label={`وقت ${t.label}`} onChange={(e) => set({ [t.key]: e.target.value || null } as Partial<NotificationSettings>)} />}
@@ -99,8 +99,8 @@ export function RemindersPage() {
 
         <section className="card">
           <h2><Moon size={18} /> الهدوء وتقليل الإشعارات</h2>
-          <label className="check"><input type="checkbox" checked={n.reduce} onChange={(e) => set({ reduce: e.target.checked })} /> تقليل الإشعارات: الصلاة عند دخول الوقت وتذكير الورد فقط</label>
-          <label className="check" style={{ marginTop: 8 }}><input type="checkbox" checked={n.quiet.enabled} onChange={(e) => set({ quiet: { ...n.quiet, enabled: e.target.checked } })} /> فترة هدوء يومية (لا تذكيرات غير الصلاة)</label>
+          <label className="check"><input type="checkbox" className="switch-input" checked={n.reduce} onChange={(e) => set({ reduce: e.target.checked })} /> تقليل الإشعارات: الصلاة عند دخول الوقت وتذكير الورد فقط</label>
+          <label className="check" style={{ marginTop: 8 }}><input type="checkbox" className="switch-input" checked={n.quiet.enabled} onChange={(e) => set({ quiet: { ...n.quiet, enabled: e.target.checked } })} /> فترة هدوء يومية (لا تذكيرات غير الصلاة)</label>
           {n.quiet.enabled && (
             <div className="row" style={{ marginTop: 8 }}>
               <label className="row small">من <input className="input" type="time" style={{ width: 130 }} value={n.quiet.start} onChange={(e) => set({ quiet: { ...n.quiet, start: e.target.value } })} /></label>

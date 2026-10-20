@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { Spinner } from '../../components/Common'
-import { useDocumentTitle, useQuran, usePlayer } from '../../hooks'
+import { useDocumentTitle, useQuran, usePlayer, useKeepAwake } from '../../hooks'
 import { ayahMeta, BASMALA_SURAH_EXCEPTIONS, pageAyahs } from '../../services/quran'
 import { kv } from '../../db/repos'
 import { toArabicDigits } from '../../lib/arabic'
@@ -22,7 +22,8 @@ export function MushafPage() {
   const params = useParams()
   const [sp] = useSearchParams()
   const nav = useNavigate()
-  const { update } = useSettings()
+  const { settings, update } = useSettings()
+  useKeepAwake(settings.keepAwake)
   const p = usePlayer()
   const sheets = useReaderSheets()
   const page = Math.min(604, Math.max(1, Number(params.page) || 1))

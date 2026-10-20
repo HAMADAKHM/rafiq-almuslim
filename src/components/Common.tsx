@@ -42,3 +42,19 @@ export function ProgressBar({ value, label }: { value: number; label?: string })
     </div>
   )
 }
+
+/** حلقة تقدم دائرية */
+export function Ring({ value, size = 96, label }: { value: number; size?: number; label: string }) {
+  const pct = Math.max(0, Math.min(100, Math.round(value * 100)))
+  const r = 42
+  const c = 2 * Math.PI * r
+  return (
+    <div className="ring" style={{ width: size, height: size }} role="progressbar" aria-label={label} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+      <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="9" />
+        <circle cx="50" cy="50" r={r} fill="none" stroke="var(--primary)" strokeWidth="9" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)} style={{ transition: 'stroke-dashoffset 0.4s ease' }} />
+      </svg>
+      <b>{pct}٪</b>
+    </div>
+  )
+}

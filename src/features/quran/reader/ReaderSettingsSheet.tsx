@@ -77,6 +77,9 @@ export function ReaderSettingsSheet({ open, onClose, onModeChange }: { open: boo
         <label className="toggle-row"><span>الترجمة الإنجليزية تحت الآيات</span>
           <input type="checkbox" role="switch" checked={settings.translation !== 'none'} onChange={(e) => update({ translation: e.target.checked ? 'en-sahih' : 'none' })} />
         </label>
+        <label className="toggle-row"><span>إبقاء الشاشة مضاءة أثناء القراءة</span>
+          <input type="checkbox" role="switch" checked={settings.keepAwake} onChange={(e) => update({ keepAwake: e.target.checked })} />
+        </label>
       </div>
     </Sheet>
   )

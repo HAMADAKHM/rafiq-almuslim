@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpen, CircleCheck } from 'lucide-react'
-import { ProgressBar } from '../../components/Common'
+import { ProgressBar, Ring } from '../../components/Common'
 import { toast, useLive } from '../../hooks'
 import { activePlan, dailyTarget, loadKhatmas, progress, recordPages, type KhatmaState } from '../../services/khatma'
 import { firstAyahOf, type QuranData } from '../../services/quran'
@@ -36,11 +36,24 @@ export function KhatmaCard({ data, compact }: { data: QuranData; compact?: boole
   }
   return (
     <div className="stack" style={{ gap: 8 }}>
-      <div className="spread">
-        <strong>{plan.name}</strong>
-        <span className="badge">{Math.round(progress(plan) * 100)}٪</span>
-      </div>
-      <ProgressBar value={progress(plan)} label="التقدم في الختمة" />
+      {compact ? (
+        <>
+          <div className="spread">
+            <strong>{plan.name}</strong>
+            <span className="badge">{Math.round(progress(plan) * 100)}٪</span>
+          </div>
+          <ProgressBar value={progress(plan)} label="التقدم في الختمة" />
+        </>
+      ) : (
+        <div className="khatma-head">
+          <Ring value={progress(plan)} label="التقدم في الختمة" />
+          <div>
+            <strong className="khatma-name">{plan.name}</strong>
+            <div className="small muted">{plan.nextPage - 1} من 604 صفحة{plan.mode === 'days' ? ` • متبقٍّ ${t.daysLeft} يومًا` : ''}</div>
+            <div className="small muted">بدأت {plan.startedAt}</div>
+          </div>
+        </div>
+      )}
       <p className="small" style={{ margin: 0 }}>
         {doneToday ? <><CircleCheck size={14} color="var(--success)" /> أتممت ورد اليوم ({t.doneToday} صفحة)</> : <>ورد اليوم: الصفحات <strong>{t.from}–{t.to}</strong> ({t.pages} صفحة){t.doneToday > 0 && ` — قرأت ${t.doneToday}`}</>}
       </p>

@@ -71,7 +71,23 @@ export interface Settings {
   tafsir: string
   showFooterDedication: boolean
   homeCards: { id: HomeCardId; visible: boolean }[]
+  /** اختصارات الوصول السريع في الرئيسية (مسارات من أقسام التطبيق) */
+  quickLinks: string[]
+  /** الانتقال تلقائيًا إلى الذكر التالي عند اكتمال العدد */
+  adhkarAutoAdvance: boolean
+  /** عرض الأذكار: جلسة (ذكر واحد في الشاشة) أو قائمة */
+  adhkarView: 'session' | 'list'
+  /** اهتزاز خفيف عند عدّ الأذكار */
+  adhkarVibrate: boolean
+  /** إبقاء الشاشة مضاءة أثناء القراءة */
+  keepAwake: boolean
+  /** متابعة أداء الصلوات (اختيارية، تُحفظ على الجهاز فقط) */
+  trackPrayers: boolean
 }
+
+export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders']
+export const DEFAULT_QUICK_LINKS = ['/tasbih', '/qibla', '/duas', '/calendar']
+export const MAX_QUICK_LINKS = 8
 
 export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
   continue: 'أكمل قراءتك',
@@ -126,6 +142,12 @@ export const DEFAULT_SETTINGS: Settings = {
   tafsir: 'ar-tafsir-muyassar',
   showFooterDedication: true,
   homeCards: DEFAULT_HOME_CARDS,
+  quickLinks: DEFAULT_QUICK_LINKS,
+  adhkarAutoAdvance: true,
+  adhkarView: 'session',
+  adhkarVibrate: true,
+  keepAwake: true,
+  trackPrayers: false,
 }
 
 /** يضمن أن قائمة بطاقات الرئيسية تحتوي كل البطاقات المعروفة مرة واحدة، وأن البطاقات المقفلة ظاهرة */
@@ -156,5 +178,12 @@ export function mergeSettings(saved: Partial<Settings> | null | undefined): Sett
       quiet: { ...DEFAULT_NOTIFICATIONS.quiet, ...s.notifications?.quiet },
     },
     homeCards: normalizeHomeCards(s.homeCards),
+    quickLinks: normalizeQuickLinks(s.quickLinks),
   }
+}
+
+export function normalizeQuickLinks(links: string[] | undefined): string[] {
+  if (!Array.isArray(links)) return DEFAULT_QUICK_LINKS
+  const out = [...new Set(links.filter((l) => QUICK_LINK_CHOICES.includes(l)))].slice(0, MAX_QUICK_LINKS)
+  return out.length ? out : DEFAULT_QUICK_LINKS
 }

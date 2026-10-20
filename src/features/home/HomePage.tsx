@@ -1,8 +1,8 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  BookOpen, Brain, Clock, Compass, Sparkles, HandHeart, Headphones, GraduationCap, MapPin, CircleCheck, CalendarDays,
-  CircleDot, Play, Image, SlidersHorizontal, ArrowUp, ArrowDown, Library,
+  BookOpen, Sparkles, MapPin, CircleCheck, Play, Image, SlidersHorizontal, ArrowUp, ArrowDown, Library,
+  ChevronLeft, Bell, Heart, Sun, Moon, Landmark, BedDouble, LayoutGrid, BookMarked,
 } from 'lucide-react'
 import { DedicationCard } from '../../components/DedicationCard'
 import { Spinner } from '../../components/Common'
@@ -10,7 +10,10 @@ import { Sheet } from '../../components/Sheet'
 import { ShareCardDialog } from '../../components/ShareCardDialog'
 import { useDocumentTitle, useLive, useNow, useQuran } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
-import { HOME_CARD_LABELS, LOCKED_HOME_CARDS, type HomeCardId } from '../../state/settings'
+import { HOME_CARD_LABELS, LOCKED_HOME_CARDS, MAX_QUICK_LINKS, QUICK_LINK_CHOICES, type HomeCardId } from '../../state/settings'
+import { LINK_META } from '../../app/nav'
+import { MosqueScene, type SceneTone } from '../../components/Art'
+import type { PrayerName } from '../../services/prayer'
 import { nextPrayer, PRAYER_LABELS, PRAYERS, todayTimes } from '../../services/prayer'
 import { dayKey, formatCountdown, formatGregorian, formatHijri, formatTime } from '../../lib/dates'
 import { cityLabel } from '../../services/cities'
@@ -25,14 +28,28 @@ import { player } from '../../services/audio'
 import type { LastRead } from '../quran/QuranIndexPage'
 import type { AdhkarLog, MemoSegment } from '../../db/db'
 
-const SHORTCUTS = [
-  { to: '/quran', label: 'القرآن الكريم', icon: BookOpen },
-  { to: '/listen', label: 'الاستماع', icon: Headphones },
-  { to: '/prayer', label: 'المواقيت', icon: Clock },
-  { to: '/adhkar', label: 'الأذكار', icon: Sparkles },
-  { to: '/memorize', label: 'الحفظ', icon: Brain },
-  { to: '/learn', label: 'التفسير', icon: GraduationCap },
+const ADHKAR_TILES = [
+  { id: 'morning', label: 'أذكار الصباح', icon: Sun },
+  { id: 'evening', label: 'أذكار المساء', icon: Moon },
+  { id: 'after-prayer', label: 'بعد الصلاة', icon: Landmark },
+  { id: 'sleep', label: 'أذكار النوم', icon: BedDouble },
 ]
+
+/** لون المشهد بحسب الصلاة القادمة */
+function toneFor(p?: PrayerName): SceneTone {
+  if (p === 'fajr' || p === 'sunrise') return 'dawn'
+  if (p === 'maghrib') return 'sunset'
+  if (p === 'isha') return 'night'
+  return 'day'
+}
+
+function humanLeft(ms: number): string {
+  const m = Math.max(0, Math.round(ms / 60000))
+  const h = Math.floor(m / 60)
+  const mm = m % 60
+  if (h === 0) return `${mm} دقيقة`
+  return mm ? `${h} س ${mm} د` : `${h} ساعة`
+}
 
 function localHour(tz?: string, now = new Date()): number {
   return Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hour12: false }).format(now)) % 24
@@ -65,33 +82,39 @@ export function HomePage() {
   const aodName = data?.meta.surahs[aod.surah - 1].name
   const cardInput = useMemo(() => (aodText ? { kind: 'ayah' as const, heading: 'آية اليوم', text: aodText, reference: `[سورة ${aodName}: ${aod.ayah}]` } : null), [aodText, aodName, aod.ayah])
 
+  const resumeTo = last ? (settings.readerMode === 'mushaf' && last.page ? `/mushaf/${last.page}` : `/quran/${last.surah}?ayah=${last.ayah}`) : '/quran/1'
+
   const cards: Record<HomeCardId, ReactNode> = {
     continue: (
-      <section className="card">
-        <h2><BookOpen size={18} /> أكمل قراءتك</h2>
-        {!data ? <Spinner /> : last ? (
-          <>
-            <p style={{ margin: 0 }}>سورة <strong>{data.meta.surahs[last.surah - 1].name}</strong> — الآية {last.ayah}</p>
-            <p className="quran-text" style={{ fontSize: '1.3rem', margin: '0.25rem 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{data.verses[last.surah - 1][last.ayah - 1]}</p>
-            <div className="row">
-              <Link className="btn btn-primary btn-sm" to={settings.readerMode === 'mushaf' && last.page ? `/mushaf/${last.page}` : `/quran/${last.surah}?ayah=${last.ayah}`}>تابع القراءة</Link>
-              <Link className="btn btn-sm btn-ghost" to="/quran">فهرس السور</Link>
-            </div>
-          </>
-        ) : (
-          <><p className="muted">ابدأ القراءة وسيُحفظ موضعك تلقائيًا.</p><Link className="btn btn-primary btn-sm" to="/quran/1">ابدأ من الفاتحة</Link></>
+      <section className="card home-continue-card" aria-label="أكمل قراءتك">
+        {!data ? <Spinner /> : (
+          <Link to={resumeTo} className="resume">
+            <span className="icon-chip green"><BookMarked size={22} /></span>
+            <span className="lc-body">
+              <h2>أكمل قراءتك</h2>
+              {last
+                ? <small>سورة {data.meta.surahs[last.surah - 1].name} — الآية {last.ayah}{last.page ? ` • الصفحة ${last.page}` : ''}</small>
+                : <small>ابدأ من الفاتحة، وسيُحفظ موضعك تلقائيًا</small>}
+              {last && <span className="quran-text resume-text">{data.verses[last.surah - 1][last.ayah - 1]}</span>}
+            </span>
+            <span className="go-btn" aria-hidden="true"><ChevronLeft size={20} /></span>
+            <span className="sr-only">{last ? 'تابع القراءة' : 'ابدأ من الفاتحة'}</span>
+          </Link>
         )}
       </section>
     ),
-    khatma: <section className="card"><h2><BookOpen size={18} /> ورد القرآن</h2>{data ? <KhatmaCard data={data} compact /> : <Spinner />}</section>,
+    khatma: <section className="card"><h2><BookOpen size={18} /> وردك اليومي</h2>{data ? <KhatmaCard data={data} compact /> : <Spinner />}</section>,
     adhkar: (
       <section className="card">
-        <h2><Sparkles size={18} /> {nowAdhkar.title}</h2>
-        <p className="small muted" style={{ marginTop: 0 }}>{done.has(nowAdhkar.id) ? 'سجّلت إتمامها اليوم. تقبّل الله.' : 'بحسب الوقت الحالي'}</p>
-        <div className="row">
-          <Link className={'btn btn-sm' + (done.has(nowAdhkar.id) ? '' : ' btn-primary')} to={`/adhkar/${nowAdhkar.id}`}>{done.has(nowAdhkar.id) ? <><CircleCheck size={14} /> تم</> : 'ابدأ الآن'}</Link>
-          {['morning', 'evening', 'after-prayer'].filter((x) => x !== nowAdhkar.id).map((id) => (
-            <Link key={id} className="btn btn-sm btn-ghost" to={`/adhkar/${id}`}>{done.has(id) && <CircleCheck size={12} color="var(--success)" />} {id === 'morning' ? 'الصباح' : id === 'evening' ? 'المساء' : 'بعد الصلاة'}</Link>
+        <div className="spread"><h2 style={{ margin: 0 }}><Sparkles size={18} /> الأذكار</h2><Link className="small" to="/adhkar">المكتبة</Link></div>
+        <p className="small muted" style={{ margin: '0.15rem 0 0.6rem' }}>{done.has(nowAdhkar.id) ? `أتممت ${nowAdhkar.title} اليوم. تقبّل الله.` : `الآن: ${nowAdhkar.title}`}</p>
+        <div className="adhkar-tiles">
+          {ADHKAR_TILES.map(({ id, label, icon: Icon }) => (
+            <Link key={id} to={`/adhkar/${id}`} className={'adhkar-tile' + (id === nowAdhkar.id ? ' now' : '') + (done.has(id) ? ' done' : '')}>
+              <Icon size={20} aria-hidden="true" />
+              <span>{label}</span>
+              {done.has(id) && <CircleCheck size={14} className="tick" aria-label="أُتمّت اليوم" />}
+            </Link>
           ))}
         </div>
       </section>
@@ -116,10 +139,12 @@ export function HomePage() {
     ),
     quick: (
       <nav aria-label="وصول سريع" className="quick-grid">
-        <Link to="/tasbih" className="quick-item"><CircleDot size={22} /><span>المسبحة</span></Link>
-        <Link to="/duas" className="quick-item"><HandHeart size={22} /><span>الأدعية</span></Link>
-        <Link to="/qibla" className="quick-item"><Compass size={22} /><span>القبلة</span></Link>
-        <Link to="/calendar" className="quick-item"><CalendarDays size={22} /><span>التقويم</span></Link>
+        {settings.quickLinks.map((to) => {
+          const m = LINK_META[to]
+          if (!m) return null
+          const Icon = m.icon
+          return <Link key={to} to={to} className="quick-item"><span className="tile-icon"><Icon size={22} /></span><span>{m.label}</span></Link>
+        })}
       </nav>
     ),
     summary: (
@@ -136,14 +161,11 @@ export function HomePage() {
     ),
     dedication: <DedicationCard />,
     shortcuts: (
-      <nav aria-label="اختصارات" className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' }}>
-        {SHORTCUTS.map(({ to, label, icon: Icon }) => (
-          <Link key={to} to={to} className="card card-link" style={{ textAlign: 'center', padding: '0.8rem 0.5rem' }}>
-            <Icon size={22} color="var(--primary)" aria-hidden="true" />
-            <div style={{ marginTop: 4 }}>{label}</div>
-          </Link>
-        ))}
-      </nav>
+      <Link to="/more" className="list-card">
+        <span className="icon-chip green"><LayoutGrid size={22} /></span>
+        <span className="lc-body"><strong>كل الأقسام</strong><small>الحفظ، الاستماع، التفسير، التقويم، الإعدادات والمزيد</small></span>
+        <span className="lc-end"><ChevronLeft size={18} /></span>
+      </Link>
     ),
   }
 
@@ -155,34 +177,58 @@ export function HomePage() {
     ;[list[i], list[j]] = [list[j], list[i]]
     update({ homeCards: list })
   }
+  const toggleLink = (to: string, on: boolean) => {
+    const cur = settings.quickLinks
+    if (on && cur.length >= MAX_QUICK_LINKS) return
+    update({ quickLinks: on ? [...cur, to] : cur.filter((x) => x !== to) })
+  }
+  const five = PRAYERS.filter((p) => p !== 'sunrise')
 
   return (
-    <div className="stack" style={{ gap: '1rem' }}>
-      <section className="hero" aria-label="الصلاة القادمة">
-        <div className="spread" style={{ alignItems: 'start' }}>
-          <div>
+    <div className="home">
+      <header className="home-hero">
+        <div className="home-hero-row">
+          <Link to="/reminders" className="hero-icon" aria-label="إعدادات التذكير"><Bell size={20} /></Link>
+          <div className="home-hero-text">
             <div className="hero-greet">{greeting(hour, today)}</div>
-            <div style={{ opacity: 0.9 }}>{formatGregorian(now, loc?.tz)}</div>
-            <div className="hero-gold">{formatHijri(now, loc?.tz, settings.hijriOffset)}</div>
-            <Link to="/prayer" className="hero-link"><MapPin size={14} /> {loc ? cityLabel(loc) : 'اختر مدينتك'}</Link>
+            <div className="hero-sub">{formatGregorian(now, loc?.tz)}</div>
+            <div className="hero-hijri">{formatHijri(now, loc?.tz, settings.hijriOffset)}</div>
           </div>
-          {np && loc ? (
-            <div style={{ textAlign: 'end' }} aria-live="polite">
-              <div style={{ opacity: 0.85, fontSize: '0.9rem' }}>الصلاة القادمة</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 700 }}>{PRAYER_LABELS[np.name]} {formatTime(np.time, loc.tz)}</div>
-              <div className="hero-count" aria-label="الوقت المتبقي">{formatCountdown(np.time.getTime() - now.getTime())}</div>
-            </div>
-          ) : (
-            <Link className="btn btn-gold" to="/prayer">اختر مدينتك لعرض مواقيت الصلاة</Link>
-          )}
+          <Link to="/about" className="hero-icon" aria-label="رسالة الوفاء"><Heart size={20} /></Link>
         </div>
-        {times && loc && (
-          <div className="row" style={{ marginTop: '0.75rem', gap: '0.4rem' }}>
-            {PRAYERS.map((p) => (
-              <span key={p} className={'hero-chip' + (np?.name === p ? ' active' : '')}>
-                {PRAYER_LABELS[p]} <strong style={{ fontVariantNumeric: 'tabular-nums' }}>{formatTime(times[p], loc.tz)}</strong>
-              </span>
-            ))}
+      </header>
+
+      <section className="next-card" aria-label="الصلاة القادمة">
+        {np && loc && times ? (
+          <>
+            <Link to="/prayer" className="next-main">
+              <div className="next-art"><MosqueScene tone={toneFor(np.name)} variant="card" /></div>
+              <div className="next-info" aria-live="polite">
+                <div className="next-label">الصلاة القادمة</div>
+                <div className="next-name">{PRAYER_LABELS[np.name]}</div>
+                <div className="next-time">{formatTime(np.time, loc.tz)}</div>
+                <div className="next-left">باقي على الأذان <b>{humanLeft(np.time.getTime() - now.getTime())}</b></div>
+                <div className="next-count" aria-label="الوقت المتبقي">{formatCountdown(np.time.getTime() - now.getTime())}</div>
+              </div>
+            </Link>
+            <div className="prayer-pills">
+              {five.map((p) => (
+                <div key={p} className={'pill' + (np.name === p ? ' active' : '')}>
+                  <span>{PRAYER_LABELS[p]}</span>
+                  <b>{formatTime(times[p], loc.tz)}</b>
+                </div>
+              ))}
+            </div>
+            <Link to="/prayer" className="next-city"><MapPin size={14} /> {cityLabel(loc)}</Link>
+          </>
+        ) : (
+          <div className="next-empty">
+            <div className="next-art"><MosqueScene tone="sunset" variant="card" /></div>
+            <div>
+              <strong>مواقيت الصلاة</strong>
+              <p className="small muted" style={{ margin: '0.2rem 0 0.6rem' }}>اختر مدينتك أو استخدم موقعك لعرض المواقيت والعدّ التنازلي.</p>
+              <Link className="btn btn-primary btn-sm" to="/prayer">اختر مدينتك لعرض مواقيت الصلاة</Link>
+            </div>
           </div>
         )}
       </section>
@@ -213,6 +259,19 @@ export function HomePage() {
             </li>
           ))}
         </ul>
+        <h3 style={{ marginTop: '1rem' }}>اختصارات الوصول السريع</h3>
+        <p className="small muted">اختر حتى {MAX_QUICK_LINKS} أقسام تستخدمها كثيرًا.</p>
+        <div className="quick-choices">
+          {QUICK_LINK_CHOICES.map((to) => {
+            const on = settings.quickLinks.includes(to)
+            return (
+              <label key={to} className="check">
+                <input type="checkbox" checked={on} disabled={!on && settings.quickLinks.length >= MAX_QUICK_LINKS} onChange={(e) => toggleLink(to, e.target.checked)} aria-label={`اختصار ${LINK_META[to].label}`} />
+                {LINK_META[to].label}
+              </label>
+            )
+          })}
+        </div>
       </Sheet>
       <ShareCardDialog open={shareAyah} onClose={() => setShareAyah(false)} input={shareAyah ? cardInput : null} />
     </div>

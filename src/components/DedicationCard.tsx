@@ -1,16 +1,18 @@
 import { Link } from 'react-router-dom'
-import { HOME_CARD } from '../content/dedication'
+import { HOME_CARD, SADAQAH_LINE, SADAQAH_PRAYER } from '../content/dedication'
+import { DedicationArt } from './Art'
 
 export function DedicationCard() {
   return (
-    <section className="card dedication-card" aria-label="إهداء التطبيق">
-      <div className="ornament" aria-hidden="true">✦ ✦ ✦</div>
-      <h2 style={{ justifyContent: 'center', margin: '0.25rem 0' }}>{HOME_CARD.app}</h2>
-      <p className="muted small" style={{ margin: 0 }}>{HOME_CARD.tagline}</p>
-      <p style={{ margin: '0.6rem 0 0' }}>{HOME_CARD.line1}</p>
-      <p className="name" style={{ margin: 0 }}>{HOME_CARD.name}</p>
-      <p className="small muted" style={{ margin: '0.25rem 0 0.5rem' }}>{HOME_CARD.prayer}</p>
-      <Link to="/about" className="small">رسالة الوفاء</Link>
+    <section className="dedication-card" aria-label="إهداء التطبيق">
+      <DedicationArt className="dedication-art" />
+      <div className="dedication-body">
+        <p className="dedication-kicker">{HOME_CARD.tagline}</p>
+        <p className="dedication-title">صدقة جارية</p>
+        <p className="dedication-line">{SADAQAH_LINE}</p>
+        <p className="dedication-prayer">{SADAQAH_PRAYER}</p>
+        <Link to="/about" className="dedication-link">رسالة الوفاء</Link>
+      </div>
     </section>
   )
 }

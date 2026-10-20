@@ -7,7 +7,8 @@ import { copyText, vibrate } from '../platform'
 import { toast } from '../hooks'
 import { favorites } from '../db/repos'
 
-const KIND_LABEL = { quran: 'قرآن كريم', hadith: 'حديث نبوي', general: 'دعاء عام' } as const
+export const KIND_LABEL = { quran: 'قرآن كريم', hadith: 'حديث نبوي', general: 'دعاء عام', personal: 'ذكر شخصي — ليس من المأثور' } as const
+export const kindBadge = (k: DhikrItem['kind']) => 'badge ' + (k === 'quran' ? 'badge-quran' : k === 'personal' ? 'badge-personal' : 'badge-hadith')
 
 export interface DhikrCardProps {
   item: DhikrItem
@@ -29,7 +30,7 @@ export function DhikrCard({ item, fav, favKind, withCounter, count = 0, onCount,
   return (
     <article className={'card dhikr-card' + (withCounter && done ? ' is-done' : '')} id={`dhikr-${item.id}`}>
       <div className="spread" style={{ marginBottom: 6 }}>
-        <span className={'badge ' + (item.kind === 'quran' ? 'badge-quran' : 'badge-hadith')}>{KIND_LABEL[item.kind]}</span>
+        <span className={kindBadge(item.kind)}>{KIND_LABEL[item.kind]}</span>
         <span className="row">
           {item.count && <span className="badge">{item.count <= 10 ? `${item.count} مرات` : `${item.count} مرة`}</span>}
           {item.text && (

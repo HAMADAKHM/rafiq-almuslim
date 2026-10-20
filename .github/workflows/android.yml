@@ -46,3 +46,15 @@ jobs:
             --target "${{ github.sha }}" --latest \
             --title "رفيق المسلم $VERSION (تجريبي ${{ github.run_number }})" \
             --notes "نسخة تجريبية لنظام Android. نزّل RafiqAlMuslim.apk وثبّته (اسمح بالتثبيت من مصادر غير معروفة). مجاني بالكامل — صدقة جارية."
+      # فروع التطوير: نسخة تجريبية (Pre-release) للمعاينة دون المساس بالإصدار الرئيسي
+      - name: Publish beta pre-release
+        if: startsWith(github.ref, 'refs/heads/feature/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          cp android/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslim-beta.apk
+          gh release create "beta-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslim-beta.apk \
+            --target "${{ github.sha }}" --prerelease \
+            --title "رفيق المسلم $VERSION — نسخة معاينة (${{ github.ref_name }})" \
+            --notes "نسخة معاينة من فرع التطوير لنظام Android. نزّل RafiqAlMuslim-beta.apk وثبّته. مجاني بالكامل — صدقة جارية."

@@ -26,6 +26,8 @@ import { TasbihPage } from '../features/tasbih/TasbihPage'
 import { CalendarPage } from '../features/calendar/CalendarPage'
 import { RemindersPage } from '../features/reminders/RemindersPage'
 import { NativeBridge } from './NativeBridge'
+import { MorePage } from '../features/more/MorePage'
+import { MyAdhkarPage } from '../features/adhkar/MyAdhkarPage'
 
 export function AppRoutes() {
   return (
@@ -55,6 +57,8 @@ export function AppRoutes() {
         <Route path="search" element={<SearchPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="about" element={<AboutPage />} />
+        <Route path="more" element={<MorePage />} />
+        <Route path="my-adhkar" element={<MyAdhkarPage />} />
         <Route path="*" element={<Empty>الصفحة غير موجودة. <Link to="/">العودة إلى الرئيسية</Link></Empty>} />
       </Route>
     </Routes>

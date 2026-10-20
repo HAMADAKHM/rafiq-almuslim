@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { BookmarkCheck, BookOpen, ChevronLeft, ChevronRight, StickyNote } from 'lucide-react'
 import { Spinner } from '../../components/Common'
-import { toast, useDocumentTitle, useLive, usePlayer, useQuran } from '../../hooks'
+import { toast, useDocumentTitle, useLive, usePlayer, useQuran, useKeepAwake } from '../../hooks'
 import { ayahMeta, BASMALA_SURAH_EXCEPTIONS, loadTranslation, type QuranData, type Translation } from '../../services/quran'
 import { bookmarks, kv, notes, reading } from '../../db/repos'
 import { useSettings } from '../../state/SettingsContext'
@@ -47,6 +47,7 @@ function Reader({ data, surah }: { data: QuranData; surah: number }) {
   const [sp] = useSearchParams()
   const nav = useNavigate()
   const { settings, update, ready } = useSettings()
+  useKeepAwake(settings.keepAwake)
   const target = Math.min(s.count, Math.max(1, Number(sp.get('ayah')) || 1))
   const [current, setCurrent] = useState(target)
   const readFrom = useRef(target)

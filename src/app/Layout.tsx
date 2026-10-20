@@ -1,50 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
-import { NavLink, Outlet, useLocation, Link } from 'react-router-dom'
-import {
-  House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, Menu, X, WifiOff, CircleDot, CalendarDays, Bell,
-} from 'lucide-react'
-import { t, type StringKey } from '../i18n/strings'
+import { useEffect, useRef } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
+import { WifiOff, ChevronRight, Search } from 'lucide-react'
+import { t } from '../i18n/strings'
 import { useSettings } from '../state/SettingsContext'
 import { FOOTER_LINE } from '../content/dedication'
 import { MiniPlayer } from '../components/MiniPlayer'
 import { useOnline, useToastMessage } from '../hooks'
 import { startReminderLoop } from '../services/notifications'
-import iconUrl from '../assets/icon.svg'
-
-const NAV: { group: StringKey; items: { to: string; key: StringKey; icon: typeof House }[] }[] = [
-  { group: 'groupDaily', items: [
-    { to: '/', key: 'home', icon: House },
-    { to: '/wird', key: 'wird', icon: CalendarCheck },
-  ] },
-  { group: 'groupQuran', items: [
-    { to: '/quran', key: 'quran', icon: BookOpen },
-    { to: '/memorize', key: 'memorize', icon: Brain },
-    { to: '/listen', key: 'listen', icon: Headphones },
-    { to: '/learn', key: 'learn', icon: GraduationCap },
-  ] },
-  { group: 'groupWorship', items: [
-    { to: '/prayer', key: 'prayer', icon: Clock },
-    { to: '/qibla', key: 'qibla', icon: Compass },
-    { to: '/adhkar', key: 'adhkar', icon: Sparkles },
-    { to: '/duas', key: 'duas', icon: HandHeart },
-    { to: '/tasbih', key: 'tasbih', icon: CircleDot },
-    { to: '/calendar', key: 'calendar', icon: CalendarDays },
-  ] },
-  { group: 'groupMore', items: [
-    { to: '/progress', key: 'progress', icon: ChartColumn },
-    { to: '/journey', key: 'journey', icon: Route },
-    { to: '/search', key: 'search', icon: Search },
-    { to: '/reminders', key: 'reminders', icon: Bell },
-    { to: '/settings', key: 'settings', icon: Settings },
-    { to: '/about', key: 'about', icon: Heart },
-  ] },
-]
+import { LogoMark } from '../components/Art'
+import { NAV, TABS } from './nav'
+import { Splash } from './Splash'
 
 function Brand() {
   return (
     <Link to="/" className="brand" aria-label="رفيق المسلم — الصفحة الرئيسية">
-      <img src={iconUrl} alt="" />
+      <span className="brand-mark"><LogoMark size={26} /></span>
       <span>
         <strong>رفيق المسلم</strong>
         <small>Islamic Companion</small>
@@ -56,25 +26,26 @@ function Brand() {
 export function Layout() {
   const { settings } = useSettings()
   const lang = settings.lang
-  const [open, setOpen] = useState(false)
   const loc = useLocation()
+  const navigate = useNavigate()
   const online = useOnline()
   const toastMsg = useToastMessage()
   const mainRef = useRef<HTMLElement>(null)
   const settingsRef = useRef(settings)
   useEffect(() => { settingsRef.current = settings }, [settings])
 
-  useEffect(() => { setOpen(false); window.scrollTo?.(0, 0) }, [loc.pathname])
+  useEffect(() => { window.scrollTo?.(0, 0) }, [loc.pathname])
   useEffect(() => startReminderLoop(() => settingsRef.current), [])
 
   // صفحات القراءة لها رأسها وشريطها السفلي الخاصان (يحتويان المشغل)
   const isReader = /^\/(quran\/\d+\/?$|mushaf)/.test(loc.pathname)
+  const isHome = loc.pathname === '/'
 
   return (
-    <div className={'app' + (isReader ? ' reading' : '')}>
+    <div className={'app' + (isReader ? ' reading' : '') + (isHome ? ' at-home' : '')}>
+      <Splash />
       <a href="#main" className="skip-link">تخطَّ إلى المحتوى</a>
-      {open && <div className="backdrop" onClick={() => setOpen(false)} aria-hidden="true" />}
-      <aside className={'sidebar' + (open ? ' open' : '')} aria-label="القائمة الرئيسية">
+      <aside className="sidebar" aria-label="القائمة الرئيسية">
         <Brand />
         <nav>
           {NAV.map((g) => (
@@ -94,10 +65,9 @@ export function Layout() {
 
       <div className="main">
         <header className="topbar">
+          <button className="btn btn-ghost icon-btn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))} aria-label="رجوع"><ChevronRight /></button>
           <Brand />
-          <button className="btn btn-ghost icon-btn" onClick={() => setOpen((o) => !o)} aria-label={t('menu', lang)} aria-expanded={open}>
-            {open ? <X /> : <Menu />}
-          </button>
+          <Link className="btn btn-ghost icon-btn" to="/search" aria-label={t('search', lang)}><Search size={20} /></Link>
         </header>
         {!online && (
           <div className="alert alert-gold small" role="status" style={{ borderRadius: 0, display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -114,6 +84,19 @@ export function Layout() {
         )}
       </div>
       {!isReader && <MiniPlayer />}
+      {!isReader && (
+        <nav className="tabbar" aria-label="التنقل السفلي">
+          {TABS.map(({ to, icon: Icon, short, match }) => {
+            const active = match.test(loc.pathname)
+            return (
+              <Link key={to} to={to} className={'tab-item' + (active ? ' active' : '')} aria-current={active ? 'page' : undefined}>
+                <Icon size={22} aria-hidden="true" strokeWidth={active ? 2.4 : 1.8} />
+                <span>{short}</span>
+              </Link>
+            )
+          })}
+        </nav>
+      )}
       {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
     </div>
   )

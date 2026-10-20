@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { CircleCheck, Star, AArrowDown, AArrowUp } from 'lucide-react'
-import { Empty, PageHead } from '../../components/Common'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, NavLink, useParams } from 'react-router-dom'
+import {
+  CircleCheck, Star, AArrowDown, AArrowUp, ChevronLeft, Sun, Moon, Landmark, BedDouble, Sunrise, DoorOpen, Utensils, Plane,
+  Droplets, Sparkles, Heart, BookOpen, HandHeart, Users, Coins, CloudSun, ShieldPlus, RefreshCcw, HeartPulse, Route, MessageCircleHeart,
+} from 'lucide-react'
+import { Empty, PageHead, Tabs } from '../../components/Common'
+import { AdhkarSession } from './AdhkarSession'
 import { DhikrCard } from '../../components/DhikrCard'
 import { ADHKAR } from '../../content/adhkar'
 import { DUAS } from '../../content/duas'
@@ -20,18 +24,43 @@ function useFavs(kind: Favorite['kind']) {
   return useMemo(() => new Set(all.filter((f) => f.kind === kind).map((f) => f.itemId)), [all, kind])
 }
 
+const CAT_ICONS: Record<string, typeof Sun> = {
+  morning: Sun, evening: Moon, 'after-prayer': Landmark, sleep: BedDouble, waking: Sunrise, home: DoorOpen, food: Utensils,
+  travel: Plane, mosque: Droplets, misc: Sparkles, salawat: Heart,
+  quranic: BookOpen, sunnah: HandHeart, parents: Users, rizq: Coins, relief: CloudSun, distress: MessageCircleHeart,
+  istighfar: RefreshCcw, healing: ShieldPlus, 'travel-dua': Route, general: HeartPulse,
+}
+
+export function catIcon(id: string) { return CAT_ICONS[id] ?? Sparkles }
+
+/** تبويبات المكتبة: الأذكار والأدعية والأذكار الشخصية */
+export function LibraryTabs() {
+  return (
+    <nav className="lib-tabs" aria-label="أقسام المكتبة">
+      <NavLink to="/adhkar" className={({ isActive }) => (isActive ? 'active' : '')}>الأذكار</NavLink>
+      <NavLink to="/duas" className={({ isActive }) => (isActive ? 'active' : '')}>الأدعية</NavLink>
+      <NavLink to="/my-adhkar" className={({ isActive }) => (isActive ? 'active' : '')}>أذكاري</NavLink>
+      <NavLink to="/tasbih" className={({ isActive }) => (isActive ? 'active' : '')}>المسبحة</NavLink>
+    </nav>
+  )
+}
+
 function CategoryGrid({ cats, base, doneToday }: { cats: ContentCategory[]; base: string; doneToday?: Set<string> }) {
   return (
-    <div className="grid grid-3">
-      {cats.map((c) => (
-        <Link key={c.id} to={`${base}/${c.id}`} className="card card-link">
-          <div className="spread">
-            <h2 style={{ margin: 0 }}>{c.title}</h2>
-            {doneToday?.has(c.id) && <CircleCheck size={20} color="var(--success)" aria-label="أُتمّت اليوم" />}
-          </div>
-          <p className="muted small" style={{ margin: 0 }}>{c.items.length} عنصرًا</p>
-        </Link>
-      ))}
+    <div className="list-stack cat-list">
+      {cats.map((c) => {
+        const Icon = catIcon(c.id)
+        return (
+          <Link key={c.id} to={`${base}/${c.id}`} className="list-card">
+            <span className="icon-chip"><Icon size={22} aria-hidden="true" /></span>
+            <span className="lc-body"><strong>{c.title}</strong><small>{c.items.length} {c.items.length > 10 ? 'ذكرًا' : 'أذكار'}</small></span>
+            <span className="lc-end">
+              {doneToday?.has(c.id) && <CircleCheck size={20} color="var(--success)" aria-label="أُتمّت اليوم" />}
+              <ChevronLeft size={18} aria-hidden="true" />
+            </span>
+          </Link>
+        )
+      })}
     </div>
   )
 }
@@ -60,6 +89,12 @@ export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' }) {
   const [onlyFav, setOnlyFav] = useState(false)
   const title = kind === 'adhkar' ? 'الأذكار' : 'الأدعية'
   const cat = cats.find((c) => c.id === category)
+  const view = settings.adhkarView
+  const autoLog = useCallback(async () => {
+    if (!cat || kind !== 'adhkar' || doneToday.has(cat.id)) return
+    await adhkarLog.complete(today, cat.id)
+    toast(`أتممت ${cat.title} — سُجّل الإتمام، تقبّل الله`)
+  }, [cat, kind, doneToday, today])
 
   const items = useMemo(() => {
     const pool = cat ? cat.items : cats.flatMap((c) => c.items)
@@ -68,18 +103,41 @@ export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' }) {
   }, [cat, cats, q, onlyFav, favs])
 
   const showList = !!cat || !!q || onlyFav
+  const sessionMode = !!cat && !q && !onlyFav && view === 'session'
 
   return (
     <>
       <PageHead title={cat ? cat.title : title} subtitle={cat ? <Link to={base}>← كل التصنيفات</Link> : SOURCE_NOTE} />
+      {!cat && <LibraryTabs />}
+      {cat && (
+        <Tabs label="طريقة العرض" value={view} onChange={(v) => update({ adhkarView: v })} items={[{ id: 'session', label: 'جلسة: ذكر تلو الآخر' }, { id: 'list', label: 'قائمة' }]} />
+      )}
+      {!sessionMode && (
       <div className="row" style={{ marginBottom: '1rem' }}>
-        <input className="input" style={{ maxWidth: 380 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder={`ابحث في ${title}…`} aria-label={`بحث في ${title}`} />
-        <button className="btn" aria-pressed={onlyFav} onClick={() => setOnlyFav((f) => !f)}><Star size={16} fill={onlyFav ? 'var(--gold)' : 'none'} /> المفضلة</button>
-        <button className="btn icon-btn" aria-label="تصغير النص" onClick={() => update({ adhkarFontScale: Math.max(0.8, +(scale - 0.1).toFixed(2)) })}><AArrowDown size={18} /></button>
-        <button className="btn icon-btn" aria-label="تكبير النص" onClick={() => update({ adhkarFontScale: Math.min(1.8, +(scale + 0.1).toFixed(2)) })}><AArrowUp size={18} /></button>
-      </div>
+          <input className="input" style={{ maxWidth: 380 }} value={q} onChange={(e) => setQ(e.target.value)} placeholder={`ابحث في ${title}…`} aria-label={`بحث في ${title}`} />
+          <button className="btn" aria-pressed={onlyFav} onClick={() => setOnlyFav((f) => !f)}><Star size={16} fill={onlyFav ? 'var(--gold)' : 'none'} /> المفضلة</button>
+          <button className="btn icon-btn" aria-label="تصغير النص" onClick={() => update({ adhkarFontScale: Math.max(0.8, +(scale - 0.1).toFixed(2)) })}><AArrowDown size={18} /></button>
+          <button className="btn icon-btn" aria-label="تكبير النص" onClick={() => update({ adhkarFontScale: Math.min(1.8, +(scale + 0.1).toFixed(2)) })}><AArrowUp size={18} /></button>
+        </div>
+      )}
       {!showList && <CategoryGrid cats={cats} base={base} doneToday={kind === 'adhkar' ? doneToday : undefined} />}
-      {showList && (
+      {!showList && kind === 'adhkar' && (
+        <section style={{ marginTop: '1.25rem' }}>
+          <h2 className="section-title">أقسام ذات صلة</h2>
+          <div className="list-stack">
+            <Link to="/duas/healing" className="list-card"><span className="icon-chip green"><ShieldPlus size={22} /></span><span className="lc-body"><strong>الرقية الشرعية</strong><small>أدعية الشفاء والرقية الثابتة</small></span><span className="lc-end"><ChevronLeft size={18} /></span></Link>
+            <Link to="/duas" className="list-card"><span className="icon-chip green"><HandHeart size={22} /></span><span className="lc-body"><strong>الأدعية المأثورة</strong><small>من القرآن والسنة، مصنفة حسب المناسبة</small></span><span className="lc-end"><ChevronLeft size={18} /></span></Link>
+          </div>
+        </section>
+      )}
+      {sessionMode && cat && (
+        <>
+          {cat.intro && <p className="alert alert-info small">{cat.intro}</p>}
+          <AdhkarSession key={cat.id} items={cat.items} counts={counts} onCount={setCount} favs={favs} favKind={favKind}
+            onAllDone={kind === 'adhkar' ? autoLog : undefined} doneLabel={`أتممت ${cat.title}`} />
+        </>
+      )}
+      {showList && !sessionMode && (
         <div className="stack" style={{ ['--adhkar-scale' as string]: scale }}>
           {cat?.intro && <p className="alert alert-info">{cat.intro}</p>}
           {items.map((it, i) => (

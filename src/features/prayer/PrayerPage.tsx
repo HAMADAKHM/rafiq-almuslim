@@ -1,7 +1,13 @@
 import { useMemo, useState } from 'react'
-import { Bell, MapPin } from 'lucide-react'
+import { Bell, BellOff, MapPin, Sunrise, Sun, CloudSun, Sunset, Moon, MoonStar, CircleCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PageHead } from '../../components/Common'
+import { MosqueScene, type SceneTone } from '../../components/Art'
+import { kv } from '../../db/repos'
+import { useLive } from '../../hooks'
+import { dayKey, shiftDayKey } from '../../lib/dates'
+import type { PrayerName } from '../../services/prayer'
+import type { PrayerKey } from '../../state/settings'
 import { CityPicker } from '../../components/CityPicker'
 import { useNow } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
@@ -9,8 +15,24 @@ import { METHODS, nextPrayer, PRAYER_LABELS, PRAYERS, upcomingDays, todayTimes }
 import { formatCountdown, formatGregorian, formatHijri, formatTime } from '../../lib/dates'
 import { cityLabel } from '../../services/cities'
 
+const ICONS: Record<PrayerName, typeof Sun> = { fajr: MoonStar, sunrise: Sunrise, dhuhr: Sun, asr: CloudSun, maghrib: Sunset, isha: Moon }
+const TONE: Record<PrayerName, SceneTone> = { fajr: 'dawn', sunrise: 'dawn', dhuhr: 'day', asr: 'day', maghrib: 'sunset', isha: 'night' }
+const prayedKey = (d: string) => `prayed:${d}`
+
+/** متابعة الصلوات اليومية (اختيارية، محلية فقط) */
+function usePrayed(day: string) {
+  return useLive(() => kv.get<PrayerKey[]>(prayedKey(day), []), ['kv:' + prayedKey(day)], [] as PrayerKey[], [day])
+}
+
+function WeekSummary({ today }: { today: string }) {
+  const days = Array.from({ length: 7 }, (_, i) => shiftDayKey(today, i - 6))
+  const all = useLive(() => Promise.all(days.map((d) => kv.get<PrayerKey[]>(prayedKey(d), []))), days.map((d) => 'kv:' + prayedKey(d)), [] as PrayerKey[][], [today])
+  const total = all.reduce((a, x) => a + x.length, 0)
+  return <p className="small muted" style={{ margin: '0.5rem 0 0' }}>آخر 7 أيام: {total} من 35 صلاة مسجّلة. هذا السجل لك وحدك ويُحفظ على جهازك.</p>
+}
+
 export function PrayerPage() {
-  const { settings } = useSettings()
+  const { settings, update } = useSettings()
   const loc = settings.location
   const [picking, setPicking] = useState(false)
   const now = useNow(1000)
@@ -19,41 +41,73 @@ export function PrayerPage() {
   const next = loc ? nextPrayer(loc, settings.prayer, now) : null
   const today = loc ? todayTimes(loc, settings.prayer, now) : null
   const method = METHODS.find((m) => m.id === settings.prayer.method)
+  const today_ = dayKey(now, loc?.tz)
+  const prayed = usePrayed(today_)
+  const n = settings.notifications
+  const togglePrayed = (p: PrayerKey) => kv.set(prayedKey(today_), prayed.includes(p) ? prayed.filter((x) => x !== p) : [...prayed, p])
 
   return (
     <>
-      <PageHead title="مواقيت الصلاة" subtitle={loc ? cityLabel(loc) : 'اختر مدينتك لعرض المواقيت'}
-        actions={loc && <button className="btn" onClick={() => setPicking((p) => !p)}><MapPin size={16} /> {picking ? 'إغلاق' : 'تغيير المدينة'}</button>} />
+      <PageHead title="مواقيت الصلاة" subtitle={loc ? undefined : 'اختر مدينتك لعرض المواقيت'} />
+      {loc && next && (
+        <section className="prayer-hero">
+          <MosqueScene tone={TONE[next.name]} className="prayer-hero-art" />
+          <div className="prayer-hero-text">
+            <div className="ph-city"><MapPin size={16} /> {cityLabel(loc)}</div>
+            <div className="ph-method">طريقة الحساب: {method?.label}</div>
+            <div className="ph-date">{formatGregorian(now, loc.tz)}</div>
+            <div className="ph-hijri">{formatHijri(now, loc.tz, settings.hijriOffset)}</div>
+            <button className="btn btn-sm ph-change" onClick={() => setPicking((p) => !p)}><MapPin size={14} /> {picking ? 'إغلاق' : 'تغيير المدينة'}</button>
+          </div>
+        </section>
+      )}
 
       {(!loc || picking) && (
-        <section className="card" style={{ marginBottom: '1rem' }}>
+        <section className="card" style={{ margin: '1rem 0' }}>
           <h2>اختيار المدينة</h2>
           <CityPicker onDone={() => setPicking(false)} />
         </section>
       )}
 
       {loc && next && today && (
-        <div className="grid grid-2">
-          <section className="card" aria-live="polite">
-            <div className="muted small">الصلاة القادمة</div>
-            <h2 style={{ fontSize: '1.6rem', margin: '0.2rem 0' }}>{PRAYER_LABELS[next.name]} — {formatTime(next.time, loc.tz)}</h2>
-            <div className="countdown" aria-label="الوقت المتبقي">{formatCountdown(next.time.getTime() - now.getTime())}</div>
-            <p className="small muted" style={{ marginTop: 8 }}>{formatGregorian(now, loc.tz)} • {formatHijri(now, loc.tz, settings.hijriOffset)}</p>
-            <p className="small muted">الوقت الحالي في {loc.nameAr ?? loc.name}: {formatTime(now, loc.tz)} <span dir="ltr">({loc.tz})</span></p>
+        <div className="grid grid-2 prayer-grid">
+          <section className="card next-prayer-card" aria-live="polite">
+            <div className="spread" style={{ alignItems: 'start' }}>
+              <div>
+                <div className="muted small">الصلاة القادمة</div>
+                <div className="np-name">{PRAYER_LABELS[next.name]}</div>
+                <div className="np-time">{formatTime(next.time, loc.tz)}</div>
+              </div>
+              <Link to="/reminders" className="icon-chip green" aria-label="التنبيهات">{n.enabled ? <Bell size={20} /> : <BellOff size={20} />}</Link>
+            </div>
+            <div className="np-left">باقي على الأذان <span className="countdown" aria-label="الوقت المتبقي">{formatCountdown(next.time.getTime() - now.getTime())}</span></div>
+            <p className="small muted" style={{ margin: '0.4rem 0 0' }}>الوقت الآن في {loc.nameAr ?? loc.name}: {formatTime(now, loc.tz)} <span dir="ltr">({loc.tz})</span></p>
           </section>
 
           <section className="card">
-            <h2>مواقيت اليوم</h2>
-            <table className="prayer-table">
-              <tbody>
-                {PRAYERS.map((p) => (
-                  <tr key={p} className={next.name === p && next.time.getTime() === today[p].getTime() ? 'next' : ''}>
-                    <td>{PRAYER_LABELS[p]}</td>
-                    <td style={{ textAlign: 'end', fontVariantNumeric: 'tabular-nums' }}>{formatTime(today[p], loc.tz)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="spread"><h2 style={{ margin: 0 }}>مواقيت اليوم</h2>
+              <label className="check small"><input type="checkbox" className="switch-input" role="switch" checked={settings.trackPrayers} onChange={(e) => update({ trackPrayers: e.target.checked })} aria-label="متابعة أداء الصلوات" /> متابعة الصلوات</label>
+            </div>
+            <ul className="prayer-rows">
+              {PRAYERS.map((p) => {
+                const Icon = ICONS[p]
+                const isNext = next.name === p && next.time.getTime() === today[p].getTime()
+                const notif = p !== 'sunrise' && n.enabled && n.perPrayer[p as PrayerKey]
+                return (
+                  <li key={p} className={'prayer-row' + (isNext ? ' next' : '') + (p === 'sunrise' ? ' sunrise' : '')}>
+                    <span className="pr-icon"><Icon size={18} aria-hidden="true" /></span>
+                    <span className="pr-name">{PRAYER_LABELS[p]}</span>
+                    <span className="pr-time">{formatTime(today[p], loc.tz)}</span>
+                    <span className="pr-end">
+                      {settings.trackPrayers && p !== 'sunrise'
+                        ? <button className={'prayed-btn' + (prayed.includes(p as PrayerKey) ? ' on' : '')} onClick={() => togglePrayed(p as PrayerKey)} aria-pressed={prayed.includes(p as PrayerKey)} aria-label={`صلّيت ${PRAYER_LABELS[p]}`}><CircleCheck size={18} /></button>
+                        : notif ? <Bell size={15} aria-label="التنبيه مفعّل" /> : null}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+            {settings.trackPrayers && <WeekSummary today={today_} />}
           </section>
 
           <section className="card" style={{ gridColumn: '1 / -1' }}>

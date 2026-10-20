@@ -80,3 +80,30 @@ export function useDocumentTitle(title: string) {
     document.title = title ? `${title} — رفيق المسلم` : 'رفيق المسلم | Islamic Companion'
   }, [title])
 }
+
+type WakeLockSentinelLike = { release: () => Promise<void>; released?: boolean }
+
+/**
+ * إبقاء الشاشة مضاءة أثناء القراءة (Screen Wake Lock API).
+ * يدعمه Chrome وAndroid WebView وSafari 16.4+؛ وحيث لا يُدعم لا يحدث شيء.
+ * يُعاد طلبه عند العودة إلى التطبيق لأن النظام يحرره عند إخفاء الصفحة.
+ */
+export function useKeepAwake(enabled: boolean) {
+  useEffect(() => {
+    const nav = navigator as Navigator & { wakeLock?: { request: (t: 'screen') => Promise<WakeLockSentinelLike> } }
+    if (!enabled || !nav.wakeLock) return
+    let lock: WakeLockSentinelLike | null = null
+    let alive = true
+    const acquire = () => {
+      if (document.visibilityState !== 'visible') return
+      nav.wakeLock!.request('screen').then((l) => { if (alive) lock = l; else l.release().catch(() => {}) }).catch(() => {})
+    }
+    acquire()
+    document.addEventListener('visibilitychange', acquire)
+    return () => {
+      alive = false
+      document.removeEventListener('visibilitychange', acquire)
+      lock?.release().catch(() => {})
+    }
+  }, [enabled])
+}

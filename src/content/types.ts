@@ -1,7 +1,8 @@
 // نموذج المحتوى الديني. كل عنصر يحدد نوعه (قرآن / حديث / دعاء عام) ومصدره.
 // النصوص القرآنية لا تُكتب هنا يدويًا أبدًا: تُحدَّد بمرجع (سورة وآيات) وتُعرض من المصحف المعتمد.
 
-export type ContentKind = 'quran' | 'hadith' | 'general'
+/** personal: ذكر أضافه المستخدم بنفسه — لا يُنسب إلى السنة */
+export type ContentKind = 'quran' | 'hadith' | 'general' | 'personal'
 
 export interface QuranRange {
   surah: number
