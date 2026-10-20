@@ -10,7 +10,7 @@ import { atLocalTime, buildSchedule, dueReminders, inQuietHours, MAX_SCHEDULED }
 import { monthDays, occasionsFor, toHijri, upcomingOccasions } from './calendar'
 import { adhkarForNow, ayahOfDay, dhikrOfDay, greeting } from './daily'
 import { wrapLines } from './shareCard'
-import { DEFAULT_SETTINGS, mergeSettings, normalizeHomeCards, type Settings } from '../state/settings'
+import { DEFAULT_HOME_CARDS, DEFAULT_SETTINGS, mergeSettings, normalizeHomeCards, type Settings } from '../state/settings'
 import { AYAH_OF_DAY_REFS } from '../content/ayahOfDay'
 import * as hafs from 'quran-meta/hafs'
 import type { QuranMeta } from './quran'
@@ -218,7 +218,8 @@ describe('ترحيل الإعدادات من 0.1', () => {
     const cards = normalizeHomeCards([{ id: 'dedication', visible: false }, { id: 'ayah', visible: false }])
     expect(cards.find((c) => c.id === 'dedication')!.visible).toBe(true)
     expect(cards.find((c) => c.id === 'ayah')!.visible).toBe(false)
-    expect(cards).toHaveLength(8)
+    expect(cards).toHaveLength(DEFAULT_HOME_CARDS.length)
+    expect(cards.map((c) => c.id)).toContain('suggest')
   })
 })
 
