@@ -3,9 +3,11 @@ import { Play, Square, Upload, Trash2, Volume2, AlarmClock } from 'lucide-react'
 import { useSettings } from '../../state/SettingsContext'
 import { toast, useLive } from '../../hooks'
 import { ADHAN_VOICES, VOICE_DEVICE, VOICE_SAME, VOICE_TONE } from '../../content/adhanVoices'
-import { DEVICE_VOICE_KEY, loadDeviceVoice, playableUrl, removeDeviceVoice, saveDeviceVoice, validateDeviceFile, type DeviceVoice } from '../../services/adhan'
+import { DEVICE_VOICE_KEY, DEVICE_NATIVE_KEY, loadDeviceNative, loadDeviceVoice, playableUrl, removeDeviceVoice, saveDeviceVoice, validateDeviceFile, type DeviceVoice } from '../../services/adhan'
 import { exactAlarmStatus, isNative, platformName, requestExactAlarm } from '../../platform'
 import type { NotificationSettings } from '../../state/settings'
+import { rescheduleNative } from '../../services/notifications'
+import type { DeviceNative } from '../../services/adhan'
 
 function fmtDuration(sec: number) {
   const m = Math.floor(sec / 60)
@@ -19,6 +21,8 @@ export function AdhanVoiceSection() {
   const n = settings.notifications
   const set = (patch: Partial<NotificationSettings>) => update((s) => ({ notifications: { ...s.notifications, ...patch } }))
   const device = useLive(() => loadDeviceVoice(), ['kv:' + DEVICE_VOICE_KEY], null as DeviceVoice | null)
+  const native = useLive(() => loadDeviceNative(), ['kv:' + DEVICE_NATIVE_KEY], null as DeviceNative | null)
+  const [busy, setBusy] = useState(false)
   const [playing, setPlaying] = useState<string | null>(null)
   const audio = useRef<HTMLAudioElement | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -49,15 +53,21 @@ export function AdhanVoiceSection() {
     if (!f) return
     const err = validateDeviceFile(f)
     if (err) { toast(err); return }
-    await saveDeviceVoice(f)
-    set({ adhanVoice: VOICE_DEVICE })
-    toast('أُضيف صوت الأذان من جهازك')
+    setBusy(true)
+    try {
+      const ok = await saveDeviceVoice(f)
+      set({ adhanVoice: VOICE_DEVICE })
+      if (isNative()) rescheduleNative({ ...settings, notifications: { ...n, adhanVoice: VOICE_DEVICE } }).catch(() => {})
+      toast(!isNative() || ok ? 'أُضيف صوت الأذان من جهازك' : 'أُضيف الصوت للتشغيل داخل التطبيق، وتعذّر ربطه بإشعارات الجهاز')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const options = [
     { id: VOICE_TONE, label: 'نغمة الإشعار فقط', hint: 'بلا أذان — نغمة الجهاز الافتراضية' },
     ...ADHAN_VOICES.map((v) => ({ id: v.id, label: v.name, hint: [v.muezzin, fmtDuration(v.durationSec)].filter(Boolean).join(' • ') })),
-    ...(device ? [{ id: VOICE_DEVICE, label: `من جهازي: ${device.name}`, hint: isNative() ? 'يُشغَّل كاملًا والتطبيق مفتوح؛ والتطبيق مغلق تظهر نغمة الإشعار' : 'يُشغَّل كاملًا ما دام التطبيق مفتوحًا' }] : []),
+    ...(device ? [{ id: VOICE_DEVICE, label: `من جهازي: ${device.name}`, hint: !isNative() ? 'يُشغَّل كاملًا ما دام التطبيق مفتوحًا' : native?.androidChannel ? 'يُرفع عند دخول الوقت حتى والتطبيق مغلق، بمستوى صوت المنبّه' : native?.iosSound ? 'والتطبيق مغلق: أول 30 ثانية (حد iPhone)؛ وكاملًا والتطبيق مفتوح' : 'يُشغَّل داخل التطبيق فقط' }] : []),
   ]
   const fajrOptions = [{ id: VOICE_SAME, label: 'نفس صوت بقية الصلوات' }, ...options]
 
@@ -94,7 +104,7 @@ export function AdhanVoiceSection() {
         </p>
       )}
       <div className="row" style={{ marginTop: 10 }}>
-        <button className="btn" onClick={() => fileRef.current?.click()}><Upload size={16} /> {device ? 'استبدال ملف الأذان من جهازي' : 'اختيار ملف أذان من جهازي'}</button>
+        <button className="btn" disabled={busy} onClick={() => fileRef.current?.click()}><Upload size={16} /> {device ? 'استبدال ملف الأذان من جهازي' : 'اختيار ملف أذان من جهازي'}</button>
         <input ref={fileRef} type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden aria-label="استيراد صوت أذان من الجهاز" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = '' }} />
       </div>
 
@@ -118,7 +128,7 @@ export function AdhanVoiceSection() {
       )}
 
       <ul className="small muted" style={{ margin: '0.75rem 0 0', paddingInlineStart: '1.2rem' }}>
-        <li>على Android يُرفع الأذان بصوت المؤذن المختار حتى والتطبيق مغلق، ويُوقف بسحب الإشعار. قد تؤخره بعض إعدادات توفير الطاقة في بعض الأجهزة.</li>
+        <li>على Android يُرفع الأذان بالصوت المختار (المدمج أو من جهازك) حتى والتطبيق مغلق، ويُوقف بسحب الإشعار. قد تؤخره إعدادات توفير الطاقة في بعض الأجهزة.</li>
         <li>على iPhone يسمح النظام بـ30 ثانية فقط من الصوت في الإشعار، ويُشغَّل الأذان كاملًا إذا كان التطبيق مفتوحًا.</li>
         <li>يعمل الصوت فقط إذا كانت التذكيرات مفعّلة وتذكير «دخول الوقت» مفعّلًا للصلاة.</li>
       </ul>

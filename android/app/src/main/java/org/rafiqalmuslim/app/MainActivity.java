@@ -6,8 +6,9 @@ import com.getcapacitor.BridgeActivity;
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        // إضافة محلية: تحديث ودجت المواقيت من التطبيق
+        // إضافات محلية: ودجت المواقيت، وصوت الأذان المختار من الجهاز
         registerPlugin(WidgetBridgePlugin.class);
+        registerPlugin(AdhanSoundPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

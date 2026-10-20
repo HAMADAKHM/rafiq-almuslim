@@ -10,7 +10,7 @@ vi.mock('../content/adhan-voices.json', () => ({
   ],
 }))
 
-const { voiceIdFor, channelsFor, withAdhanSounds, validateDeviceFile } = await import('./adhan')
+const { voiceIdFor, channelsFor, withAdhanSounds, validateDeviceFile, encodeWav } = await import('./adhan')
 
 let s: Settings
 beforeEach(() => { s = structuredClone(DEFAULT_SETTINGS) })
@@ -56,5 +56,22 @@ describe('صوت الأذان', () => {
     expect(m.notifications.adhanVoice).toBe('tone')
     expect(m.notifications.fajrVoice).toBe('same')
     expect(m.notifications.adhanInApp).toBe(true)
+  })
+  it('صوت الجهاز: قناة Android أو مقطع iOS المثبّت، وإلا نغمة الإشعار', () => {
+    const x = withN({ adhanVoice: 'device' })
+    expect(withAdhanSounds([rem('asr')], x, 'android', { androidChannel: 'adhan_dev_abc' })[0].channelId).toBe('adhan_dev_abc')
+    expect(withAdhanSounds([rem('asr')], x, 'ios', { iosSound: 'adhan_device_abc.wav' })[0].sound).toBe('adhan_device_abc.wav')
+    expect(withAdhanSounds([rem('asr')], x, 'android', null)[0].channelId).toBeUndefined()
+  })
+  it('ترميز WAV صحيح الرأس والطول', () => {
+    const buf = encodeWav(new Float32Array([0, 1, -1, 0.5]), 22050)
+    const v = new DataView(buf)
+    const tag = (o: number) => String.fromCharCode(...new Uint8Array(buf, o, 4))
+    expect(tag(0)).toBe('RIFF'); expect(tag(8)).toBe('WAVE'); expect(tag(36)).toBe('data')
+    expect(v.getUint32(24, true)).toBe(22050)
+    expect(v.getUint32(40, true)).toBe(8)
+    expect(buf.byteLength).toBe(52)
+    expect(v.getInt16(46, true)).toBe(0x7fff)
+    expect(v.getInt16(48, true)).toBe(-0x8000)
   })
 })

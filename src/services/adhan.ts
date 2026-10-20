@@ -6,6 +6,13 @@ import { ADHAN_VOICES, VOICE_DEVICE, VOICE_SAME, VOICE_TONE, voiceById, type Adh
 import type { PrayerKey, Settings } from '../state/settings'
 import type { Reminder } from './reminders'
 import { kv } from '../db/repos'
+import { registerPlugin } from '@capacitor/core'
+import { platformName } from '../platform'
+
+const AdhanSound = registerPlugin<{
+  install(o: { key: string; base64: string; ext: string; name: string }): Promise<{ channelId: string }>
+  remove(): Promise<void>
+}>('AdhanSound')
 
 /** معرّف الصوت الفعلي لصلاة معينة (الفجر قد يكون له صوت مختلف) */
 export function voiceIdFor(settings: Settings, prayer: PrayerKey): string {
@@ -32,10 +39,16 @@ export function channelsFor(settings: Settings): ChannelSpec[] {
  * يضيف القناة والصوت لتذكيرات دخول الوقت بحسب المنصة.
  * الصوت المستورد من الجهاز لا يمكن ربطه بإشعار النظام، فتستخدم هذه التذكيرات النغمة الافتراضية.
  */
-export function withAdhanSounds(list: Reminder[], settings: Settings, platform: 'android' | 'ios' | 'web'): Reminder[] {
+export function withAdhanSounds(list: Reminder[], settings: Settings, platform: 'android' | 'ios' | 'web', device?: DeviceNative | null): Reminder[] {
   return list.map((r) => {
     if (r.kind !== 'prayer' || !r.prayer) return r
-    const v = voiceById(voiceIdFor(settings, r.prayer))
+    const id = voiceIdFor(settings, r.prayer)
+    if (id === VOICE_DEVICE) {
+      if (platform === 'android' && device?.androidChannel) return { ...r, channelId: device.androidChannel }
+      if (platform === 'ios' && device?.iosSound) return { ...r, sound: device.iosSound }
+      return r
+    }
+    const v = voiceById(id)
     if (!v) return r
     if (platform === 'android') return { ...r, channelId: channelIdFor(v) }
     if (platform === 'ios') return { ...r, sound: v.iosFile }
@@ -55,12 +68,99 @@ export function validateDeviceFile(f: { name: string; type: string; size: number
   return null
 }
 
-export async function saveDeviceVoice(file: File): Promise<void> {
+/** ما يحتاجه نظام الإشعارات لتشغيل صوت الجهاز والتطبيق مغلق */
+export interface DeviceNative { androidChannel?: string; iosSound?: string }
+export const DEVICE_NATIVE_KEY = 'adhan:device:native'
+export const loadDeviceNative = () => kv.get<DeviceNative | null>(DEVICE_NATIVE_KEY, null)
+
+function blobToBase64(b: Blob): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader()
+    r.onload = () => res(String(r.result).split(',')[1] ?? '')
+    r.onerror = () => rej(r.error)
+    r.readAsDataURL(b)
+  })
+}
+
+/** ترميز WAV (PCM 16 بت أحادي) — صيغة يقبلها iOS لأصوات الإشعارات */
+export function encodeWav(samples: Float32Array, sampleRate: number): ArrayBuffer {
+  const buf = new ArrayBuffer(44 + samples.length * 2)
+  const v = new DataView(buf)
+  const str = (o: number, s: string) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)) }
+  str(0, 'RIFF'); v.setUint32(4, 36 + samples.length * 2, true); str(8, 'WAVE')
+  str(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true)
+  v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true)
+  str(36, 'data'); v.setUint32(40, samples.length * 2, true)
+  for (let i = 0; i < samples.length; i++) {
+    const x = Math.max(-1, Math.min(1, samples[i]))
+    v.setInt16(44 + i * 2, x < 0 ? x * 0x8000 : x * 0x7fff, true)
+  }
+  return buf
+}
+
+/** مقطع لا يتجاوز 29 ثانية مع خفوت في آخره (حد iOS لأصوات الإشعارات 30 ثانية) */
+async function iosClip(file: Blob): Promise<ArrayBuffer> {
+  const rate = 22050
+  const ctx = new OfflineAudioContext(1, rate * 29, rate)
+  const decoded = await ctx.decodeAudioData(await file.arrayBuffer())
+  const src = ctx.createBufferSource()
+  src.buffer = decoded
+  const g = ctx.createGain()
+  const end = Math.min(29, decoded.duration)
+  g.gain.setValueAtTime(1, Math.max(0, end - 2))
+  g.gain.linearRampToValueAtTime(0, end)
+  src.connect(g).connect(ctx.destination)
+  src.start()
+  const out = await ctx.startRendering()
+  return encodeWav(out.getChannelData(0).subarray(0, Math.ceil(end * rate)), rate)
+}
+
+/** تثبيت صوت الجهاز في نظام الإشعارات (Android: قناة بالصوت كاملًا؛ iOS: مقطع 29 ثانية) */
+async function installNative(file: File): Promise<DeviceNative | null> {
+  const p = platformName()
+  const key = Date.now().toString(36)
+  if (p === 'android') {
+    const ext = (file.name.split('.').pop() || 'mp3').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 5) || 'mp3'
+    const r = await AdhanSound.install({ key, base64: await blobToBase64(file), ext, name: file.name.replace(/\.[^.]+$/, '').slice(0, 40) })
+    return { androidChannel: r.channelId }
+  }
+  if (p === 'ios') {
+    const { Filesystem, Directory } = await import('@capacitor/filesystem')
+    const prev = await loadDeviceNative()
+    if (prev?.iosSound) await Filesystem.deleteFile({ path: `Sounds/${prev.iosSound}`, directory: Directory.Library }).catch(() => {})
+    const name = `adhan_device_${key}.wav`
+    const wav = new Blob([await iosClip(file)], { type: 'audio/wav' })
+    await Filesystem.writeFile({ path: `Sounds/${name}`, directory: Directory.Library, data: await blobToBase64(wav), recursive: true })
+    return { iosSound: name }
+  }
+  return null
+}
+
+/** يحفظ الصوت للتشغيل داخل التطبيق، ويثبّته في نظام الإشعارات على الهاتف. يعيد false إن تعذّر التثبيت الأصلي. */
+export async function saveDeviceVoice(file: File): Promise<boolean> {
   await kv.set(DEVICE_VOICE_KEY, { name: file.name, type: file.type || 'audio/mpeg', size: file.size, blob: file } satisfies DeviceVoice)
+  try {
+    const native = await installNative(file)
+    await kv.set(DEVICE_NATIVE_KEY, native)
+    return true
+  } catch {
+    await kv.set(DEVICE_NATIVE_KEY, null)
+    return false
+  }
 }
 
 export const loadDeviceVoice = () => kv.get<DeviceVoice | null>(DEVICE_VOICE_KEY, null)
-export const removeDeviceVoice = () => kv.set(DEVICE_VOICE_KEY, null)
+export async function removeDeviceVoice() {
+  await kv.set(DEVICE_VOICE_KEY, null)
+  const prev = await loadDeviceNative()
+  await kv.set(DEVICE_NATIVE_KEY, null)
+  const p = platformName()
+  if (p === 'android') await AdhanSound.remove().catch(() => {})
+  if (p === 'ios' && prev?.iosSound) {
+    const { Filesystem, Directory } = await import('@capacitor/filesystem')
+    await Filesystem.deleteFile({ path: `Sounds/${prev.iosSound}`, directory: Directory.Library }).catch(() => {})
+  }
+}
 
 /** رابط تشغيل الصوت داخل التطبيق، أو null للنغمة الافتراضية */
 export async function playableUrl(id: string): Promise<string | null> {

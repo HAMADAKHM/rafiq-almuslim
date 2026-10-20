@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Volume2, Square } from 'lucide-react'
-import { useNow } from '../hooks'
+import { useLive, useNow } from '../hooks'
 import { useSettings } from '../state/SettingsContext'
 import { PRAYER_LABELS, todayTimes } from '../services/prayer'
-import { playableUrl, voiceIdFor } from '../services/adhan'
+import { DEVICE_NATIVE_KEY, loadDeviceNative, playableUrl, voiceIdFor, type DeviceNative } from '../services/adhan'
 import { VOICE_DEVICE, VOICE_TONE, voiceById } from '../content/adhanVoices'
 import { isNative } from '../platform'
 import { dayKey } from '../lib/dates'
@@ -29,6 +29,7 @@ export function AdhanAlarm() {
   const urlRef = useRef<string | null>(null)
   const n = settings.notifications
   const loc = settings.location
+  const native = useLive(() => loadDeviceNative(), ['kv:' + DEVICE_NATIVE_KEY], null as DeviceNative | null)
 
   const stop = () => {
     audio.current?.pause()
@@ -64,7 +65,8 @@ export function AdhanAlarm() {
       if (wasPlayed(k)) continue
       const voice = voiceIdFor(settings, p)
       if (voice === VOICE_TONE) continue
-      if (isNative() && voice !== VOICE_DEVICE) continue
+      // على الهاتف يرفع نظام الإشعارات الأذان بنفسه إن كان الصوت مثبّتًا فيه
+      if (isNative() && (voice !== VOICE_DEVICE || native?.androidChannel || native?.iosSound)) continue
       markPlayed(k)
       start(p, voice)
       break
