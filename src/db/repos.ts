@@ -86,8 +86,14 @@ export const memo = {
   },
 }
 
+/** يُضبط من الإعدادات: عند إيقاف المتابعة لا يُسجَّل سجل جديد للقراءة والاستماع وإتمام الأذكار */
+let tracking = true
+export const setActivityTracking = (on: boolean) => { tracking = on }
+export const activityTracking = () => tracking
+
 export const reading = {
   async log(entry: Omit<ReadLog, 'id' | 'at'>) {
+    if (!tracking) return
     await (await db()).add('readLog', { ...entry, at: Date.now() } as ReadLog)
     notifyChange('readLog')
   },
@@ -101,6 +107,7 @@ export const reading = {
 
 export const adhkarLog = {
   async complete(date: string, category: string) {
+    if (!tracking) return
     await (await db()).add('adhkarLog', { date, category, at: Date.now() } as AdhkarLog)
     notifyChange('adhkarLog')
   },
@@ -129,6 +136,7 @@ export const favorites = {
 
 export const listening = {
   async log(reciter: string, surah: number, ayah: number, date: string) {
+    if (!tracking) return
     await (await db()).add('listenLog', { reciter, surah, ayah, date, at: Date.now() })
     notifyChange('listenLog')
   },

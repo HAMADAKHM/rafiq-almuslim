@@ -3,6 +3,7 @@ import { useLocation, Link } from 'react-router-dom'
 import { Download, Upload, Trash2, Bell } from 'lucide-react'
 import { PageHead } from '../../components/Common'
 import { CityPicker } from '../../components/CityPicker'
+import { OfficialCompare } from './OfficialCompare'
 import { useSettings } from '../../state/SettingsContext'
 import { METHODS, PRAYER_LABELS, PRAYERS, suggestMethod, type MethodId, type PrayerName } from '../../services/prayer'
 import { cityLabel } from '../../services/cities'
@@ -94,6 +95,10 @@ export function SettingsPage() {
               </label>
             ))}
           </div>
+          <details style={{ marginTop: '1rem' }}>
+            <summary><strong>مقارنة بالتقويم الرسمي</strong></summary>
+            <OfficialCompare />
+          </details>
           <label className="field" style={{ maxWidth: 360, marginTop: '1rem' }}><span>تعديل التاريخ الهجري (حسب رؤية الهلال المحلية) — اليوم: {formatHijri(new Date(), settings.location?.tz, settings.hijriOffset)}</span>
             <select className="select" value={settings.hijriOffset} onChange={(e) => update({ hijriOffset: Number(e.target.value) })}>
               {[-2, -1, 0, 1, 2].map((n) => <option key={n} value={n}>{n > 0 ? `+${n}` : n} يوم</option>)}
@@ -159,6 +164,8 @@ export function SettingsPage() {
             <li>الموقع يُطلب فقط عند ضغطك «استخدم موقعي الحالي»، ويُحفظ على جهازك.</li>
             <li>الاتصالات الخارجية: ملفات التلاوة من everyayah.com، والتفسير من مستودع tafsir_api (jsDelivr / GitHub) عند طلبك فقط.</li>
           </ul>
+          <label className="check"><input type="checkbox" className="switch-input" role="switch" checked={settings.trackActivity} onChange={(e) => update({ trackActivity: e.target.checked })} aria-label="متابعة رحلتي الإيمانية" /> متابعة رحلتي الإيمانية (سجل القراءة والاستماع وإتمام الأذكار)</label>
+          <p className="small muted" style={{ margin: 0 }}>عند الإيقاف لا يُسجَّل أي نشاط جديد، ويبقى السجل السابق على جهازك كما هو. موضعك في الختمة والحفظ لا يتأثر.</p>
         </section>
 
         <section className="card">

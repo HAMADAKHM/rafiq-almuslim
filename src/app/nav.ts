@@ -1,6 +1,6 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText,
+  ChartColumn, Route, Search, Settings, Heart, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
@@ -32,6 +32,7 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
   { group: 'groupMore', items: [
     { to: '/progress', key: 'progress', icon: ChartColumn },
     { to: '/journey', key: 'journey', icon: Route },
+    { to: '/assistant', key: 'assistant', icon: MessageCircleQuestion },
     { to: '/search', key: 'search', icon: Search },
     { to: '/reminders', key: 'reminders', icon: Bell },
     { to: '/settings', key: 'settings', icon: Settings },
@@ -45,7 +46,7 @@ export const TABS: (NavItem & { short: string; match: RegExp })[] = [
   { to: '/quran', key: 'quran', icon: BookOpen, short: 'القرآن', match: /^\/(quran|mushaf|memorize|listen|learn|studio)/ },
   { to: '/prayer', key: 'prayer', icon: Clock, short: 'المواقيت', match: /^\/(prayer|qibla|calendar|mosques)/ },
   { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|hadith|tasbih|my-adhkar)/ },
-  { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|search|reminders|settings|about)/ },
+  { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|assistant|search|reminders|settings|about)/ },
 ]
 
 /** بيانات الاختصارات (العنوان القصير والأيقونة) لكل مسار يمكن وضعه في الوصول السريع */
@@ -68,4 +69,5 @@ export const LINK_META: Record<string, { label: string; icon: typeof House }> = 
   '/studio': { label: 'تصاميم الآيات', icon: Palette },
   '/mosques': { label: 'المساجد', icon: Landmark },
   '/hadith': { label: 'الأحاديث', icon: ScrollText },
+  '/assistant': { label: 'المساعد', icon: MessageCircleQuestion },
 }

@@ -85,3 +85,19 @@ export function directionsUrl(m: Pick<Mosque, 'lat' | 'lng'>, platform = Capacit
   if (platform === 'ios') return `https://maps.apple.com/?daddr=${m.lat},${m.lng}&dirflg=w`
   return `https://www.google.com/maps/dir/?api=1&destination=${m.lat},${m.lng}&travelmode=walking`
 }
+
+/** المساجد المفضلة: تُحفظ على الجهاز فقط (الاسم والإحداثيات من OpenStreetMap كما هي) */
+export const FAV_KEY = 'mosques:favorites'
+export type FavMosque = Pick<Mosque, 'id' | 'name' | 'named' | 'lat' | 'lng'>
+export const loadFavMosques = () => kv.get<FavMosque[]>(FAV_KEY, [])
+export function toggleFav(list: FavMosque[], m: FavMosque): FavMosque[] {
+  return list.some((x) => x.id === m.id) ? list.filter((x) => x.id !== m.id) : [{ id: m.id, name: m.name, named: m.named, lat: m.lat, lng: m.lng }, ...list].slice(0, 50)
+}
+export const saveFavMosques = (l: FavMosque[]) => kv.set(FAV_KEY, l)
+
+/** موضع المسجد على الرادار المصغّر: مركز (0,0)، والشمال للأعلى، ونصف القطر 1 = نطاق البحث */
+export function radarPoint(m: Pick<Mosque, 'distance' | 'bearing'>, radius: number): { x: number; y: number } {
+  const r = Math.min(1, m.distance / Math.max(1, radius))
+  const a = (m.bearing * Math.PI) / 180
+  return { x: r * Math.sin(a), y: -r * Math.cos(a) }
+}

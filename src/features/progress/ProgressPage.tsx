@@ -7,6 +7,7 @@ import { computeStats, dailySeries } from '../../services/stats'
 import { dayKey } from '../../lib/dates'
 import type { AdhkarLog, MemoLog, MemoSegment, ReadLog } from '../../db/db'
 import { STATUS_LABELS } from '../../services/srs'
+import { useSettings } from '../../state/SettingsContext'
 
 export function useAllLogs() {
   const read = useLive(() => reading.all(), ['readLog'], [] as ReadLog[])
@@ -34,6 +35,7 @@ function Bars({ series, field, label }: { series: { date: string; ayahs: number;
 
 export function ProgressPage() {
   const { read, segs, mlogs, adh } = useAllLogs()
+  const { settings, update } = useSettings()
   const [range, setRange] = useState<'week' | 'month'>('week')
   const today = dayKey()
   const stats = useMemo(() => computeStats(read, segs, mlogs, adh, today), [read, segs, mlogs, adh, today])
@@ -44,6 +46,7 @@ export function ProgressPage() {
   return (
     <>
       <PageHead title="متابعة التقدم" subtitle="تعرض ما سجّلته بنفسك فقط. هذه أرقام للتحفيز، وليست حكمًا على إيمانك أو صلاحك." />
+      {!settings.trackActivity && <div className="alert alert-gold small" style={{ marginBottom: '1rem' }}>متابعة رحلتي الإيمانية متوقفة: لا يُسجَّل نشاط جديد. <button className="btn btn-sm" onClick={() => update({ trackActivity: true })}>تفعيل المتابعة</button></div>}
       {empty && <div className="alert alert-info" style={{ marginBottom: '1rem' }}>لم تسجّل أي نشاط بعد. ابدأ بقراءة وردك أو بتسجيل أذكار اليوم، وستظهر إحصائياتك هنا. <Link to="/journey">ابدأ رحلتك</Link></div>}
       <div className="grid grid-3">
         <div className="card stat"><b>{stats.readingDays}</b><span className="small muted">أيام القراءة</span></div>

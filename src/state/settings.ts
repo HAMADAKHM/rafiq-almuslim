@@ -91,13 +91,15 @@ export interface Settings {
   keepAwake: boolean
   /** متابعة أداء الصلوات (اختيارية، تُحفظ على الجهاز فقط) */
   trackPrayers: boolean
+  /** «رحلتي الإيمانية»: تسجيل سجل القراءة والاستماع وإتمام الأذكار للإحصاءات (على الجهاز فقط). إيقافه لا يحذف السجل السابق */
+  trackActivity: boolean
   /** اسم اختياري للتحية في الرئيسية (يبقى على الجهاز) */
   displayName: string
   /** مجموعات الأذكار اليومية الظاهرة في الرئيسية (من أقسام الأذكار الثابتة فقط) */
   dailyAdhkar: string[]
 }
 
-export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques', '/hadith']
+export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques', '/hadith', '/assistant']
 // القبلة والمسبحة والختمة أولًا (للمستخدمين الجدد؛ اختيارات المستخدمين الحاليين تبقى كما هي)
 export const DEFAULT_QUICK_LINKS = ['/qibla', '/tasbih', '/wird', '/calendar']
 export const MAX_QUICK_LINKS = 8
@@ -167,6 +169,7 @@ export const DEFAULT_SETTINGS: Settings = {
   adhkarVibrate: true,
   keepAwake: true,
   trackPrayers: false,
+  trackActivity: true,
   displayName: '',
   dailyAdhkar: DEFAULT_DAILY_ADHKAR,
 }

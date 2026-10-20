@@ -303,7 +303,7 @@ test.describe('العمل دون إنترنت', () => {
 test.describe('الشاشات الصغيرة', () => {
   test.use({ viewport: { width: 390, height: 844 } })
   test('القائمة تفتح وتغلق، ولا يوجد تمرير أفقي في الصفحات الرئيسية', async ({ page }) => {
-    for (const p of ['/', '/quran', '/quran/2', '/prayer', '/adhkar/morning', '/settings', '/memorize', '/listen', '/progress', '/mosques', '/studio', '/more', '/wird']) {
+    for (const p of ['/', '/quran', '/quran/2', '/prayer', '/adhkar/morning', '/settings', '/memorize', '/listen', '/progress', '/mosques', '/studio', '/more', '/wird', '/assistant', '/hadith']) {
       await page.goto(p)
       await page.waitForTimeout(300)
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
@@ -918,5 +918,73 @@ test.describe('1.0: الختمة الذكية والأحاديث وبطاقات 
     await bell.click()
     await expect(bell).toHaveAttribute('aria-pressed', was === 'true' ? 'false' : 'true')
     await expect(page.getByRole('link', { name: /^اتجاه القبلة \d+ درجة/ })).toBeVisible()
+  })
+})
+
+test.describe('1.0: المساعد والمساجد المفضلة والمتابعة والمقارنة بالتقويم الرسمي', () => {
+  test.use({ serviceWorkers: 'block' })
+
+  test('المساعد يعرض نصوصًا موثقة بمصادرها دون توليد، وينبّه في أسئلة الأحكام', async ({ page }) => {
+    const external: string[] = []
+    page.on('request', (r) => { const u = new URL(r.url()); if (u.hostname !== 'localhost' && u.hostname !== '127.0.0.1') external.push(r.url()) })
+    await page.goto('/assistant')
+    await page.getByLabel('سؤالك للمساعد').fill('ما فضل صلاة الجماعة؟')
+    await page.getByRole('button', { name: 'ابحث', exact: true }).click()
+    const hadith = page.getByRole('region', { name: 'أحاديث متعلقة' })
+    await expect(hadith).toContainText('صَلَاةُ الْجَمَاعَةِ تَفْضُلُ')
+    await expect(hadith).toContainText('البخاري (645) ومسلم (650)')
+    await expect(page.getByRole('region', { name: 'أقسام مقترحة' }).getByRole('link', { name: 'أحاديث الطهارة والصلاة' })).toBeVisible()
+    await expect(page.getByRole('region', { name: 'آيات متعلقة' }).getByRole('link', { name: /^تفسير / }).first()).toBeVisible()
+    await page.getByLabel('سؤالك للمساعد').fill('هل يجوز الجمع بين الصلاتين')
+    await page.getByRole('button', { name: 'ابحث', exact: true }).click()
+    await expect(page.getByRole('note')).toContainText('لا يُصدر فتاوى')
+    expect(external).toEqual([])
+  })
+
+  test('المساجد: الرادار والمفضلة والبحث في مدينة أخرى', async ({ page }) => {
+    const OSM = { elements: [{ type: 'way', id: 22, center: { lat: 32.2221, lon: 35.2544 }, tags: { 'name:ar': 'المسجد القريب' } }] }
+    let query = ''
+    await page.route(/overpass/, (r) => { query = decodeURIComponent(r.request().url()); return r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } }) })
+    await page.goto('/mosques')
+    await page.getByLabel('البحث عن المساجد في مدينة').fill('نابلس')
+    await page.getByRole('button', { name: /نابلس، فلسطين/ }).first().click()
+    await expect(page.getByRole('img', { name: /رادار المساجد: 1 مسجدًا/ })).toBeVisible()
+    expect(query).toMatch(/around:\d+,32\.2\d*,35\.2\d*/)
+    await page.getByRole('button', { name: 'إضافة المسجد القريب إلى المفضلة' }).click()
+    const favs = page.getByRole('list', { name: 'مساجدي المفضلة' })
+    await expect(favs).toContainText('المسجد القريب')
+    await page.reload()
+    await expect(page.getByRole('list', { name: 'مساجدي المفضلة' })).toContainText('المسجد القريب')
+    await page.getByRole('list', { name: 'مساجدي المفضلة' }).getByRole('button', { name: 'إزالة المسجد القريب من المفضلة' }).click()
+    await expect(page.getByRole('list', { name: 'مساجدي المفضلة' })).toHaveCount(0)
+  })
+
+  test('إيقاف متابعة رحلتي الإيمانية: لا يُسجَّل نشاط جديد، والختمة تتقدم', async ({ page }) => {
+    await page.goto('/settings')
+    await page.getByRole('switch', { name: 'متابعة رحلتي الإيمانية' }).uncheck()
+    await expect.poll(() => savedSetting(page, 'trackActivity')).toBe(false)
+    await page.goto('/wird')
+    await page.getByRole('button', { name: 'ختمة جديدة' }).click()
+    await page.getByRole('button', { name: '30 يومًا' }).click()
+    await page.getByRole('button', { name: 'بدء الختمة' }).click()
+    await page.getByRole('button', { name: 'قرأت ورد اليوم' }).click()
+    await expect(page.getByText(/أتممت ورد اليوم/)).toBeVisible()
+    await page.goto('/progress')
+    await expect(page.getByText('متابعة رحلتي الإيمانية متوقفة')).toBeVisible()
+    await expect(page.locator('.stat').filter({ hasText: 'صفحات مختلفة' }).locator('b')).toHaveText('0')
+  })
+
+  test('مقارنة المواقيت بالتقويم الرسمي وتطبيق الفرق', async ({ page }) => {
+    await chooseCity(page, 'نابلس', /نابلس، فلسطين/)
+    await page.goto('/settings')
+    await page.getByText('مقارنة بالتقويم الرسمي').click()
+    const row = page.locator('.compare-table tr').filter({ hasText: 'الفجر' })
+    const appTime = (await row.locator('td').nth(1).innerText()).match(/(\d+):(\d+)/)!
+    const total = Number(appTime[1]) * 60 + Number(appTime[2]) + 3
+    const hm = `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+    await page.getByLabel('التوقيت الرسمي: الفجر').fill(hm)
+    await expect(page.getByLabel('الفرق: الفجر')).toHaveText('+3 د')
+    await page.getByRole('button', { name: 'تطبيق الفروق كتعديلات' }).click()
+    await expect.poll(async () => ((await savedSetting(page, 'prayer')) as { adjustments: Record<string, number> }).adjustments.fajr).toBe(3)
   })
 })

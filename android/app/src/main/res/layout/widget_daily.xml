@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ودجت آية اليوم والورد — أخضر زمردي ولمسة ذهبية -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/daily_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:layoutDirection="rtl"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/daily_empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/daily_empty"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/daily_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/daily_title" android:textColor="#F0D68F" android:textSize="11sp" />
+        <TextView android:id="@+id/daily_ayah" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center" android:textColor="#FFFFFF" android:textSize="17sp" android:lineSpacingMultiplier="1.25" android:autoSizeTextType="uniform" android:autoSizeMinTextSize="11sp" android:autoSizeMaxTextSize="18sp" />
+        <TextView android:id="@+id/daily_ref" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:textColor="#F0D68F" android:textSize="12sp" android:maxLines="1" />
+        <TextView android:id="@+id/daily_wird" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:textColor="#D9E6DF" android:textSize="12sp" android:maxLines="1" android:ellipsize="end" />
+        <ProgressBar android:id="@+id/daily_progress" style="@android:style/Widget.ProgressBar.Horizontal" android:layout_width="match_parent" android:layout_height="6dp" android:layout_marginTop="4dp" android:max="100" android:progressTint="#C6A15B" android:progressBackgroundTint="#33FFFFFF" />
+    </LinearLayout>
+</FrameLayout>

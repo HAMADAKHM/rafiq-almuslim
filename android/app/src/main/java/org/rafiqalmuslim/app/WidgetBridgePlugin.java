@@ -22,4 +22,19 @@ public class WidgetBridgePlugin extends Plugin {
         PrayerWidgetProvider.refreshAll(ctx);
         call.resolve();
     }
+
+    /** بيانات ودجت «آية اليوم والورد» */
+    @PluginMethod
+    public void updateDaily(PluginCall call) {
+        String data = call.getString("data");
+        if (data == null) {
+            call.reject("data is required");
+            return;
+        }
+        Context ctx = getContext();
+        ctx.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE)
+            .edit().putString(DailyWidgetProvider.KEY, data).apply();
+        DailyWidgetProvider.refreshAll(ctx);
+        call.resolve();
+    }
 }

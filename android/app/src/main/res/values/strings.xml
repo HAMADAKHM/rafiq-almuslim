@@ -6,5 +6,13 @@
     <string name="custom_url_scheme">org.rafiqalmuslim.app</string>
     <string name="widget_description">مواقيت الصلاة والصلاة القادمة مع العدّ التنازلي</string>
     <string name="widget_next">الصلاة القادمة</string>
+    <string name="daily_description">آية اليوم من المصحف وحالة ورد اليوم</string>
+    <string name="daily_title">آية اليوم</string>
+    <string name="daily_empty">افتح رفيق المسلم مرة لعرض آية اليوم</string>
+    <string name="daily_long_ayah">آية اليوم طويلة — اضغط لقراءتها في التطبيق</string>
+    <string name="daily_wird">ورد اليوم:</string>
+    <string name="daily_wird_done">تمّ بحمد الله</string>
+    <string name="daily_wird_pending">لم يُسجَّل بعد</string>
+    <string name="daily_no_wird">ابدأ خطة ختمة لتظهر هنا</string>
     <string name="widget_empty">افتح رفيق المسلم واختر مدينتك لعرض المواقيت</string>
 </resources>

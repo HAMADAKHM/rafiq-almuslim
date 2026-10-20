@@ -113,3 +113,46 @@ export function upcomingDays(place: Place, s: PrayerSettings, days: number, now 
   }
   return out
 }
+
+/** الدقائق منذ منتصف الليل لوقتٍ ما في منطقة المدينة الزمنية */
+export function minutesInTz(d: Date, tz: string): number {
+  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d)
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0)
+  return get('hour') * 60 + get('minute')
+}
+
+const parseHM = (s: string): number | null => {
+  const m = s.trim().match(/^(\d{1,2}):(\d{2})$/)
+  if (!m) return null
+  const h = Number(m[1]), min = Number(m[2])
+  return h < 24 && min < 60 ? h * 60 + min : null
+}
+
+/** الفرق بالدقائق بين التوقيت الرسمي الذي أدخله المستخدم والمحسوب (موجب = الرسمي متأخر). تُتجاهل الحقول الفارغة */
+export function compareOfficial(times: DayTimes, official: Partial<Record<PrayerName, string>>, tz: string): Partial<Record<PrayerName, number>> {
+  const out: Partial<Record<PrayerName, number>> = {}
+  for (const p of PRAYERS) {
+    const o = parseHM(official[p] ?? '')
+    if (o == null) continue
+    let diff = o - minutesInTz(times[p], tz)
+    if (diff > 720) diff -= 1440
+    if (diff < -720) diff += 1440
+    out[p] = diff
+  }
+  return out
+}
+
+export const MAX_ADJUSTMENT = 30
+/** تعديلات جديدة تطابق التوقيت الرسمي، ضمن ±30 دقيقة (الفرق الأكبر يدل غالبًا على طريقة حساب أو مدينة غير مناسبة) */
+export function adjustmentsFromDiffs(current: Record<PrayerName, number>, diffs: Partial<Record<PrayerName, number>>): { adjustments: Record<PrayerName, number>; tooLarge: PrayerName[] } {
+  const adjustments = { ...current }
+  const tooLarge: PrayerName[] = []
+  for (const p of PRAYERS) {
+    const d = diffs[p]
+    if (d == null) continue
+    const next = current[p] + d
+    if (Math.abs(next) > MAX_ADJUSTMENT) tooLarge.push(p)
+    else adjustments[p] = next
+  }
+  return { adjustments, tooLarge }
+}

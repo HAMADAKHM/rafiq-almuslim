@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { kv } from '../db/repos'
+import { kv, setActivityTracking } from '../db/repos'
 import { DEFAULT_SETTINGS, mergeSettings, type Settings } from './settings'
 
 interface Ctx {
@@ -43,6 +43,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       return next
     })
   }, [])
+
+  useEffect(() => { setActivityTracking(settings.trackActivity !== false) }, [settings.trackActivity])
 
   // تطبيق السمة وحجم الخط على المستند
   useEffect(() => {
