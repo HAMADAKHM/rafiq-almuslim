@@ -10,6 +10,7 @@ import { startReminderLoop } from '../services/notifications'
 import { LogoMark } from '../components/Art'
 import { NAV, TABS } from './nav'
 import { Splash } from './Splash'
+import { AdhanAlarm } from '../components/AdhanAlarm'
 
 function Brand() {
   return (
@@ -44,6 +45,7 @@ export function Layout() {
   return (
     <div className={'app' + (isReader ? ' reading' : '') + (isHome ? ' at-home' : '')}>
       <Splash />
+      <AdhanAlarm />
       <a href="#main" className="skip-link">تخطَّ إلى المحتوى</a>
       <aside className="sidebar" aria-label="القائمة الرئيسية">
         <Brand />

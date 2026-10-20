@@ -581,3 +581,49 @@ test.describe('تجربة 0.4', () => {
     await expect(page.getByRole('dialog').getByRole('switch', { name: 'إبقاء الشاشة مضاءة أثناء القراءة' })).not.toBeChecked()
   })
 })
+
+test.describe('صوت الأذان', () => {
+  test('اختيار ملف أذان من الجهاز وتجربته، ويبقى بعد إعادة التحميل', async ({ page }) => {
+    await page.goto('/reminders')
+    await expect(page.getByRole('radio', { name: /نغمة الإشعار فقط/ })).toBeChecked()
+    await page.getByLabel('استيراد صوت أذان من الجهاز').setInputFiles({ name: 'my-adhan.mp3', mimeType: 'audio/mpeg', buffer: TONE })
+    await expect(page.getByRole('radio', { name: /من جهازي: my-adhan.mp3/ })).toBeChecked()
+    await page.getByRole('button', { name: /تجربة من جهازي/ }).click()
+    await page.reload()
+    await expect(page.getByRole('radio', { name: /من جهازي: my-adhan.mp3/ })).toBeChecked()
+    await page.getByLabel('صوت أذان الفجر').selectOption('tone')
+    await page.reload()
+    await expect(page.getByLabel('صوت أذان الفجر')).toHaveValue('tone')
+    await page.getByRole('button', { name: 'حذف الصوت المستورد' }).click()
+    await expect(page.getByRole('radio', { name: /نغمة الإشعار فقط/ })).toBeChecked()
+  })
+
+  test('يُرفع الأذان داخل التطبيق عند دخول وقت العصر في نابلس ويمكن إيقافه', async ({ page }) => {
+    await page.route('**/*.mp3', (r) => r.fulfill({ status: 200, contentType: 'audio/mpeg', body: TONE }))
+    // العصر في نابلس يوم 20 أكتوبر 2026 (رابطة العالم الإسلامي) 3:35 م = 12:35 UTC
+    await page.clock.install({ time: new Date('2026-10-20T12:34:30Z') })
+    await chooseCity(page, 'نابلس', /نابلس، فلسطين/)
+    await page.goto('/prayer')
+    await expect(page.locator('.prayer-row', { hasText: 'العصر' })).toContainText('3:35')
+    await page.goto('/reminders')
+    await page.getByLabel('استيراد صوت أذان من الجهاز').setInputFiles({ name: 'adhan.mp3', mimeType: 'audio/mpeg', buffer: TONE })
+    await page.goto('/')
+    await expect(page.getByRole('alertdialog', { name: 'الأذان' })).toHaveCount(0)
+    await page.clock.runFor(40_000)
+    const alarm = page.getByRole('alertdialog', { name: 'الأذان' })
+    await expect(alarm).toContainText('حان الآن وقت صلاة العصر')
+    await alarm.getByRole('button', { name: 'إيقاف الأذان' }).click()
+    await expect(alarm).toHaveCount(0)
+    // لا يتكرر لنفس الصلاة
+    await page.clock.runFor(10_000)
+    await expect(page.getByRole('alertdialog', { name: 'الأذان' })).toHaveCount(0)
+  })
+
+  test('لا أذان داخل التطبيق إذا كان الاختيار «نغمة الإشعار فقط»', async ({ page }) => {
+    await page.clock.install({ time: new Date('2026-10-20T12:34:30Z') })
+    await chooseCity(page, 'نابلس', /نابلس، فلسطين/)
+    await page.goto('/')
+    await page.clock.runFor(40_000)
+    await expect(page.getByRole('alertdialog', { name: 'الأذان' })).toHaveCount(0)
+  })
+})

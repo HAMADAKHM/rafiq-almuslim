@@ -10,6 +10,7 @@ import { rescheduleNative } from '../../services/notifications'
 import { toast } from '../../hooks'
 import { formatTime } from '../../lib/dates'
 import type { NotificationSettings } from '../../state/settings'
+import { AdhanVoiceSection } from './AdhanVoiceSection'
 
 type TimedKey = 'morningAdhkar' | 'eveningAdhkar' | 'sleepAdhkar' | 'ayahOfDay' | 'dhikrOfDay' | 'wird' | 'memorize' | 'occasions' | 'dailySummary'
 const TIMED: { key: TimedKey; label: string; hint: string; def: string }[] = [
@@ -77,6 +78,8 @@ export function RemindersPage() {
             </label>
           </div>
         </section>
+
+        <AdhanVoiceSection />
 
         <section className="card">
           <h2>تذكيرات يومية</h2>

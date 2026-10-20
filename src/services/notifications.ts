@@ -1,7 +1,8 @@
 // تشغيل التذكيرات:
 // - الويب: حلقة كل 20 ثانية تعرض التذكيرات المستحقة ما دام التطبيق مفتوحًا.
 // - الهاتف: جدولة الأيام القادمة دفعة واحدة في نظام الإشعارات المحلية، وإعادة الجدولة عند الفتح وتغيير الإعدادات.
-import { isNative, replaceScheduledNotifications, showNotification } from '../platform'
+import { ensureNotificationChannels, isNative, platformName, replaceScheduledNotifications, showNotification } from '../platform'
+import { channelsFor, withAdhanSounds } from './adhan'
 import { buildSchedule, dueReminders } from './reminders'
 import type { Settings } from '../state/settings'
 
@@ -17,7 +18,9 @@ export function checkReminders(settings: Settings, now = new Date()): { title: s
 export async function rescheduleNative(settings: Settings): Promise<number> {
   if (!isNative()) return 0
   // 7 أيام تكفي، وتُعاد الجدولة عند كل فتح للتطبيق (حد iOS: 64 إشعارًا)
-  return replaceScheduledNotifications(buildSchedule(settings, new Date(), 7))
+  const platform = platformName() === 'ios' ? 'ios' : 'android'
+  if (platform === 'android') await ensureNotificationChannels(channelsFor(settings))
+  return replaceScheduledNotifications(withAdhanSounds(buildSchedule(settings, new Date(), 7), settings, platform))
 }
 
 export function startReminderLoop(getSettings: () => Settings): () => void {

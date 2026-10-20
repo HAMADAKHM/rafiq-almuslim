@@ -34,6 +34,12 @@ export interface NotificationSettings {
   /** تقليل الإشعارات: الصلاة عند الأذان وتذكير الورد فقط */
   reduce: boolean
   quiet: { enabled: boolean; start: string; end: string }
+  /** صوت الأذان عند دخول الوقت: 'tone' نغمة الإشعار، أو معرّف صوت مدمج، أو 'device' صوت من الجهاز */
+  adhanVoice: string
+  /** صوت أذان الفجر: 'same' أو أحد الخيارات السابقة */
+  fajrVoice: string
+  /** تشغيل الأذان كاملًا داخل التطبيق إذا كان مفتوحًا */
+  adhanInApp: boolean
 }
 
 /** طريقة العرض: متتابعة (آية بآية)، صفحات المصحف، أو التركيز (آية واحدة في الشاشة) */
@@ -121,6 +127,9 @@ export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   dailySummary: null,
   reduce: false,
   quiet: { enabled: false, start: '23:00', end: '05:00' },
+  adhanVoice: 'tone',
+  fajrVoice: 'same',
+  adhanInApp: true,
 }
 
 export const DEFAULT_SETTINGS: Settings = {

@@ -87,9 +87,39 @@ export async function replaceScheduledNotifications(list: Reminder[]): Promise<n
   if (pending.notifications.length) await LocalNotifications.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) })
   if (!list.length) return 0
   await LocalNotifications.schedule({
-    notifications: list.map((r) => ({ id: r.id, title: r.title, body: r.body, schedule: { at: r.at, allowWhileIdle: true }, extra: { route: r.route } })),
+    notifications: list.map((r) => ({
+      id: r.id, title: r.title, body: r.body, schedule: { at: r.at, allowWhileIdle: true }, extra: { route: r.route },
+      ...(r.channelId ? { channelId: r.channelId } : {}), ...(r.sound ? { sound: r.sound } : {}),
+    })),
   })
   return list.length
+}
+
+/** إنشاء قنوات الإشعارات (Android فقط). إنشاء قناة موجودة لا يغيّرها، لذا تحمل المعرفات رقم إصدار. */
+export async function ensureNotificationChannels(channels: { id: string; name: string; description: string; sound: string; importance: 5 }[]) {
+  if (platformName() !== 'android' || !channels.length) return
+  const { LocalNotifications } = await import('@capacitor/local-notifications')
+  for (const c of channels) await LocalNotifications.createChannel({ ...c, visibility: 1, vibration: true })
+}
+
+/** Android 12+: هل يُسمح بالتنبيه في الدقيقة المحددة؟ (بدونه قد يتأخر الإشعار دقائق) */
+export async function exactAlarmStatus(): Promise<'granted' | 'denied' | 'unsupported'> {
+  if (platformName() !== 'android') return 'unsupported'
+  try {
+    const { LocalNotifications } = await import('@capacitor/local-notifications')
+    const r = await LocalNotifications.checkExactNotificationSetting()
+    return r.exact_alarm === 'granted' ? 'granted' : 'denied'
+  } catch {
+    return 'unsupported'
+  }
+}
+
+/** يفتح إعداد النظام للسماح بالتنبيه في الوقت الدقيق */
+export async function requestExactAlarm(): Promise<'granted' | 'denied' | 'unsupported'> {
+  if (platformName() !== 'android') return 'unsupported'
+  const { LocalNotifications } = await import('@capacitor/local-notifications')
+  const r = await LocalNotifications.changeExactNotificationSetting()
+  return r.exact_alarm === 'granted' ? 'granted' : 'denied'
 }
 
 /** فتح الصفحة المناسبة عند الضغط على إشعار على الهاتف */

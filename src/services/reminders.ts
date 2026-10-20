@@ -18,6 +18,11 @@ export interface Reminder {
   body: string
   /** المسار الذي يُفتح عند الضغط على الإشعار */
   route: string
+  /** الصلاة المعنية (لتذكيرات دخول الوقت) */
+  prayer?: PrayerKey
+  /** قناة Android وصوت الإشعار (يُحددان عند الجدولة على الهاتف بحسب صوت الأذان المختار) */
+  channelId?: string
+  sound?: string
 }
 
 /** حد iOS للإشعارات المحلية المجدولة هو 64؛ نترك هامشًا */
@@ -131,7 +136,7 @@ export function buildSchedule(settings: Settings, from: Date, days = 7): Reminde
     const times = prayerTimesFor(loc, day, settings.prayer)
     for (const p of Object.keys(PRAYER_CODE) as PrayerKey[]) {
       if (!n.perPrayer[p]) continue
-      if (n.atAdhan) add({ id: makeId(day, 'prayer', PRAYER_CODE[p]), at: times[p], kind: 'prayer', title: `حان الآن وقت صلاة ${PRAYER_LABELS[p]}`, body: place, route: ROUTES.prayer })
+      if (n.atAdhan) add({ id: makeId(day, 'prayer', PRAYER_CODE[p]), at: times[p], kind: 'prayer', prayer: p, title: `حان الآن وقت صلاة ${PRAYER_LABELS[p]}`, body: place, route: ROUTES.prayer })
       if (n.minutesBefore > 0 && !n.reduce) {
         add({ id: makeId(day, 'prayer-before', PRAYER_CODE[p]), at: new Date(times[p].getTime() - n.minutesBefore * 60_000), kind: 'prayer-before', title: `اقترب وقت صلاة ${PRAYER_LABELS[p]}`, body: `بعد ${n.minutesBefore} دقيقة — ${place}`, route: ROUTES.prayer })
       }
