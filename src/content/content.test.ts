@@ -5,10 +5,11 @@ import path from 'node:path'
 import * as hafs from 'quran-meta/hafs'
 import { ADHKAR } from './adhkar'
 import { DUAS } from './duas'
+import { HADITH } from './hadith'
 import { LESSONS } from './lessons'
 import { DEDICATION_PARAGRAPHS, DECEASED_KUNYA, DECEASED_NAME, FOOTER_LINE, HOME_CARD } from './dedication'
 
-const all = [...ADHKAR, ...DUAS].flatMap((c) => c.items.map((it) => ({ cat: c.id, it })))
+const all = [...ADHKAR, ...DUAS, ...HADITH].flatMap((c) => c.items.map((it) => ({ cat: c.id, it })))
 
 describe('الأذكار والأدعية', () => {
   it('المعرّفات فريدة', () => {
@@ -39,6 +40,15 @@ describe('الأذكار والأدعية', () => {
   })
   it('الأعداد المحددة لا تظهر إلا مع عناصر لها تخريج', () => {
     for (const { it: x } of all) if (x.count) expect(x.source).toMatch(/\u0631\u0648\u0627\u0647|\u0645\u062A\u0641\u0642|\u0627\u0644\u0628\u062E\u0627\u0631\u064A|\u0645\u0633\u0644\u0645/)
+  })
+})
+
+describe('الأحاديث النبوية', () => {
+  it('كلها من الصحيحين ومعها رقم الحديث', () => {
+    for (const c of HADITH) for (const it of c.items) {
+      expect(it.kind, it.id).toBe('hadith')
+      expect(it.source, it.id).toMatch(/(البخاري|مسلم) \(\d+\)/)
+    }
   })
 })
 

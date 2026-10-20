@@ -9,6 +9,7 @@ import { AdhkarSession } from './AdhkarSession'
 import { DhikrCard } from '../../components/DhikrCard'
 import { ADHKAR } from '../../content/adhkar'
 import { DUAS } from '../../content/duas'
+import { HADITH } from '../../content/hadith'
 import { adhkarLog, favorites, kv } from '../../db/repos'
 import { useSettings } from '../../state/SettingsContext'
 import { toast, useLive } from '../../hooks'
@@ -18,6 +19,7 @@ import type { ContentCategory } from '../../content/types'
 import type { Favorite, AdhkarLog } from '../../db/db'
 
 const SOURCE_NOTE = 'الأذكار مختارة مما ثبت في السنة كما جمعه كتاب «حصن المسلم»، مع التخريج. الأعداد لا تُذكر إلا حيث وردت في النص.'
+const HADITH_NOTE = 'مختارات من الصحيحين (البخاري ومسلم) مع رقم الحديث للتحقق. ما كان جزءًا من حديث أطول مذكور في ملاحظته.'
 
 function useFavs(kind: Favorite['kind']) {
   const all = useLive(() => favorites.all(), ['favorites'], [] as Favorite[])
@@ -29,6 +31,7 @@ const CAT_ICONS: Record<string, typeof Sun> = {
   travel: Plane, mosque: Droplets, misc: Sparkles, salawat: Heart,
   quranic: BookOpen, sunnah: HandHeart, parents: Users, rizq: Coins, relief: CloudSun, distress: MessageCircleHeart,
   istighfar: RefreshCcw, healing: ShieldPlus, 'travel-dua': Route, general: HeartPulse,
+  jawami: BookOpen, salah: Landmark, akhlaq: Heart, ibadat: Sparkles, muamalat: Coins,
 }
 
 export function catIcon(id: string) { return CAT_ICONS[id] ?? Sparkles }
@@ -39,6 +42,7 @@ export function LibraryTabs() {
     <nav className="lib-tabs" aria-label="أقسام المكتبة">
       <NavLink to="/adhkar" className={({ isActive }) => (isActive ? 'active' : '')}>الأذكار</NavLink>
       <NavLink to="/duas" className={({ isActive }) => (isActive ? 'active' : '')}>الأدعية</NavLink>
+      <NavLink to="/hadith" className={({ isActive }) => (isActive ? 'active' : '')}>الأحاديث</NavLink>
       <NavLink to="/my-adhkar" className={({ isActive }) => (isActive ? 'active' : '')}>أذكاري</NavLink>
       <NavLink to="/tasbih" className={({ isActive }) => (isActive ? 'active' : '')}>المسبحة</NavLink>
     </nav>
@@ -65,11 +69,11 @@ function CategoryGrid({ cats, base, doneToday }: { cats: ContentCategory[]; base
   )
 }
 
-export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' }) {
+export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' | 'hadith' }) {
   const { category } = useParams()
-  const cats = kind === 'adhkar' ? ADHKAR : DUAS
+  const cats = kind === 'adhkar' ? ADHKAR : kind === 'hadith' ? HADITH : DUAS
   const base = '/' + kind
-  const favKind = kind === 'adhkar' ? 'dhikr' : 'dua'
+  const favKind = kind === 'adhkar' ? 'dhikr' : kind === 'hadith' ? 'hadith' : 'dua'
   const favs = useFavs(favKind)
   const today = dayKey()
   const logs = useLive(() => adhkarLog.forDay(today), ['adhkarLog'], [] as AdhkarLog[], [today])
@@ -87,7 +91,7 @@ export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' }) {
   const scale = settings.adhkarFontScale
   const [q, setQ] = useState('')
   const [onlyFav, setOnlyFav] = useState(false)
-  const title = kind === 'adhkar' ? 'الأذكار' : 'الأدعية'
+  const title = kind === 'adhkar' ? 'الأذكار' : kind === 'hadith' ? 'الأحاديث النبوية' : 'الأدعية'
   const cat = cats.find((c) => c.id === category)
   const view = settings.adhkarView
   const autoLog = useCallback(async () => {
@@ -103,13 +107,13 @@ export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' }) {
   }, [cat, cats, q, onlyFav, favs])
 
   const showList = !!cat || !!q || onlyFav
-  const sessionMode = !!cat && !q && !onlyFav && view === 'session'
+  const sessionMode = !!cat && !q && !onlyFav && view === 'session' && kind !== 'hadith'
 
   return (
     <>
-      <PageHead title={cat ? cat.title : title} subtitle={cat ? <Link to={base}>← كل التصنيفات</Link> : SOURCE_NOTE} />
+      <PageHead title={cat ? cat.title : title} subtitle={cat ? <Link to={base}>← كل التصنيفات</Link> : kind === 'hadith' ? HADITH_NOTE : SOURCE_NOTE} />
       {!cat && <LibraryTabs />}
-      {cat && (
+      {cat && kind !== 'hadith' && (
         <Tabs label="طريقة العرض" value={view} onChange={(v) => update({ adhkarView: v })} items={[{ id: 'session', label: 'جلسة: ذكر تلو الآخر' }, { id: 'list', label: 'قائمة' }]} />
       )}
       {!sessionMode && (

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Share2, Film, ImageIcon, Upload, X } from 'lucide-react'
+import { Share2, Film, ImageIcon, Upload, X, Bookmark, Trash2 } from 'lucide-react'
 import { PageHead, Spinner, Tabs, ProgressBar } from '../../components/Common'
 import { MosqueScene } from '../../components/Art'
-import { toast, useQuran } from '../../hooks'
+import { toast, useLive, useQuran } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
 import { RECITERS, reciterById } from '../../content/reciters'
 import { shareImage } from '../../platform'
@@ -18,6 +18,16 @@ import { matchSpokenAyah } from '../../services/voiceSearch'
 import { searchSkeleton, toArabicDigits } from '../../lib/arabic'
 import { THEMES, suggestTheme } from '../../services/sceneThemes'
 import { Sparkles } from 'lucide-react'
+import { ADHKAR } from '../../content/adhkar'
+import { DUAS } from '../../content/duas'
+import { HADITH } from '../../content/hadith'
+import type { ContentCategory } from '../../content/types'
+import { SAVED_KEY, addSaved, loadSaved, saveDesigns, type SavedDesign, type StudioSource } from '../../services/studioSaved'
+
+// لا تُعرض في الاستوديو إلا العناصر ذات النص (عناصر القرآن في الأذكار تُصمَّم من «آية» بنص المصحف)
+const LIBS: Record<Exclude<StudioSource, 'ayah'>, ContentCategory[]> = { adhkar: ADHKAR, duas: DUAS, hadith: HADITH }
+const SOURCES: { id: StudioSource; label: string }[] = [{ id: 'ayah', label: 'آية' }, { id: 'adhkar', label: 'ذكر' }, { id: 'duas', label: 'دعاء' }, { id: 'hadith', label: 'حديث' }]
+const textCats = (lib: ContentCategory[]) => lib.map((c) => ({ ...c, items: c.items.filter((i) => i.text) })).filter((c) => c.items.length)
 
 const MAX_IMAGE_AYAHS = 15
 type Mode = 'image' | 'video'
@@ -42,6 +52,10 @@ export function StudioPage() {
   const [bgVideo, setBgVideo] = useState<HTMLVideoElement | null>(null)
   const [withAudio, setWithAudio] = useState(true)
   const [ayahQuery, setAyahQuery] = useState('')
+  const [source, setSource] = useState<StudioSource>('ayah')
+  const [catId, setCatId] = useState('')
+  const [itemId, setItemId] = useState('')
+  const saved = useLive(() => loadSaved(), ['kv:' + SAVED_KEY], [] as SavedDesign[])
   const videoInput = useRef<HTMLInputElement>(null)
   const [overflow, setOverflow] = useState(false)
   const [video, setVideo] = useState<VideoState>({ phase: 'idle' })
@@ -58,6 +72,10 @@ export function StudioPage() {
   const b = Math.min(Math.max(to, a), count, a + max - 1)
   const verses: Verse[] = useMemo(() => (data ? Array.from({ length: b - a + 1 }, (_, i) => ({ surah, ayah: a + i, text: data.verses[surah - 1][a + i - 1] })) : []), [data, surah, a, b])
   const ayahHits = useMemo(() => (data && searchSkeleton(ayahQuery).length >= 3 ? matchSpokenAyah(data, ayahQuery, 6) : []), [data, ayahQuery])
+  const cats = useMemo(() => (source === 'ayah' ? [] : textCats(LIBS[source])), [source])
+  const cat = cats.find((c) => c.id === catId) ?? cats[0]
+  const item = cat?.items.find((i) => i.id === itemId) ?? cat?.items[0]
+  const isAyah = source === 'ayah' || mode === 'video'
   const pick = (s: number, a: number) => { setSurah(s); setFrom(a); setTo(a); setAyahQuery('') }
   const { w: W, h: H } = FORMATS[style.format]
   const set = (p: Partial<StudioStyle>) => setStyle((s) => ({ ...s, ...p }))
@@ -75,13 +93,14 @@ export function StudioPage() {
     if (!data || mode !== 'image' || !canvasRef.current) return
     let alive = true
     const c = canvasRef.current
-    const text = versesText(verses), reference = referenceText(meta!.name, verses)
+    const text = isAyah ? versesText(verses) : item?.text ?? ''
+    const reference = isAyah ? referenceText(meta!.name, verses) : item?.source ?? ''
     const draw = async () => {
       await loadStudioFonts(text, reference)
       const img = await bgImage().catch(() => null)
       if (!alive) return
       c.width = W; c.height = H
-      const ok = drawStudioFrame(c.getContext('2d')!, W, H, { style, text, reference, bgImage: img })
+      const ok = drawStudioFrame(c.getContext('2d')!, W, H, { style, text, reference, bgImage: img, font: isAyah ? 'quran' : 'naskh' })
       setOverflow(!ok)
     }
     draw()
@@ -89,7 +108,7 @@ export function StudioPage() {
     const again = () => { draw() }
     document.fonts?.addEventListener('loadingdone', again)
     return () => { alive = false; document.fonts?.removeEventListener('loadingdone', again) }
-  }, [data, mode, style, verses, photo, bgVideo, W, H]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, mode, style, verses, photo, bgVideo, W, H, isAyah, item]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => { abortRef.current?.abort() }, [])
   useEffect(() => { if (video.phase === 'done') return () => URL.revokeObjectURL(video.url) }, [video])
@@ -98,8 +117,18 @@ export function StudioPage() {
 
   const shareImg = async () => {
     const blob = await canvasToBlob(canvasRef.current!)
-    const r = await shareImage(blob, `ayah-${surah}-${a}.png`, referenceText(meta.name, verses))
+    const r = await shareImage(blob, isAyah ? `ayah-${surah}-${a}.png` : `${source}-${item?.id}.png`, isAyah ? referenceText(meta.name, verses) : item?.source)
     toast(r === 'shared' ? 'تمت المشاركة' : r === 'downloaded' ? 'حُفظت الصورة' : 'تعذرت المشاركة في هذه البيئة')
+  }
+  const designTitle = () => (isAyah ? referenceText(meta.name, verses) : `${cat?.title}: ${(item?.text ?? '').split(/\s+/).slice(0, 6).join(' ')}…`)
+  const saveDesign = async () => {
+    const d = isAyah ? { title: designTitle(), source: 'ayah' as const, surah, from: a, to: b, style } : { title: designTitle(), source, category: cat?.id, item: item?.id, style }
+    await saveDesigns(addSaved(saved, d))
+    toast(style.bg === 'photo' || style.bg === 'video' ? 'حُفظ التصميم (بخلفية افتراضية بدل صورتك)' : 'حُفظ في «تصاميمي»')
+  }
+  const openDesign = (d: SavedDesign) => {
+    setMode('image'); setVideo({ phase: 'idle' }); setStyle(d.style); setSource(d.source)
+    if (d.source === 'ayah') { setSurah(d.surah ?? 1); setFrom(d.from ?? 1); setTo(d.to ?? d.from ?? 1) } else { setCatId(d.category ?? ''); setItemId(d.item ?? '') }
   }
 
   const makeVideo = async () => {
@@ -136,7 +165,7 @@ export function StudioPage() {
 
   return (
     <>
-      <PageHead title="استوديو التصاميم" subtitle="صمّم صورًا وفيديوهات للآيات وشاركها — النص من المصحف المعتمد كما هو" />
+      <PageHead title="استوديو التصاميم" subtitle="صمّم بطاقات للآيات والأذكار والأدعية والأحاديث وشاركها — النصوص من المصحف والمكتبة الموثقة كما هي" />
       <Tabs label="نوع التصميم" value={mode} onChange={(m) => { if (!busy) { setMode(m); setVideo({ phase: 'idle' }) } }} items={[{ id: 'image', label: 'صورة' }, { id: 'video', label: 'فيديو بصوت القارئ' }]} />
       {/* مشهد الخلفية يُرسم مخفيًا ثم يُحوَّل إلى صورة */}
       <div ref={sceneRef} aria-hidden="true" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
@@ -145,6 +174,29 @@ export function StudioPage() {
 
       <div className="studio">
         <section className="card stack studio-controls">
+          {mode === 'image' && (
+            <div className="row" role="radiogroup" aria-label="محتوى التصميم">
+              {SOURCES.map((x) => (
+                <button key={x.id} role="radio" aria-checked={source === x.id} className={'btn btn-sm' + (source === x.id ? ' btn-primary' : '')} onClick={() => { setSource(x.id); setCatId(''); setItemId('') }}>{x.label}</button>
+              ))}
+            </div>
+          )}
+          {!isAyah && cat && item && (
+            <div className="stack" style={{ gap: '0.6rem' }}>
+              <label className="field"><span>القسم</span>
+                <select className="select" value={cat.id} onChange={(e) => { setCatId(e.target.value); setItemId('') }}>
+                  {cats.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+                </select>
+              </label>
+              <label className="field"><span>{source === 'hadith' ? 'الحديث' : source === 'duas' ? 'الدعاء' : 'الذكر'}</span>
+                <select className="select" value={item.id} onChange={(e) => setItemId(e.target.value)}>
+                  {cat.items.map((i) => <option key={i.id} value={i.id}>{(i.text ?? '').split(/\s+/).slice(0, 8).join(' ')}…</option>)}
+                </select>
+              </label>
+              <p className="small muted" style={{ margin: 0 }}>المصدر: {item.source}{item.grade ? ` • ${item.grade}` : ''}. يُكتب بخط النسخ تمييزًا له عن نص المصحف، والنص من المكتبة الموثقة كما هو دون تعديل.</p>
+            </div>
+          )}
+          {isAyah && <>
           <div className="stack" style={{ gap: 6 }}>
             <div className="row" style={{ flexWrap: 'nowrap' }}>
               <input className="input" value={ayahQuery} disabled={busy} onChange={(e) => setAyahQuery(e.target.value)} placeholder="ابحث عن الآية: اكتب كلمة أو جزءًا منها" aria-label="ابحث عن الآية بكتابة جزء منها" />
@@ -180,6 +232,7 @@ export function StudioPage() {
             </label>
           </div>
           <p className="small muted" style={{ margin: 0 }}>حتى {max} آية في {mode === 'video' ? 'الفيديو' : 'الصورة'}.</p>
+          </>}
 
           <div>
             <div className="small muted" style={{ marginBottom: 4 }}>المقاس</div>
@@ -191,8 +244,8 @@ export function StudioPage() {
           </div>
 
           {(() => {
-            const sug = suggestTheme(versesText(verses))
-            if (!sug) return <p className="small muted" style={{ margin: 0 }}>لا توجد في الآيات المختارة كلمة حسية (بحر، مطر، ليل، جبال، جنات…) لاقتراح مشهد؛ اختر الخلفية التي تناسبك.</p>
+            const sug = suggestTheme(isAyah ? versesText(verses) : item?.text ?? '')
+            if (!sug) return <p className="small muted" style={{ margin: 0 }}>لا توجد في النص المختار كلمة حسية (بحر، مطر، ليل، جبال، جنات…) لاقتراح مشهد؛ اختر الخلفية التي تناسبك.</p>
             const label = THEMES.find((x) => x.id === sug.theme)!.label
             const on = style.bg === `theme-${sug.theme}`
             return (
@@ -248,7 +301,7 @@ export function StudioPage() {
           <label className="field"><span>حجم الخط</span>
             <input type="range" min={0.6} max={1.4} step={0.05} value={style.textScale} disabled={busy} onChange={(e) => set({ textScale: Number(e.target.value) })} aria-label="حجم الخط" />
           </label>
-          <label className="check"><input type="checkbox" className="switch-input" checked={style.showRef} onChange={(e) => set({ showRef: e.target.checked })} /> اسم السورة ورقم الآية</label>
+          <label className="check"><input type="checkbox" className="switch-input" checked={style.showRef} onChange={(e) => set({ showRef: e.target.checked })} /> {isAyah ? 'اسم السورة ورقم الآية' : 'المصدر والتخريج'}</label>
           <label className="check"><input type="checkbox" className="switch-input" checked={style.showBrand} onChange={(e) => set({ showBrand: e.target.checked })} /> اسم التطبيق أسفل التصميم</label>
 
           {mode === 'video' && (
@@ -266,11 +319,25 @@ export function StudioPage() {
         <section className="studio-preview">
           {mode === 'image' && (
             <>
-              <canvas ref={canvasRef} className={'studio-canvas fmt-' + style.format} role="img" aria-label={`معاينة التصميم: ${referenceText(meta.name, verses)}`} />
+              <canvas ref={canvasRef} className={'studio-canvas fmt-' + style.format} role="img" aria-label={`معاينة التصميم: ${isAyah ? referenceText(meta.name, verses) : item?.source}`} />
               {overflow && <p className="alert alert-gold small" role="alert">النص أطول من أن يتسع بخط مقروء. قلّل عدد الآيات أو اختر المقاس الطولي.</p>}
               <div className="row" style={{ justifyContent: 'center' }}>
                 <button className="btn btn-primary" disabled={overflow} onClick={shareImg}><Share2 size={16} /> مشاركة الصورة</button>
+                <button className="btn" onClick={saveDesign}><Bookmark size={16} /> حفظ التصميم</button>
               </div>
+              {saved.length > 0 && (
+                <div className="card stack" style={{ gap: 6 }}>
+                  <strong className="small">تصاميمي ({saved.length})</strong>
+                  <ul className="list-stack" style={{ listStyle: 'none', padding: 0, margin: 0 }} aria-label="تصاميمي">
+                    {saved.map((d) => (
+                      <li key={d.id} className="row" style={{ flexWrap: 'nowrap' }}>
+                        <button className="btn btn-sm btn-ghost" style={{ flex: 1, justifyContent: 'flex-start', textAlign: 'start' }} onClick={() => openDesign(d)}>{d.title}</button>
+                        <button className="btn btn-sm btn-ghost" aria-label={`حذف التصميم: ${d.title}`} onClick={() => saveDesigns(saved.filter((x) => x.id !== d.id))}><Trash2 size={14} /></button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </>
           )}
           {mode === 'video' && (

@@ -17,7 +17,7 @@ export interface MemoSegment extends SrsState {
 export interface MemoLog { id?: number; segmentId: number; date: string; grade: number; kind: 'learn' | 'review'; at: number }
 export interface ReadLog { id?: number; date: string; surah: number; from: number; to: number; ayahs: number; pages: number[]; at: number }
 export interface AdhkarLog { id?: number; date: string; category: string; at: number }
-export interface Favorite { id: string; kind: 'dhikr' | 'dua' | 'ayah'; itemId: string; createdAt: number }
+export interface Favorite { id: string; kind: 'dhikr' | 'dua' | 'ayah' | 'hadith'; itemId: string; createdAt: number }
 export interface ListenLog { id?: number; date: string; reciter: string; surah: number; ayah: number; at: number }
 
 interface CompanionDB extends DBSchema {

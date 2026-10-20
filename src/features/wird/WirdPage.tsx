@@ -4,7 +4,7 @@ import { BookOpen, CircleCheck, Clock, Brain, Sparkles, Pause, Play, RotateCcw, 
 import { PageHead, ProgressBar, Spinner } from '../../components/Common'
 import { ConfirmSheet } from '../../components/Sheet'
 import { toast, useLive, useNow, useQuran } from '../../hooks'
-import { completedCount, createPlan, progress, saveKhatmas, TOTAL_PAGES, type KhatmaPlan } from '../../services/khatma'
+import { completedCount, createPlan, DEFAULT_MINUTES_PER_PAGE, pagesForMinutes, progress, saveKhatmas, TOTAL_PAGES, type KhatmaPlan } from '../../services/khatma'
 import { adhkarLog, memo, reading } from '../../db/repos'
 import { dayKey, formatCountdown, formatTime } from '../../lib/dates'
 import { useSettings } from '../../state/SettingsContext'
@@ -14,7 +14,11 @@ import { KhatmaCard, useKhatmas } from './KhatmaCard'
 
 function NewPlanForm({ onDone }: { onDone: () => void }) {
   const state = useKhatmas()
-  const [mode, setMode] = useState<'days' | 'pages'>('days')
+  const { settings, update } = useSettings()
+  const [mode, setMode] = useState<'days' | 'pages' | 'minutes'>('days')
+  const [minutes, setMinutes] = useState(15)
+  const [minPerPage, setMinPerPage] = useState(DEFAULT_MINUTES_PER_PAGE)
+  const [remindAt, setRemindAt] = useState(settings.notifications.wird ?? '')
   const [days, setDays] = useState(30)
   const [custom, setCustom] = useState('')
   const [pages, setPages] = useState(4)
@@ -22,7 +26,8 @@ function NewPlanForm({ onDone }: { onDone: () => void }) {
   const [name, setName] = useState('')
   if (!state) return null
   const targetDays = custom ? Number(custom) : days
-  const valid = mode === 'pages' ? pages >= 1 && pages <= 604 : targetDays >= 1 && targetDays <= 3650
+  const minutePages = pagesForMinutes(minutes, minPerPage)
+  const valid = mode === 'pages' ? pages >= 1 && pages <= 604 : mode === 'minutes' ? minutes >= 1 && minutes <= 600 : targetDays >= 1 && targetDays <= 3650
   return (
     <form className="stack" onSubmit={async (e) => {
       e.preventDefault()
@@ -30,14 +35,17 @@ function NewPlanForm({ onDone }: { onDone: () => void }) {
       const today = dayKey()
       // خطة نشطة واحدة في كل وقت؛ تُوقف السابقة مؤقتًا دون حذف تقدمها
       const plans = state.plans.map((p) => (p.status === 'active' ? { ...p, status: 'paused' as const } : p))
-      plans.push(createPlan({ name, mode, targetDays, pagesPerDay: pages, startPage: start, today }))
+      plans.push(createPlan({ name, mode: mode === 'minutes' ? 'pages' : mode, targetDays, pagesPerDay: mode === 'minutes' ? minutePages : pages, startPage: start, today, ...(mode === 'minutes' ? { minutesPerDay: minutes } : {}) }))
       await saveKhatmas({ ...state, plans })
+      // وقت القراءة المفضل: تذكير الورد (اختياري)
+      if (remindAt !== (settings.notifications.wird ?? '')) update((st) => ({ notifications: { ...st.notifications, wird: remindAt || null } }))
       toast('بدأت الختمة الجديدة — وفقك الله')
       onDone()
     }}>
       <div className="row" role="radiogroup" aria-label="نوع الخطة">
         <button type="button" role="radio" aria-checked={mode === 'days'} className={'btn btn-sm' + (mode === 'days' ? ' btn-primary' : '')} onClick={() => setMode('days')}>بمدة محددة</button>
         <button type="button" role="radio" aria-checked={mode === 'pages'} className={'btn btn-sm' + (mode === 'pages' ? ' btn-primary' : '')} onClick={() => setMode('pages')}>بعدد صفحات يومي</button>
+        <button type="button" role="radio" aria-checked={mode === 'minutes'} className={'btn btn-sm' + (mode === 'minutes' ? ' btn-primary' : '')} onClick={() => setMode('minutes')}>بالوقت المتاح يوميًا</button>
       </div>
       {mode === 'days' ? (
         <div className="row">
@@ -45,6 +53,11 @@ function NewPlanForm({ onDone }: { onDone: () => void }) {
           <label className="row small">مدة أخرى
             <input className="input" style={{ width: 90, minHeight: 32 }} type="number" min={1} max={3650} value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="أيام" />
           </label>
+        </div>
+      ) : mode === 'minutes' ? (
+        <div className="grid grid-2" style={{ gap: '0.75rem' }}>
+          <label className="field"><span>الدقائق المتاحة يوميًا</span><input className="input" type="number" min={1} max={600} value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} /></label>
+          <label className="field"><span>متوسط دقائقك للصفحة (تقديري)</span><input className="input" type="number" min={0.5} max={10} step={0.5} value={minPerPage} onChange={(e) => setMinPerPage(Number(e.target.value))} /></label>
         </div>
       ) : (
         <label className="field" style={{ maxWidth: 260 }}><span>عدد الصفحات يوميًا</span>
@@ -55,7 +68,11 @@ function NewPlanForm({ onDone }: { onDone: () => void }) {
         <label className="field"><span>البدء من الصفحة</span><input className="input" type="number" min={1} max={604} value={start} onChange={(e) => setStart(Number(e.target.value))} /></label>
         <label className="field"><span>اسم الخطة (اختياري)</span><input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: ختمة رمضان" /></label>
       </div>
-      {valid && <p className="small muted" style={{ margin: 0 }}>{mode === 'days' ? `نحو ${Math.ceil((TOTAL_PAGES - start + 1) / targetDays)} صفحات يوميًا، ويُعاد الحساب تلقائيًا بحسب تقدمك.` : `تنتهي الختمة خلال نحو ${Math.ceil((TOTAL_PAGES - start + 1) / pages)} يومًا.`}</p>}
+      <label className="field" style={{ maxWidth: 260 }}><span>وقت القراءة المفضل (تذكير اختياري)</span>
+        <input className="input" type="time" value={remindAt} onChange={(e) => setRemindAt(e.target.value)} aria-label="وقت القراءة المفضل" />
+      </label>
+      {valid && mode === 'minutes' && <p className="small muted" style={{ margin: 0 }}>نحو {minutePages} صفحات يوميًا، وتنتهي الختمة خلال نحو {Math.ceil((TOTAL_PAGES - start + 1) / minutePages)} يومًا. التقدير يعتمد على متوسطك، وعدّله متى شئت.</p>}
+      {valid && mode !== 'minutes' && <p className="small muted" style={{ margin: 0 }}>{mode === 'days' ? `نحو ${Math.ceil((TOTAL_PAGES - start + 1) / targetDays)} صفحات يوميًا، ويُعاد الحساب تلقائيًا بحسب تقدمك.` : `تنتهي الختمة خلال نحو ${Math.ceil((TOTAL_PAGES - start + 1) / pages)} يومًا.`}</p>}
       <div className="row"><button className="btn btn-primary" disabled={!valid}>بدء الختمة</button><button type="button" className="btn btn-ghost" onClick={onDone}>إلغاء</button></div>
     </form>
   )

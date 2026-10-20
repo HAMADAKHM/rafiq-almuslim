@@ -46,6 +46,10 @@ export interface StudioStyle {
 export interface Verse { surah: number; ayah: number; text: string }
 
 const QURAN_FONT = '"Amiri Quran", "Amiri", serif'
+/** خط الأحاديث والأذكار: نسخي غير خط المصحف، حتى لا يلتبس النص النبوي بالقرآني */
+const NASKH_FONT = '"Amiri", "Noto Naskh Arabic", serif'
+export type TextFont = 'quran' | 'naskh'
+const fontOf = (f: TextFont = 'quran') => (f === 'naskh' ? NASKH_FONT : QURAN_FONT)
 const UI_FONT = '"IBM Plex Sans Arabic", sans-serif'
 
 /**
@@ -57,6 +61,7 @@ export async function loadStudioFonts(...texts: string[]) {
   const sample = texts.join(' ') || 'بسم الله'
   await Promise.all([
     document.fonts.load(`64px ${QURAN_FONT}`, sample),
+    document.fonts.load(`64px ${NASKH_FONT}`, sample),
     document.fonts.load(`32px ${UI_FONT}`, sample + ' سورة الآيات رفيق المسلم ٠١٢٣٤٥٦٧٨٩'),
     document.fonts.load(`700 32px ${UI_FONT}`, 'سورة الآيات ٠١٢٣٤٥٦٧٨٩ ' + sample),
   ])
@@ -88,17 +93,17 @@ export function wrap(ctx: Pick<CanvasRenderingContext2D, 'measureText'>, text: s
 }
 
 /** أكبر خط يتسع فيه النص كاملًا داخل المربع، أو null إن لم يتسع حتى بأصغر خط مقبول */
-export function fitText(ctx: CanvasRenderingContext2D, text: string, boxW: number, boxH: number, maxPx: number, minPx: number): { size: number; lines: string[]; lineH: number } | null {
+export function fitText(ctx: CanvasRenderingContext2D, text: string, boxW: number, boxH: number, maxPx: number, minPx: number, font: TextFont = 'quran'): { size: number; lines: string[]; lineH: number } | null {
   let lo = minPx, hi = maxPx, best: { size: number; lines: string[]; lineH: number } | null = null
   for (let i = 0; i < 14; i++) {
     const size = (lo + hi) / 2
-    ctx.font = `${size}px ${QURAN_FONT}`
+    ctx.font = `${size}px ${fontOf(font)}`
     const lines = wrap(ctx, text, boxW)
     const lineH = size * 1.9
     if (lines.length * lineH <= boxH && lines.every((l) => ctx.measureText(l).width <= boxW * 1.02)) { best = { size, lines, lineH }; lo = size } else hi = size
   }
   if (best) return best
-  ctx.font = `${minPx}px ${QURAN_FONT}`
+  ctx.font = `${minPx}px ${fontOf(font)}`
   const lines = wrap(ctx, text, boxW)
   return lines.length * minPx * 1.9 <= boxH ? { size: minPx, lines, lineH: minPx * 1.9 } : null
 }
@@ -151,6 +156,8 @@ export interface DrawOptions {
   subtitle?: string
   /** زمن الإطار بالثواني (لحركة المشاهد في الفيديو) */
   time?: number
+  /** خط النص: المصحف للآيات، والنسخ للأحاديث والأذكار */
+  font?: TextFont
 }
 
 /** يرسم إطارًا كاملًا. يعيد false إن لم يتسع النص */
@@ -207,13 +214,13 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
   const boxH = Math.max(100, H * sceneTop - pad - bottomReserve * (isLandscape(style.bg) ? 0.2 : 1) - boxTop)
   const maxPx = Math.min(W, H) * 0.085 * style.textScale
   const minPx = Math.min(W, H) * 0.028
-  const fit = fitText(ctx, o.text, boxW, boxH, Math.max(maxPx, minPx), minPx)
+  const fit = fitText(ctx, o.text, boxW, boxH, Math.max(maxPx, minPx), minPx, o.font)
   ctx.direction = 'rtl'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   if (!fit) { ctx.restore(); return false }
   ctx.globalAlpha = o.textAlpha ?? 1
-  ctx.font = `${fit.size}px ${QURAN_FONT}`
+  ctx.font = `${fit.size}px ${fontOf(o.font)}`
   ctx.fillStyle = ink
   if (!light) { ctx.shadowColor = 'rgba(0,0,0,0.55)'; ctx.shadowBlur = fit.size * 0.25 }
   const total = fit.lines.length * fit.lineH

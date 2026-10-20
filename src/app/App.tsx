@@ -55,6 +55,8 @@ export function AppRoutes() {
         <Route path="adhkar/:category" element={<ContentLibrary kind="adhkar" />} />
         <Route path="duas" element={<ContentLibrary kind="duas" />} />
         <Route path="duas/:category" element={<ContentLibrary kind="duas" />} />
+        <Route path="hadith" element={<ContentLibrary kind="hadith" />} />
+        <Route path="hadith/:category" element={<ContentLibrary kind="hadith" />} />
         <Route path="listen" element={<ListenPage />} />
         <Route path="learn" element={<LearnPage />} />
         <Route path="learn/:lessonId" element={<LessonPage />} />

@@ -1,5 +1,6 @@
 // إعدادات المستخدم: تُحفظ محليًا في IndexedDB.
 // أي حقل جديد يُدمج مع القيم الافتراضية في mergeSettings حتى لا تتأثر إعدادات الإصدارات السابقة.
+import { ADHKAR } from '../content/adhkar'
 import { DEFAULT_PRAYER_SETTINGS, type PrayerName, type PrayerSettings } from '../services/prayer'
 
 export interface SavedLocation {
@@ -92,12 +93,16 @@ export interface Settings {
   trackPrayers: boolean
   /** اسم اختياري للتحية في الرئيسية (يبقى على الجهاز) */
   displayName: string
+  /** مجموعات الأذكار اليومية الظاهرة في الرئيسية (من أقسام الأذكار الثابتة فقط) */
+  dailyAdhkar: string[]
 }
 
-export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques']
+export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques', '/hadith']
 // القبلة والمسبحة والختمة أولًا (للمستخدمين الجدد؛ اختيارات المستخدمين الحاليين تبقى كما هي)
 export const DEFAULT_QUICK_LINKS = ['/qibla', '/tasbih', '/wird', '/calendar']
 export const MAX_QUICK_LINKS = 8
+export const DEFAULT_DAILY_ADHKAR = ['morning', 'evening', 'after-prayer', 'sleep']
+export const MAX_DAILY_ADHKAR = 6
 
 export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
   suggest: 'اقتراح اليوم',
@@ -163,6 +168,7 @@ export const DEFAULT_SETTINGS: Settings = {
   keepAwake: true,
   trackPrayers: false,
   displayName: '',
+  dailyAdhkar: DEFAULT_DAILY_ADHKAR,
 }
 
 /** يضمن أن قائمة بطاقات الرئيسية تحتوي كل البطاقات المعروفة مرة واحدة، وأن البطاقات المقفلة ظاهرة */
@@ -194,6 +200,7 @@ export function mergeSettings(saved: Partial<Settings> | null | undefined): Sett
     },
     homeCards: normalizeHomeCards(s.homeCards),
     quickLinks: normalizeQuickLinks(s.quickLinks),
+    dailyAdhkar: normalizeDailyAdhkar(s.dailyAdhkar),
   }
 }
 
@@ -201,4 +208,12 @@ export function normalizeQuickLinks(links: string[] | undefined): string[] {
   if (!Array.isArray(links)) return DEFAULT_QUICK_LINKS
   const out = [...new Set(links.filter((l) => QUICK_LINK_CHOICES.includes(l)))].slice(0, MAX_QUICK_LINKS)
   return out.length ? out : DEFAULT_QUICK_LINKS
+}
+
+/** يُقبل فقط ما يطابق أقسام الأذكار الثابتة الموجودة */
+export function normalizeDailyAdhkar(ids: string[] | undefined): string[] {
+  if (!Array.isArray(ids)) return DEFAULT_DAILY_ADHKAR
+  const known = new Set(ADHKAR.map((c) => c.id))
+  const out = [...new Set(ids.filter((x) => known.has(x)))].slice(0, MAX_DAILY_ADHKAR)
+  return out.length ? out : DEFAULT_DAILY_ADHKAR
 }

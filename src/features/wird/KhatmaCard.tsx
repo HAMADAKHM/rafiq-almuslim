@@ -3,12 +3,20 @@ import { Link } from 'react-router-dom'
 import { BookOpen, CircleCheck } from 'lucide-react'
 import { ProgressBar, Ring } from '../../components/Common'
 import { toast, useLive } from '../../hooks'
-import { activePlan, dailyTarget, loadKhatmas, progress, recordPages, weekStats, type KhatmaState } from '../../services/khatma'
+import { activePlan, dailyTarget, extendPlan, juzProgress, loadKhatmas, progress, recordPages, saveKhatmas, scheduleStatus, weekStats, type KhatmaState } from '../../services/khatma'
+import { useMemo } from 'react'
 import { firstAyahOf, type QuranData } from '../../services/quran'
 import { dayKey } from '../../lib/dates'
 
 export function useKhatmas() {
   return useLive(() => loadKhatmas(), ['kv:khatmas', 'kv:wird'], null as KhatmaState | null)
+}
+
+/** الجزء الحالي وعدد الأجزاء المكتملة (من بيانات المصحف) */
+function JuzLine({ data, nextPage, done }: { data: QuranData; nextPage: number; done: boolean }) {
+  const starts = useMemo(() => { const out: number[] = []; for (let g = 0; g < data.meta.juz.length; g++) if (out[data.meta.juz[g] - 1] === undefined) out[data.meta.juz[g] - 1] = data.meta.page[g]; return out }, [data])
+  const j = juzProgress({ nextPage, status: done ? 'done' : 'active' } as Parameters<typeof juzProgress>[0], starts)
+  return <div className="small muted">{done ? 'اكتملت الأجزاء الثلاثون' : `الجزء الحالي: ${j.current} • تم ${j.completed} من 30 جزءًا`}</div>
 }
 
 /** بطاقة الورد اليومي للخطة النشطة: الهدف المحسوب، ونسبة الإنجاز، وتسجيل القراءة */
@@ -27,6 +35,7 @@ export function KhatmaCard({ data, compact }: { data: QuranData; compact?: boole
     )
   }
   const t = dailyTarget(plan, today)
+  const sched = scheduleStatus(plan, today)
   const doneToday = t.doneToday >= t.pages
   const start = firstAyahOf(data.meta, 'page', Math.min(604, plan.nextPage))
   const record = async (to: number) => {
@@ -50,6 +59,8 @@ export function KhatmaCard({ data, compact }: { data: QuranData; compact?: boole
           <div>
             <strong className="khatma-name">{plan.name}</strong>
             <div className="small muted">{plan.nextPage - 1} من 604 صفحة{plan.mode === 'days' ? ` • متبقٍّ ${t.daysLeft} يومًا` : ''}</div>
+            <JuzLine data={data} nextPage={plan.nextPage} done={plan.status === 'done'} />
+            {plan.minutesPerDay && <div className="small muted">خطة بالوقت: {plan.minutesPerDay} دقيقة يوميًا (~{plan.pagesPerDay} صفحات)</div>}
             <div className="small muted">بدأت {plan.startedAt}</div>
           </div>
         </div>
@@ -58,6 +69,14 @@ export function KhatmaCard({ data, compact }: { data: QuranData; compact?: boole
         {doneToday ? <><CircleCheck size={14} color="var(--success)" /> أتممت ورد اليوم ({t.doneToday} صفحة)</> : <>ورد اليوم: الصفحات <strong>{t.from}–{t.to}</strong> ({t.pages} صفحة){t.doneToday > 0 && ` — قرأت ${t.doneToday}`}</>}
       </p>
       {!compact && <p className="small muted" style={{ margin: 0 }}>المتبقي {605 - plan.nextPage} صفحة{plan.mode === 'days' ? ` • ${t.daysLeft} يومًا حسب خطتك` : ''}</p>}
+      {!compact && sched.behind && (
+        <div className="alert alert-gold small" role="status">
+          لتنتهي الختمة في موعدها صار وردك {sched.currentPace} صفحة يوميًا (الوتيرة الأصلية {sched.originalPace}). يمكنك تمديد الموعد {sched.extendDays} يومًا لتعود إلى وتيرتك.
+          <div className="row" style={{ marginTop: 6 }}>
+            <button className="btn btn-sm" onClick={async () => { await saveKhatmas({ ...state, plans: state.plans.map((x) => (x.id === plan.id ? extendPlan(x, sched.extendDays) : x)) }); toast(`مُدِّد الموعد ${sched.extendDays} يومًا`) }}>تمديد الموعد</button>
+          </div>
+        </div>
+      )}
       {!compact && (() => {
         const w = weekStats(plan, today)
         return (

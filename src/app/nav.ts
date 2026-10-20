@@ -1,6 +1,6 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark,
+  ChartColumn, Route, Search, Settings, Heart, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
@@ -24,6 +24,7 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
     { to: '/mosques', key: 'mosques', icon: Landmark },
     { to: '/adhkar', key: 'adhkar', icon: Sparkles },
     { to: '/duas', key: 'duas', icon: HandHeart },
+    { to: '/hadith', key: 'hadith', icon: ScrollText },
     { to: '/tasbih', key: 'tasbih', icon: CircleDot },
     { to: '/my-adhkar', key: 'myAdhkar', icon: PenLine },
     { to: '/calendar', key: 'calendar', icon: CalendarDays },
@@ -43,7 +44,7 @@ export const TABS: (NavItem & { short: string; match: RegExp })[] = [
   { to: '/', key: 'home', icon: House, short: 'الرئيسية', match: /^\/$/ },
   { to: '/quran', key: 'quran', icon: BookOpen, short: 'القرآن', match: /^\/(quran|mushaf|memorize|listen|learn|studio)/ },
   { to: '/prayer', key: 'prayer', icon: Clock, short: 'المواقيت', match: /^\/(prayer|qibla|calendar|mosques)/ },
-  { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|tasbih|my-adhkar)/ },
+  { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|hadith|tasbih|my-adhkar)/ },
   { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|search|reminders|settings|about)/ },
 ]
 
@@ -66,4 +67,5 @@ export const LINK_META: Record<string, { label: string; icon: typeof House }> = 
   '/reminders': { label: 'التذكير', icon: Bell },
   '/studio': { label: 'تصاميم الآيات', icon: Palette },
   '/mosques': { label: 'المساجد', icon: Landmark },
+  '/hadith': { label: 'الأحاديث', icon: ScrollText },
 }

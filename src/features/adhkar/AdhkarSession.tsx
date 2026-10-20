@@ -16,7 +16,7 @@ export interface SessionProps {
   counts: Record<string, number>
   onCount: (id: string, n: number) => void
   favs?: Set<string>
-  favKind?: 'dhikr' | 'dua'
+  favKind?: 'dhikr' | 'dua' | 'hadith'
   /** يُستدعى مرة واحدة عند اكتمال كل الأذكار */
   onAllDone?: () => void
   doneLabel?: string

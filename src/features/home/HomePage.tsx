@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   BookOpen, Sparkles, MapPin, CircleCheck, Play, Image, SlidersHorizontal, ArrowUp, ArrowDown, Library,
-  ChevronLeft, Bell, Heart, Sun, Moon, Landmark, BedDouble, LayoutGrid, BookMarked,
+  ChevronLeft, Bell, Heart, LayoutGrid, BookMarked,
 } from 'lucide-react'
 import { DedicationCard } from '../../components/DedicationCard'
 import { Spinner } from '../../components/Common'
@@ -12,6 +12,9 @@ import { useDocumentTitle, useLive, useNow, useQuran } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
 import { HOME_CARD_LABELS, LOCKED_HOME_CARDS, MAX_QUICK_LINKS, QUICK_LINK_CHOICES, type HomeCardId } from '../../state/settings'
 import { LINK_META } from '../../app/nav'
+import { ADHKAR } from '../../content/adhkar'
+import { catIcon } from '../adhkar/AdhkarPage'
+import { MAX_DAILY_ADHKAR } from '../../state/settings'
 import { MosqueScene, type SceneTone } from '../../components/Art'
 import type { PrayerName } from '../../services/prayer'
 import { nextPrayer, PRAYER_LABELS, PRAYERS, todayTimes } from '../../services/prayer'
@@ -31,12 +34,6 @@ import { player } from '../../services/audio'
 import type { LastRead } from '../quran/QuranIndexPage'
 import type { AdhkarLog, MemoSegment } from '../../db/db'
 
-const ADHKAR_TILES = [
-  { id: 'morning', label: 'أذكار الصباح', icon: Sun },
-  { id: 'evening', label: 'أذكار المساء', icon: Moon },
-  { id: 'after-prayer', label: 'بعد الصلاة', icon: Landmark },
-  { id: 'sleep', label: 'أذكار النوم', icon: BedDouble },
-]
 
 /** لون المشهد بحسب الصلاة القادمة */
 function toneFor(p?: PrayerName): SceneTone {
@@ -126,7 +123,7 @@ export function HomePage() {
         <div className="spread"><h2 style={{ margin: 0 }}><Sparkles size={18} /> الأذكار</h2><Link className="small" to="/adhkar">المكتبة</Link></div>
         <p className="small muted" style={{ margin: '0.15rem 0 0.6rem' }}>{done.has(nowAdhkar.id) ? `أتممت ${nowAdhkar.title} اليوم. تقبّل الله.` : `الآن: ${nowAdhkar.title}`}</p>
         <div className="adhkar-tiles">
-          {ADHKAR_TILES.map(({ id, label, icon: Icon }) => (
+          {settings.dailyAdhkar.map((id) => ({ id, label: ADHKAR.find((c) => c.id === id)?.title ?? id, icon: catIcon(id) })).map(({ id, label, icon: Icon }) => (
             <Link key={id} to={`/adhkar/${id}`} className={'adhkar-tile' + (id === nowAdhkar.id ? ' now' : '') + (done.has(id) ? ' done' : '')}>
               <Icon size={20} aria-hidden="true" />
               <span>{label}</span>
@@ -299,6 +296,20 @@ export function HomePage() {
         <label className="field" style={{ marginTop: '1rem' }}><span>اسمك للتحية (اختياري، يبقى على جهازك)</span>
           <input className="input" value={settings.displayName} maxLength={30} onChange={(e) => update({ displayName: e.target.value })} placeholder="مثال: محمد" />
         </label>
+        <h3 style={{ marginTop: '1rem' }}>أذكاري اليومية في الرئيسية</h3>
+        <p className="small muted">اختر حتى {MAX_DAILY_ADHKAR} من أقسام الأذكار الثابتة.</p>
+        <div className="quick-choices">
+          {ADHKAR.map((c) => {
+            const on = settings.dailyAdhkar.includes(c.id)
+            return (
+              <label key={c.id} className="check">
+                <input type="checkbox" checked={on} disabled={(!on && settings.dailyAdhkar.length >= MAX_DAILY_ADHKAR) || (on && settings.dailyAdhkar.length === 1)}
+                  onChange={(e) => update({ dailyAdhkar: e.target.checked ? [...settings.dailyAdhkar, c.id] : settings.dailyAdhkar.filter((x) => x !== c.id) })} aria-label={`ذكر يومي: ${c.title}`} />
+                {c.title}
+              </label>
+            )
+          })}
+        </div>
         <h3 style={{ marginTop: '1rem' }}>اختصارات الوصول السريع</h3>
         <p className="small muted">اختر حتى {MAX_QUICK_LINKS} أقسام تستخدمها كثيرًا.</p>
         <div className="quick-choices">

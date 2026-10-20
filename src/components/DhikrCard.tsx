@@ -13,7 +13,7 @@ export const kindBadge = (k: DhikrItem['kind']) => 'badge ' + (k === 'quran' ? '
 export interface DhikrCardProps {
   item: DhikrItem
   fav: boolean
-  favKind: 'dhikr' | 'dua'
+  favKind: 'dhikr' | 'dua' | 'hadith'
   withCounter?: boolean
   /** العدد المحفوظ لهذا اليوم (يُستأنف عند العودة) */
   count?: number

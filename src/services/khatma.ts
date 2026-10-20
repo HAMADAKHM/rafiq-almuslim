@@ -20,6 +20,12 @@ export interface KhatmaPlan {
   completedAt?: string
   /** سجل القراءة داخل الخطة */
   log: { date: string; from: number; to: number }[]
+  /** صفحة البداية (للخطط المنشأة منذ 1.0؛ القديمة تُستنتج من السجل) */
+  startPage?: number
+  /** الدقائق المتاحة يوميًا إن أُنشئت الخطة بالوقت (للعرض فقط) */
+  minutesPerDay?: number
+  /** الوتيرة الأصلية (صفحات/يوم) لخطط المدة؛ لا تتغير عند تمديد الموعد */
+  basePace?: number
 }
 
 export interface KhatmaState {
@@ -55,13 +61,16 @@ export async function saveKhatmas(s: KhatmaState) {
   await kv.set(KEY, s)
 }
 
-export function createPlan(opts: { name?: string; mode: 'days' | 'pages'; targetDays?: number; pagesPerDay?: number; startPage?: number; today: string }): KhatmaPlan {
+export function createPlan(opts: { name?: string; mode: 'days' | 'pages'; targetDays?: number; pagesPerDay?: number; startPage?: number; minutesPerDay?: number; today: string }): KhatmaPlan {
   const targetDays = Math.max(1, Math.round(opts.targetDays ?? 30))
   const pagesPerDay = Math.max(1, Math.round(opts.pagesPerDay ?? Math.ceil(TOTAL_PAGES / targetDays)))
   return {
-    id: newId(), name: opts.name?.trim() || (opts.mode === 'days' ? `ختمة في ${targetDays} يومًا` : `${pagesPerDay} صفحات يوميًا`),
+    id: newId(), name: opts.name?.trim() || (opts.minutesPerDay ? `${opts.minutesPerDay} دقيقة يوميًا` : opts.mode === 'days' ? `ختمة في ${targetDays} يومًا` : `${pagesPerDay} صفحات يوميًا`),
     mode: opts.mode, targetDays, pagesPerDay, nextPage: Math.min(TOTAL_PAGES, Math.max(1, opts.startPage ?? 1)),
     startedAt: opts.today, status: 'active', log: [],
+    startPage: Math.min(TOTAL_PAGES, Math.max(1, opts.startPage ?? 1)),
+    basePace: Math.max(1, Math.ceil((TOTAL_PAGES - Math.min(TOTAL_PAGES, Math.max(1, opts.startPage ?? 1)) + 1) / targetDays)),
+    ...(opts.minutesPerDay ? { minutesPerDay: opts.minutesPerDay } : {}),
   }
 }
 
@@ -80,6 +89,46 @@ export function weekStats(plan: KhatmaPlan, today: string): { read: number; targ
   const t = dailyTarget(plan, today)
   const remainingAtWeekStart = TOTAL_PAGES - (plan.nextPage - read) + 1
   return { read, target: Math.max(1, Math.min(t.pages * 7, remainingAtWeekStart)), activeDays: per.filter((n) => n > 0).length }
+}
+
+/** متوسط تقديري لدقائق قراءة الصفحة (يعدّله المستخدم؛ لا يُعرض كحقيقة) */
+export const DEFAULT_MINUTES_PER_PAGE = 2
+export const pagesForMinutes = (minutes: number, minPerPage = DEFAULT_MINUTES_PER_PAGE) => Math.max(1, Math.round(minutes / Math.max(0.5, minPerPage)))
+
+/**
+ * حالة الجدول في خطط المدة: إذا ارتفع ورد اليوم كثيرًا عن الوتيرة الأصلية (بسبب أيام لم يُقرأ فيها)
+ * يُقترح تمديد الموعد بدل مضاعفة الورد. لا يُعرض ذلك كتقصير.
+ */
+export function scheduleStatus(plan: KhatmaPlan, today: string): { behind: boolean; originalPace: number; currentPace: number; extendDays: number } {
+  const t = dailyTarget(plan, today)
+  const originalPace = basePaceOf(plan)
+  if (plan.mode !== 'days' || plan.status !== 'active') return { behind: false, originalPace, currentPace: t.pages, extendDays: 0 }
+  const remainingAtStart = TOTAL_PAGES - (plan.nextPage - t.doneToday) + 1
+  const daysNeeded = Math.ceil(remainingAtStart / originalPace)
+  const extendDays = Math.max(0, daysNeeded - t.daysLeft)
+  return { behind: t.pages > Math.ceil(originalPace * 1.25) && extendDays > 0, originalPace, currentPace: t.pages, extendDays }
+}
+
+function basePaceOf(plan: KhatmaPlan): number {
+  if (plan.basePace) return plan.basePace
+  const start = plan.startPage ?? plan.log[0]?.from ?? 1
+  return Math.max(1, Math.ceil((TOTAL_PAGES - start + 1) / plan.targetDays))
+}
+
+/** تمديد الموعد مع الإبقاء على الوتيرة الأصلية مرجعًا */
+export const extendPlan = (plan: KhatmaPlan, days: number): KhatmaPlan => ({ ...plan, basePace: basePaceOf(plan), targetDays: plan.targetDays + Math.max(0, Math.round(days)) })
+
+/** الجزء الحالي وعدد الأجزاء المكتملة في الخطة */
+export function juzProgress(plan: KhatmaPlan, juzStartPages: number[]): { current: number; completed: number } {
+  // juzStartPages[j-1] = أول صفحة في الجزء j
+  let current = 1
+  for (let j = 1; j <= 30; j++) if (juzStartPages[j - 1] <= Math.min(plan.nextPage, TOTAL_PAGES)) current = j
+  let completed = 0
+  for (let j = 1; j <= 30; j++) {
+    const nextStart = j < 30 ? juzStartPages[j] : TOTAL_PAGES + 1
+    if (plan.status === 'done' || nextStart <= plan.nextPage) completed = j
+  }
+  return { current: plan.status === 'done' ? 30 : current, completed }
 }
 
 export function remainingPages(plan: KhatmaPlan): number {

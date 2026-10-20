@@ -7,6 +7,7 @@ import { parseRef, searchAyahs, searchSurahs } from '../../services/quran'
 import { searchSkeleton } from '../../lib/arabic'
 import { ADHKAR } from '../../content/adhkar'
 import { DUAS } from '../../content/duas'
+import { HADITH } from '../../content/hadith'
 import { LESSONS } from '../../content/lessons'
 import type { ContentCategory } from '../../content/types'
 
@@ -27,6 +28,7 @@ export function SearchPage() {
       ayahs: searchAyahs(data, q, 60),
       adhkar: searchContent(ADHKAR, sk),
       duas: searchContent(DUAS, sk),
+      hadith: searchContent(HADITH, sk),
       lessons: LESSONS.filter((l) => searchSkeleton(l.title + ' ' + l.summary + ' ' + l.steps.map((s) => s.title + ' ' + s.body).join(' ')).includes(sk)),
     }
   }, [data, q, sk])
@@ -57,6 +59,14 @@ export function SearchPage() {
               ))}
             </div>
           </section>
+          {res.hadith.length > 0 && (
+            <section className="card">
+              <h2>الأحاديث ({res.hadith.length})</h2>
+              <ul className="small">
+                {res.hadith.map(({ cat, it }) => <li key={it.id}><Link to={`/hadith/${cat.id}`}>{cat.title}</Link>: {(it.text ?? '').slice(0, 90)}… <span className="muted">— {it.source}</span></li>)}
+              </ul>
+            </section>
+          )}
           {(res.adhkar.length > 0 || res.duas.length > 0) && (
             <section className="card">
               <h2>الأذكار والأدعية ({res.adhkar.length + res.duas.length})</h2>

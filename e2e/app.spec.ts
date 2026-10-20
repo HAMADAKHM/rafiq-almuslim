@@ -861,3 +861,62 @@ test.describe('0.9: الملخص الأسبوعي وهدف الأسبوع', () =
     await expect(gap).toHaveValue('2')
   })
 })
+
+test.describe('1.0: الختمة الذكية والأحاديث وبطاقات الاستوديو والتخصيص', () => {
+  test.use({ serviceWorkers: 'block' })
+
+  test('ختمة بالوقت المتاح يوميًا: تحويل الدقائق إلى صفحات وعرض الجزء الحالي', async ({ page }) => {
+    await page.goto('/wird')
+    await page.getByRole('button', { name: 'ختمة جديدة' }).click()
+    await page.getByRole('radio', { name: 'بالوقت المتاح يوميًا' }).click()
+    await page.getByLabel('الدقائق المتاحة يوميًا').fill('20')
+    await page.getByLabel('البدء من الصفحة').fill('45')
+    await expect(page.getByText(/نحو 10 صفحات يوميًا/)).toBeVisible()
+    await page.getByRole('button', { name: 'بدء الختمة' }).click()
+    await expect(page.getByText('ورد اليوم: الصفحات 45–54')).toBeVisible()
+    await expect(page.getByText('الجزء الحالي: 3 • تم 2 من 30 جزءًا')).toBeVisible()
+  })
+
+  test('مكتبة الأحاديث: كل حديث بتخريجه من الصحيحين، وتظهر في البحث', async ({ page }) => {
+    await page.goto('/hadith')
+    await page.getByRole('link', { name: /أحاديث جامعة/ }).click()
+    await expect(page.getByText('متفق عليه: البخاري (1) ومسلم (1907)')).toBeVisible()
+    await page.goto('/search?q=' + encodeURIComponent('النصيحة'))
+    await expect(page.getByText(/الأحاديث \(\d+\)/)).toBeVisible()
+  })
+
+  test('بطاقة حديث في الاستوديو بخط النسخ ومصدرها، وحفظها في «تصاميمي»', async ({ page }) => {
+    await page.goto('/studio')
+    await page.getByRole('radio', { name: 'حديث' }).click()
+    await expect(page.getByRole('img', { name: 'معاينة التصميم: متفق عليه: البخاري (1) ومسلم (1907)' })).toBeVisible()
+    await page.getByLabel('القسم').selectOption({ label: 'المعاملات' })
+    await expect(page.getByRole('img', { name: /معاينة التصميم: متفق عليه: البخاري \(2079\)/ })).toBeVisible()
+    await page.getByRole('button', { name: 'حفظ التصميم' }).click()
+    const list = page.getByRole('list', { name: 'تصاميمي' })
+    await expect(list.getByRole('button', { name: /^المعاملات:/ })).toBeVisible()
+    // العودة إلى آية ثم فتح التصميم المحفوظ يعيد الحديث نفسه
+    await page.getByRole('radio', { name: 'آية' }).click()
+    await expect(page.getByRole('img', { name: /معاينة التصميم: سورة الفاتحة/ })).toBeVisible()
+    await page.reload()
+    await page.getByRole('list', { name: 'تصاميمي' }).getByRole('button', { name: /^المعاملات:/ }).click()
+    await expect(page.getByRole('img', { name: /البخاري \(2079\)/ })).toBeVisible()
+    await page.getByRole('button', { name: /^حذف التصميم/ }).click()
+    await expect(page.getByRole('list', { name: 'تصاميمي' })).toHaveCount(0)
+  })
+
+  test('التحية بالاسم واقتراح اليوم وجرس كل صلاة وبطاقة القبلة', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByRole('link', { name: /^اقتراح اليوم:/ })).toBeVisible()
+    await page.getByRole('button', { name: 'تخصيص الرئيسية' }).click()
+    await page.getByLabel(/اسمك للتحية/).fill('أحمد')
+    await expect.poll(() => savedSetting(page, 'displayName')).toBe('أحمد')
+    await page.reload()
+    await expect(page.getByText('السلام عليكم، أحمد')).toBeVisible()
+    await chooseCity(page, 'نابلس', /نابلس، فلسطين/)
+    const bell = page.getByRole('button', { name: 'تنبيه العصر' })
+    const was = await bell.getAttribute('aria-pressed')
+    await bell.click()
+    await expect(bell).toHaveAttribute('aria-pressed', was === 'true' ? 'false' : 'true')
+    await expect(page.getByRole('link', { name: /^اتجاه القبلة \d+ درجة/ })).toBeVisible()
+  })
+})
