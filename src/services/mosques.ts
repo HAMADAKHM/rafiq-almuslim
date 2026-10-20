@@ -11,7 +11,8 @@ export const CACHE_KEY = 'mosques:last'
 const MAX_RESULTS = 60
 
 export function overpassQuery(lat: number, lng: number, radius: number): string {
-  const around = `(around:${Math.round(radius)},${lat.toFixed(5)},${lng.toFixed(5)})`
+  // الخصوصية: يُرسل الموقع مقرّبًا إلى نحو 100 م فقط؛ والمسافات تُحسب على الجهاز من الموقع الفعلي
+  const around = `(around:${Math.round(radius) + 150},${lat.toFixed(3)},${lng.toFixed(3)})`
   const f = '["amenity"="place_of_worship"]["religion"="muslim"]'
   return `[out:json][timeout:25];(node${f}${around};way${f}${around};relation${f}${around};);out center tags ${MAX_RESULTS * 2};`
 }
@@ -32,7 +33,7 @@ export function bearingDeg(a: { lat: number; lng: number }, b: { lat: number; ln
 }
 const DIRS = ['الشمال', 'الشمال الشرقي', 'الشرق', 'الجنوب الشرقي', 'الجنوب', 'الجنوب الغربي', 'الغرب', 'الشمال الغربي']
 export const directionName = (deg: number) => DIRS[Math.round(deg / 45) % 8]
-export const formatDistance = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} م` : `${(m / 1000).toFixed(m < 10_000 ? 1 : 0)} كم`)
+export const formatDistance = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} م` : `${Number((m / 1000).toFixed(m < 10_000 ? 1 : 0))} كم`)
 
 interface OsmElement { type: string; id: number; lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> }
 
@@ -66,7 +67,7 @@ export async function findMosques(center: { lat: number; lng: number; label: str
   for (const ep of OVERPASS_ENDPOINTS) {
     try {
       const json = await getJson(`${ep}?data=${q}`, signal)
-      const result: MosqueResult = { at: Date.now(), center, radius, mosques: parseOverpass(json, center) }
+      const result: MosqueResult = { at: Date.now(), center, radius, mosques: parseOverpass(json, center).filter((m) => m.distance <= radius) }
       kv.set(CACHE_KEY, result).catch(() => {})
       return result
     } catch (e) {

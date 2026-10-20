@@ -303,7 +303,7 @@ test.describe('العمل دون إنترنت', () => {
 test.describe('الشاشات الصغيرة', () => {
   test.use({ viewport: { width: 390, height: 844 } })
   test('القائمة تفتح وتغلق، ولا يوجد تمرير أفقي في الصفحات الرئيسية', async ({ page }) => {
-    for (const p of ['/', '/quran', '/quran/2', '/prayer', '/adhkar/morning', '/settings', '/memorize', '/listen', '/progress']) {
+    for (const p of ['/', '/quran', '/quran/2', '/prayer', '/adhkar/morning', '/settings', '/memorize', '/listen', '/progress', '/mosques', '/studio', '/more', '/wird']) {
       await page.goto(p)
       await page.waitForTimeout(300)
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)
@@ -828,5 +828,36 @@ test.describe('المساجد القريبة', () => {
     await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
     await expect(page.getByRole('alert')).toContainText('تعذر الوصول إلى خادم بيانات الخرائط')
     await expect(page.getByRole('list', { name: 'المساجد' })).toHaveCount(0)
+  })
+})
+
+test.describe('0.9: الملخص الأسبوعي وهدف الأسبوع', () => {
+  test('ملخص الرئيسية بين اليوم والأسبوع، وهدف الأسبوع في الختمة', async ({ page }) => {
+    await page.goto('/')
+    const period = page.getByRole('radiogroup', { name: 'فترة الملخص' })
+    await period.getByRole('radio', { name: 'الأسبوع' }).click()
+    await expect(page.getByRole('heading', { name: 'إنجاز الأسبوع' })).toBeVisible()
+    await expect(page.getByText('أيام نشاط')).toBeVisible()
+    await page.goto('/wird')
+    await page.getByRole('button', { name: 'ختمة جديدة' }).click()
+    await page.getByRole('button', { name: '30 يومًا' }).click()
+    await page.getByRole('button', { name: 'بدء الختمة' }).click()
+    await page.getByRole('button', { name: 'قرأت ورد اليوم' }).click()
+    const goal = page.getByLabel('هدف الأسبوع', { exact: true })
+    await expect(goal).toContainText('آخر 7 أيام: 21 من نحو')
+    await expect(goal).toContainText('1 من 7 أيام')
+  })
+
+  test('الفاصل بين تكرارات الآية في صفحة الاستماع', async ({ page }) => {
+    await page.route(/everyayah\.com|cdn\.islamic\.network/, (r) => r.fulfill({ status: 200, contentType: 'audio/mpeg', body: TONE }))
+    await page.goto('/listen')
+    await page.getByLabel('السورة').selectOption('112')
+    await page.getByRole('button', { name: /تشغيل سورة الإخلاص/ }).click()
+    const gap = page.getByLabel('الفاصل بين التكرارات')
+    await expect(gap).toBeDisabled()
+    await page.getByLabel(/تكرار كل آية/).selectOption('3')
+    await expect(gap).toBeEnabled()
+    await gap.selectOption('2')
+    await expect(gap).toHaveValue('2')
   })
 })

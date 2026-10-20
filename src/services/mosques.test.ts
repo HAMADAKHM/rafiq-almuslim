@@ -18,7 +18,9 @@ describe('دليل المساجد', () => {
     const q = overpassQuery(32.2211, 35.2544, 3000)
     expect(q).toContain('"amenity"="place_of_worship"')
     expect(q).toContain('"religion"="muslim"')
-    expect(q).toContain('around:3000,32.22110,35.25440')
+    // الموقع يُرسل مقرّبًا (~100 م) مع توسيع النطاق قليلًا لتعويض التقريب
+    expect(q).toContain('around:3150,32.221,35.254')
+    expect(q).not.toContain('32.2211')
   })
   it('تحليل النتائج: الاسم العربي أولًا، ومراكز المباني، والترتيب بالمسافة', () => {
     const from = { lat: 32.22, lng: 35.25 }
@@ -35,6 +37,7 @@ describe('دليل المساجد', () => {
   it('تنسيق المسافة وروابط الخرائط', () => {
     expect(formatDistance(437)).toBe('440 م')
     expect(formatDistance(2350)).toBe('2.4 كم')
+    expect(formatDistance(3000)).toBe('3 كم')
     expect(directionsUrl({ lat: 1, lng: 2 }, 'ios')).toContain('maps.apple.com')
     expect(directionsUrl({ lat: 1, lng: 2 }, 'android')).toContain('google.com/maps/dir')
   })
