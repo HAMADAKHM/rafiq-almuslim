@@ -1,7 +1,7 @@
 // خطط ختم القرآن: أكثر من خطة، بمدة مستهدفة أو بعدد صفحات يومي، مع سجل وختمات سابقة.
 // التقدم يُسجَّل بإجراء صريح من المستخدم (لا يُعدّ فتح الصفحة قراءةً مؤكدة).
 import { kv, reading } from '../db/repos'
-import { daysBetween } from '../lib/dates'
+import { daysBetween, shiftDayKey } from '../lib/dates'
 import { pageRange, type QuranMeta } from './quran'
 
 export const TOTAL_PAGES = 604
@@ -67,6 +67,19 @@ export function createPlan(opts: { name?: string; mode: 'days' | 'pages'; target
 
 export function pagesReadOn(plan: KhatmaPlan, date: string): number {
   return plan.log.filter((l) => l.date === date).reduce((n, l) => n + (l.to - l.from + 1), 0)
+}
+
+/**
+ * حصيلة آخر 7 أيام (اليوم وستة قبله) مقابل هدف أسبوعي تقريبي = ورد اليوم × 7،
+ * دون تجاوز الصفحات المتبقية في الختمة عند بداية الأسبوع.
+ */
+export function weekStats(plan: KhatmaPlan, today: string): { read: number; target: number; activeDays: number } {
+  const days = Array.from({ length: 7 }, (_, i) => shiftDayKey(today, -i))
+  const per = days.map((d) => pagesReadOn(plan, d))
+  const read = per.reduce((a, b) => a + b, 0)
+  const t = dailyTarget(plan, today)
+  const remainingAtWeekStart = TOTAL_PAGES - (plan.nextPage - read) + 1
+  return { read, target: Math.max(1, Math.min(t.pages * 7, remainingAtWeekStart)), activeDays: per.filter((n) => n > 0).length }
 }
 
 export function remainingPages(plan: KhatmaPlan): number {

@@ -63,6 +63,7 @@ function Practice({ data, seg, today, onGraded }: { data: QuranData; seg: MemoSe
   const [mode, setMode] = useState<'show' | 'hide' | 'hint'>(seg.status === 'new' ? 'show' : 'hide')
   const [revealed, setRevealed] = useState<Set<number>>(new Set())
   const [repeat, setRepeat] = useState(3)
+  const [gap, setGap] = useState(2)
   const s = data.meta.surahs[seg.surah - 1]
   const ayahs = Array.from({ length: seg.to - seg.from + 1 }, (_, i) => seg.from + i)
   const isNew = seg.status === 'new'
@@ -94,7 +95,12 @@ function Practice({ data, seg, today, onGraded }: { data: QuranData; seg: MemoSe
               {[1, 2, 3, 5, 7, 10].map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
           </label>
-          <button className="btn btn-sm" onClick={() => player.play({ reciterId: settings.reciterId, surah: seg.surah, surahName: s.name, from: seg.from, to: seg.to, repeatEach: repeat, repeatRange: false })}><Play size={14} /> استمع للمقطع</button>
+          <label className="row">والفاصل
+            <select className="select" style={{ width: 92, minHeight: 32, padding: '0 0.4rem' }} value={gap} onChange={(e) => setGap(Number(e.target.value))} aria-label="الفاصل بين التكرارات">
+              {[0, 1, 2, 3, 5, 10].map((g) => <option key={g} value={g}>{g === 0 ? 'بلا فاصل' : `${g} ث`}</option>)}
+            </select>
+          </label>
+          <button className="btn btn-sm" onClick={() => { player.setRepeat(repeat, false, gap); player.play({ reciterId: settings.reciterId, surah: seg.surah, surahName: s.name, from: seg.from, to: seg.to, repeatEach: repeat, repeatRange: false }) }}><Play size={14} /> استمع للمقطع</button>
           <button className="btn btn-sm btn-ghost" onClick={() => player.stop()} aria-label="إيقاف"><Pause size={14} /></button>
         </span>
       </div>

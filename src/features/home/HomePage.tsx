@@ -71,7 +71,10 @@ export function HomePage() {
   const [customize, setCustomize] = useState(false)
   const [shareAyah, setShareAyah] = useState(false)
   const stats = computeStats(read, segs, mlogs, adh, today)
-  const todaySeries = dailySeries(read, mlogs, adh, today, 1)[0]
+  const week = dailySeries(read, mlogs, adh, today, 7)
+  const todaySeries = week[6]
+  const weekSum = { ayahs: week.reduce((n, d) => n + d.ayahs, 0), adhkar: week.reduce((n, d) => n + d.adhkar, 0), reviews: week.reduce((n, d) => n + d.reviews, 0), active: week.filter((d) => d.ayahs || d.adhkar || d.reviews).length }
+  const [period, setPeriod] = useState<'day' | 'week'>('day')
   const np = loc ? nextPrayer(loc, settings.prayer, now) : null
   const times = loc ? todayTimes(loc, settings.prayer, now) : null
   const done = new Set(adhkar.map((a) => a.category))
@@ -149,13 +152,31 @@ export function HomePage() {
     ),
     summary: (
       <section className="card">
-        <div className="spread"><h2 style={{ margin: 0 }}>إنجاز اليوم</h2><Link to="/progress" className="small">التفاصيل</Link></div>
-        <div className="grid grid-4 compact-stats">
-          <div className="stat"><b>{todaySeries.ayahs}</b><span className="small muted">آية</span></div>
-          <div className="stat"><b>{done.size}</b><span className="small muted">أذكار</span></div>
-          <div className="stat"><b>{tasbih ? todayTotal(tasbih, today) : 0}</b><span className="small muted">تسبيحة</span></div>
-          <div className="stat"><b>{segs.length ? due : '—'}</b><span className="small muted">مراجعة متبقية</span></div>
+        <div className="spread">
+          <h2 style={{ margin: 0 }}>{period === 'day' ? 'إنجاز اليوم' : 'إنجاز الأسبوع'}</h2>
+          <span className="row">
+            <span className="seg" role="radiogroup" aria-label="فترة الملخص">
+              <button role="radio" aria-checked={period === 'day'} onClick={() => setPeriod('day')}>اليوم</button>
+              <button role="radio" aria-checked={period === 'week'} onClick={() => setPeriod('week')}>الأسبوع</button>
+            </span>
+            <Link to="/progress" className="small">التفاصيل</Link>
+          </span>
         </div>
+        {period === 'day' ? (
+          <div className="grid grid-4 compact-stats">
+            <div className="stat"><b>{todaySeries.ayahs}</b><span className="small muted">آية</span></div>
+            <div className="stat"><b>{done.size}</b><span className="small muted">أذكار</span></div>
+            <div className="stat"><b>{tasbih ? todayTotal(tasbih, today) : 0}</b><span className="small muted">تسبيحة</span></div>
+            <div className="stat"><b>{segs.length ? due : '—'}</b><span className="small muted">مراجعة متبقية</span></div>
+          </div>
+        ) : (
+          <div className="grid grid-4 compact-stats">
+            <div className="stat"><b>{weekSum.ayahs}</b><span className="small muted">آية</span></div>
+            <div className="stat"><b>{weekSum.adhkar}</b><span className="small muted">أذكار</span></div>
+            <div className="stat"><b>{weekSum.reviews}</b><span className="small muted">مراجعة</span></div>
+            <div className="stat"><b>{weekSum.active}/7</b><span className="small muted">أيام نشاط</span></div>
+          </div>
+        )}
         {stats.streak > 1 && <p className="small muted" style={{ margin: '6px 0 0' }}>{stats.streak} أيام متتالية من النشاط</p>}
       </section>
     ),

@@ -109,6 +109,11 @@ export function ListenPage() {
                     {[1, 2, 3, 5, 10, 20].map((n) => <option key={n} value={n}>{n === 1 ? 'بدون تكرار' : `${n} مرات`}</option>)}
                   </select>
                 </label>
+                <label className="field"><span>الفاصل بين التكرارات</span>
+                  <select className="select" value={p.repeatGap} disabled={p.repeatEach === 1} onChange={(e) => player.setRepeat(p.repeatEach, p.repeatRange, Number(e.target.value))}>
+                    {[0, 1, 2, 3, 5, 10].map((g) => <option key={g} value={g}>{g === 0 ? 'بلا فاصل' : `${g} ث`}</option>)}
+                  </select>
+                </label>
                 <label className="field"><span>السرعة</span>
                   <select className="select" value={p.rate} onChange={(e) => player.setRate(Number(e.target.value))}>
                     {[0.75, 0.9, 1, 1.1, 1.25, 1.5].map((r) => <option key={r} value={r}>{r}×</option>)}

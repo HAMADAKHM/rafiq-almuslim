@@ -19,8 +19,8 @@ export default defineConfig({
         description: 'تطبيق إسلامي مجاني — صدقة جارية عن روح المرحوم قصي بديع خلفه (أبو محمد)',
         lang: 'ar',
         dir: 'rtl',
-        theme_color: '#0d4d3a',
-        background_color: '#f7f4ec',
+        theme_color: '#073B32',
+        background_color: '#F5F0E6',
         display: 'standalone',
         start_url: '/',
         icons: [

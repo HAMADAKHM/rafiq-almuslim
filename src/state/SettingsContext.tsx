@@ -53,7 +53,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       // الأسود والذهبي: قاعدة الوضع الداكن مع لون مميز ذهبي
       if (settings.theme === 'gold') root.dataset.accent = 'gold'
       else delete root.dataset.accent
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', settings.theme === 'gold' ? '#0a0a0a' : dark ? '#0c1512' : '#0f5a44')
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', settings.theme === 'gold' ? '#0a0a0a' : dark ? '#0c1512' : '#073B32')
     }
     apply()
     const mq = window.matchMedia?.('(prefers-color-scheme: dark)')

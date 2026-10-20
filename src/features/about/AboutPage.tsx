@@ -1,6 +1,7 @@
 import { PageHead } from '../../components/Common'
 import { DEDICATION_PARAGRAPHS, DEDICATION_TITLE, FREE_PROMISE } from '../../content/dedication'
 import { useQuran } from '../../hooks'
+import { APP_VERSION } from '../../version'
 
 export function AboutPage() {
   const { data } = useQuran()
@@ -31,7 +32,7 @@ export function AboutPage() {
         </ul>
         <p className="small muted">إن لاحظت خطأً في أي محتوى فنرجو التنبيه عليه لتصحيحه. المحتوى الديني المكتوب (الأذكار والدروس) يحتاج إلى مراجعة متخصص شرعي قبل النشر العام.</p>
       </section>
-      <p className="small muted" style={{ textAlign: 'center', marginTop: '1rem' }}>رفيق المسلم — الإصدار 0.8.0</p>
+      <p className="small muted" style={{ textAlign: 'center', marginTop: '1rem' }}>رفيق المسلم — الإصدار {APP_VERSION}</p>
     </>
   )
 }

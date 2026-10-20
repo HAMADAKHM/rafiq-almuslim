@@ -2,7 +2,7 @@
 // (خوارزمية PrayTimes.org المعروفة)، ونختبر المناطق الزمنية والتوقيت الصيفي.
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_PRAYER_SETTINGS, nextPrayer, prayerTimesFor, suggestMethod, upcomingDays, type PrayerSettings } from './prayer'
-import { formatTime } from '../lib/dates'
+import { dateParts, formatTime } from '../lib/dates'
 
 // ---------- تنفيذ مرجعي مستقل ----------
 const dtr = (d: number) => (d * Math.PI) / 180
@@ -154,6 +154,24 @@ describe('المناطق الزمنية والتوقيت الصيفي', () => {
       expect(Math.abs(local(b.dhuhr) - local(a.dhuhr) - c.shift)).toBeLessThanOrEqual(2)
     })
   }
+
+  it('فلسطين (Asia/Hebron): بدء التوقيت الصيفي وانتهاؤه في 2026 يُكتشفان من قاعدة المناطق الزمنية', () => {
+    const place = { lat: 32.2211, lng: 35.2544, tz: 'Asia/Hebron' }
+    const offset = (d: Date) => new Intl.DateTimeFormat('en-US', { timeZone: place.tz, timeZoneName: 'shortOffset' }).formatToParts(d).find((p) => p.type === 'timeZoneName')!.value
+    const local = (d: Date) => { const [h, m] = new Intl.DateTimeFormat('en-GB', { timeZone: place.tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(d).split(':').map(Number); return h * 60 + m }
+    const transitions: { before: { y: number; m: number; d: number }; after: { y: number; m: number; d: number } }[] = []
+    for (let i = 0; i < 365; i++) {
+      const a = new Date(Date.UTC(2026, 0, 1 + i, 9)), b = new Date(Date.UTC(2026, 0, 2 + i, 9))
+      if (offset(a) !== offset(b)) transitions.push({ before: dateParts(a, place.tz), after: dateParts(b, place.tz) })
+    }
+    expect(transitions.length).toBe(2) // بداية ونهاية
+    for (const [i, t] of transitions.entries()) {
+      const a = prayerTimesFor(place, t.before, s), b = prayerTimesFor(place, t.after, s)
+      expect(Math.abs(b.dhuhr.getTime() - a.dhuhr.getTime() - 86_400_000) / 60_000).toBeLessThan(2)
+      // الربيع: تتقدم الساعة المعروضة ساعة؛ الخريف: تتأخر ساعة
+      expect(Math.abs(local(b.dhuhr) - local(a.dhuhr) - (i === 0 ? 60 : -60))).toBeLessThanOrEqual(2)
+    }
+  })
 
   it('تُعرض المواقيت بتوقيت المدينة لا بتوقيت جهاز المستخدم', () => {
     const t = prayerTimesFor({ lat: 21.4225, lng: 39.8262, tz: 'Asia/Riyadh' }, { y: 2026, m: 10, d: 19 }, s)

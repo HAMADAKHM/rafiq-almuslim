@@ -7,28 +7,33 @@ import { SettingsProvider } from '../state/SettingsContext'
 import { HomePage } from '../features/home/HomePage'
 import { QuranIndexPage } from '../features/quran/QuranIndexPage'
 import { ReaderPage } from '../features/quran/ReaderPage'
-import { MemorizePage } from '../features/memorize/MemorizePage'
 import { PrayerPage } from '../features/prayer/PrayerPage'
-import { QiblaPage } from '../features/qibla/QiblaPage'
 import { ContentLibrary } from '../features/adhkar/AdhkarPage'
-import { ListenPage } from '../features/listen/ListenPage'
-import { LearnPage, LessonPage } from '../features/learn/LearnPage'
-import { WirdPage } from '../features/wird/WirdPage'
-import { ProgressPage } from '../features/progress/ProgressPage'
-import { SettingsPage } from '../features/settings/SettingsPage'
-import { AboutPage } from '../features/about/AboutPage'
-import { SearchPage } from '../features/search/SearchPage'
-import { JourneyPage } from '../features/journey/JourneyPage'
 import { Empty } from '../components/Common'
-import { MushafPage } from '../features/quran/MushafPage'
-import { SurahInfoPage } from '../features/quran/SurahInfoPage'
-import { TasbihPage } from '../features/tasbih/TasbihPage'
-import { CalendarPage } from '../features/calendar/CalendarPage'
-import { RemindersPage } from '../features/reminders/RemindersPage'
 import { NativeBridge } from './NativeBridge'
-import { MorePage } from '../features/more/MorePage'
-import { MyAdhkarPage } from '../features/adhkar/MyAdhkarPage'
-import { StudioPage } from '../features/studio/StudioPage'
+import { lazy, type ComponentType } from 'react'
+
+// الصفحات الأقل استخدامًا تُحمَّل عند فتحها فقط (أول فتح أسرع)؛ وكلها مخزنة للعمل دون اتصال
+const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) => lazy(() => load().then((m) => ({ default: m[name] })))
+const MemorizePage = page(() => import('../features/memorize/MemorizePage'), 'MemorizePage')
+const QiblaPage = page(() => import('../features/qibla/QiblaPage'), 'QiblaPage')
+const ListenPage = page(() => import('../features/listen/ListenPage'), 'ListenPage')
+const WirdPage = page(() => import('../features/wird/WirdPage'), 'WirdPage')
+const ProgressPage = page(() => import('../features/progress/ProgressPage'), 'ProgressPage')
+const SettingsPage = page(() => import('../features/settings/SettingsPage'), 'SettingsPage')
+const AboutPage = page(() => import('../features/about/AboutPage'), 'AboutPage')
+const SearchPage = page(() => import('../features/search/SearchPage'), 'SearchPage')
+const JourneyPage = page(() => import('../features/journey/JourneyPage'), 'JourneyPage')
+const MushafPage = page(() => import('../features/quran/MushafPage'), 'MushafPage')
+const SurahInfoPage = page(() => import('../features/quran/SurahInfoPage'), 'SurahInfoPage')
+const TasbihPage = page(() => import('../features/tasbih/TasbihPage'), 'TasbihPage')
+const CalendarPage = page(() => import('../features/calendar/CalendarPage'), 'CalendarPage')
+const RemindersPage = page(() => import('../features/reminders/RemindersPage'), 'RemindersPage')
+const MorePage = page(() => import('../features/more/MorePage'), 'MorePage')
+const MyAdhkarPage = page(() => import('../features/adhkar/MyAdhkarPage'), 'MyAdhkarPage')
+const StudioPage = page(() => import('../features/studio/StudioPage'), 'StudioPage')
+const LearnPage = page(() => import('../features/learn/LearnPage'), 'LearnPage')
+const LessonPage = page(() => import('../features/learn/LearnPage'), 'LessonPage')
 
 export function AppRoutes() {
   return (

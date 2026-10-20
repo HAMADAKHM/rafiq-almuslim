@@ -5,6 +5,11 @@ name: Android APK
 on:
   push:
   workflow_dispatch:
+    inputs:
+      publish_beta:
+        description: 'نشر نسخة معاينة (Pre-release) علنية من هذا الفرع'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -48,7 +53,8 @@ jobs:
             --notes "نسخة تجريبية لنظام Android. نزّل RafiqAlMuslim.apk وثبّته (اسمح بالتثبيت من مصادر غير معروفة). مجاني بالكامل — صدقة جارية."
       # فروع التطوير: نسخة تجريبية (Pre-release) للمعاينة دون المساس بالإصدار الرئيسي
       - name: Publish beta pre-release
-        if: startsWith(github.ref, 'refs/heads/feature/')
+        # لا تُنشر ملفات علنية تلقائيًا: نسخة المعاينة تُنشر فقط بتشغيل يدوي يطلبها صراحة
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_beta && startsWith(github.ref, 'refs/heads/feature/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

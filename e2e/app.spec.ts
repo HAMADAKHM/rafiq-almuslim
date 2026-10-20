@@ -783,3 +783,16 @@ test.describe('الاستوديو 0.8: البحث عن الآية وفيديو �
     await expect(page).toHaveURL(/\/quran\/108\?ayah=1/)
   })
 })
+
+test.describe('جهاز بمنطقة زمنية مختلفة', () => {
+  test.use({ timezoneId: 'America/Los_Angeles' })
+  test('مستخدم جهازه على توقيت لوس أنجلوس ومدينته نابلس: المواقيت والعدّاد بتوقيت نابلس', async ({ page }) => {
+    // 12:34:30 بتوقيت UTC = 3:34 م في نابلس = 5:34 ص في لوس أنجلوس
+    await page.clock.install({ time: new Date('2026-10-20T12:34:30Z') })
+    await chooseCity(page, 'نابلس', /نابلس، فلسطين/)
+    await page.goto('/prayer')
+    await expect(page.locator('.prayer-row', { hasText: 'العصر' })).toContainText('3:35')
+    await expect(page.locator('.prayer-row.next')).toContainText('العصر')
+    await expect(page.getByLabel('الوقت المتبقي')).toHaveText(/^00:00:[0-3]\d$/)
+  })
+})

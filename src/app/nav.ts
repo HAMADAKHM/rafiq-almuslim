@@ -56,7 +56,7 @@ export const LINK_META: Record<string, { label: string; icon: typeof House }> = 
   '/quran': { label: 'القرآن', icon: BookOpen },
   '/listen': { label: 'الاستماع', icon: Headphones },
   '/prayer': { label: 'المواقيت', icon: Clock },
-  '/wird': { label: 'الورد', icon: CalendarCheck },
+  '/wird': { label: 'الختمة', icon: CalendarCheck },
   '/memorize': { label: 'الحفظ', icon: Brain },
   '/learn': { label: 'التفسير', icon: GraduationCap },
   '/my-adhkar': { label: 'أذكاري', icon: PenLine },

@@ -19,6 +19,8 @@ export interface PlayerState {
   repeatEach: number
   /** تكرار المقطع كاملًا عند انتهائه */
   repeatRange: boolean
+  /** فاصل صامت بالثواني بين تكرارات الآية الواحدة (للحفظ) */
+  repeatGap: number
   rate: number
   volume: number
   playingBasmala: boolean
@@ -33,9 +35,11 @@ class AudioPlayer {
   private el: HTMLAudioElement | null = null
   private listeners = new Set<Listener>()
   private repeatCounter = 0
+  private gapTimer: ReturnType<typeof setTimeout> | undefined
+  private gapPending = false
   state: PlayerState = {
     status: 'idle', reciterId: RECITERS[0].id, surah: 1, surahName: '', ayah: 1, from: 1, to: 7,
-    repeatEach: 1, repeatRange: false, rate: 1, volume: 1, playingBasmala: false,
+    repeatEach: 1, repeatRange: false, repeatGap: 0, rate: 1, volume: 1, playingBasmala: false,
   }
 
   subscribe = (l: Listener) => {
@@ -118,7 +122,16 @@ class AudioPlayer {
     const s = this.state
     if (s.playingBasmala) return this.load(s.ayah, false)
     this.repeatCounter++
-    if (this.repeatCounter < s.repeatEach) return this.load(s.ayah)
+    if (this.repeatCounter < s.repeatEach) {
+      if (s.repeatGap > 0) {
+        // فاصل صامت قبل إعادة الآية: يتيح للحافظ ترديدها
+        this.set({ status: 'paused' })
+        this.gapPending = true
+        this.gapTimer = setTimeout(() => { this.gapPending = false; this.load(s.ayah) }, s.repeatGap * 1000)
+        return
+      }
+      return this.load(s.ayah)
+    }
     this.repeatCounter = 0
     if (s.ayah < s.to) return this.load(s.ayah + 1)
     if (s.repeatRange) return this.load(s.from, s.from === 1 && !BASMALA_SURAH_EXCEPTIONS.has(s.surah))
@@ -128,22 +141,25 @@ class AudioPlayer {
   toggle() {
     const el = this.el
     if (!el || !el.src) return
+    // أثناء الفاصل: التشغيل يتخطى الفاصل ويعيد الآية فورًا
+    if (this.gapPending) { clearTimeout(this.gapTimer); this.gapPending = false; this.load(this.state.ayah); return }
     if (el.paused) el.play().catch(() => {})
     else el.pause()
   }
   pause() { this.el?.pause() }
   stop() {
+    clearTimeout(this.gapTimer); this.gapPending = false
     if (this.el) { this.el.pause(); this.el.removeAttribute('src'); this.el.load() }
     this.set({ status: 'idle' })
   }
-  next() { if (this.state.ayah < this.state.to) { this.repeatCounter = 0; this.load(this.state.ayah + 1) } }
-  prev() { if (this.state.ayah > this.state.from) { this.repeatCounter = 0; this.load(this.state.ayah - 1) } }
-  goTo(ayah: number) { if (ayah >= this.state.from && ayah <= this.state.to) { this.repeatCounter = 0; this.load(ayah) } }
+  next() { clearTimeout(this.gapTimer); this.gapPending = false; if (this.state.ayah < this.state.to) { this.repeatCounter = 0; this.load(this.state.ayah + 1) } }
+  prev() { clearTimeout(this.gapTimer); this.gapPending = false; if (this.state.ayah > this.state.from) { this.repeatCounter = 0; this.load(this.state.ayah - 1) } }
+  goTo(ayah: number) { clearTimeout(this.gapTimer); this.gapPending = false; if (ayah >= this.state.from && ayah <= this.state.to) { this.repeatCounter = 0; this.load(ayah) } }
   retry() { this.load(this.state.ayah, this.state.playingBasmala) }
 
   setRate(rate: number) { this.set({ rate }); if (this.el) this.el.playbackRate = rate }
   setVolume(volume: number) { this.set({ volume }); if (this.el) this.el.volume = volume }
-  setRepeat(repeatEach: number, repeatRange: boolean) { this.set({ repeatEach, repeatRange }) }
+  setRepeat(repeatEach: number, repeatRange: boolean, repeatGap = this.state.repeatGap) { this.set({ repeatEach, repeatRange, repeatGap: Math.max(0, Math.min(30, repeatGap)) }) }
   setReciter(reciterId: string) {
     this.set({ reciterId })
     if (this.state.status === 'playing' || this.state.status === 'loading') this.load(this.state.ayah)

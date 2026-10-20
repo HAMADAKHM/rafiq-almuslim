@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
 import { WifiOff, ChevronRight, Search } from 'lucide-react'
 import { t } from '../i18n/strings'
@@ -10,6 +10,7 @@ import { startReminderLoop } from '../services/notifications'
 import { LogoMark } from '../components/Art'
 import { NAV, TABS } from './nav'
 import { Splash } from './Splash'
+import { Spinner } from '../components/Common'
 import { AdhanAlarm } from '../components/AdhanAlarm'
 
 function Brand() {
@@ -77,7 +78,9 @@ export function Layout() {
           </div>
         )}
         <main id="main" ref={mainRef} className="content" tabIndex={-1}>
-          <Outlet />
+          <Suspense fallback={<Spinner label="جارٍ فتح الصفحة" />}>
+            <Outlet />
+          </Suspense>
         </main>
         {settings.showFooterDedication && !isReader && (
           <footer className="footer">

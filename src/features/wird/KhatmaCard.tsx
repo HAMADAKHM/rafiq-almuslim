@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { BookOpen, CircleCheck } from 'lucide-react'
 import { ProgressBar, Ring } from '../../components/Common'
 import { toast, useLive } from '../../hooks'
-import { activePlan, dailyTarget, loadKhatmas, progress, recordPages, type KhatmaState } from '../../services/khatma'
+import { activePlan, dailyTarget, loadKhatmas, progress, recordPages, weekStats, type KhatmaState } from '../../services/khatma'
 import { firstAyahOf, type QuranData } from '../../services/quran'
 import { dayKey } from '../../lib/dates'
 
@@ -58,6 +58,15 @@ export function KhatmaCard({ data, compact }: { data: QuranData; compact?: boole
         {doneToday ? <><CircleCheck size={14} color="var(--success)" /> أتممت ورد اليوم ({t.doneToday} صفحة)</> : <>ورد اليوم: الصفحات <strong>{t.from}–{t.to}</strong> ({t.pages} صفحة){t.doneToday > 0 && ` — قرأت ${t.doneToday}`}</>}
       </p>
       {!compact && <p className="small muted" style={{ margin: 0 }}>المتبقي {605 - plan.nextPage} صفحة{plan.mode === 'days' ? ` • ${t.daysLeft} يومًا حسب خطتك` : ''}</p>}
+      {!compact && (() => {
+        const w = weekStats(plan, today)
+        return (
+          <div className="week-goal" aria-label="هدف الأسبوع">
+            <div className="spread small"><span>آخر 7 أيام: <strong>{w.read}</strong> من نحو {w.target} صفحة</span><span className="muted">{w.activeDays} من 7 أيام</span></div>
+            <ProgressBar value={w.read / w.target} label="تقدم هدف الأسبوع" />
+          </div>
+        )
+      })()}
       <div className="row">
         {start && <Link className="btn btn-primary btn-sm" to={`/mushaf/${plan.nextPage}`}><BookOpen size={14} /> اقرأ الآن</Link>}
         {!doneToday && <button className="btn btn-sm" onClick={() => record(t.to)}><CircleCheck size={14} /> قرأت ورد اليوم</button>}

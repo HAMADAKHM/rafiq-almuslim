@@ -93,7 +93,8 @@ export interface Settings {
 }
 
 export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio']
-export const DEFAULT_QUICK_LINKS = ['/tasbih', '/qibla', '/duas', '/calendar']
+// القبلة والمسبحة والختمة أولًا (للمستخدمين الجدد؛ اختيارات المستخدمين الحاليين تبقى كما هي)
+export const DEFAULT_QUICK_LINKS = ['/qibla', '/tasbih', '/wird', '/calendar']
 export const MAX_QUICK_LINKS = 8
 
 export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
