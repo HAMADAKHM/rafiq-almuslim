@@ -10,7 +10,7 @@ export const FORMATS: Record<StudioFormat, { w: number; h: number; label: string
   landscape: { w: 1920, h: 1080, label: 'عرضي — يوتيوب' },
 }
 
-export type StudioBg = 'scene-sunset' | 'scene-night' | 'scene-dawn' | 'scene-day' | 'emerald' | 'night' | 'ivory' | 'parchment' | 'photo'
+export type StudioBg = 'scene-sunset' | 'scene-night' | 'scene-dawn' | 'scene-day' | 'emerald' | 'night' | 'gold' | 'ivory' | 'parchment' | 'photo'
 export const BACKGROUNDS: { id: StudioBg; label: string; swatch: string }[] = [
   { id: 'scene-sunset', label: 'غروب', swatch: 'linear-gradient(#2f6656,#f3c676)' },
   { id: 'scene-night', label: 'ليل', swatch: 'linear-gradient(#06161a,#1d4a40)' },
@@ -18,6 +18,7 @@ export const BACKGROUNDS: { id: StudioBg; label: string; swatch: string }[] = [
   { id: 'scene-day', label: 'نهار', swatch: 'linear-gradient(#5d9bb0,#f1ecd9)' },
   { id: 'emerald', label: 'زمردي', swatch: 'linear-gradient(135deg,#0f5a44,#0a3f30)' },
   { id: 'night', label: 'كحلي', swatch: 'linear-gradient(135deg,#0f1f33,#07111d)' },
+  { id: 'gold', label: 'أسود وذهبي', swatch: 'linear-gradient(135deg,#1d1b17,#050505)' },
   { id: 'ivory', label: 'عاجي', swatch: 'linear-gradient(135deg,#fbf7ec,#efe6cf)' },
   { id: 'parchment', label: 'ورق المصحف', swatch: 'linear-gradient(135deg,#f7f0de,#e9dcbc)' },
   { id: 'photo', label: 'صورتي', swatch: 'repeating-linear-gradient(45deg,#ccc 0 6px,#eee 6px 12px)' },
@@ -145,7 +146,7 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
     ctx.fillStyle = g
     ctx.fillRect(0, 0, W, H)
   } else {
-    const colors: Record<string, [string, string]> = { emerald: ['#0f5a44', '#0a3f30'], night: ['#0f1f33', '#07111d'], ivory: ['#fbf7ec', '#efe6cf'], parchment: ['#f7f0de', '#e9dcbc'] }
+    const colors: Record<string, [string, string]> = { emerald: ['#0f5a44', '#0a3f30'], night: ['#0f1f33', '#07111d'], gold: ['#1d1b17', '#050505'], ivory: ['#fbf7ec', '#efe6cf'], parchment: ['#f7f0de', '#e9dcbc'] }
     const [a, b] = colors[style.bg] ?? colors.emerald
     const g = ctx.createLinearGradient(0, 0, W, H)
     g.addColorStop(0, a); g.addColorStop(1, b)
@@ -153,8 +154,8 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
     ctx.fillRect(0, 0, W, H)
     pattern(ctx, W, H, light ? 'rgba(15,90,68,0.06)' : 'rgba(240,214,143,0.07)')
   }
-  const ink = light ? '#1c241f' : '#fdfaf2'
-  const gold = light ? '#8a6a1f' : '#f0d68f'
+  const ink = light ? '#1c241f' : style.bg === 'gold' ? '#f3e7c4' : '#fdfaf2'
+  const gold = light ? '#8a6a1f' : style.bg === 'gold' ? '#d4af37' : '#f0d68f'
   // ---------- الإطار ----------
   const m = Math.round(Math.min(W, H) * 0.04)
   ctx.strokeStyle = gold

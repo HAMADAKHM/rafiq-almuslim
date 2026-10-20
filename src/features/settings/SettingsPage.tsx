@@ -112,7 +112,7 @@ export function SettingsPage() {
           <div className="grid grid-2" style={{ gap: '0.75rem' }}>
             <label className="field"><span>المظهر</span>
               <select className="select" value={settings.theme} onChange={(e) => update({ theme: e.target.value as typeof settings.theme })}>
-                <option value="system">حسب النظام</option><option value="light">فاتح</option><option value="dark">داكن (ليلي)</option>
+                <option value="system">حسب النظام</option><option value="light">فاتح</option><option value="dark">داكن (ليلي)</option><option value="gold">أسود وذهبي</option>
               </select>
             </label>
             <label className="field"><span>اللغة</span>

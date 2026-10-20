@@ -218,3 +218,8 @@
 
 .sheet input[type='range'], .reader-app input[type='range'] { accent-color: var(--primary); }
 .reader-app .rd-progress input { accent-color: var(--accent); }
+.reader-bg-gold {
+  --paper: #0d0c0a; --paper-2: #141210; --ink: #f3e7c4; --ink-soft: #b6a77e; --accent: #d4af37; --gold: #d4af37;
+  --frame-a: #1c1912; --frame-b: #d4af37; --hl: rgba(212, 175, 55, 0.1); --hl-play: rgba(212, 175, 55, 0.2);
+  --cart-bg: #1c1912; --cart-ink: #e9c766; --stage: #050505; color-scheme: dark;
+}

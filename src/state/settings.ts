@@ -44,7 +44,7 @@ export interface NotificationSettings {
 
 /** طريقة العرض: متتابعة (آية بآية)، صفحات المصحف، أو التركيز (آية واحدة في الشاشة) */
 export type ReaderMode = 'flow' | 'mushaf' | 'focus'
-export type ReaderBg = 'cream' | 'ivory' | 'white' | 'sepia' | 'green' | 'night'
+export type ReaderBg = 'cream' | 'ivory' | 'white' | 'sepia' | 'green' | 'night' | 'gold'
 /** إطار الصفحة: زخرفي كلاسيكي أو بسيط */
 export type ReaderFrame = 'classic' | 'plain'
 /** خطوط عربية مرخّصة (SIL OFL) تدعم علامات الضبط القرآنية */
@@ -58,7 +58,8 @@ export const QURAN_FONTS: { id: QuranFont; label: string; family: string; note: 
 export type HomeCardId = 'continue' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
 
 export interface Settings {
-  theme: 'system' | 'light' | 'dark'
+  /** gold: أسود وذهبي (مبني على الوضع الداكن مع لون ذهبي بدل الأخضر) */
+  theme: 'system' | 'light' | 'dark' | 'gold'
   lang: 'ar' | 'en'
   uiScale: number
   quranFontSize: number

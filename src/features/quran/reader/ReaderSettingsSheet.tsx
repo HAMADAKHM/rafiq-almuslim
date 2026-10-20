@@ -11,6 +11,7 @@ const BGS: { id: ReaderBg; label: string }[] = [
   { id: 'sepia', label: 'ورقية' },
   { id: 'green', label: 'خضراء' },
   { id: 'night', label: 'داكنة' },
+  { id: 'gold', label: 'أسود وذهبي' },
 ]
 const MODES: { id: ReaderMode; label: string; hint: string }[] = [
   { id: 'flow', label: 'متتابعة', hint: 'السورة كاملة متصلة' },

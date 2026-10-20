@@ -33,8 +33,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = document.documentElement
     const apply = () => {
-      const dark = settings.theme === 'dark' || (settings.theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+      const dark = settings.theme === 'dark' || settings.theme === 'gold' || (settings.theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
       root.dataset.theme = dark ? 'dark' : 'light'
+      // الأسود والذهبي: قاعدة الوضع الداكن مع لون مميز ذهبي
+      if (settings.theme === 'gold') root.dataset.accent = 'gold'
+      else delete root.dataset.accent
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', settings.theme === 'gold' ? '#0a0a0a' : dark ? '#0c1512' : '#0f5a44')
     }
     apply()
     const mq = window.matchMedia?.('(prefers-color-scheme: dark)')
