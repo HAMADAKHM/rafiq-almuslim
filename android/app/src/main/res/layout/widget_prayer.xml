@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ودجت مواقيت الصلاة — أخضر زمردي ولمسة ذهبية -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:layoutDirection="rtl"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/widget_empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:text="@string/widget_empty"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/widget_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/widget_next" android:textColor="#F0D68F" android:textSize="11sp" />
+                <TextView android:id="@+id/next_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:id="@+id/city" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#C9D8CF" android:textSize="11sp" android:maxLines="1" android:ellipsize="end" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:orientation="vertical">
+                <TextView android:id="@+id/next_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" />
+                <Chronometer android:id="@+id/countdown" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F0D68F" android:textSize="14sp" android:layoutDirection="ltr" />
+                <TextView android:id="@+id/hijri" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#C9D8CF" android:textSize="10sp" android:maxLines="1" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:id="@+id/cell_0"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:background="@drawable/widget_cell"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp">
+                <TextView android:id="@+id/p_name_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#D9E6DF" android:textSize="11sp" android:maxLines="1" />
+                <TextView android:id="@+id/p_time_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/cell_1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:background="@drawable/widget_cell"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp">
+                <TextView android:id="@+id/p_name_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#D9E6DF" android:textSize="11sp" android:maxLines="1" />
+                <TextView android:id="@+id/p_time_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/cell_2"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:background="@drawable/widget_cell"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp">
+                <TextView android:id="@+id/p_name_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#D9E6DF" android:textSize="11sp" android:maxLines="1" />
+                <TextView android:id="@+id/p_time_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/cell_3"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:background="@drawable/widget_cell"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp">
+                <TextView android:id="@+id/p_name_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#D9E6DF" android:textSize="11sp" android:maxLines="1" />
+                <TextView android:id="@+id/p_time_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/cell_4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="2dp"
+                android:layout_marginEnd="2dp"
+                android:background="@drawable/widget_cell"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp">
+                <TextView android:id="@+id/p_name_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#D9E6DF" android:textSize="11sp" android:maxLines="1" />
+                <TextView android:id="@+id/p_time_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

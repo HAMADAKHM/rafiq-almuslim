@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../state/SettingsContext'
 import { isNative, onAppResume, onNotificationTap } from '../platform'
 import { rescheduleNative } from '../services/notifications'
+import { updatePrayerWidget } from '../platform/widget'
 
 /**
  * جسر المنصة الأصلية (Android/iOS) — لا يفعل شيئًا في المتصفح:
  * - يعيد جدولة الإشعارات عند تغيّر الإعدادات أو المدينة، وعند عودة التطبيق للواجهة
  *   (يغطي تغيّر التاريخ أو المنطقة الزمنية أو انتهاء الأيام المجدولة).
  * - يفتح الصفحة المناسبة عند الضغط على إشعار.
+ * - يحدّث بيانات ودجت المواقيت على Android.
  */
 export function NativeBridge() {
   const nav = useNavigate()
@@ -18,7 +20,7 @@ export function NativeBridge() {
 
   useEffect(() => {
     if (!ready || !isNative()) return
-    const t = setTimeout(() => { rescheduleNative(settings).catch(() => {}) }, 800)
+    const t = setTimeout(() => { rescheduleNative(settings).catch(() => {}); updatePrayerWidget(settings).catch(() => {}) }, 800)
     return () => clearTimeout(t)
   }, [ready, settings.notifications, settings.location, settings.prayer, settings.hijriOffset]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -27,7 +29,7 @@ export function NativeBridge() {
     let offTap = () => {}
     let offResume = () => {}
     onNotificationTap((route) => nav(route)).then((f) => { offTap = f })
-    onAppResume(() => { rescheduleNative(latest.current).catch(() => {}) }).then((f) => { offResume = f })
+    onAppResume(() => { rescheduleNative(latest.current).catch(() => {}); updatePrayerWidget(latest.current).catch(() => {}) }).then((f) => { offResume = f })
     return () => { offTap(); offResume() }
   }, [nav])
 

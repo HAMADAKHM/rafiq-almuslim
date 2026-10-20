@@ -4,4 +4,7 @@
     <string name="title_activity_main">رفيق المسلم</string>
     <string name="package_name">org.rafiqalmuslim.app</string>
     <string name="custom_url_scheme">org.rafiqalmuslim.app</string>
+    <string name="widget_description">مواقيت الصلاة والصلاة القادمة مع العدّ التنازلي</string>
+    <string name="widget_next">الصلاة القادمة</string>
+    <string name="widget_empty">افتح رفيق المسلم واختر مدينتك لعرض المواقيت</string>
 </resources>

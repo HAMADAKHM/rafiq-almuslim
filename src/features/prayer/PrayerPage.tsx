@@ -8,6 +8,7 @@ import { useLive } from '../../hooks'
 import { dayKey, shiftDayKey } from '../../lib/dates'
 import type { PrayerName } from '../../services/prayer'
 import type { PrayerKey } from '../../state/settings'
+import { platformName } from '../../platform'
 import { CityPicker } from '../../components/CityPicker'
 import { useNow } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
@@ -109,6 +110,13 @@ export function PrayerPage() {
             </ul>
             {settings.trackPrayers && <WeekSummary today={today_} />}
           </section>
+
+          {platformName() === 'android' && (
+            <section className="card" style={{ gridColumn: '1 / -1' }}>
+              <h2>ودجت المواقيت</h2>
+              <p className="small" style={{ margin: 0 }}>لإضافة الصلاة القادمة ومواقيت اليوم إلى الشاشة الرئيسية: اضغط مطولًا على مكان فارغ في الشاشة الرئيسية ← «الأدوات» (Widgets) ← رفيق المسلم. يتحدث الودجت عند دخول كل وقت وعند فتح التطبيق.</p>
+            </section>
+          )}
 
           <section className="card" style={{ gridColumn: '1 / -1' }}>
             <h2>الأيام القادمة</h2>
