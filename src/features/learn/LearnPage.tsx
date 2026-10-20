@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Empty, PageHead, Spinner, Tabs } from '../../components/Common'
 import { QuranRefText } from '../../components/QuranRefText'
 import { useQuran } from '../../hooks'
@@ -43,8 +43,9 @@ export function LearnPage() {
 
 function AyahTafsir({ kind }: { kind: 'tafsir' | 'gharib' }) {
   const { data } = useQuran()
-  const [surah, setSurah] = useState(1)
-  const [ayah, setAyah] = useState(1)
+  const [sp] = useSearchParams()
+  const [surah, setSurah] = useState(Math.min(114, Math.max(1, Number(sp.get('s')) || 1)))
+  const [ayah, setAyah] = useState(Math.max(1, Number(sp.get('a')) || 1))
   if (!data) return <Spinner />
   const s = data.meta.surahs[surah - 1]
   return (

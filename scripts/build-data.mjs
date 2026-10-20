@@ -52,6 +52,18 @@ fs.writeFileSync(out('quran/quran.json'), quranJson);
 fs.writeFileSync(out('quran/meta.json'), JSON.stringify(meta));
 console.log(`✓ القرآن: 114 سورة، ${total} آية، ${meta.pages} صفحة، sha256=${sha.slice(0, 16)}…`);
 
+// ---------- الترجمة الإنجليزية (Saheeh International عبر Tanzil، مضمّنة في quran-json) ----------
+const en = require('quran-json/dist/quran_en.json')
+if (en.length !== 114) fail('الترجمة: عدد السور غير صحيح')
+const enVerses = en.map((s, i) => {
+  if (s.verses.length !== verses[i].length) fail(`الترجمة: عدد آيات السورة ${i + 1} لا يطابق المصحف`)
+  s.verses.forEach((v, k) => { if (v.text !== verses[i][k]) fail(`الترجمة: النص العربي المرافق لا يطابق ${i + 1}:${k + 1}`); if (!v.translation?.trim()) fail(`ترجمة فارغة ${i + 1}:${k + 1}`) })
+  return s.verses.map((v) => v.translation)
+})
+fs.mkdirSync(out('translations'), { recursive: true })
+fs.writeFileSync(out('translations/en-sahih.json'), JSON.stringify({ v: 1, id: 'en-sahih', name: 'Saheeh International', source: 'Tanzil.net via quran-json@' + qjPkg.version, verses: enVerses }))
+console.log('✓ الترجمة الإنجليزية: 6236 آية، مطابقة لترتيب المصحف')
+
 // ---------- المدن ----------
 const tzlookup = require('@photostructure/tz-lookup');
 const cities = require('all-the-cities');

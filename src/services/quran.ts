@@ -145,3 +145,28 @@ export function parseRef(meta: QuranMeta, input: string): AyahRef | null {
 }
 
 export const BASMALA_SURAH_EXCEPTIONS = new Set([1, 9])
+
+// ---------------- الترجمات ----------------
+export interface Translation { id: string; name: string; source: string; verses: string[][] }
+const translations = new Map<string, Promise<Translation>>()
+
+/** تحميل ترجمة معتمدة مضمّنة في التطبيق (تعمل دون إنترنت بعد أول تحميل) */
+export function loadTranslation(id: string, fetcher: typeof fetch = fetch): Promise<Translation> {
+  if (!translations.has(id)) {
+    const p = fetcher(base() + `data/translations/${id}.json`).then((r) => { if (!r.ok) throw new Error('translation'); return r.json() as Promise<Translation> })
+    p.catch(() => translations.delete(id))
+    translations.set(id, p)
+  }
+  return translations.get(id)!
+}
+
+/** آيات صفحة من مصحف المدينة، مجمّعة حسب السورة */
+export function pageAyahs(meta: QuranMeta, page: number): { surah: number; from: number; to: number }[] {
+  const r = pageRange(meta, page)
+  if (!r) return []
+  const out: { surah: number; from: number; to: number }[] = []
+  for (let s = r.from.surah; s <= r.to.surah; s++) {
+    out.push({ surah: s, from: s === r.from.surah ? r.from.ayah : 1, to: s === r.to.surah ? r.to.ayah : meta.surahs[s - 1].count })
+  }
+  return out
+}

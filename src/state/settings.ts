@@ -1,4 +1,5 @@
 // إعدادات المستخدم: تُحفظ محليًا في IndexedDB.
+// أي حقل جديد يُدمج مع القيم الافتراضية في mergeSettings حتى لا تتأثر إعدادات الإصدارات السابقة.
 import { DEFAULT_PRAYER_SETTINGS, type PrayerName, type PrayerSettings } from '../services/prayer'
 
 export interface SavedLocation {
@@ -11,24 +12,86 @@ export interface SavedLocation {
   source: 'city' | 'gps' | 'manual'
 }
 
+export type PrayerKey = Exclude<PrayerName, 'sunrise'>
+
+export interface NotificationSettings {
+  /** المفتاح العام لكل التذكيرات */
+  enabled: boolean
+  perPrayer: Record<PrayerKey, boolean>
+  /** إشعار عند دخول وقت الصلاة */
+  atAdhan: boolean
+  /** دقائق التنبيه قبل الأذان (0 = بدون تنبيه مسبق) */
+  minutesBefore: number
+  morningAdhkar: string | null // "HH:MM"
+  eveningAdhkar: string | null
+  sleepAdhkar: string | null
+  ayahOfDay: string | null
+  dhikrOfDay: string | null
+  wird: string | null
+  memorize: string | null
+  occasions: string | null
+  dailySummary: string | null
+  /** تقليل الإشعارات: الصلاة عند الأذان وتذكير الورد فقط */
+  reduce: boolean
+  quiet: { enabled: boolean; start: string; end: string }
+}
+
+export type ReaderMode = 'flow' | 'mushaf'
+export type ReaderBg = 'ivory' | 'white' | 'sepia' | 'night'
+export type HomeCardId = 'continue' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
+
 export interface Settings {
   theme: 'system' | 'light' | 'dark'
   lang: 'ar' | 'en'
   uiScale: number
   quranFontSize: number
+  readerMode: ReaderMode
+  readerBg: ReaderBg
+  /** ترجمة تُعرض تحت الآيات ('none' أو معرّف الترجمة) */
+  translation: 'none' | 'en-sahih'
+  adhkarFontScale: number
   location: SavedLocation | null
   prayer: PrayerSettings
-  notifications: {
-    enabled: boolean
-    perPrayer: Record<Exclude<PrayerName, 'sunrise'>, boolean>
-    minutesBefore: number
-    morningAdhkar: string | null // "HH:MM" أو null
-    eveningAdhkar: string | null
-  }
+  notifications: NotificationSettings
   hijriOffset: number
   reciterId: string
   tafsir: string
   showFooterDedication: boolean
+  homeCards: { id: HomeCardId; visible: boolean }[]
+}
+
+export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
+  continue: 'أكمل قراءتك',
+  khatma: 'ورد القرآن',
+  adhkar: 'أذكار الوقت',
+  ayah: 'آية اليوم',
+  quick: 'وصول سريع',
+  summary: 'إنجاز اليوم',
+  dedication: 'بطاقة الإهداء',
+  shortcuts: 'الاختصارات',
+}
+
+/** بطاقة الإهداء جزء ثابت من هوية التطبيق: يمكن تغيير موضعها لا إخفاؤها. */
+export const LOCKED_HOME_CARDS: HomeCardId[] = ['dedication']
+
+export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['continue', 'khatma', 'adhkar', 'summary', 'ayah', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
+
+export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
+  enabled: false,
+  perPrayer: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
+  atAdhan: true,
+  minutesBefore: 0,
+  morningAdhkar: null,
+  eveningAdhkar: null,
+  sleepAdhkar: null,
+  ayahOfDay: null,
+  dhikrOfDay: null,
+  wird: null,
+  memorize: null,
+  occasions: null,
+  dailySummary: null,
+  reduce: false,
+  quiet: { enabled: false, start: '23:00', end: '05:00' },
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -36,28 +99,47 @@ export const DEFAULT_SETTINGS: Settings = {
   lang: 'ar',
   uiScale: 1,
   quranFontSize: 30,
+  readerMode: 'flow',
+  readerBg: 'ivory',
+  translation: 'none',
+  adhkarFontScale: 1,
   location: null,
   prayer: DEFAULT_PRAYER_SETTINGS,
-  notifications: {
-    enabled: false,
-    perPrayer: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true },
-    minutesBefore: 0,
-    morningAdhkar: null,
-    eveningAdhkar: null,
-  },
+  notifications: DEFAULT_NOTIFICATIONS,
   hijriOffset: 0,
   reciterId: 'alafasy',
   tafsir: 'ar-tafsir-muyassar',
   showFooterDedication: true,
+  homeCards: DEFAULT_HOME_CARDS,
 }
 
-/** دمج آمن مع القيم الافتراضية (عند إضافة إعدادات جديدة في إصدارات لاحقة) */
+/** يضمن أن قائمة بطاقات الرئيسية تحتوي كل البطاقات المعروفة مرة واحدة، وأن البطاقات المقفلة ظاهرة */
+export function normalizeHomeCards(cards: Settings['homeCards'] | undefined): Settings['homeCards'] {
+  const known = new Set(DEFAULT_HOME_CARDS.map((c) => c.id))
+  const seen = new Set<HomeCardId>()
+  const out: Settings['homeCards'] = []
+  for (const c of cards ?? []) {
+    if (!known.has(c.id) || seen.has(c.id)) continue
+    seen.add(c.id)
+    out.push({ id: c.id, visible: LOCKED_HOME_CARDS.includes(c.id) ? true : c.visible })
+  }
+  for (const c of DEFAULT_HOME_CARDS) if (!seen.has(c.id)) out.push(c)
+  return out
+}
+
+/** دمج آمن مع القيم الافتراضية (يحافظ على إعدادات الإصدار 0.1) */
 export function mergeSettings(saved: Partial<Settings> | null | undefined): Settings {
   const s = saved ?? {}
   return {
     ...DEFAULT_SETTINGS,
     ...s,
     prayer: { ...DEFAULT_SETTINGS.prayer, ...s.prayer, adjustments: { ...DEFAULT_SETTINGS.prayer.adjustments, ...s.prayer?.adjustments } },
-    notifications: { ...DEFAULT_SETTINGS.notifications, ...s.notifications, perPrayer: { ...DEFAULT_SETTINGS.notifications.perPrayer, ...s.notifications?.perPrayer } },
+    notifications: {
+      ...DEFAULT_NOTIFICATIONS,
+      ...s.notifications,
+      perPrayer: { ...DEFAULT_NOTIFICATIONS.perPrayer, ...s.notifications?.perPrayer },
+      quiet: { ...DEFAULT_NOTIFICATIONS.quiet, ...s.notifications?.quiet },
+    },
+    homeCards: normalizeHomeCards(s.homeCards),
   }
 }

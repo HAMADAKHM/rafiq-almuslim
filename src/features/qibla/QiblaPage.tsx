@@ -38,6 +38,7 @@ export function QiblaPage() {
   const { settings } = useSettings()
   const loc = settings.location
   const [heading, setHeading] = useState<number | null>(null)
+  const [weak, setWeak] = useState<null | 'accuracy' | 'relative'>(null)
   const [sensorMsg, setSensorMsg] = useState<string | null>(null)
   const [active, setActive] = useState(false)
   const stopRef = useRef<(() => void) | null>(null)
@@ -49,10 +50,11 @@ export function QiblaPage() {
     if (!compassAvailable()) { setSensorMsg('هذا الجهاز أو المتصفح لا يوفر مستشعر اتجاه (البوصلة). استخدم الزاوية المعروضة مع بوصلة خارجية أو الشمس.'); return }
     try {
       let got = false
-      stopRef.current = await watchHeading((h) => {
-        if (h == null) return
+      stopRef.current = await watchHeading((r) => {
+        if (r.heading == null) { if (!r.absolute) setWeak('relative'); return }
         got = true
-        setHeading(h)
+        setHeading(r.heading)
+        setWeak(r.accuracy != null && (r.accuracy < 0 || r.accuracy > 25) ? 'accuracy' : null)
       })
       setActive(true)
       setTimeout(() => { if (!got) setSensorMsg('لم تصل قراءات من مستشعر الاتجاه. على الكمبيوتر غالبًا لا يوجد مستشعر؛ جرّب على الهاتف.') }, 2500)
@@ -82,7 +84,9 @@ export function QiblaPage() {
           <Dial bearing={bearing} heading={heading} />
           <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--primary)', margin: 0 }}>{bearing.toFixed(1)}°</p>
           <p className="muted">من الشمال الجغرافي باتجاه عقارب الساعة — نحو {compassName(bearing)}</p>
-          {aligned && <p className="badge badge-success" role="status">أنت متجه نحو القبلة</p>}
+          {aligned && !weak && <p className="badge badge-success" role="status">أنت متجه نحو القبلة</p>}
+          {weak && heading != null && <p className="alert alert-gold small" role="alert">دقة البوصلة ضعيفة حاليًا؛ لا تعتمد على السهم قبل المعايرة. حرّك الهاتف على شكل الرقم 8 بعيدًا عن المعادن.</p>}
+          {weak === 'relative' && heading == null && <p className="alert alert-gold small" role="alert">المستشعر لا يعطي اتجاهًا مطلقًا نحو الشمال على هذا الجهاز، لذلك لا نعرض بوصلة حية. استخدم الزاوية المكتوبة.</p>}
           <div className="row" style={{ justifyContent: 'center' }}>
             {!active && <button className="btn btn-primary" onClick={start}><Compass size={16} /> تفعيل البوصلة</button>}
           </div>

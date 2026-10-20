@@ -4,12 +4,13 @@ import { BookOpen, Trash2 } from 'lucide-react'
 import { PageHead, Spinner, Tabs, Empty } from '../../components/Common'
 import { useLive, useQuran } from '../../hooks'
 import { firstAyahOf, parseRef, searchSurahs, type QuranData } from '../../services/quran'
-import { bookmarks, kv, notes } from '../../db/repos'
+import { bookmarks, favorites, kv, notes } from '../../db/repos'
+import type { Favorite } from '../../db/db'
 import { toArabicDigits } from '../../lib/arabic'
 
-type Tab = 'surahs' | 'juz' | 'hizb' | 'page' | 'bookmarks' | 'notes'
+type Tab = 'surahs' | 'juz' | 'hizb' | 'page' | 'bookmarks' | 'favorites' | 'notes'
 
-export interface LastRead { surah: number; ayah: number; at: number }
+export interface LastRead { surah: number; ayah: number; at: number; page?: number }
 
 export function QuranIndexPage() {
   const { data, error } = useQuran()
@@ -23,13 +24,14 @@ export function QuranIndexPage() {
         actions={last && <Link className="btn btn-primary" to={`/quran/${last.surah}?ayah=${last.ayah}`}><BookOpen size={16} /> متابعة: {data.meta.surahs[last.surah - 1].name} {last.ayah}</Link>} />
       <Tabs value={tab} onChange={setTab} label="فهارس المصحف" items={[
         { id: 'surahs', label: 'السور' }, { id: 'juz', label: 'الأجزاء' }, { id: 'hizb', label: 'الأحزاب' },
-        { id: 'page', label: 'الصفحات' }, { id: 'bookmarks', label: 'العلامات' }, { id: 'notes', label: 'ملاحظاتي' },
+        { id: 'page', label: 'الصفحات' }, { id: 'bookmarks', label: 'العلامات' }, { id: 'favorites', label: 'الآيات المفضلة' }, { id: 'notes', label: 'ملاحظاتي' },
       ]} />
       {tab === 'surahs' && <SurahList data={data} />}
       {tab === 'juz' && <PartList data={data} kind="juz" />}
       {tab === 'hizb' && <PartList data={data} kind="hizb" />}
       {tab === 'page' && <PageJump data={data} />}
       {tab === 'bookmarks' && <BookmarkList data={data} />}
+      {tab === 'favorites' && <FavoriteAyahs data={data} />}
       {tab === 'notes' && <NotesList data={data} />}
     </>
   )
@@ -114,7 +116,7 @@ function BookmarkList({ data }: { data: QuranData }) {
       {list.map((b) => (
         <div key={b.id} className="card spread">
           <Link to={`/quran/${b.surah}?ayah=${b.ayah}`} style={{ flex: 1, textDecoration: 'none', color: 'inherit' }}>
-            <strong>{data.meta.surahs[b.surah - 1].name} — الآية {b.ayah}</strong>
+            <strong>{b.label ? `${b.label} — ` : ''}{data.meta.surahs[b.surah - 1].name} — الآية {b.ayah}</strong>
             <p className="quran-text" style={{ fontSize: '1.3rem', margin: 0 }}>{data.verses[b.surah - 1][b.ayah - 1]}</p>
           </Link>
           <button className="btn btn-ghost icon-btn" aria-label="حذف العلامة" onClick={() => bookmarks.toggle(b.surah, b.ayah)}><Trash2 size={16} /></button>
@@ -139,6 +141,28 @@ function NotesList({ data }: { data: QuranData }) {
           <div className="small muted">{new Date(n.updatedAt).toLocaleString('ar-u-nu-latn')}</div>
         </div>
       ))}
+    </div>
+  )
+}
+
+function FavoriteAyahs({ data }: { data: QuranData }) {
+  const list = useLive(() => favorites.all(), ['favorites'], [] as Favorite[])
+  const ayahs = list.filter((f) => f.kind === 'ayah').sort((a, b) => b.createdAt - a.createdAt)
+  if (!ayahs.length) return <Empty>لا توجد آيات مفضلة بعد. اضغط على أي آية ثم «المفضلة».</Empty>
+  return (
+    <div className="stack">
+      {ayahs.map((f) => {
+        const [s, a] = f.itemId.split(':').map(Number)
+        return (
+          <div key={f.id} className="card spread">
+            <Link to={`/quran/${s}?ayah=${a}`} style={{ flex: 1, textDecoration: 'none', color: 'inherit' }}>
+              <strong>{data.meta.surahs[s - 1].name} — الآية {a}</strong>
+              <p className="quran-text" style={{ fontSize: '1.3rem', margin: 0 }}>{data.verses[s - 1][a - 1]}</p>
+            </Link>
+            <button className="btn btn-ghost icon-btn" aria-label="إزالة من المفضلة" onClick={() => favorites.toggle('ayah', f.itemId)}><Trash2 size={16} /></button>
+          </div>
+        )
+      })}
     </div>
   )
 }

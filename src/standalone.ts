@@ -3,11 +3,13 @@
 import quran from '../public/data/quran/quran.json'
 import meta from '../public/data/quran/meta.json'
 import cities from '../public/data/cities.json'
+import enSahih from '../public/data/translations/en-sahih.json'
 
 const EMBEDDED: Record<string, unknown> = {
   'data/quran/quran.json': quran,
   'data/quran/meta.json': meta,
   'data/cities.json': cities,
+  'data/translations/en-sahih.json': enSahih,
 }
 
 const realFetch = window.fetch.bind(window)

@@ -17,6 +17,14 @@ export const bookmarks = {
   async all(): Promise<Bookmark[]> {
     return (await (await db()).getAll('bookmarks')).sort((a, b) => b.createdAt - a.createdAt)
   },
+  /** إضافة علامة مسماة (لا تستبدل علامة موجودة بل تحدّث اسمها) */
+  async add(surah: number, ayah: number, label?: string) {
+    const d = await db()
+    const id = `${surah}:${ayah}`
+    const existing = await d.get('bookmarks', id)
+    await d.put('bookmarks', { id, surah, ayah, createdAt: existing?.createdAt ?? Date.now(), label: label?.trim() || existing?.label })
+    notifyChange('bookmarks')
+  },
   async toggle(surah: number, ayah: number): Promise<boolean> {
     const d = await db()
     const id = `${surah}:${ayah}`

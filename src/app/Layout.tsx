@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, Link } from 'react-router-dom'
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, Menu, X, WifiOff,
+  ChartColumn, Route, Search, Settings, Heart, Menu, X, WifiOff, CircleDot, CalendarDays, Bell,
 } from 'lucide-react'
 import { t, type StringKey } from '../i18n/strings'
 import { useSettings } from '../state/SettingsContext'
@@ -28,11 +28,14 @@ const NAV: { group: StringKey; items: { to: string; key: StringKey; icon: typeof
     { to: '/qibla', key: 'qibla', icon: Compass },
     { to: '/adhkar', key: 'adhkar', icon: Sparkles },
     { to: '/duas', key: 'duas', icon: HandHeart },
+    { to: '/tasbih', key: 'tasbih', icon: CircleDot },
+    { to: '/calendar', key: 'calendar', icon: CalendarDays },
   ] },
   { group: 'groupMore', items: [
     { to: '/progress', key: 'progress', icon: ChartColumn },
     { to: '/journey', key: 'journey', icon: Route },
     { to: '/search', key: 'search', icon: Search },
+    { to: '/reminders', key: 'reminders', icon: Bell },
     { to: '/settings', key: 'settings', icon: Settings },
     { to: '/about', key: 'about', icon: Heart },
   ] },
@@ -64,7 +67,7 @@ export function Layout() {
   useEffect(() => { setOpen(false); window.scrollTo?.(0, 0) }, [loc.pathname])
   useEffect(() => startReminderLoop(() => settingsRef.current), [])
 
-  const isReader = /^\/quran\/\d+/.test(loc.pathname)
+  const isReader = /^\/(quran\/\d+|mushaf)/.test(loc.pathname)
 
   return (
     <div className="app">

@@ -7,7 +7,6 @@ import { useSettings } from '../../state/SettingsContext'
 import { METHODS, PRAYER_LABELS, PRAYERS, suggestMethod, type MethodId, type PrayerName } from '../../services/prayer'
 import { cityLabel } from '../../services/cities'
 import { exportAll, importAll, clearAll } from '../../db/backup'
-import { notificationsSupported, requestNotificationPermission, showNotification } from '../../platform'
 import { toast, useQuran } from '../../hooks'
 import { RECITERS } from '../../content/reciters'
 import { TAFSIR_EDITIONS } from '../../services/tafsir'
@@ -20,7 +19,6 @@ export function SettingsPage() {
   const { hash } = useLocation()
   const [showCity, setShowCity] = useState(!settings.location)
   const fileRef = useRef<HTMLInputElement>(null)
-  const [perm, setPerm] = useState<string>(notificationsSupported() ? Notification.permission : 'unsupported')
   const [usage, setUsage] = useState<string | null>(null)
 
   useEffect(() => { if (hash) document.getElementById(hash.slice(1))?.scrollIntoView() }, [hash])
@@ -104,38 +102,9 @@ export function SettingsPage() {
         </section>
 
         <section className="card" id="notifications">
-          <h2><Bell size={18} /> التنبيهات</h2>
-          {perm === 'unsupported' ? <p className="alert alert-gold small">المتصفح لا يدعم الإشعارات.</p> : (
-            <>
-              <label className="check"><input type="checkbox" checked={settings.notifications.enabled} onChange={async (e) => {
-                if (e.target.checked) {
-                  const r = await requestNotificationPermission()
-                  setPerm(r)
-                  if (r !== 'granted') { toast('لم يُسمح بالإشعارات من المتصفح'); return }
-                }
-                update((s) => ({ notifications: { ...s.notifications, enabled: e.target.checked } }))
-              }} /> تفعيل تنبيهات الصلاة والأذكار</label>
-              {perm === 'denied' && <p className="alert alert-error small">الإشعارات محظورة في إعدادات المتصفح لهذا الموقع.</p>}
-              <div className="row" style={{ margin: '0.75rem 0' }}>
-                {(Object.keys(settings.notifications.perPrayer) as (keyof typeof settings.notifications.perPrayer)[]).map((p) => (
-                  <label key={p} className="check"><input type="checkbox" checked={settings.notifications.perPrayer[p]} onChange={(e) => update((s) => ({ notifications: { ...s.notifications, perPrayer: { ...s.notifications.perPrayer, [p]: e.target.checked } } }))} /> {PRAYER_LABELS[p]}</label>
-                ))}
-              </div>
-              <div className="grid grid-3" style={{ gap: '0.75rem' }}>
-                <label className="field"><span>التنبيه قبل الوقت بـ (دقيقة)</span>
-                  <select className="select" value={settings.notifications.minutesBefore} onChange={(e) => update((s) => ({ notifications: { ...s.notifications, minutesBefore: Number(e.target.value) } }))}>
-                    {[0, 5, 10, 15, 20, 30].map((n) => <option key={n} value={n}>{n === 0 ? 'عند دخول الوقت' : n}</option>)}
-                  </select>
-                </label>
-                <label className="field"><span>تذكير أذكار الصباح</span><input className="input" type="time" value={settings.notifications.morningAdhkar ?? ''} onChange={(e) => update((s) => ({ notifications: { ...s.notifications, morningAdhkar: e.target.value || null } }))} /></label>
-                <label className="field"><span>تذكير أذكار المساء</span><input className="input" type="time" value={settings.notifications.eveningAdhkar ?? ''} onChange={(e) => update((s) => ({ notifications: { ...s.notifications, eveningAdhkar: e.target.value || null } }))} /></label>
-              </div>
-              <div className="row" style={{ marginTop: '0.75rem' }}>
-                <button className="btn btn-sm" disabled={perm !== 'granted'} onClick={() => showNotification('رفيق المسلم', 'هذا إشعار تجريبي — التنبيهات تعمل.', 'test')}>إرسال إشعار تجريبي</button>
-              </div>
-              <p className="small muted" style={{ marginTop: 8 }}>في نسخة الكمبيوتر تعمل التنبيهات ما دام التطبيق مفتوحًا (ولو في الخلفية). التنبيهات المجدولة والتطبيق مغلق ستتوفر في نسختي Android وiPhone.</p>
-            </>
-          )}
+          <h2><Bell size={18} /> التذكيرات والإشعارات</h2>
+          <p className="small muted">مواقيت الصلاة، الأذكار، آية اليوم، الورد، فترة الهدوء وتقليل الإشعارات — كلها في صفحة مستقلة.</p>
+          <Link className="btn" to="/reminders"><Bell size={16} /> إعدادات التذكير {settings.notifications.enabled ? '(مفعّلة)' : '(متوقفة)'}</Link>
         </section>
 
         <section className="card">

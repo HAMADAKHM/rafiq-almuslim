@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PageHead } from '../../components/Common'
 import { toast, useLive } from '../../hooks'
-import { GOALS, suggestPlan, DEFAULT_WIRD, getWird, saveWird, type Journey, type JourneyGoal } from '../../services/plans'
+import { GOALS, suggestPlan, type Journey, type JourneyGoal } from '../../services/plans'
+import { activePlan, createPlan, loadKhatmas, saveKhatmas } from '../../services/khatma'
 import { kv } from '../../db/repos'
 import { dayKey } from '../../lib/dates'
 
@@ -17,8 +18,12 @@ export function JourneyPage() {
     if (!g || !plan) return
     const today = dayKey()
     await kv.set('journey', { goal: g, minutes, createdAt: today } satisfies Journey)
-    const w = await getWird()
-    await saveWird({ ...(w ?? { ...DEFAULT_WIRD, startedAt: today }), pagesPerDay: plan.pagesPerDay })
+    // تعديل الخطة النشطة (دون فقد موضعها) أو إنشاء خطة جديدة
+    const k = await loadKhatmas()
+    const a = activePlan(k)
+    await saveKhatmas(a
+      ? { ...k, plans: k.plans.map((p) => (p.id === a.id ? { ...p, mode: 'pages' as const, pagesPerDay: plan.pagesPerDay } : p)) }
+      : { ...k, plans: [...k.plans, createPlan({ mode: 'pages', pagesPerDay: plan.pagesPerDay, today, name: 'وردي اليومي' })] })
     if (plan.memorizeAyahs) await kv.set('memo:dailyNew', 1)
     toast('بدأت رحلتك — وفقك الله')
   }

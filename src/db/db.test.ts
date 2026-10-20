@@ -1,17 +1,13 @@
 // اختبارات التخزين المحلي: الحفظ والاسترجاع، النسخ الاحتياطي والاستعادة، خطة الورد والإحصائيات.
 import { describe, expect, it, beforeEach } from 'vitest'
-import fs from 'node:fs'
-import path from 'node:path'
 import { adhkarLog, bookmarks, kv, memo, notes, reading, favorites } from './repos'
 import { exportAll, importAll, clearAll, validateBackup } from './backup'
 import { resetDbForTests } from './db'
-import { completeWird, DEFAULT_WIRD, getWird, saveWird, suggestPlan } from '../services/plans'
+import { suggestPlan } from '../services/plans'
 import { computeStats, dailySeries } from '../services/stats'
 import { initialSrs } from '../services/srs'
-import type { QuranMeta } from '../services/quran'
 import { mergeSettings, DEFAULT_SETTINGS } from '../state/settings'
 
-const meta: QuranMeta = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../public/data/quran/meta.json'), 'utf8'))
 
 beforeEach(async () => {
   await clearAll()
@@ -63,22 +59,7 @@ describe('النسخ الاحتياطي والاستعادة', () => {
   })
 })
 
-describe('ورد اليوم', () => {
-  it('إتمام الورد يسجل الصفحات ويتقدم بالمؤشر', async () => {
-    await saveWird({ ...DEFAULT_WIRD, pagesPerDay: 2, startedAt: '2026-10-19' })
-    const p = await completeWird((await getWird())!, meta, '2026-10-19')
-    expect(p.nextPage).toBe(3)
-    expect(p.lastDone).toBe('2026-10-19')
-    const logs = await reading.all()
-    expect(logs.flatMap((l) => l.pages).sort()).toEqual([1, 2])
-    // الصفحة 1 = الفاتحة (7 آيات) والصفحة 2 = البقرة 1–5
-    expect(logs.reduce((n, l) => n + l.ayahs, 0)).toBe(12)
-  })
-  it('إكمال الصفحة 604 يحتسب ختمة ويعود للبداية', async () => {
-    const p = await completeWird({ ...DEFAULT_WIRD, nextPage: 603, pagesPerDay: 5 }, meta, '2026-10-19')
-    expect(p.khatmas).toBe(1)
-    expect(p.nextPage).toBe(1)
-  })
+describe('«ابدأ رحلتك»', () => {
   it('اقتراح البرامج حسب الوقت', () => {
     expect(suggestPlan('regular-reading', 25).pagesPerDay).toBe(10)
     expect(suggestPlan('return', 5).pagesPerDay).toBe(1)

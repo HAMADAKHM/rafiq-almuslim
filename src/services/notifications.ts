@@ -1,47 +1,27 @@
-// منبّه الصلاة والأذكار في نسخة الويب.
-// قيد مهم: المتصفح لا يسمح بجدولة إشعارات موثوقة والتطبيق مغلق. لذلك تعمل التنبيهات هنا
-// ما دام التطبيق مفتوحًا (ولو في تبويب بالخلفية). في Android/iOS ستُستبدل بإشعارات محلية مجدولة.
-import { showNotification } from '../platform'
-import { nextPrayer, PRAYER_LABELS, todayTimes, type PrayerName } from './prayer'
+// تشغيل التذكيرات:
+// - الويب: حلقة كل 20 ثانية تعرض التذكيرات المستحقة ما دام التطبيق مفتوحًا.
+// - الهاتف: جدولة الأيام القادمة دفعة واحدة في نظام الإشعارات المحلية، وإعادة الجدولة عند الفتح وتغيير الإعدادات.
+import { isNative, replaceScheduledNotifications, showNotification } from '../platform'
+import { buildSchedule, dueReminders } from './reminders'
 import type { Settings } from '../state/settings'
-import { dayKey } from '../lib/dates'
 
-const fired = new Set<string>()
+const fired = new Set<number>()
 
+/** للاختبارات وللتوافق مع الإصدار 0.1: التذكيرات المستحقة الآن بصيغة مبسطة */
 export function checkReminders(settings: Settings, now = new Date()): { title: string; body: string; tag: string }[] {
-  const out: { title: string; body: string; tag: string }[] = []
-  const n = settings.notifications
-  const loc = settings.location
-  if (!n.enabled || !loc) return out
-  const times = todayTimes(loc, settings.prayer, now)
-  const today = dayKey(now, loc.tz)
-  for (const p of Object.keys(n.perPrayer) as Exclude<PrayerName, 'sunrise'>[]) {
-    if (!n.perPrayer[p]) continue
-    const at = times[p].getTime() - n.minutesBefore * 60_000
-    const diff = now.getTime() - at
-    const tag = `${today}:${p}`
-    if (diff >= 0 && diff < 90_000 && !fired.has(tag)) {
-      fired.add(tag)
-      out.push({
-        title: n.minutesBefore ? `اقترب وقت صلاة ${PRAYER_LABELS[p]}` : `حان الآن وقت صلاة ${PRAYER_LABELS[p]}`,
-        body: n.minutesBefore ? `بعد ${n.minutesBefore} دقيقة — ${loc.nameAr ?? loc.name}` : `${loc.nameAr ?? loc.name}`,
-        tag,
-      })
-    }
-  }
-  const hm = new Intl.DateTimeFormat('en-GB', { timeZone: loc.tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(now)
-  for (const [key, label] of [['morningAdhkar', 'أذكار الصباح'], ['eveningAdhkar', 'أذكار المساء']] as const) {
-    const t = n[key]
-    const tag = `${today}:${key}`
-    if (t && hm === t && !fired.has(tag)) {
-      fired.add(tag)
-      out.push({ title: `تذكير: ${label}`, body: 'افتح رفيق المسلم لقراءة الأذكار', tag })
-    }
-  }
-  return out
+  const due = dueReminders(settings, now, fired)
+  due.forEach((r) => fired.add(r.id))
+  return due.map((r) => ({ title: r.title, body: r.body, tag: String(r.id) }))
+}
+
+export async function rescheduleNative(settings: Settings): Promise<number> {
+  if (!isNative()) return 0
+  // 7 أيام تكفي، وتُعاد الجدولة عند كل فتح للتطبيق (حد iOS: 64 إشعارًا)
+  return replaceScheduledNotifications(buildSchedule(settings, new Date(), 7))
 }
 
 export function startReminderLoop(getSettings: () => Settings): () => void {
+  if (isNative()) return () => {}
   const tick = () => {
     try {
       for (const r of checkReminders(getSettings())) showNotification(r.title, r.body, r.tag)
@@ -53,5 +33,3 @@ export function startReminderLoop(getSettings: () => Settings): () => void {
   const id = window.setInterval(tick, 20_000)
   return () => window.clearInterval(id)
 }
-
-export { nextPrayer }

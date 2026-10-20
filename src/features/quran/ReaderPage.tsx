@@ -1,18 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import {
-  Bookmark, BookmarkCheck, ChevronLeft, ChevronRight, Copy, Maximize2, Minimize2, Minus, Play, Plus, Share2, StickyNote, BookOpen, Check, Library,
-} from 'lucide-react'
+import { BookmarkCheck, ChevronLeft, ChevronRight, Maximize2, Minimize2, Minus, MoreHorizontal, Play, Plus, BookOpen, StickyNote, Columns2 } from 'lucide-react'
 import { Spinner } from '../../components/Common'
 import { toast, useDocumentTitle, useLive, usePlayer, useQuran } from '../../hooks'
-import { ayahMeta, BASMALA_SURAH_EXCEPTIONS, type QuranData } from '../../services/quran'
+import { ayahMeta, BASMALA_SURAH_EXCEPTIONS, loadTranslation, type QuranData, type Translation } from '../../services/quran'
 import { bookmarks, kv, notes, reading } from '../../db/repos'
 import { toArabicDigits } from '../../lib/arabic'
-import { copyText, shareText } from '../../platform'
 import { player } from '../../services/audio'
 import { useSettings } from '../../state/SettingsContext'
 import { dayKey } from '../../lib/dates'
 import { TafsirPanel } from '../learn/TafsirPanel'
+import { AyahSheet } from './AyahSheet'
+import { ReaderOptions } from './ReaderOptions'
 import type { Note } from '../../db/db'
 
 export function ReaderPage() {
@@ -24,6 +23,17 @@ export function ReaderPage() {
   return <Reader key={surah} data={data} surah={surah} />
 }
 
+export function useTranslationText(enabled: string): Translation | null {
+  const [t, setT] = useState<Translation | null>(null)
+  useEffect(() => {
+    if (enabled === 'none') { setT(null); return }
+    let alive = true
+    loadTranslation(enabled).then((x) => alive && setT(x)).catch(() => alive && toast('تعذر تحميل الترجمة'))
+    return () => { alive = false }
+  }, [enabled])
+  return t
+}
+
 function Reader({ data, surah }: { data: QuranData; surah: number }) {
   const s = data.meta.surahs[surah - 1]
   useDocumentTitle(`سورة ${s.name}`)
@@ -33,25 +43,31 @@ function Reader({ data, surah }: { data: QuranData; surah: number }) {
   const target = Math.min(s.count, Math.max(1, Number(sp.get('ayah')) || 1))
   const [current, setCurrent] = useState(target)
   const [focus, setFocus] = useState(false)
+  const [sheetFor, setSheetFor] = useState<number | null>(null)
   const [noteFor, setNoteFor] = useState<number | null>(null)
   const [tafsirFor, setTafsirFor] = useState<number | null>(null)
   const [goto, setGoto] = useState('')
   const readFrom = useRef(target)
   const p = usePlayer()
+  const translation = useTranslationText(settings.translation)
   const marks = useLive(() => bookmarks.all(), ['bookmarks'], [])
   const marked = useMemo(() => new Set(marks.filter((b) => b.surah === surah).map((b) => b.ayah)), [marks, surah])
   const noteList = useLive(() => notes.all(), ['notes'], [] as Note[])
   const noted = useMemo(() => new Set(noteList.filter((n) => n.surah === surah).map((n) => n.ayah)), [noteList, surah])
   const verses = data.verses[surah - 1]
 
-  // الانتقال إلى الآية المطلوبة
+  // من اختار «وضع المصحف» افتراضيًا يُفتح له المصحف على صفحة الآية نفسها
+  const { ready } = useSettings()
+  useEffect(() => {
+    if (ready && settings.readerMode === 'mushaf' && !sp.has('flow')) nav(`/mushaf/${ayahMeta(data.meta, surah, target).page}?s=${surah}&a=${target}`, { replace: true })
+  }, [ready]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     const el = document.getElementById(`ayah-${target}`)
     if (el && target > 1) el.scrollIntoView({ block: 'start' })
-    setCurrent(target)
   }, [target])
 
-  // حفظ آخر موضع قراءة تلقائيًا بحسب الآية الظاهرة أعلى الشاشة
+  // حفظ آخر موضع قراءة تلقائيًا بحسب الآية الظاهرة أعلى الشاشة (لا يمس العلامات المرجعية)
   useEffect(() => {
     const els = Array.from(document.querySelectorAll<HTMLElement>('[data-ayah]'))
     let timer: ReturnType<typeof setTimeout> | undefined
@@ -75,10 +91,6 @@ function Reader({ data, surah }: { data: QuranData; surah: number }) {
     if (playingHere) document.getElementById(`ayah-${p.ayah}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
   }, [playingHere, p.ayah])
 
-  const playFrom = (ayah: number) => player.play({ reciterId: settings.reciterId, surah, surahName: s.name, from: 1, to: s.count, startAt: ayah })
-
-  const ayahText = (a: number) => `${verses[a - 1]} ﴿${toArabicDigits(a)}﴾\n[سورة ${s.name}: ${a}]`
-
   const markRead = async (a: number) => {
     const from = Math.min(readFrom.current, a)
     const pages = new Set<number>()
@@ -88,69 +100,68 @@ function Reader({ data, surah }: { data: QuranData; surah: number }) {
     toast(`سُجّلت قراءة ${a - from + 1} آية`)
   }
 
-  const meta1 = ayahMeta(data.meta, surah, current)
-  const fontSize = settings.quranFontSize
+  const meta1 = ayahMeta(data.meta, Math.min(surah, 114), Math.min(current, s.count))
 
   return (
-    <div className={'reader' + (focus ? ' focus-mode' : '')}>
-      <div className="spread" style={{ marginBottom: '0.75rem', position: 'sticky', top: 0, zIndex: 5, background: 'var(--bg)', padding: '0.4rem 0' }}>
+    <div className={`reader reader-bg-${settings.readerBg}` + (focus ? ' focus-mode' : '')}>
+      <div className="reader-bar">
         <div className="row">
-          <button className="btn btn-sm" disabled={surah === 1} onClick={() => nav(`/quran/${surah - 1}`)} aria-label="السورة السابقة"><ChevronRight size={16} /> السابقة</button>
-          <button className="btn btn-sm" disabled={surah === 114} onClick={() => nav(`/quran/${surah + 1}`)} aria-label="السورة التالية">التالية <ChevronLeft size={16} /></button>
-          <span className="small muted">الجزء {meta1.juz} • الحزب {meta1.hizb} • الصفحة {meta1.page}</span>
+          <button className="btn btn-sm" disabled={surah === 1} onClick={() => nav(`/quran/${surah - 1}`)} aria-label="السورة السابقة"><ChevronRight size={16} /> <span className="hide-sm">السابقة</span></button>
+          <button className="btn btn-sm" disabled={surah === 114} onClick={() => nav(`/quran/${surah + 1}`)} aria-label="السورة التالية"><span className="hide-sm">التالية</span> <ChevronLeft size={16} /></button>
+          <span className="small muted">الجزء {meta1.juz} • الحزب {meta1.hizb} • ص {meta1.page}</span>
         </div>
         <div className="row">
           <form onSubmit={(e) => { e.preventDefault(); const n = Number(goto); if (n >= 1 && n <= s.count) { nav(`/quran/${surah}?ayah=${n}`); setGoto('') } else toast(`أدخل رقمًا بين 1 و${s.count}`) }} className="row">
-            <input className="input" style={{ width: 90, minHeight: 32, padding: '0.2rem 0.5rem' }} type="number" min={1} max={s.count} placeholder="آية" aria-label="رقم الآية" value={goto} onChange={(e) => setGoto(e.target.value)} />
+            <input className="input" style={{ width: 76, minHeight: 32, padding: '0.2rem 0.5rem' }} type="number" min={1} max={s.count} placeholder="آية" aria-label="رقم الآية" value={goto} onChange={(e) => setGoto(e.target.value)} />
           </form>
-          <button className="btn btn-sm icon-btn" onClick={() => update({ quranFontSize: Math.max(18, fontSize - 2) })} aria-label="تصغير الخط"><Minus size={16} /></button>
-          <button className="btn btn-sm icon-btn" onClick={() => update({ quranFontSize: Math.min(56, fontSize + 2) })} aria-label="تكبير الخط"><Plus size={16} /></button>
-          <button className="btn btn-sm" onClick={() => playFrom(current)}><Play size={16} /> استماع</button>
-          <button className="btn btn-sm icon-btn" onClick={() => setFocus((f) => !f)} aria-pressed={focus} aria-label={focus ? 'إنهاء وضع التركيز' : 'وضع القراءة دون مشتتات'}>
+          <button className="btn btn-sm icon-btn" onClick={() => update({ quranFontSize: Math.max(18, settings.quranFontSize - 2) })} aria-label="تصغير الخط"><Minus size={16} /></button>
+          <button className="btn btn-sm icon-btn" onClick={() => update({ quranFontSize: Math.min(56, settings.quranFontSize + 2) })} aria-label="تكبير الخط"><Plus size={16} /></button>
+          <button className="btn btn-sm icon-btn" onClick={() => nav(`/mushaf/${meta1.page}`)} aria-label="وضع المصحف (صفحات)" title="وضع المصحف"><Columns2 size={16} /></button>
+          <button className="btn btn-sm" onClick={() => player.play({ reciterId: settings.reciterId, surah, surahName: s.name, from: 1, to: s.count, startAt: current })}><Play size={16} /> <span className="hide-sm">استماع</span></button>
+          <ReaderOptions />
+          <button className="btn btn-sm icon-btn" onClick={() => { setFocus((f) => !f); if (!focus) document.documentElement.requestFullscreen?.().catch(() => {}); else if (document.fullscreenElement) document.exitFullscreen().catch(() => {}) }} aria-pressed={focus} aria-label={focus ? 'إنهاء وضع التركيز' : 'وضع القراءة دون مشتتات'}>
             {focus ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
           </button>
         </div>
       </div>
 
-      <header className="surah-header">
-        <h1>سورة {s.name}</h1>
-        <div className="small muted">{s.type === 'meccan' ? 'مكية' : 'مدنية'} • {s.count} آية • ترتيبها {s.n}</div>
-      </header>
-      {!BASMALA_SURAH_EXCEPTIONS.has(surah) && <p className="quran-text basmala-line">{data.verses[0][0]}</p>}
+      <div className="reader-paper">
+        <header className="surah-header">
+          <h1>سورة {s.name}</h1>
+          <div className="small muted">{s.type === 'meccan' ? 'مكية' : 'مدنية'} • {s.count} آية • ترتيبها {s.n}</div>
+        </header>
+        {!BASMALA_SURAH_EXCEPTIONS.has(surah) && <p className="quran-text basmala-line">{data.verses[0][0]}</p>}
+        <p className="small muted reader-hint">اضغط على أي آية لعرض الخيارات: الاستماع، التفسير، المشاركة، العلامات…</p>
 
-      <div>
         {verses.map((text, i) => {
           const a = i + 1
           const m = ayahMeta(data.meta, surah, a)
-          const prevPage = a > 1 ? ayahMeta(data.meta, surah, a - 1).page : (surah > 1 ? data.meta.page[data.meta.surahs[surah - 1].start - 2] : 0)
+          const prevPage = a > 1 ? ayahMeta(data.meta, surah, a - 1).page : 0
           const isPlaying = playingHere && p.ayah === a
           return (
             <div key={a}>
               {m.page !== prevPage && a > 1 && <div className="page-mark">الصفحة {m.page}{m.juz !== ayahMeta(data.meta, surah, a - 1).juz ? ` • بداية الجزء ${m.juz}` : ''}</div>}
               <div id={`ayah-${a}`} data-ayah={a} className={'ayah-row' + (isPlaying ? ' playing' : a === target && sp.get('ayah') ? ' current' : '')}>
-                <p className="quran-text" style={{ margin: 0 }}>
-                  {text} <span className="ayah-num" aria-label={`الآية ${a}`}>{toArabicDigits(a)}</span>
-                  {m.sajda && <span className="badge badge-hadith" style={{ fontFamily: 'var(--font-ui)', fontSize: '0.7rem' }}>سجدة</span>}
-                </p>
-                <div className="ayah-tools" role="toolbar" aria-label={`أدوات الآية ${a}`}>
-                  <button className="btn btn-ghost btn-sm icon-btn" onClick={async () => toast((await bookmarks.toggle(surah, a)) ? 'أضيفت العلامة' : 'أزيلت العلامة')} aria-label={marked.has(a) ? 'إزالة العلامة' : 'إضافة علامة'} aria-pressed={marked.has(a)}>
-                    {marked.has(a) ? <BookmarkCheck size={16} color="var(--gold)" /> : <Bookmark size={16} />}
-                  </button>
-                  <button className="btn btn-ghost btn-sm icon-btn" onClick={() => setNoteFor(noteFor === a ? null : a)} aria-label="ملاحظة شخصية" aria-expanded={noteFor === a}>
-                    <StickyNote size={16} color={noted.has(a) ? 'var(--gold)' : undefined} />
-                  </button>
-                  <button className="btn btn-ghost btn-sm icon-btn" onClick={() => playFrom(a)} aria-label="استماع من هذه الآية"><Play size={16} /></button>
-                  <button className="btn btn-ghost btn-sm icon-btn" onClick={() => setTafsirFor(tafsirFor === a ? null : a)} aria-label="التفسير" aria-expanded={tafsirFor === a}><Library size={16} /></button>
-                  <button className="btn btn-ghost btn-sm icon-btn" onClick={async () => toast((await copyText(ayahText(a))) ? 'نُسخت الآية' : 'تعذر النسخ')} aria-label="نسخ الآية"><Copy size={16} /></button>
-                  <button className="btn btn-ghost btn-sm icon-btn" onClick={async () => { const r = await shareText(`سورة ${s.name}`, ayahText(a)); if (r === 'copied') toast('نُسخت الآية للمشاركة') }} aria-label="مشاركة الآية"><Share2 size={16} /></button>
-                  <button className="btn btn-ghost btn-sm" onClick={() => markRead(a)} aria-label="تسجيل القراءة حتى هذه الآية"><Check size={16} /> قرأت حتى هنا</button>
+                <div className="ayah-main">
+                  <p className="quran-text ayah-tap" style={{ margin: 0 }} role="button" tabIndex={0} aria-label={`الآية ${a} — اضغط لعرض الخيارات`}
+                    onClick={() => setSheetFor(a)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSheetFor(a) } }}>
+                    {text} <span className="ayah-num">{toArabicDigits(a)}</span>
+                    {m.sajda && <span className="badge badge-hadith" style={{ fontFamily: 'var(--font-ui)', fontSize: '0.7rem' }}>سجدة</span>}
+                  </p>
+                  <span className="ayah-flags">
+                    {marked.has(a) && <BookmarkCheck size={16} color="var(--gold)" aria-label="عليها علامة" />}
+                    {noted.has(a) && <StickyNote size={16} color="var(--gold)" aria-label="عليها ملاحظة" />}
+                    <button className="btn btn-ghost btn-sm icon-btn ayah-more" onClick={() => setSheetFor(a)} aria-label={`خيارات الآية ${a}`}><MoreHorizontal size={16} /></button>
+                  </span>
                 </div>
+                {translation && <p className="translation" dir="ltr" lang="en">{translation.verses[surah - 1][a - 1]}</p>}
                 {noteFor === a && <NoteEditor surah={surah} ayah={a} onClose={() => setNoteFor(null)} />}
-                {tafsirFor === a && <TafsirPanel surah={surah} ayah={a} />}
+                {tafsirFor === a && <div><TafsirPanel surah={surah} ayah={a} /><button className="btn btn-ghost btn-sm" onClick={() => setTafsirFor(null)}>إغلاق التفسير</button></div>}
               </div>
             </div>
           )
         })}
+        {translation && <p className="source">الترجمة: {translation.name} — المصدر: {translation.source}</p>}
       </div>
 
       <div className="spread" style={{ margin: '1.5rem 0' }}>
@@ -158,11 +169,13 @@ function Reader({ data, surah }: { data: QuranData; surah: number }) {
         <button className="btn btn-primary" onClick={() => markRead(s.count)}><BookOpen size={16} /> أتممت قراءة السورة</button>
         {surah < 114 ? <Link className="btn" to={`/quran/${surah + 1}`}>سورة {data.meta.surahs[surah].name} <ChevronLeft size={16} /></Link> : <span />}
       </div>
+
+      <AyahSheet data={data} surah={surah} ayah={sheetFor} onClose={() => setSheetFor(null)} onTafsir={setTafsirFor} onNote={setNoteFor} onMarkRead={markRead} />
     </div>
   )
 }
 
-function NoteEditor({ surah, ayah, onClose }: { surah: number; ayah: number; onClose: () => void }) {
+export function NoteEditor({ surah, ayah, onClose }: { surah: number; ayah: number; onClose: () => void }) {
   const existing = useLive(() => notes.forAyah(surah, ayah), ['notes'], [] as Note[], [surah, ayah])
   const [text, setText] = useState('')
   const [editing, setEditing] = useState<Note | null>(null)
@@ -191,3 +204,4 @@ function NoteEditor({ surah, ayah, onClose }: { surah: number; ayah: number; onC
     </div>
   )
 }
+

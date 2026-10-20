@@ -20,6 +20,11 @@ import { AboutPage } from '../features/about/AboutPage'
 import { SearchPage } from '../features/search/SearchPage'
 import { JourneyPage } from '../features/journey/JourneyPage'
 import { Empty } from '../components/Common'
+import { MushafPage } from '../features/quran/MushafPage'
+import { TasbihPage } from '../features/tasbih/TasbihPage'
+import { CalendarPage } from '../features/calendar/CalendarPage'
+import { RemindersPage } from '../features/reminders/RemindersPage'
+import { NativeBridge } from './NativeBridge'
 
 export function AppRoutes() {
   return (
@@ -28,6 +33,10 @@ export function AppRoutes() {
         <Route index element={<HomePage />} />
         <Route path="quran" element={<QuranIndexPage />} />
         <Route path="quran/:surah" element={<ReaderPage />} />
+        <Route path="mushaf/:page" element={<MushafPage />} />
+        <Route path="tasbih" element={<TasbihPage />} />
+        <Route path="calendar" element={<CalendarPage />} />
+        <Route path="reminders" element={<RemindersPage />} />
         <Route path="memorize" element={<MemorizePage />} />
         <Route path="prayer" element={<PrayerPage />} />
         <Route path="qibla" element={<QiblaPage />} />
@@ -55,6 +64,7 @@ export function App() {
     <SettingsProvider>
       <Router>
         <AppRoutes />
+        <NativeBridge />
       </Router>
     </SettingsProvider>
   )

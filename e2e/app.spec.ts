@@ -89,15 +89,20 @@ test.describe('القرآن الكريم', () => {
   test('العلامة المرجعية والملاحظة تبقيان بعد إعادة التحميل', async ({ page }) => {
     await page.goto('/quran/112')
     const row = page.locator('#ayah-1')
-    await row.getByRole('button', { name: 'إضافة علامة' }).click()
-    await row.getByRole('button', { name: 'ملاحظة شخصية' }).click()
+    // الضغط على الآية يفتح قائمة الخيارات
+    await row.locator('.ayah-tap').click()
+    const sheet = page.getByRole('dialog')
+    await sheet.getByLabel('اسم العلامة').fill('التوحيد')
+    await sheet.getByRole('button', { name: 'إضافة علامة' }).click()
+    await expect(page.getByText('أضيفت العلامة')).toBeVisible()
+    await sheet.getByRole('button', { name: 'ملاحظة' }).click()
     await row.getByRole('textbox').fill('سورة التوحيد')
     await row.getByRole('button', { name: 'حفظ' }).click()
     await expect(page.getByText('حُفظت الملاحظة')).toBeVisible()
     await page.reload()
     await page.goto('/quran')
     await page.getByRole('tab', { name: 'العلامات' }).click()
-    await expect(page.getByText('الإخلاص — الآية 1')).toBeVisible()
+    await expect(page.getByText('التوحيد — الإخلاص — الآية 1')).toBeVisible()
     await page.getByRole('tab', { name: 'ملاحظاتي' }).click()
     await expect(page.getByText('سورة التوحيد')).toBeVisible()
   })
@@ -153,15 +158,15 @@ test.describe('مواقيت الصلاة والقبلة', () => {
 })
 
 test.describe('الأذكار والحفظ', () => {
-  test('العداد وتسجيل إتمام أذكار الصباح يظهر في الرئيسية', async ({ page }) => {
+  test('العداد وتسجيل إتمام أذكار الصباح يظهر في ورد اليوم', async ({ page }) => {
     await page.goto('/adhkar/morning')
     await expect(page.getByText('رواه مسلم (2723)')).toBeVisible()
     const counter = page.getByRole('button', { name: /عدّاد: 0 من 3/ }).first()
     await counter.click()
     await expect(page.getByRole('button', { name: /عدّاد: 1 من 3/ }).first()).toBeVisible()
     await page.getByRole('button', { name: 'تسجيل الإتمام' }).click()
-    await page.goto('/')
-    await expect(page.getByRole('link', { name: /أذكار الصباح/ }).first()).toContainText('تم')
+    await page.goto('/wird')
+    await expect(page.getByRole('link', { name: /أذكار الصباح/ })).toHaveClass(/btn-gold/)
   })
 
   test('المفضلة', async ({ page }) => {
@@ -230,7 +235,9 @@ test.describe('البيانات والإعدادات', () => {
 
   test('تصدير نسخة احتياطية', async ({ page }) => {
     await page.goto('/quran/1')
-    await page.locator('#ayah-1').getByRole('button', { name: 'إضافة علامة' }).click()
+    await page.locator('#ayah-1 .ayah-tap').click()
+    await page.getByRole('dialog').getByRole('button', { name: 'إضافة علامة' }).click()
+    await expect(page.getByText('أضيفت العلامة')).toBeVisible()
     await page.goto('/settings')
     const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'تصدير نسخة احتياطية' }).click()])
     const json = JSON.parse(fs.readFileSync((await download.path())!, 'utf8'))
@@ -271,5 +278,133 @@ test.describe('الشاشات الصغيرة', () => {
     await page.getByRole('button', { name: 'القائمة' }).click()
     await page.getByRole('complementary').getByRole('link', { name: 'القبلة' }).click()
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('اتجاه القبلة')
+  })
+})
+
+test.describe('الإصدار 0.2', () => {
+  test('قائمة خيارات الآية: المفضلة وبطاقة الصورة والتفسير', async ({ page }) => {
+    await page.goto('/quran/112')
+    await page.locator('#ayah-2 .ayah-tap').click()
+    const sheet = page.getByRole('dialog')
+    await expect(sheet).toContainText('سورة الإخلاص: 2')
+    await sheet.getByRole('button', { name: 'المفضلة' }).click()
+    await expect(page.getByText('أضيفت إلى المفضلة')).toBeVisible()
+    await sheet.getByRole('button', { name: 'بطاقة صورة' }).click()
+    await expect(page.getByRole('img', { name: /معاينة البطاقة/ })).toBeVisible({ timeout: 10000 })
+    await page.getByRole('dialog').getByRole('button', { name: 'إغلاق' }).first().click()
+    await page.goto('/quran')
+    await page.getByRole('tab', { name: 'الآيات المفضلة' }).click()
+    await expect(page.getByText('الإخلاص — الآية 2')).toBeVisible()
+  })
+
+  test('وضع المصحف: صفحة 42 فيها آية الكرسي، والتنقل بين الصفحات، والعودة للقراءة المتتابعة', async ({ page }) => {
+    await page.goto('/mushaf/42')
+    await expect(page.getByRole('article', { name: 'الصفحة 42' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'سورة البقرة الآية 255' })).toBeVisible()
+    await page.getByRole('button', { name: 'الصفحة التالية' }).click()
+    await expect(page).toHaveURL(/\/mushaf\/43$/)
+    await page.getByRole('button', { name: /قراءة متتابعة/ }).click()
+    await expect(page).toHaveURL(/\/quran\/2\?ayah=\d+&flow=1/)
+  })
+
+  test('خلفية القراءة والترجمة تُحفظان', async ({ page }) => {
+    await page.goto('/quran/1')
+    await page.getByRole('button', { name: 'خيارات القراءة' }).click()
+    await page.getByRole('radio', { name: 'ورقي دافئ' }).click()
+    await page.getByLabel('الترجمة تحت الآيات').selectOption('en-sahih')
+    await page.keyboard.press('Escape')
+    await expect(page.locator('.translation').first()).toContainText('In the name of Allah')
+    await page.reload()
+    await expect(page.locator('.reader')).toHaveClass(/reader-bg-sepia/)
+    await expect(page.locator('.translation').first()).toBeVisible()
+  })
+
+  test('خطة ختمة بمدة 30 يومًا وتسجيل الورد', async ({ page }) => {
+    await page.goto('/wird')
+    await page.getByRole('button', { name: 'ختمة جديدة' }).click()
+    await page.getByRole('button', { name: '30 يومًا' }).click()
+    await page.getByRole('button', { name: 'بدء الختمة' }).click()
+    await expect(page.getByText('ورد اليوم: الصفحات 1–21')).toBeVisible()
+    await page.getByRole('button', { name: 'قرأت ورد اليوم' }).click()
+    await expect(page.getByText(/أتممت ورد اليوم \(21 صفحة\)/)).toBeVisible()
+    await page.reload()
+    await expect(page.getByText(/أتممت ورد اليوم/)).toBeVisible()
+    await page.goto('/progress')
+    await expect(page.locator('.stat').filter({ hasText: 'صفحات مختلفة' }).locator('b')).toHaveText('21')
+  })
+
+  test('المسبحة: العد يُحفظ بعد إعادة التحميل، والتصفير يحتاج تأكيدًا', async ({ page }) => {
+    await page.goto('/tasbih')
+    const btn = page.locator('.tasbih-btn')
+    for (let i = 0; i < 5; i++) await btn.click()
+    await expect(page.locator('.tasbih-count')).toHaveText('5')
+    await page.waitForTimeout(600)
+    await page.reload()
+    await expect(page.locator('.tasbih-count')).toHaveText('5')
+    await page.getByRole('button', { name: 'تصفير العداد' }).click()
+    await page.getByRole('dialog').getByRole('button', { name: 'تصفير' }).click()
+    await expect(page.locator('.tasbih-count')).toHaveText('0')
+  })
+
+  test('التقويم الهجري والمناسبات', async ({ page }) => {
+    await page.goto('/calendar')
+    await expect(page.getByText('المناسبات القادمة')).toBeVisible()
+    await expect(page.getByRole('gridcell')).toHaveCount(31)
+    await expect(page.getByText(/قد تختلف بداية الشهر/)).toBeVisible()
+  })
+
+  test('إعدادات التذكير: معاينة الجدول وفترة الهدوء', async ({ page, context }) => {
+    await context.grantPermissions(['notifications'])
+    await chooseCity(page, 'نابلس', /نابلس/)
+    await page.goto('/reminders')
+    await page.getByLabel('تفعيل التذكيرات').check()
+    await page.getByRole('checkbox', { name: /أذكار الصباح/ }).check()
+    await expect(page.getByLabel('وقت أذكار الصباح')).toHaveValue('06:30')
+    await expect(page.locator('li', { hasText: 'حان الآن وقت صلاة' }).first()).toBeVisible()
+    await page.getByRole('checkbox', { name: /تقليل الإشعارات/ }).check()
+    await expect(page.locator('li', { hasText: 'أذكار الصباح' })).toHaveCount(0)
+    await page.reload()
+    await expect(page.getByRole('checkbox', { name: /تقليل الإشعارات/ })).toBeChecked()
+  })
+
+  test('تخصيص الرئيسية: إخفاء بطاقة يبقى بعد إعادة التحميل، وبطاقة الإهداء لا تُخفى', async ({ page }) => {
+    await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'آية اليوم' })).toBeVisible()
+    await page.getByRole('button', { name: 'تخصيص الرئيسية' }).click()
+    const sheet = page.getByRole('dialog')
+    await sheet.getByRole('checkbox', { name: 'آية اليوم' }).uncheck()
+    await expect(sheet.getByRole('checkbox', { name: 'بطاقة الإهداء' })).toBeDisabled()
+    await page.keyboard.press('Escape')
+    await page.reload()
+    await expect(page.getByRole('heading', { name: 'آية اليوم' })).toHaveCount(0)
+    await expect(page.getByRole('region', { name: 'إهداء التطبيق' })).toBeVisible()
+  })
+
+  test('عداد الأذكار يُستأنف بعد الخروج والعودة', async ({ page }) => {
+    await page.goto('/adhkar/morning')
+    await page.getByRole('button', { name: /عدّاد: 0 من 3/ }).first().click()
+    await page.getByRole('button', { name: /عدّاد: 1 من 3/ }).first().click()
+    await page.goto('/')
+    await page.goto('/adhkar/morning')
+    await expect(page.getByRole('button', { name: /عدّاد: 2 من 3/ }).first()).toBeVisible()
+  })
+
+  test('ترحيل بيانات الإصدار 0.1: الورد القديم يصبح خطة ختمة دون فقد الموضع', async ({ page }) => {
+    await page.goto('/about')
+    await page.evaluate(async () => {
+      await new Promise<void>((res, rej) => {
+        const r = indexedDB.open('islamic-companion', 1)
+        r.onsuccess = () => {
+          const tx = r.result.transaction('kv', 'readwrite')
+          tx.objectStore('kv').put({ pagesPerDay: 3, nextPage: 50, startedAt: '2026-09-01', khatmas: 1 }, 'wird')
+          tx.objectStore('kv').delete('khatmas')
+          tx.oncomplete = () => { r.result.close(); res() }
+          tx.onerror = () => rej(tx.error)
+        }
+      })
+    })
+    await page.goto('/wird')
+    await expect(page.getByText('ورد اليوم: الصفحات 50–52')).toBeVisible()
+    await expect(page.getByText('الختمات المكتملة: 1')).toBeVisible()
   })
 })
