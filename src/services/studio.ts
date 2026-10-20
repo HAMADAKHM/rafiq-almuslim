@@ -11,7 +11,7 @@ export const FORMATS: Record<StudioFormat, { w: number; h: number; label: string
   landscape: { w: 1920, h: 1080, label: 'عرضي — يوتيوب' },
 }
 
-export type StudioBg = 'scene-sunset' | 'scene-night' | 'scene-dawn' | 'scene-day' | `theme-${ThemeId}` | 'emerald' | 'night' | 'gold' | 'ivory' | 'parchment' | 'photo'
+export type StudioBg = 'scene-sunset' | 'scene-night' | 'scene-dawn' | 'scene-day' | `theme-${ThemeId}` | 'emerald' | 'night' | 'gold' | 'ivory' | 'parchment' | 'photo' | 'video'
 export const BACKGROUNDS: { id: StudioBg; label: string; swatch: string }[] = [
   { id: 'scene-sunset', label: 'غروب', swatch: 'linear-gradient(#2f6656,#f3c676)' },
   { id: 'scene-night', label: 'ليل', swatch: 'linear-gradient(#06161a,#1d4a40)' },
@@ -24,6 +24,7 @@ export const BACKGROUNDS: { id: StudioBg; label: string; swatch: string }[] = [
   { id: 'ivory', label: 'عاجي', swatch: 'linear-gradient(135deg,#fbf7ec,#efe6cf)' },
   { id: 'parchment', label: 'ورق المصحف', swatch: 'linear-gradient(135deg,#f7f0de,#e9dcbc)' },
   { id: 'photo', label: 'صورتي', swatch: 'repeating-linear-gradient(45deg,#ccc 0 6px,#eee 6px 12px)' },
+  { id: 'video', label: 'فيديو من جهازي', swatch: 'repeating-linear-gradient(90deg,#222 0 8px,#555 8px 10px)' },
 ]
 export const isScene = (b: StudioBg) => b.startsWith('scene-')
 /** المشاهد المتحركة المرسومة بالشيفرة */
@@ -102,9 +103,21 @@ export function fitText(ctx: CanvasRenderingContext2D, text: string, boxW: numbe
   return lines.length * minPx * 1.9 <= boxH ? { size: minPx, lines, lineH: minPx * 1.9 } : null
 }
 
-function cover(ctx: CanvasRenderingContext2D, img: CanvasImageSource & { width: number; height: number }, W: number, H: number, zoom = 1, anchorY = 0.5) {
-  const s = Math.max(W / img.width, H / img.height) * zoom
-  const w = img.width * s, h = img.height * s
+/** خلفية قابلة للرسم: صورة أو مشهد أو فيديو (إطاره الحالي) */
+export type BgSource = CanvasImageSource & ({ width: number; height: number } | { videoWidth: number; videoHeight: number })
+
+function dims(img: BgSource): [number, number] {
+  const v = img as { videoWidth?: number; videoHeight?: number }
+  if (v.videoWidth) return [v.videoWidth, v.videoHeight!]
+  const i = img as { width: number; height: number }
+  return [i.width, i.height]
+}
+
+function cover(ctx: CanvasRenderingContext2D, img: BgSource, W: number, H: number, zoom = 1, anchorY = 0.5) {
+  const [iw, ih] = dims(img)
+  if (!iw || !ih) return
+  const s = Math.max(W / iw, H / ih) * zoom
+  const w = iw * s, h = ih * s
   ctx.drawImage(img, (W - w) / 2, (H - h) * anchorY, w, h)
 }
 
@@ -130,7 +143,7 @@ export interface DrawOptions {
   text: string
   reference: string
   /** صورة المشهد أو صورة المستخدم */
-  bgImage?: (CanvasImageSource & { width: number; height: number }) | null
+  bgImage?: BgSource | null
   /** للفيديو: تكبير بطيء للخلفية وشفافية النص وشريط التقدم */
   zoom?: number
   textAlpha?: number
@@ -157,10 +170,11 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
     g.addColorStop(0, 'rgba(4,14,20,0.6)'); g.addColorStop(0.55, 'rgba(4,14,20,0.28)'); g.addColorStop(1, 'rgba(4,14,20,0.1)')
     ctx.fillStyle = g
     ctx.fillRect(0, 0, W, H)
-  } else if ((isScene(style.bg) || style.bg === 'photo') && o.bgImage) {
-    cover(ctx, o.bgImage, W, H, o.zoom ?? 1, isScene(style.bg) ? 1 : 0.5)
+  } else if ((isScene(style.bg) || style.bg === 'photo' || style.bg === 'video') && o.bgImage) {
+    // الفيديو لا يُكبَّر تدريجيًا (حركته من نفسه)
+    cover(ctx, o.bgImage, W, H, style.bg === 'video' ? 1 : o.zoom ?? 1, isScene(style.bg) ? 1 : 0.5)
     const g = ctx.createLinearGradient(0, 0, 0, H)
-    if (style.bg === 'photo') { g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(1, 'rgba(0,0,0,0.55)') } else { g.addColorStop(0, 'rgba(4,20,16,0.62)'); g.addColorStop(0.55, 'rgba(4,20,16,0.25)'); g.addColorStop(1, 'rgba(4,20,16,0.1)') }
+    if (style.bg === 'photo' || style.bg === 'video') { g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(1, 'rgba(0,0,0,0.55)') } else { g.addColorStop(0, 'rgba(4,20,16,0.62)'); g.addColorStop(0.55, 'rgba(4,20,16,0.25)'); g.addColorStop(1, 'rgba(4,20,16,0.1)') }
     ctx.fillStyle = g
     ctx.fillRect(0, 0, W, H)
   } else {

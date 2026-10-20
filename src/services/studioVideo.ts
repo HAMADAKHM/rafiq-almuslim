@@ -2,7 +2,7 @@
 // يُسجَّل الفيديو بزمن التلاوة الفعلي، ولا يُرفع شيء إلى أي خادم.
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { ayahAudioSources, reciterById } from '../content/reciters'
-import { drawStudioFrame, type StudioStyle, type Verse } from './studio'
+import { drawStudioFrame, type BgSource, type StudioStyle, type Verse } from './studio'
 import { toArabicDigits } from '../lib/arabic'
 
 /** فاصل قصير بين الآيات (ثوانٍ) */
@@ -76,11 +76,25 @@ export interface VideoJob {
   verses: Verse[]
   surahName: string
   reciterName: string
-  bgImage?: (CanvasImageSource & { width: number; height: number }) | null
-  buffers: AudioBuffer[]
+  bgImage?: BgSource | null
+  /** فيديو المستخدم خلفيةً: يُشغَّل مكتومًا ومتكررًا، ولا يدخل صوته الأصلي في الناتج أبدًا */
+  bgVideo?: HTMLVideoElement | null
+  /** تلاوة كل آية؛ أو null لفيديو بلا صوت (تُستخدم durations) */
+  buffers: AudioBuffer[] | null
+  /** مدة عرض كل آية بالثواني حين لا توجد تلاوة */
+  durations?: number[]
   actx: AudioContext
   onProgress?: (fraction: number) => void
   signal?: AbortSignal
+}
+
+/** مدة عرض كل آية في فيديو بلا تلاوة: بحسب طول الآية، أو تقسيم مدة فيديو المستخدم */
+export function silentDurations(verses: Verse[], videoSeconds?: number): number[] {
+  if (videoSeconds && Number.isFinite(videoSeconds) && videoSeconds > 1) {
+    const each = Math.max(2.5, Math.min(60, videoSeconds) / verses.length - GAP)
+    return verses.map(() => each)
+  }
+  return verses.map((v) => Math.min(14, 3 + v.text.length * 0.07))
 }
 
 /** تسجيل الفيديو بزمن التلاوة الفعلي */
@@ -90,11 +104,13 @@ export function recordVideo(job: VideoJob): Promise<Blob> {
   const { canvas, actx, buffers } = job
   const ctx = canvas.getContext('2d')!
   const W = canvas.width, H = canvas.height
-  const tl = timeline(buffers.map((b) => b.duration))
+  const tl = timeline(buffers ? buffers.map((b) => b.duration) : (job.durations ?? job.verses.map(() => 5)))
   const total = tl[tl.length - 1].end + 0.6
   const dest = actx.createMediaStreamDestination()
   const stream = canvas.captureStream(30)
-  dest.stream.getAudioTracks().forEach((t) => stream.addTrack(t))
+  if (buffers) dest.stream.getAudioTracks().forEach((t) => stream.addTrack(t))
+  const vid = job.bgVideo
+  if (vid) { vid.muted = true; vid.loop = true; vid.playsInline = true }
   const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6_000_000, audioBitsPerSecond: 128_000 })
   const chunks: Blob[] = []
   recorder.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }
@@ -103,7 +119,7 @@ export function recordVideo(job: VideoJob): Promise<Blob> {
     let raf = 0
     let t0 = 0
     const sources: AudioBufferSourceNode[] = []
-    const finish = () => { cancelAnimationFrame(raf); if (recorder.state !== 'inactive') recorder.stop() }
+    const finish = () => { cancelAnimationFrame(raf); vid?.pause(); if (recorder.state !== 'inactive') recorder.stop() }
     recorder.onstop = () => {
       stream.getTracks().forEach((t) => t.stop())
       if (job.signal?.aborted) reject(new DOMException('أُلغي', 'AbortError'))
@@ -117,19 +133,20 @@ export function recordVideo(job: VideoJob): Promise<Blob> {
       const { index, alpha } = frameAt(tl, t)
       const v = job.verses[index]
       drawStudioFrame(ctx, W, H, {
-        style: job.style, bgImage: job.bgImage, zoom: 1 + 0.06 * (t / total), textAlpha: alpha, progress: Math.min(1, t / total), time: t,
+        style: job.style, bgImage: vid ?? job.bgImage, zoom: 1 + 0.06 * (t / total), textAlpha: alpha, progress: Math.min(1, t / total), time: t,
         text: `${v.text} ۝${toArabicDigits(v.ayah)}`,
         reference: `سورة ${job.surahName} • الآية ${toArabicDigits(v.ayah)}`,
-        subtitle: job.reciterName,
+        subtitle: buffers ? job.reciterName : undefined,
       })
       job.onProgress?.(Math.min(1, t / total))
       if (t >= total) { finish(); return }
       raf = requestAnimationFrame(draw)
     }
 
-    actx.resume().then(() => {
+    const startVideo = vid ? (vid.currentTime = 0, vid.play().catch(() => {})) : Promise.resolve()
+    Promise.all([actx.resume(), startVideo]).then(() => {
       t0 = actx.currentTime + 0.25
-      tl.forEach((x, i) => {
+      if (buffers) tl.forEach((x, i) => {
         const src = actx.createBufferSource()
         src.buffer = buffers[i]
         src.connect(dest)

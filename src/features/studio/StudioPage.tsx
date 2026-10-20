@@ -12,7 +12,10 @@ import {
   BACKGROUNDS, FORMATS, canvasToBlob, drawStudioFrame, isScene, loadStudioFonts, referenceText, sceneTone, svgToImage, versesText,
   type StudioBg, type StudioFormat, type StudioStyle, type Verse,
 } from '../../services/studio'
-import { MAX_VIDEO_AYAHS, extFor, loadRecitation, pickVideoMime, recordVideo } from '../../services/studioVideo'
+import { MAX_VIDEO_AYAHS, extFor, loadRecitation, pickVideoMime, recordVideo, silentDurations } from '../../services/studioVideo'
+import { VoiceAyahSearch } from '../../components/VoiceAyahSearch'
+import { matchSpokenAyah } from '../../services/voiceSearch'
+import { searchSkeleton, toArabicDigits } from '../../lib/arabic'
 import { THEMES, suggestTheme } from '../../services/sceneThemes'
 import { Sparkles } from 'lucide-react'
 
@@ -36,6 +39,10 @@ export function StudioPage() {
   const [style, setStyle] = useState<StudioStyle>({ format: 'square', bg: 'scene-sunset', textScale: 1, showRef: true, showBrand: true })
   const [reciterId, setReciterId] = useState(settings.reciterId)
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null)
+  const [bgVideo, setBgVideo] = useState<HTMLVideoElement | null>(null)
+  const [withAudio, setWithAudio] = useState(true)
+  const [ayahQuery, setAyahQuery] = useState('')
+  const videoInput = useRef<HTMLInputElement>(null)
   const [overflow, setOverflow] = useState(false)
   const [video, setVideo] = useState<VideoState>({ phase: 'idle' })
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -50,11 +57,14 @@ export function StudioPage() {
   const a = Math.min(from, count)
   const b = Math.min(Math.max(to, a), count, a + max - 1)
   const verses: Verse[] = useMemo(() => (data ? Array.from({ length: b - a + 1 }, (_, i) => ({ surah, ayah: a + i, text: data.verses[surah - 1][a + i - 1] })) : []), [data, surah, a, b])
+  const ayahHits = useMemo(() => (data && searchSkeleton(ayahQuery).length >= 3 ? matchSpokenAyah(data, ayahQuery, 6) : []), [data, ayahQuery])
+  const pick = (s: number, a: number) => { setSurah(s); setFrom(a); setTo(a); setAyahQuery('') }
   const { w: W, h: H } = FORMATS[style.format]
   const set = (p: Partial<StudioStyle>) => setStyle((s) => ({ ...s, ...p }))
 
   const bgImage = async () => {
     if (style.bg === 'photo') return photo
+    if (style.bg === 'video') return bgVideo
     if (!isScene(style.bg)) return null
     const svg = sceneRef.current?.querySelector('svg')
     return svg ? svgToImage(svg as SVGSVGElement, W, H) : null
@@ -79,7 +89,7 @@ export function StudioPage() {
     const again = () => { draw() }
     document.fonts?.addEventListener('loadingdone', again)
     return () => { alive = false; document.fonts?.removeEventListener('loadingdone', again) }
-  }, [data, mode, style, verses, photo, W, H]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [data, mode, style, verses, photo, bgVideo, W, H]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => () => { abortRef.current?.abort() }, [])
   useEffect(() => { if (video.phase === 'done') return () => URL.revokeObjectURL(video.url) }, [video])
@@ -101,7 +111,8 @@ export function StudioPage() {
     try {
       await loadStudioFonts(versesText(verses), referenceText(meta.name, verses), reciterById(reciterId).name)
       setVideo({ phase: 'loading', done: 0, total: verses.length })
-      const buffers = await loadRecitation(actx, reciterId, verses, (done, total) => setVideo({ phase: 'loading', done, total }))
+      const buffers = withAudio ? await loadRecitation(actx, reciterId, verses, (done, total) => setVideo({ phase: 'loading', done, total })) : null
+      const useVideo = style.bg === 'video' ? bgVideo : null
       if (ctrl.signal.aborted) return
       const c = canvasRef.current!
       c.width = W; c.height = H
@@ -109,7 +120,8 @@ export function StudioPage() {
       setVideo({ phase: 'recording', progress: 0 })
       let last = 0
       const blob = await recordVideo({
-        canvas: c, style, verses, surahName: meta.name, reciterName: reciterById(reciterId).name, bgImage: img, buffers, actx, signal: ctrl.signal,
+        canvas: c, style, verses, surahName: meta.name, reciterName: reciterById(reciterId).name, bgImage: img, bgVideo: useVideo, buffers, actx, signal: ctrl.signal,
+        durations: buffers ? undefined : silentDurations(verses, useVideo?.duration),
         onProgress: (p) => { if (p - last > 0.01 || p === 1) { last = p; setVideo({ phase: 'recording', progress: p }) } },
       })
       setVideo({ phase: 'done', blob, url: URL.createObjectURL(blob) })
@@ -133,6 +145,23 @@ export function StudioPage() {
 
       <div className="studio">
         <section className="card stack studio-controls">
+          <div className="stack" style={{ gap: 6 }}>
+            <div className="row" style={{ flexWrap: 'nowrap' }}>
+              <input className="input" value={ayahQuery} disabled={busy} onChange={(e) => setAyahQuery(e.target.value)} placeholder="ابحث عن الآية: اكتب كلمة أو جزءًا منها" aria-label="ابحث عن الآية بكتابة جزء منها" />
+              <VoiceAyahSearch compact onPick={(s, a) => pick(s, a)} />
+            </div>
+            {ayahHits.length > 0 && (
+              <div className="studio-hits" role="list" aria-label="نتائج البحث عن الآية">
+                {ayahHits.map((m) => (
+                  <button key={`${m.surah}:${m.ayah}`} role="listitem" className="voice-hit" onClick={() => pick(m.surah, m.ayah)}>
+                    <span className="small"><strong>سورة {data.meta.surahs[m.surah - 1].name}</strong> — الآية {toArabicDigits(m.ayah)}</span>
+                    <span className="quran-text voice-hit-text">{data.verses[m.surah - 1][m.ayah - 1]}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {searchSkeleton(ayahQuery).length >= 3 && ayahHits.length === 0 && <p className="small muted" style={{ margin: 0 }}>لا نتائج — جرّب كلمات أخرى من الآية.</p>}
+          </div>
           <div className="grid grid-2" style={{ gap: '0.6rem' }}>
             <label className="field" style={{ gridColumn: '1 / -1' }}><span>السورة</span>
               <select className="select" value={surah} disabled={busy} onChange={(e) => { setSurah(Number(e.target.value)); setFrom(1); setTo(1) }}>
@@ -177,7 +206,7 @@ export function StudioPage() {
             <div className="bg-swatches" role="radiogroup" aria-label="الخلفية">
               {BACKGROUNDS.map((bg) => (
                 <button key={bg.id} role="radio" aria-checked={style.bg === bg.id} aria-label={bg.label} disabled={busy} className={'bg-sw' + (style.bg === bg.id ? ' on' : '')}
-                  onClick={() => { if (bg.id === 'photo' && !photo) photoInput.current?.click(); else set({ bg: bg.id as StudioBg }) }}>
+                  onClick={() => { if (bg.id === 'photo' && !photo) photoInput.current?.click(); else if (bg.id === 'video' && !bgVideo) videoInput.current?.click(); else set({ bg: bg.id as StudioBg }) }}>
                   <span style={{ background: bg.swatch }} />{bg.label}
                 </button>
               ))}
@@ -190,6 +219,26 @@ export function StudioPage() {
               img.onerror = () => toast('تعذر فتح الصورة')
               img.src = URL.createObjectURL(f)
             }} />
+            <input ref={videoInput} type="file" accept="video/*" hidden aria-label="اختيار فيديو من الجهاز" onChange={(e) => {
+              const f = e.target.files?.[0]; e.target.value = ''
+              if (!f) return
+              if (f.size > 300 * 1024 * 1024) { toast('الفيديو أكبر من 300 ميغابايت'); return }
+              const v = document.createElement('video')
+              v.muted = true; v.playsInline = true; v.loop = true; v.preload = 'auto'
+              v.onloadeddata = () => {
+                // إطار من بداية الفيديو للمعاينة
+                v.onseeked = () => { v.onseeked = null; setBgVideo(v); set({ bg: 'video' }) }
+                v.currentTime = Math.min(0.5, (v.duration || 1) / 2)
+              }
+              v.onerror = () => toast('تعذر فتح الفيديو — جرّب ملف MP4')
+              if (bgVideo) URL.revokeObjectURL(bgVideo.src)
+              v.src = URL.createObjectURL(f)
+            }} />
+            {bgVideo && <div className="row" style={{ marginTop: 6 }}>
+              <span className="small muted">فيديو من جهازك ({Math.round(bgVideo.duration)} ث) — يُكتم صوته الأصلي دائمًا</span>
+              <button className="btn btn-sm" onClick={() => videoInput.current?.click()}><Upload size={14} /> تغيير الفيديو</button>
+              <button className="btn btn-sm btn-ghost" onClick={() => { URL.revokeObjectURL(bgVideo.src); setBgVideo(null); if (style.bg === 'video') set({ bg: 'scene-sunset' }) }}><X size={14} /> إزالة</button>
+            </div>}
             {photo && <div className="row" style={{ marginTop: 6 }}>
               <button className="btn btn-sm" onClick={() => photoInput.current?.click()}><Upload size={14} /> تغيير صورتي</button>
               <button className="btn btn-sm btn-ghost" onClick={() => { setPhoto(null); if (style.bg === 'photo') set({ bg: 'scene-sunset' }) }}><X size={14} /> إزالة</button>
@@ -203,6 +252,9 @@ export function StudioPage() {
           <label className="check"><input type="checkbox" className="switch-input" checked={style.showBrand} onChange={(e) => set({ showBrand: e.target.checked })} /> اسم التطبيق أسفل التصميم</label>
 
           {mode === 'video' && (
+            <label className="check"><input type="checkbox" className="switch-input" checked={withAudio} disabled={busy} onChange={(e) => setWithAudio(e.target.checked)} aria-label="إضافة صوت التلاوة" /> إضافة صوت التلاوة بصوت القارئ</label>
+          )}
+          {mode === 'video' && withAudio && (
             <label className="field"><span>القارئ</span>
               <select className="select" value={reciterId} disabled={busy} onChange={(e) => setReciterId(e.target.value)}>
                 {RECITERS.map((r) => <option key={r.id} value={r.id}>{r.name} — {r.style}</option>)}
@@ -228,8 +280,10 @@ export function StudioPage() {
               {video.phase === 'idle' && (
                 <div className="studio-empty">
                   <Film size={36} aria-hidden="true" />
-                  <p>تُعرض كل آية مع تلاوتها بصوت <strong>{reciterById(reciterId).name}</strong>.</p>
-                  <p className="small muted">يُنشأ الفيديو بزمن التلاوة الفعلي ({verses.length} آية)، فأبقِ الشاشة مفتوحة حتى ينتهي. التلاوة تحتاج اتصالًا بالإنترنت ما لم تكن السورة منزّلة.</p>
+                  {withAudio
+                    ? <p>تُعرض كل آية مع تلاوتها بصوت <strong>{reciterById(reciterId).name}</strong>{style.bg === 'video' ? ' فوق الفيديو الذي اخترته (صوته الأصلي مكتوم)' : ''}.</p>
+                    : <p>تُعرض الآيات {style.bg === 'video' ? 'فوق الفيديو الذي اخترته، بلا صوت (صوته الأصلي مكتوم)' : 'بلا صوت'}.</p>}
+                  <p className="small muted">يُنشأ الفيديو بزمنه الفعلي ({verses.length} آية)، فأبقِ الشاشة مفتوحة حتى ينتهي.{withAudio ? ' التلاوة تحتاج اتصالًا بالإنترنت ما لم تكن السورة منزّلة.' : ''}</p>
                   <button className="btn btn-primary" onClick={makeVideo}><Film size={16} /> إنشاء الفيديو</button>
                 </div>
               )}

@@ -31,7 +31,7 @@ export function AboutPage() {
         </ul>
         <p className="small muted">إن لاحظت خطأً في أي محتوى فنرجو التنبيه عليه لتصحيحه. المحتوى الديني المكتوب (الأذكار والدروس) يحتاج إلى مراجعة متخصص شرعي قبل النشر العام.</p>
       </section>
-      <p className="small muted" style={{ textAlign: 'center', marginTop: '1rem' }}>رفيق المسلم — الإصدار 0.7.0</p>
+      <p className="small muted" style={{ textAlign: 'center', marginTop: '1rem' }}>رفيق المسلم — الإصدار 0.8.0</p>
     </>
   )
 }

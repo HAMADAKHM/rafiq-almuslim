@@ -48,6 +48,16 @@
         </provider>
     </application>
 
+    <!-- Android 11+: إظهار خدمة التعرف على الكلام ونافذة Google الصوتية للتطبيق (البحث بالصوت) -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

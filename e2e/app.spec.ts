@@ -5,12 +5,27 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const TONE = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures/tone.mp3'))
+const CLIP = fs.readFileSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'fixtures/clip.webm'))
 
 async function chooseCity(page: Page, query: string, match: RegExp) {
   await page.goto('/prayer')
   await page.getByLabel('اسم المدينة').fill(query)
   await page.getByRole('button', { name: match }).first().click()
   await expect(page.getByText(/تم حفظ الموقع/)).toBeVisible()
+}
+
+
+/** قراءة إعداد محفوظ فعلًا في IndexedDB (للانتظار حتى يكتمل الحفظ قبل إعادة التحميل) */
+async function savedSetting(page: Page, key: string): Promise<unknown> {
+  return page.evaluate((k) => new Promise((res) => {
+    const r = indexedDB.open('islamic-companion')
+    r.onsuccess = () => {
+      const g = r.result.transaction('kv').objectStore('kv').get('settings')
+      g.onsuccess = () => { res((g.result as Record<string, unknown> | undefined)?.[k] ?? null); r.result.close() }
+      g.onerror = () => res(null)
+    }
+    r.onerror = () => res(null)
+  }), key)
 }
 
 test.describe('الواجهة والتنقل', () => {
@@ -247,6 +262,7 @@ test.describe('البيانات والإعدادات', () => {
   test('الوضع الليلي يُحفظ', async ({ page }) => {
     await page.goto('/settings')
     await page.getByLabel('المظهر').selectOption('dark')
+    await expect.poll(() => savedSetting(page, 'theme')).toBe('dark')
     await page.reload()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
   })
@@ -714,6 +730,7 @@ test.describe('البحث بالصوت والسمة الذهبية', () => {
     await page.goto('/settings')
     await page.getByLabel('المظهر').selectOption('gold')
     await expect(page.locator('html')).toHaveAttribute('data-accent', 'gold')
+    await expect.poll(() => savedSetting(page, 'theme')).toBe('gold')
     await page.reload()
     await expect(page.locator('html')).toHaveAttribute('data-accent', 'gold')
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
@@ -721,5 +738,48 @@ test.describe('البحث بالصوت والسمة الذهبية', () => {
     expect(bg).toBe('rgb(10, 10, 10)')
     await page.getByLabel('المظهر').selectOption('light')
     await expect(page.locator('html')).not.toHaveAttribute('data-accent', 'gold')
+  })
+})
+
+test.describe('الاستوديو 0.8: البحث عن الآية وفيديو من الجهاز', () => {
+  test.use({ serviceWorkers: 'block' })
+
+  test('البحث عن الآية بالكتابة داخل الاستوديو واختيارها', async ({ page }) => {
+    await page.goto('/studio?mode=video')
+    await page.getByLabel('ابحث عن الآية بكتابة جزء منها').fill('الحي القيوم لا تاخذه سنه')
+    const hits = page.getByRole('list', { name: 'نتائج البحث عن الآية' })
+    await hits.getByRole('listitem').filter({ hasText: 'سورة البقرة — الآية ٢٥٥' }).click()
+    await expect(page.getByRole('combobox', { name: /^السورة/ })).toHaveValue('2')
+    await expect(page.getByLabel('من الآية')).toHaveValue('255')
+    await expect(page.getByLabel('إلى الآية')).toHaveValue('255')
+  })
+
+  test('فيديو من جهاز المستخدم بلا صوته الأصلي وعليه الآية — بلا تلاوة ومع تلاوة', async ({ page }) => {
+    await page.route(/everyayah\.com|cdn\.islamic\.network/, (r) => r.fulfill({ status: 200, contentType: 'audio/mpeg', body: TONE, headers: { 'access-control-allow-origin': '*' } }))
+    await page.goto('/studio?mode=video&s=112&a=1&to=2')
+    await page.getByLabel('اختيار فيديو من الجهاز').setInputFiles({ name: 'clip.webm', mimeType: 'video/webm', buffer: CLIP })
+    await expect(page.getByText(/فيديو من جهازك \(3 ث\) — يُكتم صوته الأصلي دائمًا/)).toBeVisible()
+    await expect(page.getByRole('radio', { name: 'فيديو من جهازي' })).toHaveAttribute('aria-checked', 'true')
+    await page.getByRole('switch', { name: 'إضافة صوت التلاوة' }).or(page.getByLabel('إضافة صوت التلاوة')).first().uncheck()
+    await expect(page.getByText(/فوق الفيديو الذي اخترته، بلا صوت/)).toBeVisible()
+    await page.getByRole('button', { name: 'إنشاء الفيديو' }).click()
+    const out = page.getByLabel('الفيديو الناتج')
+    await expect(out).toBeVisible({ timeout: 25_000 })
+    expect(await out.evaluate(async (v: HTMLVideoElement) => (await fetch(v.src).then((r) => r.blob())).size)).toBeGreaterThan(5_000)
+    // مع التلاوة
+    await page.getByRole('button', { name: 'فيديو جديد' }).click()
+    await page.getByLabel('إضافة صوت التلاوة').check()
+    await page.getByRole('button', { name: 'إنشاء الفيديو' }).click()
+    await expect(page.getByLabel('الفيديو الناتج')).toBeVisible({ timeout: 25_000 })
+  })
+
+  test('نافذة البحث بالصوت فيها بحث مكتوب بديل', async ({ page }) => {
+    await page.addInitScript(() => { const w = window as unknown as Record<string, unknown>; delete w.webkitSpeechRecognition; delete w.SpeechRecognition })
+    await page.goto('/quran')
+    await page.getByRole('button', { name: 'البحث عن آية بالصوت' }).click()
+    const sheet = page.getByRole('dialog')
+    await sheet.getByLabel('اكتب جزءًا من الآية').fill('انا اعطيناك الكوثر')
+    await sheet.getByRole('link', { name: /سورة الكوثر — الآية ١/ }).click()
+    await expect(page).toHaveURL(/\/quran\/108\?ayah=1/)
   })
 })

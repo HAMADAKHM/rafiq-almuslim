@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { kv } from '../db/repos'
 import { DEFAULT_SETTINGS, mergeSettings, type Settings } from './settings'
 
@@ -14,17 +14,32 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [ready, setReady] = useState(false)
 
+  type Patch = Partial<Settings> | ((s: Settings) => Partial<Settings>)
+  const apply = (s: Settings, p: Patch): Settings => ({ ...s, ...(typeof p === 'function' ? p(s) : p) })
+  // تغييرات قبل اكتمال تحميل الإعدادات المحفوظة: تُطبق فوقها بعد التحميل، ولا يُكتب شيء قبل ذلك
+  // (وإلا كُتبت القيم الافتراضية فوق إعدادات المستخدم المحفوظة)
+  const loaded = useRef(false)
+  const pending = useRef<Patch[]>([])
+
   useEffect(() => {
     kv.get<Partial<Settings> | null>('settings', null)
-      .then((s) => setSettings(mergeSettings(s)))
-      .catch(() => {})
-      .finally(() => setReady(true))
+      .catch(() => null)
+      .then((saved) => {
+        let s = mergeSettings(saved)
+        for (const p of pending.current) s = apply(s, p)
+        loaded.current = true
+        if (pending.current.length) kv.set('settings', s).catch(() => {})
+        pending.current = []
+        setSettings(s)
+        setReady(true)
+      })
   }, [])
 
-  const update = useCallback((patch: Partial<Settings> | ((s: Settings) => Partial<Settings>)) => {
+  const update = useCallback((patch: Patch) => {
+    if (!loaded.current) pending.current.push(patch)
     setSettings((prev) => {
-      const next = { ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }
-      kv.set('settings', next).catch(() => {})
+      const next = apply(prev, patch)
+      if (loaded.current) kv.set('settings', next).catch(() => {})
       return next
     })
   }, [])

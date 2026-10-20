@@ -343,3 +343,5 @@ input.switch-input:disabled { opacity: 0.5; cursor: not-allowed; }
 .voice-hit { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.6rem 0.75rem; border: 1px solid var(--border); border-radius: 14px; text-decoration: none; color: inherit; background: var(--surface); }
 .voice-hit.best { border-color: var(--primary); background: var(--primary-soft); }
 .voice-hit-text { font-size: 1.25rem; line-height: 2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.studio-hits { display: flex; flex-direction: column; gap: 0.4rem; max-height: 300px; overflow-y: auto; }
+button.voice-hit { font: inherit; text-align: start; cursor: pointer; width: 100%; }

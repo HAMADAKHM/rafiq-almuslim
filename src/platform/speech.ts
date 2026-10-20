@@ -34,13 +34,22 @@ export async function listenOnce(lang = 'ar-SA'): Promise<string[]> {
   if (Capacitor.isNativePlatform()) {
     const { SpeechRecognition } = await import('@capacitor-community/speech-recognition')
     const av = await SpeechRecognition.available().catch(() => ({ available: false }))
-    if (!av.available) throw new Error('التعرف على الكلام غير متاح على هذا الجهاز.')
-    const perm = await SpeechRecognition.requestPermissions()
+    if (!av.available) throw new Error('خدمة التعرف على الكلام غير موجودة على هذا الجهاز. ثبّت تطبيق Google (أو فعّل «الكتابة بالصوت من Google») ثم أعد المحاولة، أو اكتب جزءًا من الآية.')
+    let perm = await SpeechRecognition.checkPermissions().catch(() => null)
+    if (perm?.speechRecognition !== 'granted') perm = await SpeechRecognition.requestPermissions()
     if (perm.speechRecognition !== 'granted') throw new Error(ERRORS['not-allowed'])
     stopCurrent = () => { SpeechRecognition.stop().catch(() => {}) }
     try {
-      const r = await SpeechRecognition.start({ language: lang, maxResults: 5, partialResults: false, popup: false })
+      // على Android نافذة Google للتعرف على الكلام أكثر ثباتًا من الاستماع داخل التطبيق
+      const android = Capacitor.getPlatform() === 'android'
+      const r = await SpeechRecognition.start({ language: lang, maxResults: 5, partialResults: false, popup: android, prompt: 'اقرأ الآية أو جزءًا منها' })
       return r.matches ?? []
+    } catch (e) {
+      const msg = String((e as Error)?.message ?? e)
+      // إغلاق نافذة Google دون كلام يعيد رمز إلغاء (0)
+      if (/^0$|cancel/i.test(msg)) return []
+      if (/no match|didn't understand|7/i.test(msg)) throw new Error('لم أتمكن من فهم الكلام. اقرأ بوضوح وببطء، أو اكتب جزءًا من الآية.')
+      throw new Error(`تعذر التعرف على الكلام (${msg}). يمكنك كتابة جزء من الآية بدلًا من ذلك.`)
     } finally {
       stopCurrent = null
     }
