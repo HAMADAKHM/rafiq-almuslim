@@ -36,8 +36,19 @@ export interface NotificationSettings {
   quiet: { enabled: boolean; start: string; end: string }
 }
 
-export type ReaderMode = 'flow' | 'mushaf'
-export type ReaderBg = 'ivory' | 'white' | 'sepia' | 'night'
+/** طريقة العرض: متتابعة (آية بآية)، صفحات المصحف، أو التركيز (آية واحدة في الشاشة) */
+export type ReaderMode = 'flow' | 'mushaf' | 'focus'
+export type ReaderBg = 'cream' | 'ivory' | 'white' | 'sepia' | 'green' | 'night'
+/** إطار الصفحة: زخرفي كلاسيكي أو بسيط */
+export type ReaderFrame = 'classic' | 'plain'
+/** خطوط عربية مرخّصة (SIL OFL) تدعم علامات الضبط القرآنية */
+export type QuranFont = 'amiri-quran' | 'scheherazade' | 'noto-naskh'
+
+export const QURAN_FONTS: { id: QuranFont; label: string; family: string; note: string }[] = [
+  { id: 'amiri-quran', label: 'أميري قرآن', family: '"Amiri Quran", "Amiri", serif', note: 'نسخي مصمم للمصحف' },
+  { id: 'scheherazade', label: 'شهرزاد', family: '"Scheherazade New", "Amiri Quran", serif', note: 'نسخي واضح بحروف كبيرة' },
+  { id: 'noto-naskh', label: 'نسخ حديث', family: '"Noto Naskh Arabic", "Amiri Quran", serif', note: 'خط حديث بسيط' },
+]
 export type HomeCardId = 'continue' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
 
 export interface Settings {
@@ -47,6 +58,8 @@ export interface Settings {
   quranFontSize: number
   readerMode: ReaderMode
   readerBg: ReaderBg
+  readerFrame: ReaderFrame
+  quranFont: QuranFont
   /** ترجمة تُعرض تحت الآيات ('none' أو معرّف الترجمة) */
   translation: 'none' | 'en-sahih'
   adhkarFontScale: number
@@ -100,7 +113,9 @@ export const DEFAULT_SETTINGS: Settings = {
   uiScale: 1,
   quranFontSize: 30,
   readerMode: 'flow',
-  readerBg: 'ivory',
+  readerBg: 'cream',
+  readerFrame: 'classic',
+  quranFont: 'amiri-quran',
   translation: 'none',
   adhkarFontScale: 1,
   location: null,

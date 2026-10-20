@@ -21,6 +21,7 @@ import { SearchPage } from '../features/search/SearchPage'
 import { JourneyPage } from '../features/journey/JourneyPage'
 import { Empty } from '../components/Common'
 import { MushafPage } from '../features/quran/MushafPage'
+import { SurahInfoPage } from '../features/quran/SurahInfoPage'
 import { TasbihPage } from '../features/tasbih/TasbihPage'
 import { CalendarPage } from '../features/calendar/CalendarPage'
 import { RemindersPage } from '../features/reminders/RemindersPage'
@@ -33,6 +34,7 @@ export function AppRoutes() {
         <Route index element={<HomePage />} />
         <Route path="quran" element={<QuranIndexPage />} />
         <Route path="quran/:surah" element={<ReaderPage />} />
+        <Route path="quran/:surah/info" element={<SurahInfoPage />} />
         <Route path="mushaf/:page" element={<MushafPage />} />
         <Route path="tasbih" element={<TasbihPage />} />
         <Route path="calendar" element={<CalendarPage />} />

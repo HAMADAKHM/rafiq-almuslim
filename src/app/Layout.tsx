@@ -67,10 +67,11 @@ export function Layout() {
   useEffect(() => { setOpen(false); window.scrollTo?.(0, 0) }, [loc.pathname])
   useEffect(() => startReminderLoop(() => settingsRef.current), [])
 
-  const isReader = /^\/(quran\/\d+|mushaf)/.test(loc.pathname)
+  // صفحات القراءة لها رأسها وشريطها السفلي الخاصان (يحتويان المشغل)
+  const isReader = /^\/(quran\/\d+\/?$|mushaf)/.test(loc.pathname)
 
   return (
-    <div className="app">
+    <div className={'app' + (isReader ? ' reading' : '')}>
       <a href="#main" className="skip-link">تخطَّ إلى المحتوى</a>
       {open && <div className="backdrop" onClick={() => setOpen(false)} aria-hidden="true" />}
       <aside className={'sidebar' + (open ? ' open' : '')} aria-label="القائمة الرئيسية">
@@ -112,7 +113,7 @@ export function Layout() {
           </footer>
         )}
       </div>
-      <MiniPlayer />
+      {!isReader && <MiniPlayer />}
       {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
     </div>
   )

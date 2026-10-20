@@ -211,7 +211,7 @@ describe('ترحيل الإعدادات من 0.1', () => {
     expect(s.notifications.perPrayer).toMatchObject({ fajr: false, dhuhr: true })
     expect(s.notifications.atAdhan).toBe(true)
     expect(s.notifications.quiet.enabled).toBe(false)
-    expect(s.readerBg).toBe('ivory')
+    expect(s.readerBg).toBe('cream')
     expect(s.homeCards.map((c) => c.id)).toContain('dedication')
   })
   it('بطاقة الإهداء لا يمكن إخفاؤها', () => {
