@@ -3,7 +3,7 @@ import { Download, Pause, Play, Repeat, SkipBack, SkipForward, Square, Trash2, V
 import { PageHead, ProgressBar, Spinner } from '../../components/Common'
 import { toast, useLive, usePlayer, useQuran } from '../../hooks'
 import { RECITERS, reciterById } from '../../content/reciters'
-import { downloadSurah, isSurahDownloaded, player, removeSurahDownload, type LastListen } from '../../services/audio'
+import { downloadSurah, isEmbeddedPreview, isSurahDownloaded, player, removeSurahDownload, type LastListen } from '../../services/audio'
 import { kv } from '../../db/repos'
 import { useSettings } from '../../state/SettingsContext'
 
@@ -44,7 +44,8 @@ export function ListenPage() {
 
   return (
     <>
-      <PageHead title="الاستماع إلى القرآن" subtitle="تلاوات آية بآية من مشروع EveryAyah — تحتاج اتصالًا بالإنترنت ما لم تُنزَّل" />
+      <PageHead title="الاستماع إلى القرآن" subtitle="تلاوات آية بآية من EveryAyah، مع Islamic Network مصدرًا بديلًا — تحتاج اتصالًا بالإنترنت ما لم تُنزَّل" />
+      {isEmbeddedPreview() && <p className="alert alert-gold" role="note" style={{ marginBottom: '1rem' }}>أنت تفتح التطبيق داخل صفحة معاينة، وسياسة الأمان فيها تمنع تحميل الصوت من مواقع خارجية، لذلك لن تعمل التلاوات هنا. افتح ملف التطبيق في المتصفح مباشرة أو استخدم نسخة الجوال.</p>}
       <div className="grid grid-2">
         <section className="card stack">
           <label className="field"><span>القارئ</span>

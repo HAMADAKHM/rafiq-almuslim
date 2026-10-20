@@ -26,12 +26,12 @@ export function AboutPage() {
           <li><strong>الأذكار والأدعية:</strong> مختارة من الأذكار الثابتة كما في «حصن المسلم» للشيخ سعيد بن وهف القحطاني رحمه الله، مع ذكر التخريج، والآيات تُعرض من المصحف المعتمد.</li>
           <li><strong>الترجمة الإنجليزية:</strong> Saheeh International عبر Tanzil.net (مضمّنة في quran-json)، متحقق من مطابقة ترتيبها للمصحف.</li>
           <li><strong>التقويم الهجري:</strong> تقويم أم القرى المدمج في النظام، مع تعديل يدوي لاختلاف الرؤية.</li>
-          <li><strong>التلاوات:</strong> مشروع EveryAyah (everyayah.com) — تُبث مباشرة، ويُخزَّن ما ينزّله المستخدم على جهازه فقط.</li>
+          <li><strong>التلاوات:</strong> مشروع EveryAyah (everyayah.com)، ومصدر بديل تلقائي Islamic Network (cdn.islamic.network) — تُبث مباشرة، ويُخزَّن ما ينزّله المستخدم على جهازه فقط.</li>
           <li><strong>مواقيت الصلاة:</strong> مكتبة adhan مفتوحة المصدر. <strong>المدن:</strong> GeoNames (CC BY 4.0).</li>
         </ul>
         <p className="small muted">إن لاحظت خطأً في أي محتوى فنرجو التنبيه عليه لتصحيحه. المحتوى الديني المكتوب (الأذكار والدروس) يحتاج إلى مراجعة متخصص شرعي قبل النشر العام.</p>
       </section>
-      <p className="small muted" style={{ textAlign: 'center', marginTop: '1rem' }}>رفيق المسلم — الإصدار 0.3.0</p>
+      <p className="small muted" style={{ textAlign: 'center', marginTop: '1rem' }}>رفيق المسلم — الإصدار 0.3.1</p>
     </>
   )
 }

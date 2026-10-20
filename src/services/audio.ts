@@ -1,6 +1,6 @@
 // مشغل التلاوة: قائمة تشغيل آية بآية (يسمح بالانتقال لآية محددة، وتكرار الآية أو المقطع، وتغيير السرعة).
 // يعمل في الخلفية بقدر ما يسمح المتصفح، ويدعم أزرار التحكم في نظام التشغيل عبر Media Session.
-import { ayahAudioUrl, reciterById, RECITERS } from '../content/reciters'
+import { ayahAudioSources, reciterById, RECITERS } from '../content/reciters'
 import { kv, listening } from '../db/repos'
 import { dayKey } from '../lib/dates'
 import { BASMALA_SURAH_EXCEPTIONS } from './quran'
@@ -57,10 +57,7 @@ class AudioPlayer {
       el.addEventListener('pause', () => { if (this.state.status === 'playing') this.set({ status: 'paused' }) })
       el.addEventListener('waiting', () => this.set({ status: 'loading' }))
       el.addEventListener('ended', () => this.onEnded())
-      el.addEventListener('error', () => this.set({
-        status: 'error',
-        error: navigator.onLine ? 'تعذر تحميل ملف التلاوة من الخادم. جرّب قارئًا آخر أو أعد المحاولة لاحقًا.' : 'لا يوجد اتصال بالإنترنت، وهذه التلاوة غير منزّلة على الجهاز.',
-      }))
+      el.addEventListener('error', () => this.onError())
       this.el = el
       this.setupMediaSession()
     }
@@ -80,10 +77,28 @@ class AudioPlayer {
     this.load(start, withBasmala)
   }
 
+  /** روابط الملف الحالي ومؤشر الرابط الذي نجربه (للانتقال تلقائيًا إلى المصدر البديل) */
+  private sources: string[] = []
+  private sourceIdx = 0
+
+  private onError() {
+    if (this.sourceIdx < this.sources.length - 1) {
+      this.sourceIdx++
+      const el = this.audio()
+      el.src = this.sources[this.sourceIdx]
+      el.playbackRate = this.state.rate
+      el.play().catch(() => {})
+      return
+    }
+    this.set({ status: 'error', error: playbackErrorMessage() })
+  }
+
   private load(ayah: number, basmala = false) {
     const el = this.audio()
     const rec = reciterById(this.state.reciterId)
-    el.src = basmala ? ayahAudioUrl(rec, 1, 1) : ayahAudioUrl(rec, this.state.surah, ayah)
+    this.sources = basmala ? ayahAudioSources(rec, 1, 1) : ayahAudioSources(rec, this.state.surah, ayah)
+    this.sourceIdx = 0
+    el.src = this.sources[0]
     el.playbackRate = this.state.rate
     el.volume = this.state.volume
     this.set({ ayah, playingBasmala: basmala, status: 'loading', error: undefined })
@@ -152,6 +167,21 @@ class AudioPlayer {
   }
 }
 
+/** هل يعمل التطبيق داخل صفحة معاينة مضمّنة (مثل رابط المعاينة)؟ سياسة الأمان فيها تمنع الصوت الخارجي */
+export function isEmbeddedPreview(): boolean {
+  try {
+    return window.self !== window.top
+  } catch {
+    return true
+  }
+}
+
+export function playbackErrorMessage(): string {
+  if (!navigator.onLine) return 'لا يوجد اتصال بالإنترنت، وهذه التلاوة غير منزّلة على الجهاز.'
+  if (isEmbeddedPreview()) return 'تشغيل التلاوات غير متاح في رابط المعاينة لأن سياسة الأمان فيه تمنع تحميل الصوت من مواقع خارجية. افتح ملف التطبيق RafiqAlMuslim.html في المتصفح أو استخدم نسخة الجوال.'
+  return 'تعذر تحميل ملف التلاوة من الخادمين المتاحين. تأكد من الاتصال بالإنترنت، أو جرّب قارئًا آخر.'
+}
+
 export const player = new AudioPlayer()
 
 // ---------------- التنزيل للاستماع دون إنترنت ----------------
@@ -171,21 +201,30 @@ export async function downloadSurah(reciterId: string, surah: number, count: num
   if (!('caches' in window)) throw new Error('المتصفح لا يدعم التخزين دون اتصال')
   const cache = await caches.open(AUDIO_CACHE)
   const rec = reciterById(reciterId)
-  const urls = [...(BASMALA_SURAH_EXCEPTIONS.has(surah) ? [] : [ayahAudioUrl(rec, 1, 1)]), ...Array.from({ length: count }, (_, i) => ayahAudioUrl(rec, surah, i + 1))]
+  const files = [...(BASMALA_SURAH_EXCEPTIONS.has(surah) ? [] : [ayahAudioSources(rec, 1, 1)]), ...Array.from({ length: count }, (_, i) => ayahAudioSources(rec, surah, i + 1))]
   let done = 0
-  for (const url of urls) {
+  for (const sources of files) {
     if (signal?.aborted) throw new Error('أُلغي التنزيل')
-    if (!(await cache.match(url))) {
-      let res: Response
+    let saved = false
+    for (const url of sources) {
+      if (await cache.match(url)) { saved = true; break }
       try {
-        res = await fetch(url, { mode: 'cors', signal })
-      } catch {
-        res = await fetch(url, { mode: 'no-cors', signal }) // بعض الخوادم لا ترسل ترويسات CORS
+        let res: Response
+        try {
+          res = await fetch(url, { mode: 'cors', signal })
+        } catch {
+          res = await fetch(url, { mode: 'no-cors', signal }) // بعض الخوادم لا ترسل ترويسات CORS
+        }
+        if (res.type !== 'opaque' && !res.ok) continue
+        await cache.put(url, res)
+        saved = true
+        break
+      } catch (e) {
+        if ((e as Error).name === 'AbortError') throw new Error('أُلغي التنزيل')
       }
-      if (res.type !== 'opaque' && !res.ok) throw new Error('فشل تنزيل أحد الملفات (HTTP ' + res.status + ')')
-      await cache.put(url, res)
     }
-    onProgress?.(++done, urls.length)
+    if (!saved) throw new Error('تعذر تنزيل أحد الملفات من الخادمين. تحقق من الاتصال وأعد المحاولة.')
+    onProgress?.(++done, files.length)
   }
   await kv.set(dlKey(reciterId, surah), true)
 }
@@ -193,6 +232,6 @@ export async function downloadSurah(reciterId: string, surah: number, count: num
 export async function removeSurahDownload(reciterId: string, surah: number, count: number) {
   const cache = await caches.open(AUDIO_CACHE)
   const rec = reciterById(reciterId)
-  for (let a = 1; a <= count; a++) await cache.delete(ayahAudioUrl(rec, surah, a))
+  for (let a = 1; a <= count; a++) for (const url of ayahAudioSources(rec, surah, a)) await cache.delete(url)
   await kv.set(dlKey(reciterId, surah), false)
 }

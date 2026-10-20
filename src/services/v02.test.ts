@@ -221,3 +221,17 @@ describe('ترحيل الإعدادات من 0.1', () => {
     expect(cards).toHaveLength(8)
   })
 })
+
+describe('مصادر التلاوة البديلة', async () => {
+  const { ayahAudioSources, reciterById } = await import('../content/reciters')
+  it('مصدر أساسي ثم بدائل بالرقم المتسلسل الصحيح للآية', () => {
+    const s = ayahAudioSources(reciterById('alafasy'), 2, 255)
+    expect(s[0]).toBe('https://everyayah.com/data/Alafasy_128kbps/002255.mp3')
+    expect(s[1]).toBe('https://cdn.islamic.network/quran/audio/128/ar.alafasy/262.mp3')
+    expect(s).toHaveLength(4)
+    expect(ayahAudioSources(reciterById('alafasy'), 114, 6)[1]).toMatch(/\/6236\.mp3$/)
+  })
+  it('القارئ الذي ليس له مصدر بديل يبقى بمصدر واحد', () => {
+    expect(ayahAudioSources(reciterById('husary-muallim'), 1, 1)).toHaveLength(1)
+  })
+})

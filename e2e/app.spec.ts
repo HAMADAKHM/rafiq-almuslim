@@ -216,8 +216,25 @@ test.describe('الاستماع', () => {
     await expect(player.getByRole('button', { name: 'تشغيل' })).toBeVisible()
   })
 
-  test('رسالة خطأ واضحة عند فشل تحميل التلاوة', async ({ page }) => {
+  test('عند فشل المصدر الأول تُشغَّل التلاوة تلقائيًا من المصدر البديل', async ({ page }) => {
+    const mirror: string[] = []
     await page.route(/everyayah\.com\/data\//, (route) => route.fulfill({ status: 404, body: 'not found' }))
+    await page.route(/cdn\.islamic\.network\/quran\/audio\//, (route) => {
+      mirror.push(route.request().url())
+      return route.fulfill({ status: 200, body: TONE, headers: { 'content-type': 'audio/mpeg' } })
+    })
+    await page.goto('/listen')
+    await page.getByLabel('السورة').selectOption('112')
+    await page.getByRole('button', { name: /تشغيل سورة الإخلاص/ }).click()
+    const player = page.getByRole('region', { name: 'مشغل التلاوة' })
+    await expect(player).toContainText('الآية 2', { timeout: 15000 })
+    await expect(player.getByRole('alert')).toHaveCount(0)
+    // الرقم المتسلسل للإخلاص 1 هو 6222
+    expect(mirror.some((u) => u.endsWith('/ar.alafasy/6222.mp3'))).toBe(true)
+  })
+
+  test('رسالة خطأ واضحة عند فشل تحميل التلاوة', async ({ page }) => {
+    await page.route(/everyayah\.com\/data\/|cdn\.islamic\.network/, (route) => route.fulfill({ status: 404, body: 'not found' }))
     await page.goto('/listen')
     await page.getByLabel('السورة').selectOption('1')
     await page.getByRole('button', { name: /تشغيل سورة الفاتحة/ }).click()

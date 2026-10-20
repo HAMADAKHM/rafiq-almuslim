@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // التلاوات تُبث من everyayah.com؛ ما ينزّله المستخدم صراحةً يُخزَّن في ذاكرة "audio-offline".
-const AUDIO_HOST = /^https:\/\/everyayah\.com\/data\//
+const AUDIO_HOST = /^https:\/\/(everyayah\.com\/data|cdn\.islamic\.network\/quran\/audio)\//
 const TAFSIR_HOST = /^https:\/\/(cdn\.jsdelivr\.net\/gh\/spa5k|raw\.githubusercontent\.com\/spa5k)\/tafsir_api/
 
 export default defineConfig({
