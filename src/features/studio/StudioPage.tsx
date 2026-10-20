@@ -13,6 +13,8 @@ import {
   type StudioBg, type StudioFormat, type StudioStyle, type Verse,
 } from '../../services/studio'
 import { MAX_VIDEO_AYAHS, extFor, loadRecitation, pickVideoMime, recordVideo } from '../../services/studioVideo'
+import { THEMES, suggestTheme } from '../../services/sceneThemes'
+import { Sparkles } from 'lucide-react'
 
 const MAX_IMAGE_AYAHS = 15
 type Mode = 'image' | 'video'
@@ -159,6 +161,17 @@ export function StudioPage() {
             </div>
           </div>
 
+          {(() => {
+            const sug = suggestTheme(versesText(verses))
+            if (!sug) return <p className="small muted" style={{ margin: 0 }}>لا توجد في الآيات المختارة كلمة حسية (بحر، مطر، ليل، جبال، جنات…) لاقتراح مشهد؛ اختر الخلفية التي تناسبك.</p>
+            const label = THEMES.find((x) => x.id === sug.theme)!.label
+            const on = style.bg === `theme-${sug.theme}`
+            return (
+              <button className={'btn' + (on ? ' btn-gold' : '')} disabled={busy || on} onClick={() => set({ bg: `theme-${sug.theme}` as StudioBg })} aria-label={`المشهد المقترح: ${label}`}>
+                <Sparkles size={16} /> {on ? `المشهد المقترح مطبّق: ${label}` : `مشهد مقترح من كلمات الآية: ${label}`}
+              </button>
+            )
+          })()}
           <div>
             <div className="small muted" style={{ marginBottom: 4 }}>الخلفية</div>
             <div className="bg-swatches" role="radiogroup" aria-label="الخلفية">

@@ -117,7 +117,7 @@ export function recordVideo(job: VideoJob): Promise<Blob> {
       const { index, alpha } = frameAt(tl, t)
       const v = job.verses[index]
       drawStudioFrame(ctx, W, H, {
-        style: job.style, bgImage: job.bgImage, zoom: 1 + 0.06 * (t / total), textAlpha: alpha, progress: Math.min(1, t / total),
+        style: job.style, bgImage: job.bgImage, zoom: 1 + 0.06 * (t / total), textAlpha: alpha, progress: Math.min(1, t / total), time: t,
         text: `${v.text} ۝${toArabicDigits(v.ayah)}`,
         reference: `سورة ${job.surahName} • الآية ${toArabicDigits(v.ayah)}`,
         subtitle: job.reciterName,

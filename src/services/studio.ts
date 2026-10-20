@@ -2,6 +2,7 @@
 // النص القرآني يؤخذ دائمًا من ملف المصحف المعتمد (لا يُكتب ولا يُعدَّل)، ويُعرض كاملًا دون اقتطاع:
 // إن لم يتسع النص بأصغر خط مقبول يُطلب من المستخدم تقليل عدد الآيات بدل قصّ النص.
 import { toArabicDigits } from '../lib/arabic'
+import { THEMES, drawTheme, type ThemeId } from './sceneThemes'
 
 export type StudioFormat = 'square' | 'story' | 'landscape'
 export const FORMATS: Record<StudioFormat, { w: number; h: number; label: string }> = {
@@ -10,12 +11,13 @@ export const FORMATS: Record<StudioFormat, { w: number; h: number; label: string
   landscape: { w: 1920, h: 1080, label: 'عرضي — يوتيوب' },
 }
 
-export type StudioBg = 'scene-sunset' | 'scene-night' | 'scene-dawn' | 'scene-day' | 'emerald' | 'night' | 'gold' | 'ivory' | 'parchment' | 'photo'
+export type StudioBg = 'scene-sunset' | 'scene-night' | 'scene-dawn' | 'scene-day' | `theme-${ThemeId}` | 'emerald' | 'night' | 'gold' | 'ivory' | 'parchment' | 'photo'
 export const BACKGROUNDS: { id: StudioBg; label: string; swatch: string }[] = [
   { id: 'scene-sunset', label: 'غروب', swatch: 'linear-gradient(#2f6656,#f3c676)' },
   { id: 'scene-night', label: 'ليل', swatch: 'linear-gradient(#06161a,#1d4a40)' },
   { id: 'scene-dawn', label: 'فجر', swatch: 'linear-gradient(#1d3b4a,#f4d0a4)' },
   { id: 'scene-day', label: 'نهار', swatch: 'linear-gradient(#5d9bb0,#f1ecd9)' },
+  ...THEMES.map((t) => ({ id: `theme-${t.id}` as StudioBg, label: t.label, swatch: t.swatch })),
   { id: 'emerald', label: 'زمردي', swatch: 'linear-gradient(135deg,#0f5a44,#0a3f30)' },
   { id: 'night', label: 'كحلي', swatch: 'linear-gradient(135deg,#0f1f33,#07111d)' },
   { id: 'gold', label: 'أسود وذهبي', swatch: 'linear-gradient(135deg,#1d1b17,#050505)' },
@@ -24,6 +26,10 @@ export const BACKGROUNDS: { id: StudioBg; label: string; swatch: string }[] = [
   { id: 'photo', label: 'صورتي', swatch: 'repeating-linear-gradient(45deg,#ccc 0 6px,#eee 6px 12px)' },
 ]
 export const isScene = (b: StudioBg) => b.startsWith('scene-')
+/** المشاهد المتحركة المرسومة بالشيفرة */
+export const isTheme = (b: StudioBg) => b.startsWith('theme-')
+/** خلفيات المشاهد (مساجد أو طبيعة): النص في الجزء العلوي فوق الأفق */
+const isLandscape = (b: StudioBg) => isScene(b) || isTheme(b)
 export const sceneTone = (b: StudioBg) => b.replace('scene-', '') as 'sunset' | 'night' | 'dawn' | 'day'
 const isLight = (b: StudioBg) => b === 'ivory' || b === 'parchment'
 
@@ -130,6 +136,8 @@ export interface DrawOptions {
   textAlpha?: number
   progress?: number
   subtitle?: string
+  /** زمن الإطار بالثواني (لحركة المشاهد في الفيديو) */
+  time?: number
 }
 
 /** يرسم إطارًا كاملًا. يعيد false إن لم يتسع النص */
@@ -139,7 +147,17 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
   ctx.save()
   ctx.clearRect(0, 0, W, H)
   // ---------- الخلفية ----------
-  if ((isScene(style.bg) || style.bg === 'photo') && o.bgImage) {
+  if (isTheme(style.bg)) {
+    const z = o.zoom ?? 1
+    ctx.save()
+    ctx.translate(W / 2, H); ctx.scale(z, z); ctx.translate(-W / 2, -H)
+    drawTheme(ctx, W, H, style.bg.slice(6) as ThemeId, o.time ?? 0)
+    ctx.restore()
+    const g = ctx.createLinearGradient(0, 0, 0, H)
+    g.addColorStop(0, 'rgba(4,14,20,0.6)'); g.addColorStop(0.55, 'rgba(4,14,20,0.28)'); g.addColorStop(1, 'rgba(4,14,20,0.1)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, W, H)
+  } else if ((isScene(style.bg) || style.bg === 'photo') && o.bgImage) {
     cover(ctx, o.bgImage, W, H, o.zoom ?? 1, isScene(style.bg) ? 1 : 0.5)
     const g = ctx.createLinearGradient(0, 0, 0, H)
     if (style.bg === 'photo') { g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(1, 'rgba(0,0,0,0.55)') } else { g.addColorStop(0, 'rgba(4,20,16,0.62)'); g.addColorStop(0.55, 'rgba(4,20,16,0.25)'); g.addColorStop(1, 'rgba(4,20,16,0.1)') }
@@ -169,10 +187,10 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
   // ---------- النص ----------
   const pad = Math.round(Math.min(W, H) * 0.11)
   const bottomReserve = (style.showRef ? H * 0.08 : 0) + (style.showBrand ? H * 0.05 : 0) + (o.progress != null ? H * 0.02 : 0)
-  const sceneTop = isScene(style.bg) ? (style.format === 'landscape' ? 0.6 : 0.62) : 1
+  const sceneTop = isLandscape(style.bg) ? (style.format === 'landscape' ? 0.6 : 0.62) : 1
   const boxW = W - 2 * pad
   const boxTop = pad
-  const boxH = Math.max(100, H * sceneTop - pad - bottomReserve * (isScene(style.bg) ? 0.2 : 1) - boxTop)
+  const boxH = Math.max(100, H * sceneTop - pad - bottomReserve * (isLandscape(style.bg) ? 0.2 : 1) - boxTop)
   const maxPx = Math.min(W, H) * 0.085 * style.textScale
   const minPx = Math.min(W, H) * 0.028
   const fit = fitText(ctx, o.text, boxW, boxH, Math.max(maxPx, minPx), minPx)
@@ -193,7 +211,7 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
   if (style.showBrand) {
     ctx.globalAlpha = 0.75
     ctx.font = `600 ${Math.round(Math.min(W, H) * 0.024)}px ${UI_FONT}`
-    ctx.fillStyle = isScene(style.bg) ? '#fdfaf2' : ink
+    ctx.fillStyle = isLandscape(style.bg) ? '#fdfaf2' : ink
     ctx.fillText('رفيق المسلم', W / 2, by)
     by -= Math.min(W, H) * 0.05
   }
@@ -202,11 +220,11 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
     const sz = Math.round(Math.min(W, H) * 0.034)
     ctx.font = `700 ${sz}px ${UI_FONT}`
     ctx.fillStyle = gold
-    const refY = isScene(style.bg) ? Math.min(y + sz, H * sceneTop) : by
+    const refY = isLandscape(style.bg) ? Math.min(y + sz, H * sceneTop) : by
     ctx.fillText(o.reference, W / 2, refY)
     if (o.subtitle) {
       ctx.font = `${Math.round(sz * 0.72)}px ${UI_FONT}`
-      ctx.fillStyle = isScene(style.bg) || !light ? 'rgba(253,250,242,0.85)' : '#5f6b63'
+      ctx.fillStyle = isLandscape(style.bg) || !light ? 'rgba(253,250,242,0.85)' : '#5f6b63'
       ctx.fillText(o.subtitle, W / 2, refY + sz * 1.3)
     }
   }
