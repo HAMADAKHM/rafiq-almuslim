@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { PageHead, Spinner } from '../../components/Common'
+import { VoiceAyahSearch } from '../../components/VoiceAyahSearch'
 import { useQuran } from '../../hooks'
 import { parseRef, searchAyahs, searchSurahs } from '../../services/quran'
 import { searchSkeleton } from '../../lib/arabic'
@@ -33,8 +34,9 @@ export function SearchPage() {
   return (
     <>
       <PageHead title="البحث" subtitle="في السور والآيات والأذكار والأدعية والدروس — دون اعتبار للتشكيل أو اختلاف الهمزات" />
-      <form onSubmit={(e) => { e.preventDefault(); setSp(q ? { q } : {}) }}>
-        <input className="input" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="مثال: الصبر، الرحمن، 2:255، أذكار النوم" aria-label="كلمة البحث" style={{ maxWidth: 560 }} />
+      <form className="row" onSubmit={(e) => { e.preventDefault(); setSp(q ? { q } : {}) }}>
+        <input className="input" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="مثال: الصبر، الرحمن، 2:255، أذكار النوم" aria-label="كلمة البحث" style={{ maxWidth: 560, flex: 1 }} />
+        <VoiceAyahSearch compact />
       </form>
       {!data && <Spinner />}
       {res && (

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BookOpen, Trash2 } from 'lucide-react'
 import { PageHead, Spinner, Tabs, Empty } from '../../components/Common'
+import { VoiceAyahSearch } from '../../components/VoiceAyahSearch'
 import { useLive, useQuran } from '../../hooks'
 import { firstAyahOf, parseRef, searchSurahs, type QuranData } from '../../services/quran'
 import { bookmarks, favorites, kv, notes } from '../../db/repos'
@@ -21,7 +22,7 @@ export function QuranIndexPage() {
   return (
     <>
       <PageHead title="القرآن الكريم" subtitle="المصحف برواية حفص عن عاصم — الرسم العثماني"
-        actions={last && <Link className="btn btn-primary" to={`/quran/${last.surah}?ayah=${last.ayah}`}><BookOpen size={16} /> متابعة: {data.meta.surahs[last.surah - 1].name} {last.ayah}</Link>} />
+        actions={<>{last && <Link className="btn btn-primary" to={`/quran/${last.surah}?ayah=${last.ayah}`}><BookOpen size={16} /> متابعة: {data.meta.surahs[last.surah - 1].name} {last.ayah}</Link>}<VoiceAyahSearch /></>} />
       <Tabs value={tab} onChange={setTab} label="فهارس المصحف" items={[
         { id: 'surahs', label: 'السور' }, { id: 'juz', label: 'الأجزاء' }, { id: 'hizb', label: 'الأحزاب' },
         { id: 'page', label: 'الصفحات' }, { id: 'bookmarks', label: 'العلامات' }, { id: 'favorites', label: 'الآيات المفضلة' }, { id: 'notes', label: 'ملاحظاتي' },

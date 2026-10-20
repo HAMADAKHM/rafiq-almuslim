@@ -677,3 +677,49 @@ test.describe('استوديو التصاميم', () => {
     await expect(page.getByRole('img', { name: /سورة الإخلاص • الآية ٢/ })).toBeVisible()
   })
 })
+
+test.describe('البحث بالصوت والسمة الذهبية', () => {
+  test('قراءة جزء من آية الكرسي بالصوت تجد الآية وتفتحها', async ({ page }) => {
+    // محاكاة خدمة التعرف على الكلام في المتصفح بما «سمعته» من المستخدم (إملاء حديث بلا تشكيل)
+    await page.addInitScript(() => {
+      class FakeSR {
+        lang = ''; interimResults = false; maxAlternatives = 1; continuous = false
+        onresult: ((e: unknown) => void) | null = null; onerror: ((e: unknown) => void) | null = null; onend: (() => void) | null = null
+        start() { setTimeout(() => { this.onresult?.({ results: [[{ transcript: 'الله لا اله الا هو الحي القيوم' }, { transcript: 'الله لا اله' }]] }); this.onend?.() }, 300) }
+        stop() { this.onend?.() } abort() {}
+      }
+      const w = window as unknown as Record<string, unknown>
+      w.SpeechRecognition = FakeSR
+      w.webkitSpeechRecognition = FakeSR
+    })
+    await page.goto('/quran')
+    await page.getByRole('button', { name: 'البحث عن آية بالصوت' }).click()
+    const sheet = page.getByRole('dialog')
+    await expect(sheet).toContainText('سمعتُ: «الله لا اله الا هو الحي القيوم»')
+    // العبارة نفسها هي آل عمران 2 كاملة وبداية آية الكرسي: تظهر الاثنتان أولًا
+    await expect(sheet.getByRole('link').nth(0)).toContainText('سورة آل عمران — الآية ٢')
+    await expect(sheet.getByRole('link').nth(1)).toContainText('سورة البقرة — الآية ٢٥٥')
+    await sheet.getByRole('link', { name: /سورة البقرة — الآية ٢٥٥/ }).click()
+    await expect(page).toHaveURL(/\/quran\/2\?ayah=255/)
+  })
+
+  test('متصفح بلا دعم للتعرف على الكلام: رسالة واضحة', async ({ page }) => {
+    await page.addInitScript(() => { delete (window as unknown as Record<string, unknown>).webkitSpeechRecognition; delete (window as unknown as Record<string, unknown>).SpeechRecognition })
+    await page.goto('/search')
+    await page.getByRole('button', { name: 'البحث عن آية بالصوت' }).click()
+    await expect(page.getByRole('dialog').getByRole('alert')).toContainText('لا يدعم البحث بالصوت')
+  })
+
+  test('سمة أسود وذهبي تُطبّق وتبقى بعد إعادة التحميل', async ({ page }) => {
+    await page.goto('/settings')
+    await page.getByLabel('المظهر').selectOption('gold')
+    await expect(page.locator('html')).toHaveAttribute('data-accent', 'gold')
+    await page.reload()
+    await expect(page.locator('html')).toHaveAttribute('data-accent', 'gold')
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+    const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor)
+    expect(bg).toBe('rgb(10, 10, 10)')
+    await page.getByLabel('المظهر').selectOption('light')
+    await expect(page.locator('html')).not.toHaveAttribute('data-accent', 'gold')
+  })
+})

@@ -24,6 +24,10 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>يُستخدم الميكروفون فقط عند ضغطك زر البحث بالصوت، لتقرأ الآية فيجدها التطبيق.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>يحوّل التعرف على الكلام ما تقرؤه إلى نص للبحث عن الآية في المصحف. لا يحفظ التطبيق صوتك.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>يُستخدم موقعك على جهازك فقط لحساب مواقيت الصلاة واتجاه القبلة، ولا يُرسل إلى أي خادم. يمكنك بدلًا من ذلك اختيار مدينتك يدويًا.</string>
 	<key>NSMotionUsageDescription</key>
