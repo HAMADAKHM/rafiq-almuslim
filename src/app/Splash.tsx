@@ -31,10 +31,15 @@ export function Splash() {
     <div className={'splash' + (leaving ? ' leaving' : '')} role="dialog" aria-label="رفيق المسلم" onClick={() => setShow(false)}>
       <MosqueScene tone="sunset" variant="tall" className="splash-art" />
       <div className="splash-veil" />
+      {/* إطار قوس معماري ذهبي */}
+      <svg className="splash-arch" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M6 158 V62 C6 30 28 14 50 4 C72 14 94 30 94 62 V158" fill="none" stroke="#C6A15B" strokeWidth="0.9" vectorEffect="non-scaling-stroke" />
+        <path d="M10 158 V64 C10 35 30 20 50 10 C70 20 90 35 90 64 V158" fill="none" stroke="#C6A15B" strokeWidth="0.5" opacity="0.5" vectorEffect="non-scaling-stroke" />
+      </svg>
       <div className="splash-top">
-        <LogoMark size={92} className="splash-logo" />
+        <LogoMark size={104} className="splash-logo" />
         <h1>رفيق المسلم</h1>
-        <p>معك في كل خطوة نحو الله</p>
+        <p>في كل خطوة.. نحو رضا الله</p>
       </div>
       <div className="splash-bottom">
         <p className="splash-items">القرآن • الصلاة • الأذكار • وأكثر</p>

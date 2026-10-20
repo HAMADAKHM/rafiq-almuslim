@@ -9,6 +9,32 @@ import { dayKey, shiftDayKey } from '../../lib/dates'
 import type { PrayerName } from '../../services/prayer'
 import type { PrayerKey } from '../../state/settings'
 import { platformName } from '../../platform'
+import { compassName, distanceToKaabaKm, qiblaBearing } from '../../services/qibla'
+
+/** بطاقة القبلة المختصرة: الاتجاه المحسوب بالدرجات من الشمال الجغرافي والمسافة إلى الكعبة */
+function QiblaCard({ lat, lng, place }: { lat: number; lng: number; place: string }) {
+  const deg = qiblaBearing(lat, lng)
+  return (
+    <Link to="/qibla" className="card qibla-card" aria-label={`اتجاه القبلة ${Math.round(deg)} درجة`}>
+      <div>
+        <div className="small muted">اتجاه القبلة من {place}</div>
+        <div className="qc-deg">{Math.round(deg)}°</div>
+        <div className="small">{compassName(deg)} • {Math.round(distanceToKaabaKm(lat, lng)).toLocaleString('ar')} كم إلى الكعبة</div>
+        <div className="small muted" style={{ marginTop: 4 }}>محسوب من الإحداثيات (من الشمال الجغرافي). افتح البوصلة للتوجيه.</div>
+      </div>
+      <svg className="qc-dial" viewBox="0 0 100 100" aria-hidden="true">
+        <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2" />
+        {[0, 90, 180, 270].map((a) => <line key={a} x1="50" y1="8" x2="50" y2="14" stroke="currentColor" strokeOpacity="0.5" strokeWidth="2" transform={`rotate(${a} 50 50)`} />)}
+        <text x="50" y="24" textAnchor="middle" fontSize="9" fill="currentColor" opacity="0.7">ش</text>
+        <g transform={`rotate(${deg} 50 50)`}>
+          <path d="M50 16 L56 50 L50 46 L44 50 Z" fill="#C6A15B" />
+          <rect x="45" y="12" width="10" height="9" rx="1.5" fill="#26352F" stroke="#C6A15B" strokeWidth="1" />
+        </g>
+        <circle cx="50" cy="50" r="3" fill="#C6A15B" />
+      </svg>
+    </Link>
+  )
+}
 import { CityPicker } from '../../components/CityPicker'
 import { useNow } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
@@ -100,16 +126,24 @@ export function PrayerPage() {
                     <span className="pr-name">{PRAYER_LABELS[p]}</span>
                     <span className="pr-time">{formatTime(today[p], loc.tz)}</span>
                     <span className="pr-end">
-                      {settings.trackPrayers && p !== 'sunrise'
-                        ? <button className={'prayed-btn' + (prayed.includes(p as PrayerKey) ? ' on' : '')} onClick={() => togglePrayed(p as PrayerKey)} aria-pressed={prayed.includes(p as PrayerKey)} aria-label={`صلّيت ${PRAYER_LABELS[p]}`}><CircleCheck size={18} /></button>
-                        : notif ? <Bell size={15} aria-label="التنبيه مفعّل" /> : null}
+                      {settings.trackPrayers && p !== 'sunrise' && <button className={'prayed-btn' + (prayed.includes(p as PrayerKey) ? ' on' : '')} onClick={() => togglePrayed(p as PrayerKey)} aria-pressed={prayed.includes(p as PrayerKey)} aria-label={`صلّيت ${PRAYER_LABELS[p]}`}><CircleCheck size={18} /></button>}
+                      {p !== 'sunrise' && (
+                        <button className={'bell-btn' + (notif ? ' on' : '')} aria-pressed={n.perPrayer[p as PrayerKey]} aria-label={`تنبيه ${PRAYER_LABELS[p]}`}
+                          title={n.enabled ? undefined : 'التذكيرات العامة متوقفة — فعّلها من إعدادات التذكير'}
+                          onClick={() => update((st) => ({ notifications: { ...st.notifications, perPrayer: { ...st.notifications.perPrayer, [p]: !st.notifications.perPrayer[p as PrayerKey] } } }))}>
+                          {n.perPrayer[p as PrayerKey] ? <Bell size={16} /> : <BellOff size={16} />}
+                        </button>
+                      )}
                     </span>
                   </li>
                 )
               })}
             </ul>
             {settings.trackPrayers && <WeekSummary today={today_} />}
+            {!n.enabled && <p className="small muted" style={{ margin: '0.5rem 0 0' }}>أجراس الصلوات تحدد أي صلاة يُنبَّه لها، والتذكيرات نفسها متوقفة الآن. <Link to="/reminders">تفعيل التذكيرات</Link></p>}
           </section>
+
+          <QiblaCard lat={loc.lat} lng={loc.lng} place={loc.nameAr ?? loc.name} />
 
           {platformName() === 'android' && (
             <section className="card" style={{ gridColumn: '1 / -1' }}>

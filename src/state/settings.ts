@@ -55,7 +55,7 @@ export const QURAN_FONTS: { id: QuranFont; label: string; family: string; note: 
   { id: 'scheherazade', label: 'شهرزاد', family: '"Scheherazade New", "Amiri Quran", serif', note: 'نسخي واضح بحروف كبيرة' },
   { id: 'noto-naskh', label: 'نسخ حديث', family: '"Noto Naskh Arabic", "Amiri Quran", serif', note: 'خط حديث بسيط' },
 ]
-export type HomeCardId = 'continue' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
+export type HomeCardId = 'continue' | 'suggest' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
 
 export interface Settings {
   /** gold: أسود وذهبي (مبني على الوضع الداكن مع لون ذهبي بدل الأخضر) */
@@ -90,6 +90,8 @@ export interface Settings {
   keepAwake: boolean
   /** متابعة أداء الصلوات (اختيارية، تُحفظ على الجهاز فقط) */
   trackPrayers: boolean
+  /** اسم اختياري للتحية في الرئيسية (يبقى على الجهاز) */
+  displayName: string
 }
 
 export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques']
@@ -98,6 +100,7 @@ export const DEFAULT_QUICK_LINKS = ['/qibla', '/tasbih', '/wird', '/calendar']
 export const MAX_QUICK_LINKS = 8
 
 export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
+  suggest: 'اقتراح اليوم',
   continue: 'أكمل قراءتك',
   khatma: 'ورد القرآن',
   adhkar: 'أذكار الوقت',
@@ -111,7 +114,7 @@ export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
 /** بطاقة الإهداء جزء ثابت من هوية التطبيق: يمكن تغيير موضعها لا إخفاؤها. */
 export const LOCKED_HOME_CARDS: HomeCardId[] = ['dedication']
 
-export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['continue', 'khatma', 'adhkar', 'summary', 'ayah', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
+export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['continue', 'suggest', 'khatma', 'adhkar', 'summary', 'ayah', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
 
 export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   enabled: false,
@@ -159,6 +162,7 @@ export const DEFAULT_SETTINGS: Settings = {
   adhkarVibrate: true,
   keepAwake: true,
   trackPrayers: false,
+  displayName: '',
 }
 
 /** يضمن أن قائمة بطاقات الرئيسية تحتوي كل البطاقات المعروفة مرة واحدة، وأن البطاقات المقفلة ظاهرة */

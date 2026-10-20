@@ -1,0 +1,23 @@
+// شعار رفيق المسلم: قوس معماري مدبب يعلوه هلال، وفي داخله مصحف مفتوح.
+// مصدر واحد للأيقونات: يولّد SVG بخلفية (أيقونة التطبيق) أو بلا خلفية (الطبقة الأمامية لأيقونة Android التكيفية).
+export function logoSvg({ background = true, scale = 1 } = {}) {
+  const g = (s) => `<g transform="translate(256 256) scale(${s}) translate(-256 -256)">`
+  const art = `
+  <defs>
+    <linearGradient id="gold" gradientUnits="userSpaceOnUse" x1="0" y1="50" x2="0" y2="440"><stop offset="0" stop-color="#E9CF8E"/><stop offset="1" stop-color="#B98F45"/></linearGradient>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0E5446"/><stop offset="1" stop-color="#062F28"/></linearGradient>
+    <mask id="moon"><rect width="512" height="512" fill="#fff"/><circle cx="270" cy="74" r="25" fill="#000"/></mask>
+  </defs>
+  ${background ? '<rect width="512" height="512" rx="112" fill="url(#bg)"/>' : ''}
+  ${g(scale)}
+    <circle cx="256" cy="80" r="30" fill="url(#gold)" mask="url(#moon)"/>
+    <path d="M140 420 V262 C140 182 196 136 256 112 C316 136 372 182 372 262 V420" fill="none" stroke="url(#gold)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M178 420 V270 C178 214 214 180 256 160 C298 180 334 214 334 270 V420" fill="none" stroke="url(#gold)" stroke-width="7" opacity="0.55"/>
+    <path d="M256 250 l10 14 17 -3 -3 17 14 10 -14 10 3 17 -17 -3 -10 14 -10 -14 -17 3 3 -17 -14 -10 14 -10 -3 -17 17 3 Z" fill="url(#gold)" opacity="0.9"/>
+    <path d="M256 404 C228 384 196 378 160 384 V330 C196 324 228 330 256 350 Z" fill="url(#gold)"/>
+    <path d="M256 404 C284 384 316 378 352 384 V330 C316 324 284 330 256 350 Z" fill="url(#gold)"/>
+    <path d="M256 352 V402" stroke="${background ? '#073B32' : '#073B32'}" stroke-width="5" stroke-linecap="round"/>
+    <path d="M118 424 H394" stroke="url(#gold)" stroke-width="18" stroke-linecap="round"/>
+  </g>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">${art}</svg>`
+}

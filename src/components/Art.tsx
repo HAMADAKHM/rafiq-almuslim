@@ -104,24 +104,17 @@ export function MosqueScene({ tone = 'sunset', variant = 'wide', className, labe
 // قمة القبة الكبرى للمسجد الرئيسي (نفس حساب mosque)
 function by(base: number) { return base - 40 - 26 * 1.7 - 9 }
 
-/** شعار رفيق المسلم: قوس محراب يحتضن قبة ومئذنتين، يعلوه هلال */
+/** شعار رفيق المسلم: قوس معماري يعلوه هلال، وفيه نجمة ومصحف مفتوح (نفس تصميم أيقونة التطبيق، بلون واحد) */
 export function LogoMark({ size = 72, className }: { size?: number; className?: string }) {
   const id = useId().replace(/:/g, '')
   return (
-    <svg className={className} width={size} height={size} viewBox="0 0 100 100" aria-hidden="true">
-      <mask id={`lm${id}`}><rect width="100" height="100" fill="#fff" /><circle cx="54" cy="8.5" r="6" fill="#000" /></mask>
-      <circle cx="50" cy="10" r="7" fill="currentColor" mask={`url(#lm${id})`} />
-      <g fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M50 21 C30 26 17 40 17 60 V93 M50 21 C70 26 83 40 83 60 V93" />
-        <path d="M9 93 H91" />
-      </g>
-      <g fill="currentColor">
-        <path d={dome(50, 70, 15)} />
-        <rect x="33" y="70" width="34" height="23" rx="1.5" />
-        <rect x="49.3" y="38" width="1.4" height="7" />
-        <path d={minaret(28, 93, 34, 4.4)} />
-        <path d={minaret(72, 93, 34, 4.4)} />
-      </g>
+    <svg className={className} width={size} height={size} viewBox="96 40 320 400" aria-hidden="true">
+      <mask id={`lm${id}`}><rect x="0" y="0" width="512" height="512" fill="#fff" /><circle cx="270" cy="74" r="25" fill="#000" /></mask>
+      <circle cx="256" cy="80" r="30" fill="currentColor" mask={`url(#lm${id})`} />
+      <path d="M140 420 V262 C140 182 196 136 256 112 C316 136 372 182 372 262 V420" fill="none" stroke="currentColor" strokeWidth="24" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M256 250 l10 14 17 -3 -3 17 14 10 -14 10 3 17 -17 -3 -10 14 -10 -14 -17 3 3 -17 -14 -10 14 -10 -3 -17 17 3 Z" fill="currentColor" />
+      <path d="M256 404 C228 384 196 378 160 384 V330 C196 324 228 330 256 350 Z M256 404 C284 384 316 378 352 384 V330 C316 324 284 330 256 350 Z" fill="currentColor" />
+      <path d="M118 424 H394" stroke="currentColor" strokeWidth="20" strokeLinecap="round" />
     </svg>
   )
 }

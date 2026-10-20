@@ -18,7 +18,10 @@ import { nextPrayer, PRAYER_LABELS, PRAYERS, todayTimes } from '../../services/p
 import { dayKey, formatCountdown, formatGregorian, formatHijri, formatTime } from '../../lib/dates'
 import { cityLabel } from '../../services/cities'
 import { adhkarLog, kv, memo } from '../../db/repos'
-import { KhatmaCard } from '../wird/KhatmaCard'
+import { KhatmaCard, useKhatmas } from '../wird/KhatmaCard'
+import { activePlan, dailyTarget } from '../../services/khatma'
+import { dailySuggestion } from '../../services/dailySuggest'
+import { Lightbulb } from 'lucide-react'
 import { useAllLogs } from '../progress/ProgressPage'
 import { computeStats, dailySeries } from '../../services/stats'
 import { adhkarForNow, ayahOfDay, greeting } from '../../services/daily'
@@ -80,6 +83,10 @@ export function HomePage() {
   const done = new Set(adhkar.map((a) => a.category))
   const due = segs.filter((s) => !s.paused && s.status !== 'new' && s.due <= today).length
   const nowAdhkar = adhkarForNow(hour)
+  const khatmas = useKhatmas()
+  const plan = khatmas ? activePlan(khatmas) : null
+  const tgt = plan ? dailyTarget(plan, today) : null
+  const suggestion = dailySuggestion({ hour, hasLocation: !!loc, adhkarDone: done, memoDue: due, khatma: plan && tgt ? { active: true, doneToday: tgt.doneToday >= tgt.pages, from: tgt.from, to: tgt.to, page: plan.nextPage } : { active: false, doneToday: false } })
   const aod = ayahOfDay(today)
   const aodText = data?.verses[aod.surah - 1][aod.ayah - 1]
   const aodName = data?.meta.surahs[aod.surah - 1].name
@@ -88,6 +95,13 @@ export function HomePage() {
   const resumeTo = last ? (settings.readerMode === 'mushaf' && last.page ? `/mushaf/${last.page}` : `/quran/${last.surah}?ayah=${last.ayah}`) : '/quran/1'
 
   const cards: Record<HomeCardId, ReactNode> = {
+    suggest: (
+      <Link to={suggestion.to} className="list-card suggest-card" aria-label={`اقتراح اليوم: ${suggestion.title}`}>
+        <span className="icon-chip"><Lightbulb size={22} aria-hidden="true" /></span>
+        <span className="lc-body"><small>اقتراح اليوم</small><strong>{suggestion.title}</strong><small>{suggestion.body}</small></span>
+        <span className="btn btn-sm btn-primary">{suggestion.action}</span>
+      </Link>
+    ),
     continue: (
       <section className="card home-continue-card" aria-label="أكمل قراءتك">
         {!data ? <Spinner /> : (
@@ -132,7 +146,7 @@ export function HomePage() {
               <Link className="small" to={`/quran/${aod.surah}?ayah=${aod.ayah}`}>سورة {aodName}: {aod.ayah}</Link>
               <span className="row">
                 <button className="btn btn-ghost btn-sm icon-btn" aria-label="استماع لآية اليوم" onClick={() => player.play({ reciterId: settings.reciterId, surah: aod.surah, surahName: aodName!, from: aod.ayah, to: aod.ayah })}><Play size={16} /></button>
-                <Link className="btn btn-ghost btn-sm icon-btn" aria-label="تفسير آية اليوم" to={`/learn?s=${aod.surah}&a=${aod.ayah}`}><Library size={16} /></Link>
+                <Link className="btn btn-sm btn-gold" aria-label="تفسير آية اليوم" to={`/learn?s=${aod.surah}&a=${aod.ayah}`}><Library size={15} /> تفسير الآية</Link>
                 <button className="btn btn-ghost btn-sm icon-btn" aria-label="مشاركة آية اليوم كصورة" onClick={() => setShareAyah(true)}><Image size={16} /></button>
               </span>
             </div>
@@ -208,10 +222,12 @@ export function HomePage() {
   return (
     <div className="home">
       <header className="home-hero">
+        <MosqueScene tone={toneFor(np?.name)} className="home-hero-art" />
         <div className="home-hero-row">
           <Link to="/reminders" className="hero-icon" aria-label="إعدادات التذكير"><Bell size={20} /></Link>
           <div className="home-hero-text">
-            <div className="hero-greet">{greeting(hour, today)}</div>
+            <div className="hero-greet">{settings.displayName.trim() ? `السلام عليكم، ${settings.displayName.trim()}` : greeting(hour, today)}</div>
+            {settings.displayName.trim() && <div className="hero-sub">{greeting(hour, today)}</div>}
             <div className="hero-sub">{formatGregorian(now, loc?.tz)}</div>
             <div className="hero-hijri">{formatHijri(now, loc?.tz, settings.hijriOffset)}</div>
           </div>
@@ -280,6 +296,9 @@ export function HomePage() {
             </li>
           ))}
         </ul>
+        <label className="field" style={{ marginTop: '1rem' }}><span>اسمك للتحية (اختياري، يبقى على جهازك)</span>
+          <input className="input" value={settings.displayName} maxLength={30} onChange={(e) => update({ displayName: e.target.value })} placeholder="مثال: محمد" />
+        </label>
         <h3 style={{ marginTop: '1rem' }}>اختصارات الوصول السريع</h3>
         <p className="small muted">اختر حتى {MAX_QUICK_LINKS} أقسام تستخدمها كثيرًا.</p>
         <div className="quick-choices">
