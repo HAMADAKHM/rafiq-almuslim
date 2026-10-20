@@ -280,3 +280,19 @@ input.switch-input:disabled { opacity: 0.5; cursor: not-allowed; }
 .voice-row label { flex: 1; min-width: 0; display: flex; align-items: center; gap: 0.6rem; cursor: pointer; }
 .voice-row input[type='radio'] { accent-color: var(--primary); width: 1.1rem; height: 1.1rem; }
 .voice-row small { display: block; color: var(--text-muted); font-size: 0.78rem; }
+
+/* ======================= استوديو التصاميم ======================= */
+.studio { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 1rem; align-items: start; }
+@media (max-width: 900px) { .studio { grid-template-columns: 1fr; } .studio-preview { order: -1; } }
+.studio-preview { display: flex; flex-direction: column; gap: 0.75rem; align-items: stretch; position: sticky; top: 1rem; }
+@media (max-width: 900px) { .studio-preview { position: static; } }
+.studio-canvas { display: block; margin: 0 auto; max-width: 100%; border-radius: 14px; box-shadow: var(--shadow-lg); background: #0e2a22; }
+.studio-canvas.fmt-square { width: min(100%, 560px); aspect-ratio: 1; }
+.studio-canvas.fmt-story { height: min(70vh, 720px); aspect-ratio: 9 / 16; width: auto; }
+.studio-canvas.fmt-landscape { width: min(100%, 760px); aspect-ratio: 16 / 9; }
+.bg-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 0.4rem; }
+.bg-sw { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0.35rem; border: 2px solid var(--border); border-radius: 12px; background: var(--surface); cursor: pointer; font-size: 0.75rem; color: var(--text); }
+.bg-sw span { width: 100%; height: 34px; border-radius: 8px; }
+.bg-sw.on { border-color: var(--primary); }
+.studio-empty { text-align: center; padding: 2rem 1rem; border: 1px dashed var(--border); border-radius: var(--radius); background: var(--surface); }
+.studio-empty svg { color: var(--primary); }

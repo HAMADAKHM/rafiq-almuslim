@@ -607,6 +607,7 @@ test.describe('صوت الأذان', () => {
     await expect(page.locator('.prayer-row', { hasText: 'العصر' })).toContainText('3:35')
     await page.goto('/reminders')
     await page.getByLabel('استيراد صوت أذان من الجهاز').setInputFiles({ name: 'adhan.mp3', mimeType: 'audio/mpeg', buffer: TONE })
+    await expect(page.getByRole('radio', { name: /من جهازي: adhan.mp3/ })).toBeChecked()
     await page.goto('/')
     await expect(page.getByRole('alertdialog', { name: 'الأذان' })).toHaveCount(0)
     await page.clock.runFor(40_000)
@@ -625,5 +626,54 @@ test.describe('صوت الأذان', () => {
     await page.goto('/')
     await page.clock.runFor(40_000)
     await expect(page.getByRole('alertdialog', { name: 'الأذان' })).toHaveCount(0)
+  })
+})
+
+test.describe('استوديو التصاميم', () => {
+  test.use({ serviceWorkers: 'block' })
+
+  test('تصميم صورة لآيات من المصحف بخط محمّل لكل الحروف، وتغيير المقاس والخلفية', async ({ page }) => {
+    await page.goto('/studio?s=18&a=1&to=4')
+    const canvas = page.getByRole('img', { name: /معاينة التصميم: سورة الكهف • الآيات ١–٤/ })
+    await expect(canvas).toBeVisible()
+    // كل حروف الآيات لها خط محمّل (لا حروف ساقطة من الصورة)
+    await expect.poll(() => page.evaluate(async () => {
+      const r = await fetch('/data/quran/quran.json').then((x) => x.json())
+      const text = (r.verses?.[17] ?? r[17]).slice(0, 4).join(' ')
+      return document.fonts.check('64px "Amiri Quran"', text)
+    })).toBe(true)
+    await page.getByRole('radio', { name: /طولي/ }).click()
+    await expect.poll(() => canvas.evaluate((c: HTMLCanvasElement) => `${c.width}x${c.height}`)).toBe('1080x1920')
+    await page.getByRole('radio', { name: 'عاجي' }).click()
+    // نطاق الآيات لا يتجاوز الحد ولا ينعكس
+    await page.getByLabel('من الآية').selectOption('10')
+    await expect(page.getByLabel('إلى الآية')).toHaveValue('10')
+    await expect(page.getByRole('button', { name: 'مشاركة الصورة' })).toBeEnabled()
+  })
+
+  test('النص الطويل لا يُقتص: يُطلب تقليل الآيات', async ({ page }) => {
+    // أطول 15 آية متتالية في البقرة لا تتسع في مقاس عرضي بخط مقروء
+    await page.goto('/studio?s=2&a=270&to=284')
+    await page.getByRole('radio', { name: /عرضي/ }).click()
+    await expect(page.getByRole('alert')).toContainText('قلّل عدد الآيات')
+    await expect(page.getByRole('button', { name: 'مشاركة الصورة' })).toBeDisabled()
+  })
+
+  test('إنشاء فيديو لآيتين بصوت القارئ', async ({ page }) => {
+    await page.route(/everyayah\.com|cdn\.islamic\.network/, (r) => r.fulfill({ status: 200, contentType: 'audio/mpeg', body: TONE, headers: { 'access-control-allow-origin': '*' } }))
+    await page.goto('/studio?mode=video&s=112&a=1&to=2')
+    await page.getByRole('button', { name: 'إنشاء الفيديو' }).click()
+    const video = page.getByLabel('الفيديو الناتج')
+    await expect(video).toBeVisible({ timeout: 20_000 })
+    const size = await video.evaluate(async (v: HTMLVideoElement) => (await fetch(v.src).then((r) => r.blob())).size)
+    expect(size).toBeGreaterThan(10_000)
+    await expect(page.getByRole('button', { name: 'مشاركة الفيديو' })).toBeVisible()
+  })
+
+  test('من قائمة الآية في القارئ إلى الاستوديو', async ({ page }) => {
+    await page.goto('/quran/112')
+    await page.locator('#ayah-2').click()
+    await page.getByRole('dialog').getByRole('button', { name: 'تصميم صورة' }).click()
+    await expect(page.getByRole('img', { name: /سورة الإخلاص • الآية ٢/ })).toBeVisible()
   })
 })

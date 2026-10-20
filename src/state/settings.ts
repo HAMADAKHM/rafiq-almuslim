@@ -91,7 +91,7 @@ export interface Settings {
   trackPrayers: boolean
 }
 
-export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders']
+export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio']
 export const DEFAULT_QUICK_LINKS = ['/tasbih', '/qibla', '/duas', '/calendar']
 export const MAX_QUICK_LINKS = 8
 

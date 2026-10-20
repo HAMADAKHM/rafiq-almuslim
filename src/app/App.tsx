@@ -28,6 +28,7 @@ import { RemindersPage } from '../features/reminders/RemindersPage'
 import { NativeBridge } from './NativeBridge'
 import { MorePage } from '../features/more/MorePage'
 import { MyAdhkarPage } from '../features/adhkar/MyAdhkarPage'
+import { StudioPage } from '../features/studio/StudioPage'
 
 export function AppRoutes() {
   return (
@@ -59,6 +60,7 @@ export function AppRoutes() {
         <Route path="about" element={<AboutPage />} />
         <Route path="more" element={<MorePage />} />
         <Route path="my-adhkar" element={<MyAdhkarPage />} />
+        <Route path="studio" element={<StudioPage />} />
         <Route path="*" element={<Empty>الصفحة غير موجودة. <Link to="/">العودة إلى الرئيسية</Link></Empty>} />
       </Route>
     </Routes>

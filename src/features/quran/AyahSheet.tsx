@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookOpen, Bookmark, BookmarkCheck, Check, Copy, Heart, Image, Library, Play, Repeat, Share2, StickyNote } from 'lucide-react'
+import { BookOpen, Bookmark, BookmarkCheck, Check, Copy, Heart, Image, Library, Play, Repeat, Share2, StickyNote, Palette, Film } from 'lucide-react'
 import { Sheet } from '../../components/Sheet'
 import { ShareCardDialog } from '../../components/ShareCardDialog'
 import { toast, useLive } from '../../hooks'
@@ -58,6 +58,8 @@ export function AyahSheet({ data, surah, ayah, onClose, onTafsir, onNote, onMark
           <button className="sheet-action" onClick={async () => toast((await copyText(full)) ? 'نُسخت الآية' : 'تعذر النسخ')}><Copy size={18} /><span>نسخ</span></button>
           <button className="sheet-action" onClick={async () => { const r = await shareText(ref, full); if (r === 'copied') toast('نُسخت الآية للمشاركة') }}><Share2 size={18} /><span>مشاركة النص</span></button>
           <button className="sheet-action" onClick={() => setCard(true)}><Image size={18} /><span>بطاقة صورة</span></button>
+          <button className="sheet-action" onClick={() => { nav(`/studio?s=${surah}&a=${ayah}`); onClose() }}><Palette size={18} /><span>تصميم صورة</span></button>
+          <button className="sheet-action" onClick={() => { nav(`/studio?mode=video&s=${surah}&a=${ayah}`); onClose() }}><Film size={18} /><span>فيديو بصوت القارئ</span></button>
           <button className="sheet-action" onClick={() => { onNote(ayah); onClose() }}><StickyNote size={18} /><span>ملاحظة</span></button>
           <button className="sheet-action" onClick={() => { nav(`/mushaf/${ayahMeta(data.meta, surah, ayah).page}?s=${surah}&a=${ayah}`); onClose() }}><BookOpen size={18} /><span>موضعها في المصحف</span></button>
           {onMarkRead && <button className="sheet-action" onClick={() => { onMarkRead(ayah); onClose() }}><Check size={18} /><span>قرأت حتى هنا</span></button>}

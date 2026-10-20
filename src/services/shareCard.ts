@@ -34,7 +34,9 @@ export function wrapLines(ctx: Pick<CanvasRenderingContext2D, 'measureText'>, te
 
 export async function renderCard(input: CardInput, size = 1080): Promise<Blob> {
   const font = input.kind === 'ayah' ? '"Amiri Quran", "Amiri", serif' : '"Amiri", serif'
-  await Promise.all([document.fonts?.load(`48px ${font}`), document.fonts?.load('32px "IBM Plex Sans Arabic"')].filter(Boolean))
+  // تحميل الخط لحروف النص نفسه (الخطوط مقسّمة حسب نطاقات الحروف، وإلا قد تسقط حروف من الصورة)
+  await Promise.all([document.fonts?.load(`48px ${font}`, input.text), document.fonts?.load('32px "IBM Plex Sans Arabic"', input.heading + ' ' + input.reference)].filter(Boolean))
+  await document.fonts?.ready
   const t = THEMES[input.theme]
   const W = size, H = size
   const canvas = document.createElement('canvas')

@@ -1,6 +1,6 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine,
+  ChartColumn, Route, Search, Settings, Heart, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
@@ -16,6 +16,7 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
     { to: '/memorize', key: 'memorize', icon: Brain },
     { to: '/listen', key: 'listen', icon: Headphones },
     { to: '/learn', key: 'learn', icon: GraduationCap },
+    { to: '/studio', key: 'studio', icon: Palette },
   ] },
   { group: 'groupWorship', items: [
     { to: '/prayer', key: 'prayer', icon: Clock },
@@ -39,7 +40,7 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
 /** شريط التنقل السفلي على الجوال: الأقسام الأكثر استخدامًا، والباقي في «المزيد» */
 export const TABS: (NavItem & { short: string; match: RegExp })[] = [
   { to: '/', key: 'home', icon: House, short: 'الرئيسية', match: /^\/$/ },
-  { to: '/quran', key: 'quran', icon: BookOpen, short: 'القرآن', match: /^\/(quran|mushaf|memorize|listen|learn)/ },
+  { to: '/quran', key: 'quran', icon: BookOpen, short: 'القرآن', match: /^\/(quran|mushaf|memorize|listen|learn|studio)/ },
   { to: '/prayer', key: 'prayer', icon: Clock, short: 'المواقيت', match: /^\/(prayer|qibla|calendar)/ },
   { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|tasbih|my-adhkar)/ },
   { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|search|reminders|settings|about)/ },
@@ -62,4 +63,5 @@ export const LINK_META: Record<string, { label: string; icon: typeof House }> = 
   '/search': { label: 'البحث', icon: Search },
   '/progress': { label: 'التقدم', icon: ChartColumn },
   '/reminders': { label: 'التذكير', icon: Bell },
+  '/studio': { label: 'تصاميم الآيات', icon: Palette },
 }
