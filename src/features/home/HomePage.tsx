@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   BookOpen, Sparkles, MapPin, CircleCheck, Play, Image, SlidersHorizontal, ArrowUp, ArrowDown, Library,
-  ChevronLeft, Bell, Heart, LayoutGrid, BookMarked,
+  ChevronLeft, Bell, Heart, LayoutGrid, BookMarked, Sunrise, Sun, CloudSun, Sunset, Moon, MoonStar,
 } from 'lucide-react'
 import { DedicationCard } from '../../components/DedicationCard'
 import { Spinner } from '../../components/Common'
@@ -15,7 +15,9 @@ import { LINK_META } from '../../app/nav'
 import { ADHKAR } from '../../content/adhkar'
 import { catIcon } from '../adhkar/AdhkarPage'
 import { MAX_DAILY_ADHKAR } from '../../state/settings'
-import { MosqueScene, type SceneTone } from '../../components/Art'
+import { LogoMark } from '../../components/Art'
+import { PaintedScene, type PaintTone } from '../../components/Scene'
+import { progress as khatmaProgress } from '../../services/khatma'
 import type { PrayerName } from '../../services/prayer'
 import { nextPrayer, PRAYER_LABELS, PRAYERS, todayTimes } from '../../services/prayer'
 import { dayKey, formatCountdown, formatGregorian, formatHijri, formatTime } from '../../lib/dates'
@@ -36,11 +38,12 @@ import type { AdhkarLog, MemoSegment } from '../../db/db'
 
 
 /** لون المشهد بحسب الصلاة القادمة */
-function toneFor(p?: PrayerName): SceneTone {
+const PRAYER_ICONS: Record<PrayerName, typeof Sun> = { fajr: MoonStar, sunrise: Sunrise, dhuhr: Sun, asr: CloudSun, maghrib: Sunset, isha: Moon }
+
+function toneFor(p?: PrayerName): PaintTone {
   if (p === 'fajr' || p === 'sunrise') return 'dawn'
-  if (p === 'maghrib') return 'sunset'
   if (p === 'isha') return 'night'
-  return 'day'
+  return 'sunset'
 }
 
 function humanLeft(ms: number): string {
@@ -134,22 +137,50 @@ export function HomePage() {
       </section>
     ),
     ayah: (
-      <section className="card ayah-day">
-        <h2>آية اليوم</h2>
+      <section className="card ayah-day" aria-label="آية اليوم">
+        <div className="ayah-day-head">
+          <h2>آية اليوم</h2>
+          <span className="row" style={{ gap: 2 }}>
+            <button className="btn btn-ghost btn-sm icon-btn" aria-label="استماع لآية اليوم" onClick={() => aodName && player.play({ reciterId: settings.reciterId, surah: aod.surah, surahName: aodName, from: aod.ayah, to: aod.ayah })}><Play size={16} /></button>
+            <button className="btn btn-ghost btn-sm icon-btn" aria-label="مشاركة آية اليوم كصورة" onClick={() => setShareAyah(true)}><Image size={16} /></button>
+          </span>
+        </div>
+        <span className="ayah-medallion" aria-hidden="true"><LogoMark size={30} /></span>
         {aodText ? (
           <>
-            <p className="quran-text" style={{ fontSize: '1.6rem', margin: '0.25rem 0' }}>{aodText} <span className="ayah-num">{toArabicDigits(aod.ayah)}</span></p>
-            <div className="spread">
-              <Link className="small" to={`/quran/${aod.surah}?ayah=${aod.ayah}`}>سورة {aodName}: {aod.ayah}</Link>
-              <span className="row">
-                <button className="btn btn-ghost btn-sm icon-btn" aria-label="استماع لآية اليوم" onClick={() => player.play({ reciterId: settings.reciterId, surah: aod.surah, surahName: aodName!, from: aod.ayah, to: aod.ayah })}><Play size={16} /></button>
-                <Link className="btn btn-sm btn-gold" aria-label="تفسير آية اليوم" to={`/learn?s=${aod.surah}&a=${aod.ayah}`}><Library size={15} /> تفسير الآية</Link>
-                <button className="btn btn-ghost btn-sm icon-btn" aria-label="مشاركة آية اليوم كصورة" onClick={() => setShareAyah(true)}><Image size={16} /></button>
-              </span>
-            </div>
+            <p className="quran-text ayah-day-text">﴿{aodText}﴾ <span className="ayah-num">{toArabicDigits(aod.ayah)}</span></p>
+            <Link className="ayah-day-ref" to={`/quran/${aod.surah}?ayah=${aod.ayah}`}>سورة {aodName} • الآية {toArabicDigits(aod.ayah)}</Link>
+            <Link className="btn btn-primary btn-sm ayah-day-tafsir" aria-label="تفسير آية اليوم" to={`/learn?s=${aod.surah}&a=${aod.ayah}`}><Library size={15} /> تفسير الآية</Link>
           </>
         ) : <Spinner />}
       </section>
+    ),
+    today: (
+      <div className="home-duo">
+        <Link to="/wird" className="duo-card" aria-label="وردك اليوم">
+          <span className="duo-head"><span className="duo-icon"><BookOpen size={18} /></span><strong>وردك اليوم</strong></span>
+          {plan && tgt ? (
+            <>
+              <span className="duo-main">{tgt.doneToday >= tgt.pages ? 'تمّ بحمد الله' : `${tgt.pages} صفحات`}</span>
+              <small className="muted">الصفحات {tgt.from}–{tgt.to}</small>
+              <span className="duo-bar"><span style={{ width: `${Math.round(khatmaProgress(plan) * 100)}%` }} /></span>
+              <small className="duo-pct">{Math.round(khatmaProgress(plan) * 100)}٪ من الختمة</small>
+            </>
+          ) : (
+            <>
+              <span className="duo-main">ابدأ ختمة</span>
+              <small className="muted">نحسب لك وردًا يوميًا يناسب وقتك</small>
+            </>
+          )}
+        </Link>
+        <Link to={`/adhkar/${nowAdhkar.id}`} className="duo-card" aria-label="أذكار اليوم">
+          <span className="duo-head"><span className="duo-icon gold"><Sparkles size={18} /></span><strong>أذكار اليوم</strong></span>
+          <span className="duo-main">{nowAdhkar.title}</span>
+          <small className="muted">{done.has(nowAdhkar.id) ? 'أتممتها اليوم، تقبّل الله' : 'حان وقتها الآن'}</small>
+          <span className="duo-bar gold"><span style={{ width: `${Math.round((settings.dailyAdhkar.filter((id) => done.has(id)).length / Math.max(1, settings.dailyAdhkar.length)) * 100)}%` }} /></span>
+          <small className="duo-pct">{settings.dailyAdhkar.filter((id) => done.has(id)).length} من {settings.dailyAdhkar.length} أقسام يومية</small>
+        </Link>
+      </div>
     ),
     quick: (
       <nav aria-label="وصول سريع" className="quick-grid">
@@ -214,21 +245,25 @@ export function HomePage() {
     if (on && cur.length >= MAX_QUICK_LINKS) return
     update({ quickLinks: on ? [...cur, to] : cur.filter((x) => x !== to) })
   }
-  const five = PRAYERS.filter((p) => p !== 'sunrise')
 
   return (
     <div className="home">
       <header className="home-hero">
-        <MosqueScene tone={toneFor(np?.name)} className="home-hero-art" />
+        <PaintedScene tone={toneFor(np?.name)} variant="hero" className="home-hero-art" />
         <div className="home-hero-row">
-          <Link to="/reminders" className="hero-icon" aria-label="إعدادات التذكير"><Bell size={20} /></Link>
-          <div className="home-hero-text">
-            <div className="hero-greet">{settings.displayName.trim() ? `السلام عليكم، ${settings.displayName.trim()}` : greeting(hour, today)}</div>
-            {settings.displayName.trim() && <div className="hero-sub">{greeting(hour, today)}</div>}
-            <div className="hero-sub">{formatGregorian(now, loc?.tz)}</div>
-            <div className="hero-hijri">{formatHijri(now, loc?.tz, settings.hijriOffset)}</div>
+          <div className="hero-who">
+            <span className="hero-avatar" aria-hidden="true">{settings.displayName.trim() ? settings.displayName.trim()[0] : <LogoMark size={24} />}</span>
+            <div className="home-hero-text">
+              <div className="hero-greet">{settings.displayName.trim() ? `السلام عليكم، ${settings.displayName.trim()}` : greeting(hour, today)}</div>
+              <div className="hero-sub">{settings.displayName.trim() ? `${greeting(hour, today)} • ` : ''}جعلك الله من أهل القرآن</div>
+              <div className="hero-date">{formatGregorian(now, loc?.tz)}</div>
+              <div className="hero-date hero-hijri">{formatHijri(now, loc?.tz, settings.hijriOffset)}</div>
+            </div>
           </div>
-          <Link to="/about" className="hero-icon" aria-label="رسالة الوفاء"><Heart size={20} /></Link>
+          <div className="hero-actions">
+            <Link to="/reminders" className="hero-icon" aria-label="إعدادات التذكير"><Bell size={19} /></Link>
+            <Link to="/about" className="hero-icon" aria-label="رسالة الوفاء"><Heart size={19} /></Link>
+          </div>
         </div>
       </header>
 
@@ -236,7 +271,7 @@ export function HomePage() {
         {np && loc && times ? (
           <>
             <Link to="/prayer" className="next-main">
-              <div className="next-art"><MosqueScene tone={toneFor(np.name)} variant="card" /></div>
+              <div className="next-art"><PaintedScene tone={toneFor(np.name)} variant="card" /></div>
               <div className="next-info" aria-live="polite">
                 <div className="next-label">الصلاة القادمة</div>
                 <div className="next-name">{PRAYER_LABELS[np.name]}</div>
@@ -245,19 +280,23 @@ export function HomePage() {
                 <div className="next-count" aria-label="الوقت المتبقي">{formatCountdown(np.time.getTime() - now.getTime())}</div>
               </div>
             </Link>
-            <div className="prayer-pills">
-              {five.map((p) => (
-                <div key={p} className={'pill' + (np.name === p ? ' active' : '')}>
-                  <span>{PRAYER_LABELS[p]}</span>
-                  <b>{formatTime(times[p], loc.tz)}</b>
-                </div>
-              ))}
-            </div>
             <Link to="/prayer" className="next-city"><MapPin size={14} /> {cityLabel(loc)}</Link>
+            <div className="prayer-pills">
+              {PRAYERS.map((p) => {
+                const Icon = PRAYER_ICONS[p]
+                return (
+                  <div key={p} className={'pill' + (np.name === p ? ' active' : '') + (p === 'sunrise' ? ' sunrise' : '')}>
+                    <Icon size={17} aria-hidden="true" />
+                    <span>{PRAYER_LABELS[p]}</span>
+                    <b>{formatTime(times[p], loc.tz).replace(/\s?[صم]$/, '')}</b>
+                  </div>
+                )
+              })}
+            </div>
           </>
         ) : (
           <div className="next-empty">
-            <div className="next-art"><MosqueScene tone="sunset" variant="card" /></div>
+            <div className="next-art"><PaintedScene tone="sunset" variant="card" /></div>
             <div>
               <strong>مواقيت الصلاة</strong>
               <p className="small muted" style={{ margin: '0.2rem 0 0.6rem' }}>اختر مدينتك أو استخدم موقعك لعرض المواقيت والعدّ التنازلي.</p>

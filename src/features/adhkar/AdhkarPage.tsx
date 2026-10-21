@@ -17,6 +17,47 @@ import { dayKey } from '../../lib/dates'
 import { searchSkeleton } from '../../lib/arabic'
 import type { ContentCategory } from '../../content/types'
 import type { Favorite, AdhkarLog } from '../../db/db'
+import { PaintedScene } from '../../components/Scene'
+import { adhkarForNow } from '../../services/daily'
+import { loadTasbih, todayTotal } from '../../services/tasbih'
+import { daysBetween } from '../../lib/dates'
+
+/** بطاقة الأذكار الحالية بلوحة، وبطاقة المسبحة (أعلى مكتبة الأذكار) */
+function AdhkarFeature({ doneToday }: { doneToday: Set<string> }) {
+  const { settings } = useSettings()
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: settings.location?.tz, hour: '2-digit', hour12: false }).format(new Date())) % 24
+  const now = adhkarForNow(hour)
+  const today = dayKey(new Date(), settings.location?.tz)
+  const tasbih = useLive(() => loadTasbih(), ['kv:tasbih'], null)
+  const tone = now.id === 'morning' ? 'dawn' : now.id === 'evening' ? 'sunset' : 'night'
+  return (
+    <>
+      <Link to={`/adhkar/${now.id}`} className="feature-card" aria-label={`${now.title}: قراءة الأذكار`}>
+        <PaintedScene tone={tone} variant="hero" className="feature-art" />
+        <h2>{now.title}</h2>
+        <p>{doneToday.has(now.id) ? 'أتممتها اليوم، تقبّل الله منك' : now.id === 'morning' ? 'ابدأ يومك بذكر الله' : now.id === 'evening' ? 'اختم نهارك بذكر الله' : 'نم على ذكر الله'}</p>
+        <span className="btn btn-sm">قراءة الأذكار</span>
+      </Link>
+      <Link to="/tasbih" className="tasbih-mini" aria-label="المسبحة">
+        <span className="tm-ring">{tasbih ? todayTotal(tasbih, today) : 0}</span>
+        <span><strong>المسبحة</strong><small>تسبيحات اليوم • اضغط للتسبيح</small></span>
+      </Link>
+    </>
+  )
+}
+
+/** حديث اليوم: من مكتبة الصحيحين، يتغير كل يوم */
+function HadithFeature() {
+  const all = HADITH.flatMap((c) => c.items)
+  const h = all[Math.max(0, daysBetween('2026-01-01', dayKey())) % all.length]
+  return (
+    <section className="hadith-feature" aria-label="حديث اليوم">
+      <div className="hf-kicker">حديث اليوم</div>
+      <p className="hf-text">«{h.text}»</p>
+      <div className="hf-src">{h.source}{h.note ? ` — ${h.note}` : ''}</div>
+    </section>
+  )
+}
 
 const SOURCE_NOTE = 'الأذكار مختارة مما ثبت في السنة كما جمعه كتاب «حصن المسلم»، مع التخريج. الأعداد لا تُذكر إلا حيث وردت في النص.'
 const HADITH_NOTE = 'مختارات من الصحيحين (البخاري ومسلم) مع رقم الحديث للتحقق. ما كان جزءًا من حديث أطول مذكور في ملاحظته.'
@@ -57,7 +98,7 @@ function CategoryGrid({ cats, base, doneToday }: { cats: ContentCategory[]; base
         return (
           <Link key={c.id} to={`${base}/${c.id}`} className="list-card">
             <span className="icon-chip"><Icon size={22} aria-hidden="true" /></span>
-            <span className="lc-body"><strong>{c.title}</strong><small>{c.items.length} {c.items.length > 10 ? 'ذكرًا' : 'أذكار'}</small></span>
+            <span className="lc-body"><strong>{c.title}</strong><small>{c.items.length} {base === '/hadith' ? (c.items.length > 10 ? 'حديثًا' : 'أحاديث') : c.items.length > 10 ? 'ذكرًا' : 'أذكار'}</small></span>
             <span className="lc-end">
               {doneToday?.has(c.id) && <CircleCheck size={20} color="var(--success)" aria-label="أُتمّت اليوم" />}
               <ChevronLeft size={18} aria-hidden="true" />
@@ -124,6 +165,8 @@ export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' | 'hadith' })
           <button className="btn icon-btn" aria-label="تكبير النص" onClick={() => update({ adhkarFontScale: Math.min(1.8, +(scale + 0.1).toFixed(2)) })}><AArrowUp size={18} /></button>
         </div>
       )}
+      {!showList && kind === 'adhkar' && <AdhkarFeature doneToday={doneToday} />}
+      {!showList && kind === 'hadith' && <HadithFeature />}
       {!showList && <CategoryGrid cats={cats} base={base} doneToday={kind === 'adhkar' ? doneToday : undefined} />}
       {!showList && kind === 'adhkar' && (
         <section style={{ marginTop: '1.25rem' }}>

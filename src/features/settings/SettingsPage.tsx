@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { Download, Upload, Trash2, Bell } from 'lucide-react'
+import { Download, Upload, Trash2, Bell, MapPin, Clock, Palette, Database, ShieldCheck, BookOpen, Info, ChevronLeft, Moon, Sun } from 'lucide-react'
+import { PaintedScene } from '../../components/Scene'
 import { PageHead } from '../../components/Common'
 import { CityPicker } from '../../components/CityPicker'
 import { OfficialCompare } from './OfficialCompare'
@@ -53,7 +54,23 @@ export function SettingsPage() {
 
   return (
     <>
-      <PageHead title="الإعدادات" />
+      <PageHead title="الإعدادات" subtitle="خصّص التطبيق كما تحب" />
+      <ul className="settings-index" aria-label="أقسام الإعدادات">
+        {([['#location', 'المدينة والموقع', MapPin], ['#prayer', 'حساب مواقيت الصلاة', Clock], ['#notifications', 'التنبيهات والأذان', Bell], ['#appearance', 'القراءة والمظهر', Palette], ['#privacy', 'الخصوصية ومتابعة الرحلة', ShieldCheck], ['#data', 'النسخ الاحتياطي والبيانات', Database], ['#sources', 'مصادر المحتوى', BookOpen]] as const).map(([href, label, Icon]) => (
+          <li key={href}><a href={href} onClick={(e) => { e.preventDefault(); document.querySelector(href)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}><span className="si-icon"><Icon size={18} /></span>{label}<span className="si-end"><ChevronLeft size={18} /></span></a></li>
+        ))}
+        <li><Link to="/about"><span className="si-icon"><Info size={18} /></span>حول التطبيق ورسالة الوفاء<span className="si-end"><ChevronLeft size={18} /></span></Link></li>
+      </ul>
+      <div className="night-card" style={{ marginBottom: '1rem' }}>
+        <PaintedScene tone="night" variant="hero" />
+        <div className="row" style={{ justifyContent: 'space-between', width: '100%' }}>
+          <span><strong>الوضع الليلي</strong><br /><small style={{ opacity: 0.85 }}>راحة لعينيك في كل الأوقات</small></span>
+          <span className="seg" role="radiogroup" aria-label="الوضع الليلي">
+            <button role="radio" aria-checked={settings.theme === 'dark' || settings.theme === 'gold'} onClick={() => update({ theme: 'dark' })} aria-label="داكن"><Moon size={16} /></button>
+            <button role="radio" aria-checked={settings.theme === 'light'} onClick={() => update({ theme: 'light' })} aria-label="فاتح"><Sun size={16} /></button>
+          </span>
+        </div>
+      </div>
       <div className="stack">
         <section className="card" id="location">
           <h2>المدينة والموقع</h2>
@@ -112,7 +129,7 @@ export function SettingsPage() {
           <Link className="btn" to="/reminders"><Bell size={16} /> إعدادات التذكير {settings.notifications.enabled ? '(مفعّلة)' : '(متوقفة)'}</Link>
         </section>
 
-        <section className="card">
+        <section className="card" id="appearance">
           <h2>القراءة والمظهر</h2>
           <div className="grid grid-2" style={{ gap: '0.75rem' }}>
             <label className="field"><span>المظهر</span>
@@ -168,7 +185,7 @@ export function SettingsPage() {
           <p className="small muted" style={{ margin: 0 }}>عند الإيقاف لا يُسجَّل أي نشاط جديد، ويبقى السجل السابق على جهازك كما هو. موضعك في الختمة والحفظ لا يتأثر.</p>
         </section>
 
-        <section className="card">
+        <section className="card" id="sources">
           <h2>مصادر المحتوى</h2>
           <ul className="small">
             <li>نص القرآن: الرسم العثماني برواية حفص — موسوعة القرآن الكريم (QuranEnc) عبر حزمة quran-json 3.1.2، متحقق من اكتماله (114 سورة، 6236 آية).</li>

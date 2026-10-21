@@ -10,7 +10,7 @@ import { dayKey, formatCountdown, formatTime } from '../../lib/dates'
 import { useSettings } from '../../state/SettingsContext'
 import { nextPrayer, PRAYER_LABELS } from '../../services/prayer'
 import type { AdhkarLog, MemoSegment, ReadLog } from '../../db/db'
-import { KhatmaCard, useKhatmas } from './KhatmaCard'
+import { KhatmaHero, KhatmaCard, useKhatmas } from './KhatmaCard'
 
 function NewPlanForm({ onDone }: { onDone: () => void }) {
   const state = useKhatmas()
@@ -123,6 +123,7 @@ export function WirdPage() {
   return (
     <>
       <PageHead title="ورد اليوم" subtitle="ما تيسّر لك اليوم — بلا لوم إن فاتك شيء، والبدء من جديد متاح دائمًا" />
+      <KhatmaHero data={data} />
       <div className="grid grid-2">
         <section className="card">
           <h2><BookOpen size={18} /> ختمة القرآن</h2>

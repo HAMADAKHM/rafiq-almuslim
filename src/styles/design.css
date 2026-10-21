@@ -1,0 +1,204 @@
+/* ======================= تصميم 1.0 (على هيئة التصميم المعتمد) =======================
+   رؤوس خضراء داكنة بعنوان أبيض في الوسط، وبطاقات عاجية مستديرة، ولمسات ذهبية، ولوحات المسجد عند الغروب.
+   يُحمَّل بعد theme.css ويعيد تشكيل المكونات المشتركة دون تغيير بنيتها. */
+
+:root {
+  --radius: 20px;
+  --hdr: #073B32;
+  --hdr-2: #0B4A3E;
+  --hdr-text: #F5F0E6;
+  --hdr-gold: #E2C27E;
+  --card-shadow: 0 1px 2px rgba(7, 59, 50, 0.04), 0 8px 24px rgba(7, 59, 50, 0.08);
+  --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23E2C27E' stroke-width='0.8'%3E%3Crect x='17' y='17' width='22' height='22'/%3E%3Crect x='17' y='17' width='22' height='22' transform='rotate(45 28 28)'/%3E%3C/g%3E%3C/svg%3E");
+}
+:root[data-theme='dark'] { --hdr: #0A2A24; --hdr-2: #0E3A31; --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3); }
+:root[data-accent='gold'] { --hdr: #12110e; --hdr-2: #1d1b17; --hdr-gold: #E6C45A; }
+
+.card, .list-card, .tile { box-shadow: var(--card-shadow); }
+.card { border-radius: var(--radius); }
+.btn-primary { background: var(--hdr); border-color: var(--hdr); color: #fff; }
+.btn-primary:hover { background: var(--hdr-2); border-color: var(--hdr-2); }
+:root[data-theme='dark'] .btn-primary { background: #237B6D; border-color: #237B6D; color: #fff; }
+:root[data-accent='gold'] .btn-primary { background: #d4af37; border-color: #d4af37; color: #111; }
+
+/* ---------- الرأس الأخضر للصفحات الداخلية ---------- */
+.page-head {
+  position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 0.5rem;
+  background: linear-gradient(160deg, var(--hdr-2), var(--hdr));
+  color: var(--hdr-text); border-radius: 24px; padding: 1.1rem 1.25rem 1.3rem; margin-bottom: 1.1rem; box-shadow: var(--shadow-lg);
+}
+.page-head::before { content: ''; position: absolute; inset: 0; background: var(--pattern) center / 56px; opacity: 0.07; pointer-events: none; }
+.page-head > * { position: relative; }
+.page-head h1 { color: #fff; font-size: 1.45rem; margin: 0; }
+.page-head p { color: rgba(245, 240, 230, 0.82); margin: 0.25rem auto 0; max-width: 60ch; font-size: 0.88rem; }
+.page-head p a { color: var(--hdr-gold); }
+.page-head .row { justify-content: center; }
+.page-head .btn { background: rgba(255, 255, 255, 0.12); color: #fff; border-color: rgba(255, 255, 255, 0.28); }
+.page-head .btn-primary, .page-head .btn-gold { background: var(--hdr-gold); color: #2a2208; border-color: var(--hdr-gold); }
+@media (max-width: 900px) {
+  .topbar { background: var(--hdr); border-bottom: 0; backdrop-filter: none; color: #fff; }
+  .topbar .btn-ghost { color: #fff; }
+  .topbar .btn-ghost:hover { background: rgba(255, 255, 255, 0.1); }
+  .topbar .brand strong { color: #fff; }
+  .topbar .brand-mark { background: rgba(255, 255, 255, 0.08); color: var(--hdr-gold); border: 1px solid rgba(226, 194, 126, 0.45); }
+  .page-head { margin: -1rem -1rem 1.1rem; border-radius: 0 0 28px 28px; padding: 0.2rem 1.25rem 1.5rem; box-shadow: 0 10px 24px rgba(7, 59, 50, 0.18); }
+  .app.reading .topbar { background: color-mix(in srgb, var(--bg) 88%, transparent); color: inherit; }
+}
+
+/* ---------- التبويبات: حبوب على العاجي، النشطة خضراء داكنة ---------- */
+.tabs, .lib-tabs { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px; box-shadow: var(--card-shadow); }
+.tab, .lib-tabs a { border-radius: 999px; }
+.tab[aria-selected='true'], .lib-tabs a.active { background: var(--hdr); color: #fff; }
+:root[data-theme='dark'] .tab[aria-selected='true'], :root[data-theme='dark'] .lib-tabs a.active { background: #237B6D; color: #fff; }
+:root[data-accent='gold'] .tab[aria-selected='true'], :root[data-accent='gold'] .lib-tabs a.active { background: #d4af37; color: #111; }
+
+/* ---------- الشريط السفلي ---------- */
+@media (max-width: 900px) {
+  .tabbar { border-radius: 22px 22px 0 0; }
+  .tab-item.active { color: var(--hdr); }
+  :root[data-theme='dark'] .tab-item.active { color: var(--primary); }
+  .tab-item.active svg { background: var(--hdr); color: var(--hdr-gold); }
+  :root[data-theme='dark'] .tab-item.active svg { background: #237B6D; color: #fff; }
+  :root[data-accent='gold'] .tab-item.active svg { background: #d4af37; color: #111; }
+}
+
+/* ======================= الرئيسية ======================= */
+.home-hero { background: var(--hdr); min-height: 300px; padding: calc(1.1rem + env(safe-area-inset-top, 0px)) 1.1rem 6.6rem; border-radius: 0 0 30px 30px; }
+.home-hero::before { display: none; }
+.home-hero-art { opacity: 1; }
+.home-hero::after { background: linear-gradient(to bottom, rgba(4, 22, 19, 0.72) 0%, rgba(4, 22, 19, 0.25) 38%, rgba(4, 22, 19, 0) 60%, rgba(4, 22, 19, 0.25) 100%); }
+:root[data-accent='gold'] .home-hero { background: #050505; }
+.home-hero-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.75rem; grid-template-columns: none; }
+.hero-who { display: flex; align-items: center; gap: 0.7rem; min-width: 0; }
+.hero-avatar { width: 50px; height: 50px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; background: rgba(7, 59, 50, 0.75); border: 2px solid var(--hdr-gold); color: var(--hdr-gold); font-size: 1.35rem; font-weight: 700; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); }
+.home-hero-text { text-align: start; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55); min-width: 0; }
+.hero-greet { font-size: 1.32rem; line-height: 1.35; }
+.hero-sub { font-size: 0.84rem; opacity: 0.95; }
+.hero-date { font-size: 0.76rem; opacity: 0.9; margin-top: 2px; }
+.hero-hijri { font-size: inherit; color: var(--hdr-gold); }
+.hero-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+.hero-icon { background: rgba(4, 22, 19, 0.35); border: 1px solid rgba(255, 255, 255, 0.18); backdrop-filter: blur(6px); border-radius: 50%; }
+
+.next-card { margin-top: -5.4rem; background: linear-gradient(155deg, var(--hdr-2), var(--hdr)); border: 1px solid rgba(226, 194, 126, 0.35); color: var(--hdr-text); padding: 0.85rem 0.85rem 0; overflow: hidden; box-shadow: 0 16px 34px rgba(7, 59, 50, 0.3); }
+.next-main { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.next-main .next-art { order: 2; aspect-ratio: 4 / 3.4; border-radius: 18px; border: 1px solid rgba(226, 194, 126, 0.4); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); }
+.next-label { color: rgba(245, 240, 230, 0.75); }
+.next-name { color: #fff; font-size: 1.75rem; }
+.next-time { color: var(--hdr-gold); font-size: 2.2rem; line-height: 1.15; }
+.next-left { color: rgba(245, 240, 230, 0.8); }
+.next-left b { color: #fff; }
+.next-count { color: var(--hdr-gold); text-align: start; font-size: 0.95rem; }
+.next-city { color: rgba(245, 240, 230, 0.75); margin: 0.4rem 0 0.55rem; }
+.prayer-pills { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.2rem; margin: 0 -0.85rem; padding: 0.6rem 0.5rem 0.7rem; background: var(--surface); border-radius: 22px 22px 0 0; }
+.pill { background: transparent; gap: 2px; font-size: 0.74rem; padding: 0.45rem 0.1rem; border-radius: 16px; }
+.pill svg { color: var(--gold-2); }
+.pill b { font-size: 0.86rem; }
+.pill.sunrise { opacity: 0.8; }
+.pill.active { background: var(--hdr); color: #e9f3ec; }
+.pill.active svg { color: var(--hdr-gold); }
+.next-empty { color: var(--hdr-text); padding-bottom: 0.85rem; }
+.next-empty .muted { color: rgba(245, 240, 230, 0.78); }
+.next-empty .btn-primary { background: var(--hdr-gold); color: #2a2208; border-color: var(--hdr-gold); }
+
+.home-grid { display: flex; flex-direction: column; gap: 1rem; }
+.ayah-day { position: relative; text-align: center; padding: 1rem 1.1rem 1.15rem; background: linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--gold-soft) 45%, var(--surface))); }
+.ayah-day-head { display: flex; justify-content: space-between; align-items: center; }
+.ayah-day-head h2 { margin: 0; font-size: 1.05rem; color: var(--gold); }
+.ayah-medallion { position: absolute; left: 50%; transform: translateX(-50%); top: 0.55rem; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--gold-2); border: 1px solid color-mix(in srgb, var(--gold-2) 55%, transparent); background: var(--surface); }
+.ayah-day-text { font-size: 1.65rem; line-height: 2.05; margin: 0.9rem 0 0.2rem; color: var(--text); }
+.ayah-day-ref { display: block; font-size: 0.85rem; color: var(--text-muted); text-decoration: none; margin-bottom: 0.65rem; }
+.ayah-day-tafsir { border-radius: 999px; padding-inline: 1.2rem; }
+
+.home-duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+.duo-card { display: flex; flex-direction: column; gap: 3px; padding: 0.85rem 0.9rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--card-shadow); text-decoration: none; color: inherit; min-width: 0; }
+.duo-card:hover { border-color: var(--primary); }
+.duo-head { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.25rem; }
+.duo-head strong { font-size: 0.95rem; }
+.duo-icon { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--hdr); color: var(--hdr-gold); flex-shrink: 0; }
+.duo-icon.gold { background: var(--gold-soft); color: var(--gold); }
+.duo-main { font-weight: 700; font-size: 1.05rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.duo-card small { font-size: 0.76rem; }
+.duo-bar { display: block; height: 6px; border-radius: 6px; background: var(--surface-2); overflow: hidden; margin-top: 6px; }
+.duo-bar span { display: block; height: 100%; background: var(--gold-2); border-radius: 6px; }
+.duo-bar.gold span { background: var(--primary); }
+.duo-pct { color: var(--text-muted); }
+
+/* شبكة الأقسام: دوائر خضراء بأيقونات ذهبية */
+.tile-icon, .quick-item .tile-icon { border-radius: 50%; background: var(--hdr); color: var(--hdr-gold); box-shadow: 0 4px 12px rgba(7, 59, 50, 0.18); }
+:root[data-theme='dark'] .tile-icon { background: #0E3A31; }
+.tile, .quick-item { border-radius: 20px; }
+
+/* ======================= المواقيت ======================= */
+.prayer-hero { min-height: 250px; border-radius: 26px; }
+.prayer-hero::after { background: linear-gradient(to bottom, rgba(4, 22, 19, 0.65), rgba(4, 22, 19, 0.1) 55%, rgba(4, 22, 19, 0.45)); }
+.prayer-hero-text { align-items: center; text-align: center; padding-top: 1.3rem; }
+.prayer-row { padding: 0.55rem 0.65rem; border: 1px solid transparent; }
+.prayer-row + .prayer-row { border-top-color: var(--border); border-radius: 0; }
+.prayer-row.next { background: linear-gradient(90deg, var(--gold-soft), color-mix(in srgb, var(--gold-soft) 40%, var(--surface))); border: 1px solid color-mix(in srgb, var(--gold-2) 55%, transparent); border-radius: 16px; }
+.prayer-row.next + .prayer-row { border-top-color: transparent; }
+.prayer-row.next .pr-name, .prayer-row.next .pr-time { color: var(--gold); }
+.pr-icon { background: transparent; color: var(--gold-2); }
+.qibla-card { border: 1px solid rgba(226, 194, 126, 0.4); }
+.qc-dial { color: var(--hdr-gold); filter: drop-shadow(0 0 10px rgba(226, 194, 126, 0.25)); }
+
+/* ======================= الأذكار والأحاديث ======================= */
+.feature-card { position: relative; overflow: hidden; border-radius: 24px; min-height: 190px; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; padding: 1.1rem; box-shadow: var(--shadow-lg); margin-bottom: 1rem; text-decoration: none; }
+.feature-card svg.feature-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.feature-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(4, 22, 19, 0.88), rgba(4, 22, 19, 0.35) 55%, rgba(4, 22, 19, 0.1)); }
+.feature-card > *:not(svg) { position: relative; z-index: 1; }
+.feature-card h2 { margin: 0; font-size: 1.35rem; color: #fff; }
+.feature-card p { margin: 0.15rem 0 0.7rem; color: rgba(245, 240, 230, 0.88); font-size: 0.88rem; }
+.feature-card .btn { align-self: flex-start; background: var(--hdr-gold); color: #2a2208; border-color: var(--hdr-gold); border-radius: 999px; }
+.hadith-feature { position: relative; border-radius: 22px; padding: 1.2rem 1.25rem 1rem; margin-bottom: 1rem; border: 1px solid color-mix(in srgb, var(--gold-2) 50%, var(--border)); background: radial-gradient(120% 90% at 50% 0%, #fbf3df, #efe2c2); color: #2e2a1e; box-shadow: var(--card-shadow); }
+:root[data-theme='dark'] .hadith-feature { background: radial-gradient(120% 90% at 50% 0%, #2a2617, #1b1a12); color: #efe6cd; }
+.hadith-feature::after { content: ''; position: absolute; inset: 6px; border: 1px solid color-mix(in srgb, var(--gold-2) 45%, transparent); border-radius: 17px; pointer-events: none; }
+.hadith-feature .hf-kicker { font-size: 0.82rem; color: var(--gold); font-weight: 700; }
+.hadith-feature .hf-text { font-family: var(--font-classic); font-size: 1.3rem; line-height: 2; margin: 0.3rem 0; }
+.hadith-feature .hf-src { font-size: 0.8rem; color: var(--text-muted); }
+.cat-list .list-card { border-radius: 16px; }
+.cat-list .icon-chip { border-radius: 50%; background: var(--hdr); color: var(--hdr-gold); }
+.tasbih-mini { display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1rem; border-radius: 24px; background: linear-gradient(155deg, var(--hdr-2), var(--hdr)); color: var(--hdr-text); text-decoration: none; margin-bottom: 1rem; box-shadow: var(--shadow-lg); }
+.tasbih-mini .tm-ring { width: 78px; height: 78px; border-radius: 50%; display: grid; place-items: center; border: 3px solid var(--hdr-gold); color: #fff; font-size: 1.5rem; font-weight: 700; flex-shrink: 0; box-shadow: inset 0 0 0 6px rgba(226, 194, 126, 0.15); font-variant-numeric: tabular-nums; }
+.tasbih-mini strong { display: block; font-size: 1.05rem; }
+.tasbih-mini small { color: rgba(245, 240, 230, 0.78); }
+
+/* ======================= الختمة ======================= */
+.khatma-hero { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 1.3rem 1rem; border-radius: 26px; margin-bottom: 1rem; background: linear-gradient(160deg, var(--hdr-2), var(--hdr)); color: var(--hdr-text); box-shadow: var(--shadow-lg); text-align: center; }
+.khatma-hero .ring b { color: #fff; font-size: 1.6rem; }
+.khatma-hero .ring circle:first-child { stroke: rgba(255, 255, 255, 0.12); }
+.khatma-hero .ring circle:last-child { stroke: var(--hdr-gold); }
+.khatma-hero small { color: rgba(245, 240, 230, 0.8); }
+
+/* ======================= الإعدادات: قائمة مجمعة ======================= */
+.settings-index { list-style: none; margin: 0 0 1rem; padding: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--card-shadow); overflow: hidden; }
+.settings-index a { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem 1rem; text-decoration: none; color: var(--text); }
+.settings-index li + li a { border-top: 1px solid var(--border); }
+.settings-index .si-icon { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--primary-soft); color: var(--primary); flex-shrink: 0; }
+.settings-index .si-end { margin-inline-start: auto; color: var(--text-muted); }
+
+/* ======================= المساعد: محادثة ======================= */
+.chat-q { align-self: flex-start; max-width: 85%; padding: 0.6rem 0.9rem; border-radius: 18px 18px 18px 4px; background: var(--hdr); color: #fff; box-shadow: var(--card-shadow); }
+[dir='rtl'] .chat-q { border-radius: 18px 18px 4px 18px; }
+.chat-a { border-radius: 18px; }
+.chat-bar { display: flex; gap: 0.5rem; align-items: center; padding: 0.4rem 0.4rem 0.4rem 0.4rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); box-shadow: var(--card-shadow); }
+.chat-bar .input { border: 0; background: transparent; box-shadow: none; flex: 1; min-width: 0; }
+.chat-bar .btn { border-radius: 999px; }
+
+/* ======================= الوضع الليلي: بطاقة المعاينة ======================= */
+.night-card { position: relative; overflow: hidden; border-radius: 22px; min-height: 150px; color: #fff; display: flex; align-items: flex-end; padding: 1rem; }
+.night-card svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.night-card > div { position: relative; }
+.pr-time { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }
+.pr-left { font-size: 0.72rem; color: var(--gold); font-weight: 600; direction: rtl; }
+.next-prayer-card { background: linear-gradient(155deg, var(--hdr-2), var(--hdr)); color: var(--hdr-text); border: 1px solid rgba(226, 194, 126, 0.35); border-top: 1px solid rgba(226, 194, 126, 0.35); }
+.next-prayer-card .muted, .next-prayer-card .np-left { color: rgba(245, 240, 230, 0.78); }
+.next-prayer-card .np-name { color: #fff; }
+.next-prayer-card .np-time, .next-prayer-card .countdown { color: var(--hdr-gold); }
+.next-prayer-card .icon-chip { background: rgba(255, 255, 255, 0.1); color: var(--hdr-gold); }
+.khatma-hero .small.muted { color: rgba(245, 240, 230, 0.8); }
+
+.night-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgba(2, 10, 9, 0.7), rgba(2, 10, 9, 0)); }
+.night-card > div { z-index: 1; }
+.night-card .seg { background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.25); }
+.night-card .seg button { color: #fff; padding: 0.35rem 0.7rem; display: grid; place-items: center; }
+.night-card .seg button[aria-checked='true'] { background: var(--hdr-gold); color: #2a2208; }

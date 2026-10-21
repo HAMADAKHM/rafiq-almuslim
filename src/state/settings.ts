@@ -56,7 +56,7 @@ export const QURAN_FONTS: { id: QuranFont; label: string; family: string; note: 
   { id: 'scheherazade', label: 'شهرزاد', family: '"Scheherazade New", "Amiri Quran", serif', note: 'نسخي واضح بحروف كبيرة' },
   { id: 'noto-naskh', label: 'نسخ حديث', family: '"Noto Naskh Arabic", "Amiri Quran", serif', note: 'خط حديث بسيط' },
 ]
-export type HomeCardId = 'continue' | 'suggest' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
+export type HomeCardId = 'continue' | 'suggest' | 'khatma' | 'adhkar' | 'ayah' | 'today' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
 
 export interface Settings {
   /** gold: أسود وذهبي (مبني على الوضع الداكن مع لون ذهبي بدل الأخضر) */
@@ -108,6 +108,7 @@ export const MAX_DAILY_ADHKAR = 6
 
 export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
   suggest: 'اقتراح اليوم',
+  today: 'وردك وأذكارك اليوم',
   continue: 'أكمل قراءتك',
   khatma: 'ورد القرآن',
   adhkar: 'أذكار الوقت',
@@ -121,7 +122,10 @@ export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
 /** بطاقة الإهداء جزء ثابت من هوية التطبيق: يمكن تغيير موضعها لا إخفاؤها. */
 export const LOCKED_HOME_CARDS: HomeCardId[] = ['dedication']
 
-export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['continue', 'suggest', 'khatma', 'adhkar', 'summary', 'ayah', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
+// ترتيب 1.0 (على هيئة التصميم المعتمد): آية اليوم، ثم بطاقتا الورد والأذكار جنبًا إلى جنب.
+// بطاقتا الورد والأذكار المفصلتان مخفيتان افتراضيًا (يمكن إظهارهما من «تخصيص الرئيسية»)
+const HIDDEN_BY_DEFAULT: HomeCardId[] = ['khatma', 'adhkar']
+export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['ayah', 'today', 'continue', 'suggest', 'quick', 'summary', 'khatma', 'adhkar', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: !HIDDEN_BY_DEFAULT.includes(id) }))
 
 export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   enabled: false,

@@ -55,11 +55,11 @@ export function KhatmaCard({ data, compact }: { data: QuranData; compact?: boole
         </>
       ) : (
         <div className="khatma-head">
-          <Ring value={progress(plan)} label="التقدم في الختمة" />
+          {/* الحلقة والجزء الحالي في رأس الصفحة (KhatmaHero) */}
           <div>
             <strong className="khatma-name">{plan.name}</strong>
             <div className="small muted">{plan.nextPage - 1} من 604 صفحة{plan.mode === 'days' ? ` • متبقٍّ ${t.daysLeft} يومًا` : ''}</div>
-            <JuzLine data={data} nextPage={plan.nextPage} done={plan.status === 'done'} />
+            <ProgressBar value={progress(plan)} label="التقدم في الختمة" />
             {plan.minutesPerDay && <div className="small muted">خطة بالوقت: {plan.minutesPerDay} دقيقة يوميًا (~{plan.pagesPerDay} صفحات)</div>}
             <div className="small muted">بدأت {plan.startedAt}</div>
           </div>
@@ -99,5 +99,19 @@ export function KhatmaCard({ data, compact }: { data: QuranData; compact?: boole
         </form>
       )}
     </div>
+  )
+}
+
+/** رأس صفحة الختمة: حلقة ذهبية كبيرة بنسبة الختمة والجزء الحالي (على هيئة التصميم المعتمد) */
+export function KhatmaHero({ data }: { data: QuranData }) {
+  const state = useKhatmas()
+  const plan = state ? activePlan(state) : undefined
+  if (!plan) return null
+  return (
+    <section className="khatma-hero" aria-label="ختمة القرآن">
+      <Ring value={progress(plan)} size={150} label="نسبة الختمة" />
+      <strong>{plan.name}</strong>
+      <JuzLine data={data} nextPage={plan.nextPage} done={plan.status === 'done'} />
+    </section>
   )
 }
