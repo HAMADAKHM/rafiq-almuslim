@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   BookOpen, Sparkles, MapPin, CircleCheck, Play, Image, SlidersHorizontal, ArrowUp, ArrowDown, Library,
-  ChevronLeft, Bell, Heart, LayoutGrid, BookMarked,
+  ChevronLeft, Bell, Heart, LayoutGrid, BookMarked, Sun, CloudSun, Sunset, Moon, MoonStar, Sunrise,
 } from 'lucide-react'
 import { DedicationCard } from '../../components/DedicationCard'
 import { Spinner } from '../../components/Common'
@@ -15,7 +15,8 @@ import { LINK_META } from '../../app/nav'
 import { ADHKAR } from '../../content/adhkar'
 import { catIcon } from '../adhkar/AdhkarPage'
 import { MAX_DAILY_ADHKAR } from '../../state/settings'
-import { MosqueScene, type SceneTone } from '../../components/Art'
+import { LogoMark } from '../../components/Art'
+import { PaintedScene, type PaintTone } from '../../components/Scene'
 import type { PrayerName } from '../../services/prayer'
 import { nextPrayer, PRAYER_LABELS, PRAYERS, todayTimes } from '../../services/prayer'
 import { dayKey, formatCountdown, formatGregorian, formatHijri, formatTime } from '../../lib/dates'
@@ -36,11 +37,13 @@ import type { AdhkarLog, MemoSegment } from '../../db/db'
 
 
 /** لون المشهد بحسب الصلاة القادمة */
-function toneFor(p?: PrayerName): SceneTone {
+const PRAYER_ICONS: Record<PrayerName, typeof Sun> = { fajr: MoonStar, sunrise: Sunrise, dhuhr: Sun, asr: CloudSun, maghrib: Sunset, isha: Moon }
+
+/** لون اللوحة بحسب الصلاة القادمة */
+function toneFor(p?: PrayerName): PaintTone {
   if (p === 'fajr' || p === 'sunrise') return 'dawn'
-  if (p === 'maghrib') return 'sunset'
   if (p === 'isha') return 'night'
-  return 'day'
+  return 'sunset'
 }
 
 function humanLeft(ms: number): string {
@@ -219,9 +222,10 @@ export function HomePage() {
   return (
     <div className="home">
       <header className="home-hero">
-        <MosqueScene tone={toneFor(np?.name)} className="home-hero-art" />
+        <PaintedScene tone={toneFor(np?.name)} variant="hero" className="home-hero-art" />
         <div className="home-hero-row">
           <Link to="/reminders" className="hero-icon" aria-label="إعدادات التذكير"><Bell size={20} /></Link>
+          <span className="hero-avatar" aria-hidden="true">{settings.displayName.trim() ? settings.displayName.trim()[0] : <LogoMark size={24} />}</span>
           <div className="home-hero-text">
             <div className="hero-greet">{settings.displayName.trim() ? `السلام عليكم، ${settings.displayName.trim()}` : greeting(hour, today)}</div>
             {settings.displayName.trim() && <div className="hero-sub">{greeting(hour, today)}</div>}
@@ -236,7 +240,7 @@ export function HomePage() {
         {np && loc && times ? (
           <>
             <Link to="/prayer" className="next-main">
-              <div className="next-art"><MosqueScene tone={toneFor(np.name)} variant="card" /></div>
+              <div className="next-art"><PaintedScene tone={toneFor(np.name)} variant="card" /></div>
               <div className="next-info" aria-live="polite">
                 <div className="next-label">الصلاة القادمة</div>
                 <div className="next-name">{PRAYER_LABELS[np.name]}</div>
@@ -245,19 +249,20 @@ export function HomePage() {
                 <div className="next-count" aria-label="الوقت المتبقي">{formatCountdown(np.time.getTime() - now.getTime())}</div>
               </div>
             </Link>
+            <Link to="/prayer" className="next-city"><MapPin size={14} /> {cityLabel(loc)}</Link>
             <div className="prayer-pills">
               {five.map((p) => (
                 <div key={p} className={'pill' + (np.name === p ? ' active' : '')}>
+                  {(() => { const Icon = PRAYER_ICONS[p]; return <Icon size={17} aria-hidden="true" /> })()}
                   <span>{PRAYER_LABELS[p]}</span>
                   <b>{formatTime(times[p], loc.tz)}</b>
                 </div>
               ))}
             </div>
-            <Link to="/prayer" className="next-city"><MapPin size={14} /> {cityLabel(loc)}</Link>
           </>
         ) : (
           <div className="next-empty">
-            <div className="next-art"><MosqueScene tone="sunset" variant="card" /></div>
+            <div className="next-art"><PaintedScene tone="sunset" variant="card" /></div>
             <div>
               <strong>مواقيت الصلاة</strong>
               <p className="small muted" style={{ margin: '0.2rem 0 0.6rem' }}>اختر مدينتك أو استخدم موقعك لعرض المواقيت والعدّ التنازلي.</p>

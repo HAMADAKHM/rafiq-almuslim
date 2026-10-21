@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Bell, BellOff, MapPin, Sunrise, Sun, CloudSun, Sunset, Moon, MoonStar, CircleCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PageHead } from '../../components/Common'
-import { MosqueScene, type SceneTone } from '../../components/Art'
+import { PaintedScene, type PaintTone } from '../../components/Scene'
 import { kv } from '../../db/repos'
 import { useLive } from '../../hooks'
 import { dayKey, shiftDayKey } from '../../lib/dates'
@@ -43,7 +43,7 @@ import { formatCountdown, formatGregorian, formatHijri, formatTime } from '../..
 import { cityLabel } from '../../services/cities'
 
 const ICONS: Record<PrayerName, typeof Sun> = { fajr: MoonStar, sunrise: Sunrise, dhuhr: Sun, asr: CloudSun, maghrib: Sunset, isha: Moon }
-const TONE: Record<PrayerName, SceneTone> = { fajr: 'dawn', sunrise: 'dawn', dhuhr: 'day', asr: 'day', maghrib: 'sunset', isha: 'night' }
+const TONE: Record<PrayerName, PaintTone> = { fajr: 'dawn', sunrise: 'dawn', dhuhr: 'sunset', asr: 'sunset', maghrib: 'sunset', isha: 'night' }
 const prayedKey = (d: string) => `prayed:${d}`
 
 /** متابعة الصلوات اليومية (اختيارية، محلية فقط) */
@@ -78,7 +78,7 @@ export function PrayerPage() {
       <PageHead title="مواقيت الصلاة" subtitle={loc ? undefined : 'اختر مدينتك لعرض المواقيت'} />
       {loc && next && (
         <section className="prayer-hero">
-          <MosqueScene tone={TONE[next.name]} className="prayer-hero-art" />
+          <PaintedScene tone={TONE[next.name]} variant="hero" className="prayer-hero-art" />
           <div className="prayer-hero-text">
             <div className="ph-city"><MapPin size={16} /> {cityLabel(loc)}</div>
             <div className="ph-method">طريقة الحساب: {method?.label}</div>

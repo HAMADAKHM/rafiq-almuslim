@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { LogoMark, MosqueScene } from '../components/Art'
+import { LogoMark } from '../components/Art'
+import { PaintedScene } from '../components/Scene'
 import { SADAQAH_LINE, SADAQAH_PRAYER } from '../content/dedication'
 
 const KEY = 'rafiq:splash-shown'
@@ -29,7 +30,7 @@ export function Splash() {
   if (!show) return null
   return (
     <div className={'splash' + (leaving ? ' leaving' : '')} role="dialog" aria-label="رفيق المسلم" onClick={() => setShow(false)}>
-      <MosqueScene tone="sunset" variant="tall" className="splash-art" />
+      <PaintedScene tone="sunset" variant="tall" className="splash-art" />
       <div className="splash-veil" />
       {/* إطار قوس معماري ذهبي */}
       <svg className="splash-arch" viewBox="0 0 100 160" preserveAspectRatio="none" aria-hidden="true">
