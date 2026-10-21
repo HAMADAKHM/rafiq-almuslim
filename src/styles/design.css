@@ -204,3 +204,17 @@
 .night-card .seg { background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.25); }
 .night-card .seg button { color: #fff; padding: 0.35rem 0.7rem; display: grid; place-items: center; }
 .night-card .seg button[aria-checked='true'] { background: var(--hdr-gold); color: #2a2208; }
+
+/* الرئيسية: بطاقتا الورد والأذكار جنبًا إلى جنب (كما في التصميم المعتمد) */
+.home-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.home-grid > .home-cell { grid-column: 1 / -1; min-width: 0; }
+.home-grid > .home-khatma, .home-grid > .home-adhkar { grid-column: auto; }
+.home-grid > .home-khatma .card, .home-grid > .home-adhkar .card { height: 100%; padding: 0.85rem; }
+.home-khatma h2, .home-adhkar h2 { font-size: 0.98rem; }
+.home-adhkar .adhkar-tiles { grid-template-columns: 1fr; gap: 0.35rem; }
+.home-adhkar .adhkar-tile { padding: 0.5rem 0.55rem; font-size: 0.84rem; }
+.home-khatma .btn, .home-khatma .input, .home-khatma .select { max-width: 100%; }
+
+/* الختمة: حلقة ذهبية */
+.khatma-head .ring circle:last-child { stroke: var(--gold-2); }
+.khatma-head .ring b { color: var(--gold); }

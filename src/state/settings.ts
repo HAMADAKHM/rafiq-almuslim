@@ -121,7 +121,8 @@ export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
 /** بطاقة الإهداء جزء ثابت من هوية التطبيق: يمكن تغيير موضعها لا إخفاؤها. */
 export const LOCKED_HOME_CARDS: HomeCardId[] = ['dedication']
 
-export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['continue', 'suggest', 'khatma', 'adhkar', 'summary', 'ayah', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
+// الترتيب الافتراضي على هيئة التصميم المعتمد: آية اليوم، ثم الورد والأذكار جنبًا إلى جنب (كل البطاقات ظاهرة)
+export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['ayah', 'khatma', 'adhkar', 'continue', 'suggest', 'summary', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
 
 export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   enabled: false,

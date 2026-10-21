@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ShieldCheck, Library } from 'lucide-react'
+import { ShieldCheck, Library, Send } from 'lucide-react'
 import { PageHead, Spinner } from '../../components/Common'
 import { useQuran } from '../../hooks'
 import { ADHKAR } from '../../content/adhkar'
@@ -38,9 +38,9 @@ export function AssistantPage() {
         <ShieldCheck size={18} aria-hidden="true" style={{ flexShrink: 0 }} />
         <span>يعمل على جهازك دون إنترنت ولا يُرسَل سؤالك إلى أي خادم. لا يكتب المساعد نصوصًا من عنده ولا يُفتي: يعرض نصوص المصحف والأحاديث المخرّجة والأذكار كما هي بمصادرها.</span>
       </div>
-      <form className="row" style={{ marginTop: '0.75rem' }} onSubmit={(e) => { e.preventDefault(); ask(q) }}>
-        <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="اكتب سؤالك أو موضوعًا، مثل: دعاء القلق" aria-label="سؤالك للمساعد" style={{ flex: 1, maxWidth: 560 }} />
-        <button className="btn btn-primary" disabled={!q.trim()}>ابحث</button>
+      <form className="chat-bar" style={{ marginTop: '0.75rem' }} onSubmit={(e) => { e.preventDefault(); ask(q) }}>
+        <input className="input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="اكتب سؤالك هنا… مثل: دعاء القلق" aria-label="سؤالك للمساعد" />
+        <button className="btn btn-primary" disabled={!q.trim()} aria-label="ابحث"><Send size={16} /> ابحث</button>
       </form>
       {!asked && (
         <div className="row" style={{ marginTop: '0.75rem' }} aria-label="أمثلة">
@@ -50,13 +50,14 @@ export function AssistantPage() {
       {asked && !data && <Spinner />}
       {res && (
         <div className="stack" style={{ marginTop: '1rem' }}>
+          <div className="chat-q">{asked}</div>
           {res.fiqh && (
             <p className="alert alert-gold small" role="note">
               سؤالك عن حكم شرعي. المساعد لا يُصدر فتاوى ولا أحكامًا؛ ارجع إلى عالم موثوق أو إلى دار الإفتاء الرسمية في بلدك، فالأحكام تختلف باختلاف الأحوال. وهذه نصوص متعلقة بموضوعك للاطلاع:
             </p>
           )}
           {res.topics.length > 0 && (
-            <section className="card stack" aria-label="أقسام مقترحة">
+            <section className="card stack chat-a" aria-label="أقسام مقترحة">
               <h2 style={{ margin: 0 }}>أقسام تفيدك</h2>
               {res.topics.map((t) => (
                 <div key={t.id}>
@@ -67,7 +68,7 @@ export function AssistantPage() {
             </section>
           )}
           {res.verses.length > 0 && (
-            <section className="card stack" aria-label="آيات متعلقة">
+            <section className="card stack chat-a" aria-label="آيات متعلقة">
               <h2 style={{ margin: 0 }}>آيات فيها كلمات سؤالك</h2>
               {res.verses.map((v) => (
                 <div key={`${v.surah}:${v.ayah}`} style={{ borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
@@ -82,7 +83,7 @@ export function AssistantPage() {
             </section>
           )}
           {res.hadith.length > 0 && (
-            <section className="card stack" aria-label="أحاديث متعلقة">
+            <section className="card stack chat-a" aria-label="أحاديث متعلقة">
               <h2 style={{ margin: 0 }}>أحاديث من الصحيحين</h2>
               {res.hadith.map(({ cat, it }) => (
                 <div key={it.id}>
@@ -93,7 +94,7 @@ export function AssistantPage() {
             </section>
           )}
           {res.adhkar.length > 0 && (
-            <section className="card stack" aria-label="أذكار وأدعية متعلقة">
+            <section className="card stack chat-a" aria-label="أذكار وأدعية متعلقة">
               <h2 style={{ margin: 0 }}>أذكار وأدعية</h2>
               {res.adhkar.map(({ cat, it, base }) => (
                 <div key={it.id}>
