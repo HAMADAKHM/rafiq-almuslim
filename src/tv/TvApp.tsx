@@ -128,10 +128,18 @@ export function TvApp() {
   useEffect(() => {
     const b = bridge()
     if (!b?.setSchedule || !city) return
-    const ts = upcomingDays(city, s.prayer, 7, new Date()).flatMap((d) => TV_PRAYERS.map((p) => d.times[p].getTime())).filter((t) => t > Date.now() - 120_000)
-    try { b.setSchedule(JSON.stringify({ adhan: s.adhan, url: ADHAN_URL, times: ts })) } catch { /* خارج التطبيق */ }
+    const all = upcomingDays(city, s.prayer, 7, new Date()).flatMap((d) => TV_PRAYERS.map((p) => ({ t: d.times[p].getTime(), name: PRAYER_LABELS[p] }))).filter((x) => x.t > Date.now() - 120_000)
+    try { b.setSchedule(JSON.stringify({ adhan: s.adhan, url: ADHAN_URL, times: all.map((x) => x.t), names: all.map((x) => x.name) })) } catch { /* خارج التطبيق */ }
   }, [city, s.prayer, s.adhan, day]) // eslint-disable-line react-hooks/exhaustive-deps
   const stopAdhan = () => { audio.current?.pause(); audio.current = null; setAdhanPlaying(false) }
+  // أي زر في جهاز التحكم يوقف الأذان أثناء رفعه
+  useEffect(() => {
+    if (!adhanPlaying) return
+    const stop = (e: Event) => { e.preventDefault(); e.stopPropagation(); stopAdhan() }
+    window.addEventListener('keydown', stop, true)
+    window.addEventListener('click', stop, true)
+    return () => { window.removeEventListener('keydown', stop, true); window.removeEventListener('click', stop, true) }
+  }, [adhanPlaying]) // eslint-disable-line react-hooks/exhaustive-deps
   const update = (p: Partial<TvSettings>) => setS((prev) => { const next = { ...prev, ...p }; saveTv(next); return next })
 
   // التلاوة: تتوقف وقت الأذان وانتظار الإقامة، وتُستأنف بعدهما
@@ -216,7 +224,7 @@ export function TvApp() {
             <div className="tv-overlay-kicker">حان الآن وقت صلاة</div>
             <div className="tv-overlay-title">{PRAYER_LABELS[phase.prayer]}</div>
             <div className="tv-overlay-sub">{clock(phase.at, city.tz, s.hour12)} — {city.nameAr ?? city.name}</div>
-            {s.adhan && <button className="tv-btn" autoFocus onClick={stopAdhan}>إيقاف صوت الأذان</button>}
+            {s.adhan && adhanPlaying && <div className="tv-overlay-sub">اضغط أي زر في جهاز التحكم لإيقاف الأذان</div>}
           </div>
         </div>
       )}
@@ -382,13 +390,13 @@ function TvAutoStart() {
       <h2>فتح الشاشة وحدها</h2>
       <div className={'tv-permission' + (allowed ? ' ok' : '')}>
         {allowed
-          ? '✓ مسموح للتطبيق بالظهور فوق التطبيقات الأخرى: تُفتح الشاشة وحدها عند عدم استخدام التلفاز وعند دخول وقت الصلاة.'
+          ? '✓ مسموح للتطبيق بالظهور فوق التطبيقات الأخرى: تُفتح الشاشة وحدها عند عدم استخدام التلفاز، ووقت الصلاة يظهر شريط صغير يوقف الأذان بأي زر.'
           : 'خطوة واحدة مطلوبة: اسمح لـ«شاشة رفيق المسلم» بـ«الظهور فوق التطبيقات الأخرى»، ثم ارجع بزر الرجوع.'}
       </div>
       {!allowed && <button className="tv-choice on big" onClick={() => b.openOverlaySettings?.()}>فتح إعداد «الظهور فوق التطبيقات الأخرى»</button>}
       <Toggle on={idle} onChange={(v) => { b.setIdleTakeover?.(v); setIdle(v) }} label="فتح الشاشة عند بدء شاشة التوقف في التلفاز (عدم الاستخدام)" />
       <Toggle on={auto} onChange={(v) => { b.setAutostart(v); setAuto(v) }} label="فتح الشاشة عند تشغيل التلفاز" />
-      <p className="tv-muted">لتعمل عند عدم الاستخدام: يجب أن تكون «شاشة التوقف» أو «الوضع المحيطي» مفعّلة في إعدادات التلفاز (مثلًا بعد 5 دقائق)، فتظهر شاشة المواقيت بدلها. الأذان يُرفع في وقته ولو كان التلفاز على تطبيق آخر.</p>
+      <p className="tv-muted">لتعمل عند عدم الاستخدام: يجب أن تكون «شاشة التوقف» أو «الوضع المحيطي» مفعّلة في إعدادات التلفاز (مثلًا بعد 5 دقائق)، فتظهر شاشة المواقيت بدلها. وقت الصلاة والتلفاز على يوتيوب أو تطبيق آخر: لا تُفتح الشاشة، يُرفع الأذان فقط (ويتوقف صوت يوتيوب مؤقتًا)، وأي زر في جهاز التحكم يوقفه.</p>
       <p className="tv-muted">إن لم يظهر إعداد «الظهور فوق التطبيقات» في تلفازك: الإعدادات ← التطبيقات ← وصول خاص للتطبيقات ← الظهور فوق التطبيقات الأخرى.</p>
     </>
   )

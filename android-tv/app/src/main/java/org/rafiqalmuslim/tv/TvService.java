@@ -10,8 +10,21 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
+import android.graphics.Color;
+import android.graphics.PixelFormat;
 import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.session.MediaSession;
+import android.media.session.PlaybackState;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -23,8 +36,8 @@ import org.json.JSONObject;
 /**
  * خدمة تعمل في الخلفية على التلفاز:
  * - حين يبدأ التلفاز شاشة التوقف الخاصة به (عدم الاستخدام) تُفتح «شاشة رفيق المسلم» مكانها.
- * - عند دخول وقت الصلاة تُفتح الشاشة (فيُرفع الأذان فيها) حتى لو كان التلفاز على تطبيق آخر؛
- *   وإن تعذر فتحها يُرفع الأذان من الخدمة نفسها.
+ * - عند دخول وقت الصلاة والتلفاز على تطبيق آخر (يوتيوب…) لا تُفتح الشاشة: يُرفع الأذان فقط،
+ *   ويتوقف صوت التطبيق الآخر مؤقتًا، وأي زر في جهاز التحكم يوقف الأذان.
  * فتح الشاشة من الخلفية يحتاج إذن «الظهور فوق التطبيقات الأخرى» على Android 10 وما بعده.
  */
 public class TvService extends Service {
@@ -102,12 +115,13 @@ public class TvService extends Service {
         }
     };
 
-    /** الجدول تحفظه الواجهة: {"adhan":true,"url":"…","times":[ms,…]} */
+    /** الجدول تحفظه الواجهة: {"adhan":true,"url":"…","times":[ms,…],"names":["الفجر",…]} */
     private void checkPrayer() throws Exception {
         String raw = prefs(this).getString(KEY_SCHEDULE, null);
         if (raw == null) return;
         JSONObject o = new JSONObject(raw);
         JSONArray times = o.getJSONArray("times");
+        JSONArray names = o.optJSONArray("names");
         long now = System.currentTimeMillis();
         long fired = prefs(this).getLong("fired", 0);
         for (int i = 0; i < times.length(); i++) {
@@ -116,25 +130,120 @@ public class TvService extends Service {
                 prefs(this).edit().putLong("fired", at).apply();
                 // الشاشة مفتوحة: الأذان يُرفع فيها
                 if (MainActivity.visible) return;
-                if (openScreen(this)) return;
-                if (o.optBoolean("adhan", true)) playAdhan(o.optString("url", null));
+                // على يوتيوب أو أي تطبيق آخر: لا تُفتح الشاشة، يُرفع الأذان فقط ويُوقف بأي زر
+                if (o.optBoolean("adhan", true)) playAdhan(o.optString("url", null), names != null ? names.optString(i, "") : "");
                 return;
             }
         }
     }
 
-    private void playAdhan(String url) {
+    // ---------- الأذان من الخلفية ----------
+    private AudioManager audioManager;
+    private AudioFocusRequest focusRequest;
+    private View overlay;
+    private MediaSession session;
+
+    private void playAdhan(String url, String prayer) {
         if (url == null || url.isEmpty()) return;
+        stopAdhan();
         try {
-            if (player != null) player.release();
+            requestFocus();
             player = new MediaPlayer();
             player.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());
             player.setDataSource(url);
             player.setOnPreparedListener(MediaPlayer::start);
-            player.setOnCompletionListener(mp -> { mp.release(); player = null; });
+            player.setOnCompletionListener(mp -> stopAdhan());
+            player.setOnErrorListener((mp, what, extra) -> { stopAdhan(); return true; });
             player.prepareAsync();
+            showOverlay(prayer);
+            startMediaSession();
+        } catch (Exception e) {
+            stopAdhan();
+        }
+    }
+
+    /** يوقف الأذان ويعيد الصوت للتطبيق السابق (يوتيوب وغيره يستأنف) */
+    void stopAdhan() {
+        if (player != null) { try { player.stop(); } catch (Exception ignored) { /* لم يبدأ بعد */ } player.release(); player = null; }
+        if (overlay != null) {
+            try { ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(overlay); } catch (Exception ignored) { /* أُزيل */ }
+            overlay = null;
+        }
+        if (session != null) { session.setActive(false); session.release(); session = null; }
+        abandonFocus();
+    }
+
+    /** يوقف صوت التطبيق الآخر (يوتيوب) مؤقتًا طوال الأذان */
+    private void requestFocus() {
+        audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+        if (Build.VERSION.SDK_INT >= 26) {
+            focusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                .setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+                .build();
+            audioManager.requestAudioFocus(focusRequest);
+        } else {
+            audioManager.requestAudioFocus(null, AudioManager.STREAM_ALARM, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+        }
+    }
+
+    private void abandonFocus() {
+        if (audioManager == null) return;
+        if (Build.VERSION.SDK_INT >= 26 && focusRequest != null) audioManager.abandonAudioFocusRequest(focusRequest);
+        else audioManager.abandonAudioFocus(null);
+        focusRequest = null;
+    }
+
+    /** أزرار الوسائط (تشغيل/إيقاف) تصل إلى هذه الجلسة أثناء الأذان، فتوقفه */
+    private void startMediaSession() {
+        session = new MediaSession(this, "adhan");
+        session.setCallback(new MediaSession.Callback() {
+            @Override public void onPause() { stopAdhan(); }
+            @Override public void onStop() { stopAdhan(); }
+            @Override public void onPlay() { stopAdhan(); }
+            @Override public boolean onMediaButtonEvent(Intent i) { stopAdhan(); return true; }
+        });
+        session.setPlaybackState(new PlaybackState.Builder().setActions(PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_STOP | PlaybackState.ACTION_PLAY_PAUSE)
+            .setState(PlaybackState.STATE_PLAYING, 0, 1f).build());
+        session.setActive(true);
+    }
+
+    /**
+     * شريط صغير أعلى الشاشة فوق التطبيق الحالي: «حان وقت الصلاة — اضغط أي زر لإيقاف الأذان».
+     * يأخذ ضغطات جهاز التحكم أثناء الأذان، فأي زر يوقفه ويُزال الشريط (يحتاج إذن الظهور فوق التطبيقات).
+     */
+    private void showOverlay(String prayer) {
+        if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(this)) return;
+        FrameLayout box = new FrameLayout(this) {
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent e) {
+                if (e.getAction() == KeyEvent.ACTION_UP) stopAdhan();
+                return true;
+            }
+        };
+        box.setFocusable(true);
+        box.setFocusableInTouchMode(true);
+        box.setBackgroundColor(Color.parseColor("#E6073B32"));
+        box.setOnClickListener(v -> stopAdhan());
+        TextView tv = new TextView(this);
+        tv.setText((prayer.isEmpty() ? "حان الآن وقت الصلاة" : "حان الآن وقت صلاة " + prayer) + "  —  اضغط أي زر لإيقاف الأذان");
+        tv.setTextColor(Color.parseColor("#F5E7BF"));
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+        tv.setGravity(Gravity.CENTER);
+        int pad = (int) (getResources().getDisplayMetrics().density * 14);
+        tv.setPadding(pad, pad, pad, pad);
+        box.addView(tv);
+        int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+            WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT, type,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            PixelFormat.TRANSLUCENT);
+        lp.gravity = Gravity.TOP;
+        try {
+            ((WindowManager) getSystemService(WINDOW_SERVICE)).addView(box, lp);
+            overlay = box;
+            box.requestFocus();
         } catch (Exception ignored) {
-            // لا اتصال
+            overlay = null;
         }
     }
 
@@ -145,7 +254,7 @@ public class TvService extends Service {
     public void onDestroy() {
         handler.removeCallbacks(tick);
         if (dreamRx != null) unregisterReceiver(dreamRx);
-        if (player != null) player.release();
+        stopAdhan();
         super.onDestroy();
     }
 
