@@ -27,3 +27,4 @@ playwright-report
 *.tmp.mjs
 dist-standalone
 scripts/.tmp/
+dist-tv/

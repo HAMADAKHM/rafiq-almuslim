@@ -16,7 +16,8 @@
     "cap:sync": "npm run build && npx cap sync",
     "android:open": "npx cap open android",
     "android:apk": "npm run cap:sync && cd android && ./gradlew assembleDebug",
-    "ios:open": "npx cap open ios"
+    "ios:open": "npx cap open ios",
+    "build:tv": "vite build --config vite.tv.config.ts && node scripts/tv-index.mjs"
   },
   "dependencies": {
     "@capacitor-community/speech-recognition": "^7.0.1",
