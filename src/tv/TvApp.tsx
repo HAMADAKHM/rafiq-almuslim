@@ -11,6 +11,9 @@ import { loadQuran, type QuranData } from '../services/quran'
 import { dayKey, daysBetween, formatGregorian, formatHijri, formatCountdown } from '../lib/dates'
 import { toArabicDigits } from '../lib/arabic'
 import { loadTv, saveTv, tvPhase, TV_PRAYERS, type TvPrayer, type TvSettings } from './state'
+import { RECITE_MODES, TV_RECITERS } from './recite'
+import { resetRecitePos, useRecitation } from './useRecitation'
+import { reciterById } from '../content/reciters'
 
 const ADHAN_URL = ONLINE_ADHANS[0].url
 const ROTATE_MS = 25_000
@@ -96,22 +99,49 @@ export function TvApp() {
   const np = city ? nextPrayer(city, s.prayer, now) : null
   const phase = times ? tvPhase(now, times, s.iqama) : { kind: 'normal' as const }
 
-  // تشغيل الأذان مرة واحدة لكل صلاة
+  // الأذان عند دخول الوقت (أولوية على التلاوة)، مرة لكل صلاة، مع إعادة المحاولة إن تعذر التحميل
+  const [adhanPlaying, setAdhanPlaying] = useState(false)
   useEffect(() => {
     if (phase.kind !== 'adhan' || !s.adhan) return
     const key = `${day}:${phase.prayer}`
     if (playedFor.current === key) return
     playedFor.current = key
-    const a = new Audio(ADHAN_URL)
-    audio.current = a
-    a.play().catch(() => {})
+    let tries = 0
+    const start = () => {
+      const a = new Audio(ADHAN_URL)
+      a.volume = 1
+      audio.current = a
+      setAdhanPlaying(true)
+      a.onended = () => { setAdhanPlaying(false); audio.current = null }
+      const retry = () => { if (audio.current !== a) return; if (++tries < 4) setTimeout(start, 8000); else setAdhanPlaying(false) }
+      a.onerror = retry
+      a.play().catch(retry)
+    }
+    start()
   }, [phase.kind, phase.kind === 'adhan' ? phase.prayer : '', day, s.adhan]) // eslint-disable-line react-hooks/exhaustive-deps
-  const stopAdhan = () => { audio.current?.pause(); audio.current = null }
+  const stopAdhan = () => { audio.current?.pause(); audio.current = null; setAdhanPlaying(false) }
+  const update = (p: Partial<TvSettings>) => setS((prev) => { const next = { ...prev, ...p }; saveTv(next); return next })
+
+  // التلاوة: تتوقف وقت الأذان وانتظار الإقامة، وتُستأنف بعدهما
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: city?.tz, hour: '2-digit', hour12: false }).format(now)) % 24
+  const rec = useRecitation(s, data, { day, hour }, phase.kind !== 'normal' || adhanPlaying)
+  // أزرار الوسائط في جهاز التحكم: تشغيل/إيقاف التلاوة
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (['MediaPlayPause', 'MediaPlay', 'MediaPause', 'MediaStop'].includes(e.key)) update({ reciteOn: e.key === 'MediaPlay' ? true : e.key === 'MediaPause' || e.key === 'MediaStop' ? false : !s.reciteOn }) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [s.reciteOn]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (DREAM && (!city || !times || !np)) return <div className="tv tv-dream-empty"><p>افتح تطبيق «شاشة رفيق المسلم» واختر مدينتك لتظهر المواقيت هنا.</p></div>
-  if (setup || !city || !times || !np) return <TvSetup s={s} onSave={(next) => { saveTv(next); setS(next); setSetup(false) }} canCancel={!!city} onCancel={() => setSetup(false)} />
+  if (setup || !city || !times || !np) return <TvSetup s={s} data={data} onSave={(next) => { saveTv(next); setS(next); setSetup(false) }} canCancel={!!city} onCancel={() => setSetup(false)} />
 
-  const item = rotating[slide % Math.max(1, rotating.length)]
+  const playingText = rec.current && data ? {
+    title: 'تلاوة الآن',
+    text: data.verses[rec.current.surah - 1][rec.current.ayah - 1],
+    ref: `سورة ${data.meta.surahs[rec.current.surah - 1].name} • الآية ${toArabicDigits(rec.current.ayah)} — ${reciterById(s.reciterId).name}`,
+    quran: true,
+  } : null
+  const item = playingText ?? rotating[slide % Math.max(1, rotating.length)]
   const tone = toneFor(np.name)
   const left = np.time.getTime() - now.getTime()
 
@@ -136,10 +166,11 @@ export function TvApp() {
           </div>
         </section>
         {item && (
-          <section className="tv-card" key={slide}>
+          <section className={'tv-card' + (playingText ? ' playing' : '')} key={playingText ? `${rec.current!.surah}:${rec.current!.ayah}` : slide}>
             <div className="tv-card-title">{item.title}</div>
             <p className={'tv-card-text' + (item.quran ? ' quran' : '')}>{item.quran ? `﴿${item.text}﴾` : `«${item.text}»`}</p>
             <div className="tv-card-ref">{item.ref}</div>
+            {rec.failed && <div className="tv-card-ref">تعذر تحميل التلاوة — تحقق من اتصال التلفاز بالإنترنت</div>}
           </section>
         )}
       </main>
@@ -159,6 +190,7 @@ export function TvApp() {
         {!DREAM && <span className="tv-actions">
           {!unlocked && s.adhan && <span className="tv-hint">اضغط أي زر في جهاز التحكم لتفعيل صوت الأذان</span>}
           {!IN_APP && <button className="tv-btn" onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})}>ملء الشاشة</button>}
+          <button className={'tv-btn' + (s.reciteOn ? ' on' : '')} onClick={() => update({ reciteOn: !s.reciteOn })}>{s.reciteOn ? '⏸ إيقاف القراءة' : '▶ تشغيل القراءة'}</button>
           <button className="tv-btn" onClick={() => setSetup(true)}>الإعدادات</button>
         </span>}
       </footer>
@@ -190,7 +222,7 @@ export function TvApp() {
 }
 
 /** إعدادات الشاشة: المدينة، وطريقة الحساب، والأذان، ودقائق الإقامة */
-function TvSetup({ s, onSave, canCancel, onCancel }: { s: TvSettings; onSave: (s: TvSettings) => void; canCancel: boolean; onCancel: () => void }) {
+function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data: QuranData | null; onSave: (s: TvSettings) => void; canCancel: boolean; onCancel: () => void }) {
   const [draft, setDraft] = useState<TvSettings>(s)
   const [q, setQ] = useState('')
   const [cities, setCities] = useState<City[] | null>(null)
@@ -243,9 +275,40 @@ function TvSetup({ s, onSave, canCancel, onCancel }: { s: TvSettings; onSave: (s
             <p className="tv-muted">0 = بلا عدّاد للإقامة.</p>
           </section>
         </div>
+        <section className="tv-auto">
+          <h2>القراءة بصوت هادئ</h2>
+          <label className="tv-check"><input type="checkbox" checked={draft.reciteOn} onChange={(e) => set({ reciteOn: e.target.checked })} /> تشغيل القراءة على الشاشة (تتوقف تلقائيًا وقت الأذان وتُستأنف بعد الصلاة)</label>
+          <div className="tv-hits" role="radiogroup" aria-label="ما يُقرأ">
+            {RECITE_MODES.map((m) => <button key={m.id} role="radio" aria-checked={draft.reciteMode === m.id} className={'tv-btn' + (draft.reciteMode === m.id ? ' on' : '')} onClick={() => set({ reciteMode: m.id })}>{m.label}</button>)}
+          </div>
+          <p className="tv-muted">{RECITE_MODES.find((m) => m.id === draft.reciteMode)?.hint}</p>
+          <div className="tv-iqama">
+            <label className="tv-field">القارئ
+              <select className="tv-input" value={draft.reciterId} onChange={(e) => set({ reciterId: e.target.value })}>
+                {TV_RECITERS.map((id) => reciterById(id)).map((r) => <option key={r.id} value={r.id}>{r.name} — {r.style}</option>)}
+              </select>
+            </label>
+            {draft.reciteMode === 'surah' && (
+              <label className="tv-field">البدء من سورة
+                <select className="tv-input" value={draft.reciteSurah} onChange={(e) => set({ reciteSurah: Number(e.target.value) })}>
+                  {(data?.meta.surahs ?? []).map((x) => <option key={x.n} value={x.n}>{x.n}. {x.name}</option>)}
+                </select>
+              </label>
+            )}
+            <label className="tv-field">مستوى الصوت
+              <select className="tv-input" value={draft.reciteVolume} onChange={(e) => set({ reciteVolume: Number(e.target.value) })}>
+                <option value={0.25}>هادئ جدًا</option>
+                <option value={0.4}>هادئ</option>
+                <option value={0.6}>متوسط</option>
+                <option value={0.85}>مرتفع</option>
+              </select>
+            </label>
+          </div>
+          <p className="tv-muted">الأذان يُرفع دائمًا بصوت كامل عند دخول الوقت، وله الأولوية على القراءة.</p>
+        </section>
         {bridge() && <TvAutoStart />}
         <div className="tv-setup-actions">
-          <button className="tv-btn primary" disabled={!draft.city} onClick={() => onSave(draft)}>حفظ وعرض الشاشة</button>
+          <button className="tv-btn primary" disabled={!draft.city} onClick={() => { if (draft.reciteSurah !== s.reciteSurah) resetRecitePos(); onSave(draft) }}>حفظ وعرض الشاشة</button>
           {canCancel && <button className="tv-btn" onClick={onCancel}>إلغاء</button>}
         </div>
         <p className="tv-muted">{SADAQAH_LINE}</p>

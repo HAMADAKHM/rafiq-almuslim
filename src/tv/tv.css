@@ -84,3 +84,5 @@ button, input, select { font: inherit; }
 .tv-setup-actions .tv-btn { font-size: 1.5vw; padding: 0.8vw 2vw; }
 .tv-auto { padding: 1.2vw 1.8vw; border-radius: 1.4vw; background: rgba(255, 253, 248, 0.07); border: 0.1vw solid rgba(226, 194, 126, 0.35); }
 .tv-dream-empty { align-items: center; justify-content: center; font-size: 2vw; text-align: center; background: #073B32; }
+.tv-card.playing { border-color: rgba(226, 194, 126, 0.75); box-shadow: 0 0 2vw rgba(226, 194, 126, 0.15); }
+.tv-card.playing .tv-card-title::before { content: '♪ '; }

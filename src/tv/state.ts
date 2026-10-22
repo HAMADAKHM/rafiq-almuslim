@@ -14,6 +14,12 @@ export interface TvSettings {
   iqama: Record<TvPrayer, number>
   /** نظام الساعة */
   hour12: boolean
+  /** التلاوة: مشغّلة أم لا، ووضعها، والقارئ، وسورة البدء، ومستوى الصوت (0–1) */
+  reciteOn: boolean
+  reciteMode: 'ayah' | 'surah' | 'adhkar'
+  reciterId: string
+  reciteSurah: number
+  reciteVolume: number
 }
 
 export const DEFAULT_TV: TvSettings = {
@@ -22,6 +28,11 @@ export const DEFAULT_TV: TvSettings = {
   adhan: true,
   iqama: { fajr: 0, dhuhr: 0, asr: 0, maghrib: 0, isha: 0 },
   hour12: true,
+  reciteOn: false,
+  reciteMode: 'surah',
+  reciterId: 'husary',
+  reciteSurah: 2,
+  reciteVolume: 0.5,
 }
 
 const KEY = 'rafiq-tv:settings'
