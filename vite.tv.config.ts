@@ -6,6 +6,10 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   base: './',
+  // رقم الإصدار ورقم البناء يظهران في الإعدادات للتأكد من تحديث التطبيق على التلفاز
+  define: {
+    __TV_VERSION__: JSON.stringify(`${process.env.npm_package_version ?? ''} • بناء ${process.env.GITHUB_RUN_NUMBER ?? 'محلي'}`),
+  },
   // متصفحات التلفاز ومكوّن WebView فيها قد تكون قديمة جدًا: نسخة احتياطية (nomodule) مع الدوال الناقصة
   plugins: [react(), legacy({ targets: ['chrome >= 49', 'safari >= 10', 'android >= 5'], modernPolyfills: true })],
   build: {

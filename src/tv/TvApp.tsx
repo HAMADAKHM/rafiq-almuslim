@@ -15,6 +15,8 @@ import { RECITE_MODES, TV_RECITERS } from './recite'
 import { resetRecitePos, useRecitation } from './useRecitation'
 import { reciterById } from '../content/reciters'
 
+declare const __TV_VERSION__: string
+const TV_VERSION = typeof __TV_VERSION__ === 'string' ? __TV_VERSION__ : ''
 const ADHAN_URL = ONLINE_ADHANS[0].url
 const ROTATE_MS = 25_000
 /** داخل تطبيق Android TV: الصوت مسموح دون ضغطة، والشاشة كاملة أصلًا */
@@ -192,6 +194,7 @@ export function TvApp() {
           {!IN_APP && <button className="tv-btn" onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})}>ملء الشاشة</button>}
           <button className={'tv-btn' + (s.reciteOn ? ' on' : '')} onClick={() => update({ reciteOn: !s.reciteOn })}>{s.reciteOn ? '⏸ إيقاف القراءة' : '▶ تشغيل القراءة'}</button>
           <button className="tv-btn" onClick={() => setSetup(true)}>الإعدادات</button>
+          <span className="tv-hint">{TV_VERSION}</span>
         </span>}
       </footer>
 
@@ -312,6 +315,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
           {canCancel && <button className="tv-btn" onClick={onCancel}>إلغاء</button>}
         </div>
         <p className="tv-muted">{SADAQAH_LINE}</p>
+        <p className="tv-muted">الإصدار {TV_VERSION}</p>
       </div>
     </div>
   )

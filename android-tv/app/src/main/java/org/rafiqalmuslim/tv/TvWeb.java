@@ -38,6 +38,9 @@ final class TvWeb {
         ws.setDomStorageEnabled(true);
         ws.setMediaPlaybackRequiresUserGesture(false);
         ws.setAllowFileAccess(false);
+        // الواجهة من أصول التطبيق نفسه: لا تخزين مؤقت، حتى تظهر النسخة الجديدة فور تحديث التطبيق
+        ws.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        web.clearCache(true);
         WebView.setWebContentsDebuggingEnabled(true);
         web.setWebChromeClient(new WebChromeClient());
         web.setWebViewClient(new WebViewClient() {

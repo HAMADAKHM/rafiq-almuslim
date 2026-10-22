@@ -27,6 +27,13 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      # مفتاح توقيع ثابت للنسخ التجريبية: يُولَّد مرة ويُحفظ في ذاكرة البناء المؤقتة ويُعاد استخدامه،
+      # فتُثبَّت كل نسخة جديدة فوق السابقة دون حذفها (للهاتف والتلفاز). ليس سرًا: مفتاح تطوير فقط.
+      - name: Restore stable debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: android-debug-keystore-v1
       - run: npm ci
       - run: npm test
       - run: npm run build
