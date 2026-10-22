@@ -16,6 +16,11 @@ const ADHAN_URL = ONLINE_ADHANS[0].url
 const ROTATE_MS = 25_000
 /** داخل تطبيق Android TV: الصوت مسموح دون ضغطة، والشاشة كاملة أصلًا */
 const IN_APP = typeof location !== 'undefined' && new URLSearchParams(location.search).has('app')
+/** وضع شاشة التوقف في تطبيق Android TV: عرض فقط بلا أزرار */
+const DREAM = typeof location !== 'undefined' && new URLSearchParams(location.search).has('dream')
+/** جسر تطبيق Android TV (غير موجود في المتصفح) */
+type Bridge = { openScreensaverSettings(): boolean; getAutostart(): boolean; setAutostart(on: boolean): void }
+const bridge = (): Bridge | null => (window as unknown as { RafiqTV?: Bridge }).RafiqTV ?? null
 
 function toneFor(p?: PrayerName): PaintTone {
   if (p === 'fajr' || p === 'sunrise') return 'dawn'
@@ -103,6 +108,7 @@ export function TvApp() {
   }, [phase.kind, phase.kind === 'adhan' ? phase.prayer : '', day, s.adhan]) // eslint-disable-line react-hooks/exhaustive-deps
   const stopAdhan = () => { audio.current?.pause(); audio.current = null }
 
+  if (DREAM && (!city || !times || !np)) return <div className="tv tv-dream-empty"><p>افتح تطبيق «شاشة رفيق المسلم» واختر مدينتك لتظهر المواقيت هنا.</p></div>
   if (setup || !city || !times || !np) return <TvSetup s={s} onSave={(next) => { saveTv(next); setS(next); setSetup(false) }} canCancel={!!city} onCancel={() => setSetup(false)} />
 
   const item = rotating[slide % Math.max(1, rotating.length)]
@@ -150,11 +156,11 @@ export function TvApp() {
 
       <footer className="tv-foot">
         <span className="tv-sadaqah">{SADAQAH_LINE} — {HOME_CARD.prayer}</span>
-        <span className="tv-actions">
+        {!DREAM && <span className="tv-actions">
           {!unlocked && s.adhan && <span className="tv-hint">اضغط أي زر في جهاز التحكم لتفعيل صوت الأذان</span>}
           {!IN_APP && <button className="tv-btn" onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})}>ملء الشاشة</button>}
           <button className="tv-btn" onClick={() => setSetup(true)}>الإعدادات</button>
-        </span>
+        </span>}
       </footer>
 
       {phase.kind === 'adhan' && (
@@ -237,6 +243,7 @@ function TvSetup({ s, onSave, canCancel, onCancel }: { s: TvSettings; onSave: (s
             <p className="tv-muted">0 = بلا عدّاد للإقامة.</p>
           </section>
         </div>
+        {bridge() && <TvAutoStart />}
         <div className="tv-setup-actions">
           <button className="tv-btn primary" disabled={!draft.city} onClick={() => onSave(draft)}>حفظ وعرض الشاشة</button>
           {canCancel && <button className="tv-btn" onClick={onCancel}>إلغاء</button>}
@@ -244,5 +251,23 @@ function TvSetup({ s, onSave, canCancel, onCancel }: { s: TvSettings; onSave: (s
         <p className="tv-muted">{SADAQAH_LINE}</p>
       </div>
     </div>
+  )
+}
+
+/** تشغيل الشاشة وحدها: كشاشة توقف حين يُترك التلفاز، وعند تشغيل التلفاز (في تطبيق Android TV فقط) */
+function TvAutoStart() {
+  const b = bridge()!
+  const [auto, setAuto] = useState(() => { try { return b.getAutostart() } catch { return false } })
+  const [msg, setMsg] = useState('')
+  return (
+    <section className="tv-auto">
+      <h2>تشغيل الشاشة تلقائيًا</h2>
+      <p className="tv-muted">لتظهر المواقيت وحدها حين يُترك التلفاز دون استخدام: اختر «شاشة رفيق المسلم» شاشةً للتوقف (Screen saver)، وحدد بعد كم دقيقة تبدأ.</p>
+      <div className="tv-setup-actions">
+        <button className="tv-btn primary" onClick={() => setMsg(b.openScreensaverSettings() ? 'اختر «شاشة رفيق المسلم» من قائمة شاشة التوقف، ثم حدد وقت البدء.' : 'تعذر فتح الإعدادات: افتح إعدادات التلفاز ← تفضيلات الجهاز ← شاشة التوقف.')}>فتح إعدادات شاشة التوقف</button>
+      </div>
+      {msg && <p className="tv-muted">{msg}</p>}
+      <label className="tv-check"><input type="checkbox" checked={auto} onChange={(e) => { b.setAutostart(e.target.checked); setAuto(e.target.checked) }} /> فتح الشاشة تلقائيًا عند تشغيل التلفاز</label>
+    </section>
   )
 }
