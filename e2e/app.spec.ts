@@ -1018,3 +1018,45 @@ test.describe('1.0: المساعد والمساجد المفضلة والمتا�
     await expect.poll(async () => ((await savedSetting(page, 'prayer')) as { adjustments: Record<string, number> }).adjustments.fajr).toBe(3)
   })
 })
+
+test.describe('1.0: تنبيه الأذكار وإضافة ذكر وتكبير المصحف', () => {
+  test.use({ serviceWorkers: 'block' })
+
+  test('شاشة تنبيه الأذكار: كاملة، وتتنقل بين الأذكار، وتفتح الجلسة', async ({ page }) => {
+    await page.addInitScript(() => { const w = window as unknown as { speechSynthesis?: { speak: (u: { onend?: () => void }) => void } }; if (w.speechSynthesis) w.speechSynthesis.speak = (u) => setTimeout(() => u.onend?.(), 50) })
+    await page.route(/everyayah\.com|cdn\.islamic\.network/, (r) => r.fulfill({ status: 200, contentType: 'audio/mpeg', body: TONE, headers: { 'access-control-allow-origin': '*' } }))
+    await page.goto('/adhkar-alert/morning')
+    const dlg = page.getByRole('dialog', { name: 'تنبيه أذكار الصباح' })
+    await expect(dlg).toBeVisible()
+    await dlg.getByRole('button', { name: 'إيقاف الصوت' }).click()
+    await dlg.getByRole('button', { name: 'الذكر التالي' }).click()
+    await expect(dlg.getByText(/^2 من \d+$/)).toBeVisible()
+    await dlg.getByRole('button', { name: 'إيقاف الصوت' }).click()
+    await dlg.getByRole('link', { name: 'فتح الأذكار بالعدّاد' }).click()
+    await expect(page).toHaveURL(/\/adhkar\/morning$/)
+  })
+
+  test('زر «إضافة ذكر» في الأذكار يفتح نموذج الذكر الشخصي', async ({ page }) => {
+    await page.goto('/adhkar')
+    await page.getByRole('link', { name: /^إضافة ذكر/ }).click()
+    await expect(page).toHaveURL(/\/my-adhkar\?new=1/)
+    await page.getByLabel('نص الذكر').fill('اللهم اغفر لوالديّ')
+    await page.getByRole('button', { name: /حفظ/ }).first().click()
+    await expect(page.getByText('اللهم اغفر لوالديّ')).toBeVisible()
+  })
+
+  test('المصحف بالصفحة الكاملة: التكبير والتصغير مع التمرير', async ({ page }) => {
+    await page.goto('/mushaf/445')
+    await expect(page.getByRole('article', { name: 'الصفحة 445' })).toBeVisible()
+    await page.getByRole('button', { name: 'أدوات القراءة' }).click()
+    await page.getByRole('button', { name: 'تكبير الصفحة' }).click()
+    await page.getByRole('button', { name: 'تكبير الصفحة' }).click()
+    await expect(page.getByText('150٪')).toBeVisible()
+    await expect(page.locator('.mp-content')).toHaveClass(/zoomed/)
+    const scrollable = await page.locator('.mp-content').evaluate((el) => el.scrollHeight > el.clientHeight)
+    expect(scrollable).toBe(true)
+    await page.getByRole('button', { name: 'تصغير الصفحة' }).click()
+    await page.getByRole('button', { name: 'تصغير الصفحة' }).click()
+    await expect(page.locator('.mp-content')).not.toHaveClass(/zoomed/)
+  })
+})

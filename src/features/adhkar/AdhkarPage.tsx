@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, useParams } from 'react-router-dom'
 import {
-  CircleCheck, Star, AArrowDown, AArrowUp, ChevronLeft, Sun, Moon, Landmark, BedDouble, Sunrise, DoorOpen, Utensils, Plane,
+  CircleCheck, Star, Plus, AArrowDown, AArrowUp, ChevronLeft, Sun, Moon, Landmark, BedDouble, Sunrise, DoorOpen, Utensils, Plane,
   Droplets, Sparkles, Heart, BookOpen, HandHeart, Users, Coins, CloudSun, ShieldPlus, RefreshCcw, HeartPulse, Route, MessageCircleHeart,
 } from 'lucide-react'
 import { Empty, PageHead, Tabs } from '../../components/Common'
@@ -166,6 +166,13 @@ export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' | 'hadith' })
         </div>
       )}
       {!showList && kind === 'adhkar' && <AdhkarFeature doneToday={doneToday} />}
+      {!showList && kind === 'adhkar' && (
+        <Link to="/my-adhkar?new=1" className="list-card add-dhikr" style={{ marginBottom: '1rem' }}>
+          <span className="icon-chip green"><Plus size={22} /></span>
+          <span className="lc-body"><strong>إضافة ذكر</strong><small>أضف ذكرًا أو دعاءً خاصًا بك مع عدّاد، يظهر في «أذكاري»</small></span>
+          <span className="lc-end"><ChevronLeft size={18} /></span>
+        </Link>
+      )}
       {!showList && kind === 'hadith' && <HadithFeature />}
       {!showList && <CategoryGrid cats={cats} base={base} doneToday={kind === 'adhkar' ? doneToday : undefined} />}
       {!showList && kind === 'adhkar' && (

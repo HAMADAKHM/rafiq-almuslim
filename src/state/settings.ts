@@ -41,6 +41,8 @@ export interface NotificationSettings {
   fajrVoice: string
   /** تشغيل الأذان كاملًا داخل التطبيق إذا كان مفتوحًا */
   adhanInApp: boolean
+  /** شاشة تنبيه الأذكار (الصباح والمساء والنوم) بصوت الذكر عند حلول وقتها أو عند الضغط على الإشعار */
+  adhkarScreen: boolean
 }
 
 /** طريقة العرض: متتابعة (آية بآية)، صفحات المصحف، أو التركيز (آية واحدة في الشاشة) */
@@ -143,6 +145,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   adhanVoice: 'tone',
   fajrVoice: 'same',
   adhanInApp: true,
+  adhkarScreen: true,
 }
 
 export const DEFAULT_SETTINGS: Settings = {

@@ -12,6 +12,7 @@ import { NAV, TABS } from './nav'
 import { Splash } from './Splash'
 import { Spinner } from '../components/Common'
 import { AdhanAlarm } from '../components/AdhanAlarm'
+import { AdhkarAlarm } from '../components/AdhkarAlert'
 
 function Brand() {
   return (
@@ -47,6 +48,7 @@ export function Layout() {
     <div className={'app' + (isReader ? ' reading' : '') + (isHome ? ' at-home' : '')}>
       <Splash />
       <AdhanAlarm />
+      <AdhkarAlarm />
       <a href="#main" className="skip-link">تخطَّ إلى المحتوى</a>
       <aside className="sidebar" aria-label="القائمة الرئيسية">
         <Brand />

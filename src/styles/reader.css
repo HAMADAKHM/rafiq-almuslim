@@ -238,7 +238,9 @@
 .frame-classic .mp-page { border: 22px solid transparent; border-image: url('../assets/mushaf-frame.svg') 32 round; padding: 4px 6px 14px; }
 @media (min-width: 600px) { .frame-classic .mp-page { border-width: 28px; } }
 .mp-content { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
-.mp-content .q-text { font-size: var(--mp-size, 22px); line-height: 1.95; word-spacing: 0; }
+.mp-content .q-text { font-size: calc(var(--mp-size, 22px) * var(--mp-zoom, 1)); line-height: 1.95; word-spacing: 0; }
+.mp-content.zoomed { overflow-y: auto; justify-content: flex-start; overscroll-behavior: contain; }
+.mp-stage { touch-action: pan-y; }
 .mp-content .q-flow { text-align: justify; text-align-last: justify; }
 .mp-content section:last-child .q-flow { text-align-last: center; }
 .mp-content .q-basmala { margin: 0; text-align: center; }
@@ -268,3 +270,4 @@
 .mp-nav { background: var(--paper-2); margin: 0; padding: 0.5rem; border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent); }
 .reader-app.immersive .rd-bar.over { bottom: var(--dock-h); padding-bottom: 0.35rem; }
 .reader-app.immersive .mp-dock:has(.mp-nav) ~ .rd-bar.over, .reader-app.immersive .rd-bar.over:has(~ .mp-dock .mp-nav) { bottom: calc(var(--dock-h) + 52px); }
+.mp-nav { flex-wrap: wrap; row-gap: 0.4rem; }

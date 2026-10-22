@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, BookOpen, Bookmark, Search } from 'lucide-react'
+import { ChevronLeft, ChevronRight, BookOpen, Bookmark, Search, ZoomIn, ZoomOut } from 'lucide-react'
 import { Spinner } from '../../components/Common'
 import { useDocumentTitle, useQuran, usePlayer, useKeepAwake } from '../../hooks'
 import { ayahMeta, BASMALA_SURAH_EXCEPTIONS, pageAyahs } from '../../services/quran'
@@ -33,6 +33,10 @@ export function MushafPage() {
   const touch = useRef<number | null>(null)
   const [toolsOpen, setToolsOpen] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
+  // التكبير: بإصبعين على الصفحة أو بالأزرار؛ عند التكبير تُمرَّر الصفحة عموديًا
+  const [zoom, setZoomState] = useState(() => { try { return Math.min(3, Math.max(1, Number(localStorage.getItem('mushaf:zoom')) || 1)) } catch { return 1 } })
+  const setZoom = (z: number) => { const v = Math.round(Math.min(3, Math.max(1, z)) * 100) / 100; setZoomState(v); try { localStorage.setItem('mushaf:zoom', String(v)) } catch { /* اختياري */ } }
+  const pinch = useRef<{ d: number; z: number } | null>(null)
   const marks = useLive(() => bookmarks.all(), ['bookmarks'], [])
   useDocumentTitle(`المصحف — الصفحة ${page}`)
 
@@ -68,6 +72,7 @@ export function MushafPage() {
     const el = contentRef.current
     if (!el || !data) return
     const fit = () => {
+      el.style.setProperty('--mp-zoom', '1')
       let lo = 12, hi = 46
       for (let i = 0; i < 12; i++) {
         const mid = (lo + hi) / 2
@@ -76,6 +81,7 @@ export function MushafPage() {
         else hi = mid
       }
       el.style.setProperty('--mp-size', `${lo}px`)
+      el.style.removeProperty('--mp-zoom')
     }
     fit()
     const ro = new ResizeObserver(() => fit())
@@ -113,6 +119,11 @@ export function MushafPage() {
             <input name="pg" className="input" type="number" min={1} max={604} defaultValue={page} key={page} aria-label="رقم الصفحة" style={{ width: 84, minHeight: 34, textAlign: 'center' }} />
           </form>
           <button className="btn btn-sm" onClick={() => go(page + 1)} disabled={page === 604} aria-label="الصفحة التالية">التالية <ChevronLeft size={16} /></button>
+          <span className="row" style={{ gap: 4 }}>
+            <button className="btn btn-sm icon-btn" onClick={() => setZoom(zoom - 0.25)} disabled={zoom <= 1} aria-label="تصغير الصفحة"><ZoomOut size={16} /></button>
+            <span className="small" aria-live="polite">{Math.round(zoom * 100)}٪</span>
+            <button className="btn btn-sm icon-btn" onClick={() => setZoom(zoom + 0.25)} disabled={zoom >= 3} aria-label="تكبير الصفحة"><ZoomIn size={16} /></button>
+          </span>
         </div>
       )}
       <nav className="mp-bar" aria-label="شريط المصحف">
@@ -133,10 +144,25 @@ export function MushafPage() {
       onModeChange={changeMode} onTafsir={(s, a) => sheets.setTafsir({ surah: s, ayah: a })}
       immersive={{ bar, toolsOpen }}>
       <div className="mp-stage"
-        onTouchStart={(e) => { touch.current = e.touches[0].clientX }}
-        onTouchEnd={(e) => { if (touch.current == null) return; const dx = e.changedTouches[0].clientX - touch.current; touch.current = null; if (Math.abs(dx) > 70) go(dx > 0 ? page + 1 : page - 1) }}>
+        onTouchStart={(e) => {
+          if (e.touches.length === 2) {
+            touch.current = null
+            pinch.current = { d: Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY), z: zoom }
+          } else if (!pinch.current) touch.current = e.touches[0].clientX
+        }}
+        onTouchMove={(e) => {
+          if (e.touches.length !== 2 || !pinch.current) return
+          const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY)
+          setZoom(pinch.current.z * (d / pinch.current.d))
+        }}
+        onTouchEnd={(e) => {
+          if (pinch.current) { if (e.touches.length === 0) pinch.current = null; return }
+          if (touch.current == null) return
+          const dx = e.changedTouches[0].clientX - touch.current; touch.current = null
+          if (Math.abs(dx) > 70) go(dx > 0 ? page + 1 : page - 1)
+        }}>
         <article className="mp-page" aria-label={`الصفحة ${page}`}>
-          <div className="mp-content" ref={contentRef}>
+          <div className={'mp-content' + (zoom > 1 ? ' zoomed' : '')} ref={contentRef} style={{ ['--mp-zoom' as string]: zoom }}>
             {groups.map((g) => {
               const s = data.meta.surahs[g.surah - 1]
               return (

@@ -50,7 +50,8 @@ function Editor({ initial, onSave, onClose }: { initial?: MyDhikr; onSave: (d: O
 
 export function MyAdhkarPage() {
   const list = useLive(() => kv.get<MyDhikr[]>(MY_ADHKAR_KEY, []), ['kv:' + MY_ADHKAR_KEY], [] as MyDhikr[])
-  const [editing, setEditing] = useState<MyDhikr | 'new' | null>(null)
+  // ‎?new=1 يفتح نموذج الإضافة مباشرة (من زر «إضافة ذكر» في صفحات الأذكار)
+  const [editing, setEditing] = useState<MyDhikr | 'new' | null>(() => (typeof location !== 'undefined' && new URLSearchParams(location.search).has('new') ? 'new' : null))
   const [del, setDel] = useState<MyDhikr | null>(null)
   const [session, setSession] = useState(false)
   const today = dayKey()

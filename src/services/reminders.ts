@@ -110,7 +110,7 @@ function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, sl
 }
 
 const ROUTES: Record<ReminderKind, string> = {
-  prayer: '/prayer', 'prayer-before': '/prayer', morning: '/adhkar/morning', evening: '/adhkar/evening', sleep: '/adhkar/sleep',
+  prayer: '/prayer', 'prayer-before': '/prayer', morning: '/adhkar-alert/morning', evening: '/adhkar-alert/evening', sleep: '/adhkar-alert/sleep',
   ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress',
 }
 
