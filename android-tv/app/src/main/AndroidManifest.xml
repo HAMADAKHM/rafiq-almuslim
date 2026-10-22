@@ -4,6 +4,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- فتح الشاشة تلقائيًا عند تشغيل التلفاز -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- خدمة الخلفية: فتح الشاشة عند عدم الاستخدام وعند دخول وقت الصلاة -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <!-- فتح الشاشة فوق التطبيقات الأخرى (يمنحه المستخدم من الإعدادات) -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- يعمل على التلفاز (بلا شاشة لمس) وعلى غيره -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -19,6 +24,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:screenOrientation="landscape"
+            android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -37,6 +43,15 @@
                 <action android:name="android.service.dreams.DreamService" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+        </service>
+
+        <service
+            android:name=".TvService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Prayer times display: opens the screen at prayer time and when the TV is idle" />
         </service>
 
         <receiver android:name=".BootReceiver" android:exported="true">

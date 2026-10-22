@@ -11,6 +11,8 @@ import android.webkit.WebView;
  * وتبقي الشاشة مضاءة، وتسمح بتشغيل الأذان دون ضغطة سابقة. الإنترنت مطلوب لصوت الأذان فقط.
  */
 public class MainActivity extends Activity {
+    /** هل الشاشة ظاهرة الآن (حتى لا تُفتح فوق نفسها، ولا يُكرر الأذان) */
+    static volatile boolean visible = false;
     private WebView web;
 
     @Override
@@ -23,7 +25,14 @@ public class MainActivity extends Activity {
         setContentView(web);
         hideSystemUi();
         web.requestFocus();
+        TvService.start(this);
     }
+
+    @Override
+    protected void onResume() { super.onResume(); visible = true; }
+
+    @Override
+    protected void onPause() { visible = false; super.onPause(); }
 
     private void hideSystemUi() {
         web.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);

@@ -10,6 +10,8 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context ctx, Intent intent) {
         String a = intent.getAction();
         if (!Intent.ACTION_BOOT_COMPLETED.equals(a) && !"android.intent.action.QUICKBOOT_POWERON".equals(a)) return;
+        // الخدمة تعمل دائمًا بعد التشغيل (الأذان وشاشة عدم الاستخدام)
+        TvService.start(ctx);
         if (!TvWeb.autostart(ctx)) return;
         Intent open = new Intent(ctx, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         try { ctx.startActivity(open); } catch (Exception ignored) { /* بعض الأنظمة تمنع الفتح من الخلفية */ }

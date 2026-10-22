@@ -4,7 +4,7 @@ import { LogoMark } from '../components/Art'
 import { SADAQAH_LINE, HOME_CARD } from '../content/dedication'
 import { ONLINE_ADHANS } from '../content/onlineAdhans'
 import { HADITH } from '../content/hadith'
-import { METHODS, PRAYER_LABELS, PRAYERS, nextPrayer, suggestMethod, todayTimes, type MethodId, type PrayerName } from '../services/prayer'
+import { METHODS, PRAYER_LABELS, PRAYERS, nextPrayer, suggestMethod, todayTimes, upcomingDays, type MethodId, type PrayerName } from '../services/prayer'
 import { cityLabel, loadCities, searchCities, type City } from '../services/cities'
 import { ayahOfDay, dhikrOfDay } from '../services/daily'
 import { loadQuran, type QuranData } from '../services/quran'
@@ -24,7 +24,10 @@ const IN_APP = typeof location !== 'undefined' && new URLSearchParams(location.s
 /** وضع شاشة التوقف في تطبيق Android TV: عرض فقط بلا أزرار */
 const DREAM = typeof location !== 'undefined' && new URLSearchParams(location.search).has('dream')
 /** جسر تطبيق Android TV (غير موجود في المتصفح) */
-type Bridge = { openScreensaverSettings(): boolean; getAutostart(): boolean; setAutostart(on: boolean): void }
+type Bridge = {
+  openScreensaverSettings(): boolean; getAutostart(): boolean; setAutostart(on: boolean): void
+  canOpenFromBackground?(): boolean; openOverlaySettings?(): boolean; getIdleTakeover?(): boolean; setIdleTakeover?(on: boolean): void; setSchedule?(json: string): void
+}
 const bridge = (): Bridge | null => (window as unknown as { RafiqTV?: Bridge }).RafiqTV ?? null
 
 function toneFor(p?: PrayerName): PaintTone {
@@ -121,6 +124,13 @@ export function TvApp() {
     }
     start()
   }, [phase.kind, phase.kind === 'adhan' ? phase.prayer : '', day, s.adhan]) // eslint-disable-line react-hooks/exhaustive-deps
+  // جدول الأذان لأسبوع: تفتح خدمة التطبيق الشاشة عند دخول الوقت ولو كان التلفاز على تطبيق آخر
+  useEffect(() => {
+    const b = bridge()
+    if (!b?.setSchedule || !city) return
+    const ts = upcomingDays(city, s.prayer, 7, new Date()).flatMap((d) => TV_PRAYERS.map((p) => d.times[p].getTime())).filter((t) => t > Date.now() - 120_000)
+    try { b.setSchedule(JSON.stringify({ adhan: s.adhan, url: ADHAN_URL, times: ts })) } catch { /* خارج التطبيق */ }
+  }, [city, s.prayer, s.adhan, day]) // eslint-disable-line react-hooks/exhaustive-deps
   const stopAdhan = () => { audio.current?.pause(); audio.current = null; setAdhanPlaying(false) }
   const update = (p: Partial<TvSettings>) => setS((prev) => { const next = { ...prev, ...p }; saveTv(next); return next })
 
@@ -139,8 +149,8 @@ export function TvApp() {
 
   const playingText = rec.current && data ? {
     title: 'تلاوة الآن',
-    text: data.verses[rec.current.surah - 1][rec.current.ayah - 1],
-    ref: `سورة ${data.meta.surahs[rec.current.surah - 1].name} • الآية ${toArabicDigits(rec.current.ayah)} — ${reciterById(s.reciterId).name}`,
+    text: rec.current.ayah === 0 ? data.verses[0][0] : data.verses[rec.current.surah - 1][rec.current.ayah - 1],
+    ref: `سورة ${data.meta.surahs[rec.current.surah - 1].name} • ${rec.current.ayah === 0 ? 'البسملة' : `الآية ${toArabicDigits(rec.current.ayah)}`} — ${reciterById(s.reciterId).name}`,
     quran: true,
   } : null
   const item = playingText ?? rotating[slide % Math.max(1, rotating.length)]
@@ -224,117 +234,162 @@ export function TvApp() {
   )
 }
 
-/** إعدادات الشاشة: المدينة، وطريقة الحساب، والأذان، ودقائق الإقامة */
+type SetupPage = 'city' | 'prayer' | 'iqama' | 'recite' | 'voice' | 'auto'
+
+/** أزرار اختيار كبيرة (أسهل من القوائم المنسدلة بجهاز التحكم) */
+function Choices<T extends string | number>({ value, options, onChange, label, cols = 3 }: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void; label: string; cols?: number }) {
+  return (
+    <div className="tv-choices" role="radiogroup" aria-label={label} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
+      {options.map((o) => <button key={String(o.id)} role="radio" aria-checked={value === o.id} className={'tv-choice' + (value === o.id ? ' on' : '')} onClick={() => onChange(o.id)}>{value === o.id ? '✓ ' : ''}{o.label}</button>)}
+    </div>
+  )
+}
+
+/** مفتاح تشغيل/إيقاف بزر كبير */
+function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
+  return <button role="switch" aria-checked={on} className={'tv-toggle' + (on ? ' on' : '')} onClick={() => onChange(!on)}><span>{label}</span><b>{on ? 'مفعّل' : 'متوقف'}</b></button>
+}
+
+/** رقم بزرّي − و + (أسهل من الكتابة بجهاز التحكم) */
+function Stepper({ value, onChange, min, max, label, suffix = '' }: { value: number; onChange: (v: number) => void; min: number; max: number; label: string; suffix?: string }) {
+  return (
+    <div className="tv-stepper" aria-label={label}>
+      <span className="tv-stepper-label">{label}</span>
+      <button className="tv-step" onClick={() => onChange(Math.max(min, value - 1))} aria-label={`إنقاص ${label}`}>−</button>
+      <b>{value}{suffix}</b>
+      <button className="tv-step" onClick={() => onChange(Math.min(max, value + 1))} aria-label={`زيادة ${label}`}>+</button>
+    </div>
+  )
+}
+
+const QUICK_SURAHS = [1, 2, 18, 36, 55, 56, 67, 112]
+
+/** إعدادات الشاشة: صفحات قصيرة بأزرار كبيرة تُستخدم بأسهم جهاز التحكم وزر الموافقة، بلا تمرير */
 function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data: QuranData | null; onSave: (s: TvSettings) => void; canCancel: boolean; onCancel: () => void }) {
   const [draft, setDraft] = useState<TvSettings>(s)
+  const [page, setPage] = useState<SetupPage>(s.city ? 'prayer' : 'city')
   const [q, setQ] = useState('')
   const [cities, setCities] = useState<City[] | null>(null)
   useEffect(() => { loadCities().then(setCities).catch(() => {}) }, [])
-  const hits = useMemo(() => (cities && q.trim().length >= 2 ? searchCities(cities, q, undefined, 8) : []), [cities, q])
+  const hits = useMemo(() => (cities && q.trim().length >= 2 ? searchCities(cities, q, undefined, 9) : []), [cities, q])
   const set = (p: Partial<TvSettings>) => setDraft((d) => ({ ...d, ...p }))
+  const b = bridge()
+  const pages: { id: SetupPage; label: string }[] = [
+    { id: 'city', label: '📍 المدينة' },
+    { id: 'prayer', label: '🕌 الصلاة والأذان' },
+    { id: 'iqama', label: '⏱ الإقامة' },
+    { id: 'recite', label: '📖 القراءة' },
+    { id: 'voice', label: '🎙 القارئ والصوت' },
+    ...(b ? [{ id: 'auto' as const, label: '⚡ التشغيل التلقائي' }] : []),
+  ]
+  const surahs = data?.meta.surahs ?? []
   return (
     <div className="tv tv-setup">
       <PaintedScene tone="night" variant="hero" className="tv-art" />
       <div className="tv-veil strong" />
       <div className="tv-setup-body">
-        <h1><LogoMark size={40} /> إعداد شاشة رفيق المسلم</h1>
-        <div className="tv-setup-grid">
-          <section>
-            <h2>المدينة</h2>
-            <p className="tv-muted">{draft.city ? `المختارة: ${cityLabel(draft.city)}` : 'اكتب اسم مدينتك ثم اخترها من القائمة'}</p>
-            <input className="tv-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="مثال: نابلس، الرياض، القاهرة" aria-label="اسم المدينة" autoFocus />
-            <div className="tv-hits">
-              {hits.map((c) => (
-                <button key={c.id} className={'tv-btn' + (draft.city?.name === c.name && draft.city?.country === c.country ? ' on' : '')}
-                  onClick={() => set({ city: { name: c.name, nameAr: c.nameAr, country: c.country, lat: c.lat, lng: c.lng, tz: c.tz }, prayer: { ...draft.prayer, method: suggestMethod(c.country) } })}>
-                  {cityLabel(c)}
-                </button>
-              ))}
-            </div>
-          </section>
-          <section>
-            <h2>الحساب والصوت</h2>
-            <label className="tv-field">طريقة الحساب
-              <select className="tv-input" value={draft.prayer.method} onChange={(e) => set({ prayer: { ...draft.prayer, method: e.target.value as MethodId } })}>
-                {METHODS.map((m) => <option key={m.id} value={m.id}>{m.label}</option>)}
-              </select>
-            </label>
-            <label className="tv-field">حساب العصر
-              <select className="tv-input" value={draft.prayer.madhab} onChange={(e) => set({ prayer: { ...draft.prayer, madhab: e.target.value as 'shafi' | 'hanafi' } })}>
-                <option value="shafi">الجمهور (ظل المثل)</option>
-                <option value="hanafi">الحنفي (ظل المثلين)</option>
-              </select>
-            </label>
-            <label className="tv-check"><input type="checkbox" checked={draft.adhan} onChange={(e) => set({ adhan: e.target.checked })} /> تشغيل الأذان عند دخول الوقت (منصور الزهراني)</label>
-            <label className="tv-check"><input type="checkbox" checked={draft.hour12} onChange={(e) => set({ hour12: e.target.checked })} /> نظام 12 ساعة</label>
-            <h2>دقائق الإقامة بعد الأذان</h2>
-            <div className="tv-iqama">
-              {TV_PRAYERS.map((p) => (
-                <label key={p} className="tv-field">{PRAYER_LABELS[p]}
-                  <input className="tv-input" type="number" min={0} max={60} value={draft.iqama[p]} onChange={(e) => set({ iqama: { ...draft.iqama, [p]: Math.max(0, Math.min(60, Number(e.target.value) || 0)) } })} />
-                </label>
-              ))}
-            </div>
-            <p className="tv-muted">0 = بلا عدّاد للإقامة.</p>
-          </section>
-        </div>
-        <section className="tv-auto">
-          <h2>القراءة بصوت هادئ</h2>
-          <label className="tv-check"><input type="checkbox" checked={draft.reciteOn} onChange={(e) => set({ reciteOn: e.target.checked })} /> تشغيل القراءة على الشاشة (تتوقف تلقائيًا وقت الأذان وتُستأنف بعد الصلاة)</label>
-          <div className="tv-hits" role="radiogroup" aria-label="ما يُقرأ">
-            {RECITE_MODES.map((m) => <button key={m.id} role="radio" aria-checked={draft.reciteMode === m.id} className={'tv-btn' + (draft.reciteMode === m.id ? ' on' : '')} onClick={() => set({ reciteMode: m.id })}>{m.label}</button>)}
-          </div>
-          <p className="tv-muted">{RECITE_MODES.find((m) => m.id === draft.reciteMode)?.hint}</p>
-          <div className="tv-iqama">
-            <label className="tv-field">القارئ
-              <select className="tv-input" value={draft.reciterId} onChange={(e) => set({ reciterId: e.target.value })}>
-                {TV_RECITERS.map((id) => reciterById(id)).map((r) => <option key={r.id} value={r.id}>{r.name} — {r.style}</option>)}
-              </select>
-            </label>
-            {draft.reciteMode === 'surah' && (
-              <label className="tv-field">البدء من سورة
-                <select className="tv-input" value={draft.reciteSurah} onChange={(e) => set({ reciteSurah: Number(e.target.value) })}>
-                  {(data?.meta.surahs ?? []).map((x) => <option key={x.n} value={x.n}>{x.n}. {x.name}</option>)}
-                </select>
-              </label>
+        <h1><LogoMark size={40} /> إعدادات شاشة رفيق المسلم</h1>
+        <div className="tv-setup-layout">
+          <nav className="tv-setup-nav" aria-label="أقسام الإعدادات">
+            {pages.map((p) => <button key={p.id} className={'tv-nav' + (page === p.id ? ' on' : '')} aria-current={page === p.id ? 'page' : undefined} onClick={() => setPage(p.id)} autoFocus={page === p.id}>{p.label}</button>)}
+            <button className="tv-nav save" disabled={!draft.city} onClick={() => { if (draft.reciteSurah !== s.reciteSurah) resetRecitePos(); onSave(draft) }}>✓ حفظ وعرض الشاشة</button>
+            {canCancel && <button className="tv-nav" onClick={onCancel}>إلغاء</button>}
+          </nav>
+          <section className="tv-setup-page">
+            {page === 'city' && (
+              <>
+                <h2>المدينة</h2>
+                <p className="tv-muted">{draft.city ? `المختارة: ${cityLabel(draft.city)}` : 'اكتب اسم مدينتك بلوحة المفاتيح ثم اخترها من الأزرار'}</p>
+                <input className="tv-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="مثال: نابلس، الرياض، القاهرة" aria-label="اسم المدينة" />
+                <div className="tv-choices" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
+                  {hits.map((c) => (
+                    <button key={c.id} className={'tv-choice' + (draft.city?.name === c.name && draft.city?.country === c.country ? ' on' : '')}
+                      onClick={() => set({ city: { name: c.name, nameAr: c.nameAr, country: c.country, lat: c.lat, lng: c.lng, tz: c.tz }, prayer: { ...draft.prayer, method: suggestMethod(c.country) } })}>
+                      {cityLabel(c)}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
-            <label className="tv-field">مستوى الصوت
-              <select className="tv-input" value={draft.reciteVolume} onChange={(e) => set({ reciteVolume: Number(e.target.value) })}>
-                <option value={0.25}>هادئ جدًا</option>
-                <option value={0.4}>هادئ</option>
-                <option value={0.6}>متوسط</option>
-                <option value={0.85}>مرتفع</option>
-              </select>
-            </label>
-          </div>
-          <p className="tv-muted">الأذان يُرفع دائمًا بصوت كامل عند دخول الوقت، وله الأولوية على القراءة.</p>
-        </section>
-        {bridge() && <TvAutoStart />}
-        <div className="tv-setup-actions">
-          <button className="tv-btn primary" disabled={!draft.city} onClick={() => { if (draft.reciteSurah !== s.reciteSurah) resetRecitePos(); onSave(draft) }}>حفظ وعرض الشاشة</button>
-          {canCancel && <button className="tv-btn" onClick={onCancel}>إلغاء</button>}
+            {page === 'prayer' && (
+              <>
+                <h2>الأذان</h2>
+                <Toggle on={draft.adhan} onChange={(v) => set({ adhan: v })} label="رفع الأذان عند دخول الوقت (منصور الزهراني)" />
+                <Toggle on={draft.hour12} onChange={(v) => set({ hour12: v })} label="نظام 12 ساعة" />
+                <h2>حساب العصر</h2>
+                <Choices label="حساب العصر" cols={2} value={draft.prayer.madhab} onChange={(v) => set({ prayer: { ...draft.prayer, madhab: v } })} options={[{ id: 'shafi', label: 'الجمهور (ظل المثل)' }, { id: 'hanafi', label: 'الحنفي (ظل المثلين)' }]} />
+                <h2>طريقة الحساب</h2>
+                <Choices label="طريقة الحساب" cols={3} value={draft.prayer.method} onChange={(v) => set({ prayer: { ...draft.prayer, method: v as MethodId } })} options={METHODS.map((m) => ({ id: m.id, label: m.label }))} />
+              </>
+            )}
+            {page === 'iqama' && (
+              <>
+                <h2>دقائق الإقامة بعد الأذان</h2>
+                <p className="tv-muted">بعد الأذان يظهر عدّاد تنازلي للإقامة. 0 = بلا عدّاد.</p>
+                <div className="tv-steppers">
+                  {TV_PRAYERS.map((p) => <Stepper key={p} label={PRAYER_LABELS[p]} suffix=" د" min={0} max={60} value={draft.iqama[p]} onChange={(v) => set({ iqama: { ...draft.iqama, [p]: v } })} />)}
+                </div>
+              </>
+            )}
+            {page === 'recite' && (
+              <>
+                <Toggle on={draft.reciteOn} onChange={(v) => set({ reciteOn: v })} label="القراءة على الشاشة (تتوقف وقت الأذان وتُستأنف بعده)" />
+                <h2>ما يُقرأ</h2>
+                <Choices label="ما يُقرأ" cols={3} value={draft.reciteMode} onChange={(v) => set({ reciteMode: v })} options={RECITE_MODES.map((m) => ({ id: m.id, label: m.label }))} />
+                {draft.reciteMode === 'surah' && (
+                  <>
+                    <div className="tv-stepper wide" aria-label="سورة البدء">
+                      <span className="tv-stepper-label">البدء من</span>
+                      <button className="tv-step" onClick={() => set({ reciteSurah: draft.reciteSurah <= 1 ? 114 : draft.reciteSurah - 1 })} aria-label="السورة السابقة">−</button>
+                      <b>{draft.reciteSurah}. سورة {surahs[draft.reciteSurah - 1]?.name ?? ''}</b>
+                      <button className="tv-step" onClick={() => set({ reciteSurah: draft.reciteSurah >= 114 ? 1 : draft.reciteSurah + 1 })} aria-label="السورة التالية">+</button>
+                    </div>
+                    <Choices label="سور مختارة" cols={4} value={draft.reciteSurah} onChange={(v) => set({ reciteSurah: v })} options={QUICK_SURAHS.map((n) => ({ id: n, label: surahs[n - 1]?.name ?? String(n) }))} />
+                  </>
+                )}
+              </>
+            )}
+            {page === 'voice' && (
+              <>
+                <h2>القارئ</h2>
+                <Choices label="القارئ" cols={3} value={draft.reciterId} onChange={(v) => set({ reciterId: v })} options={TV_RECITERS.map((id) => reciterById(id)).map((r) => ({ id: r.id, label: `${r.name}${r.style.includes('مجود') ? ' (مجود)' : ''}` }))} />
+                <h2>مستوى الصوت</h2>
+                <Choices label="مستوى الصوت" cols={4} value={draft.reciteVolume} onChange={(v) => set({ reciteVolume: v })} options={[{ id: 0.25, label: 'هادئ جدًا' }, { id: 0.4, label: 'هادئ' }, { id: 0.6, label: 'متوسط' }, { id: 0.85, label: 'مرتفع' }]} />
+              </>
+            )}
+            {page === 'auto' && b && <TvAutoStart />}
+          </section>
         </div>
-        <p className="tv-muted">{SADAQAH_LINE}</p>
-        <p className="tv-muted">الإصدار {TV_VERSION}</p>
+        <p className="tv-muted tv-setup-foot">{SADAQAH_LINE} • الإصدار {TV_VERSION}</p>
       </div>
     </div>
   )
 }
 
-/** تشغيل الشاشة وحدها: كشاشة توقف حين يُترك التلفاز، وعند تشغيل التلفاز (في تطبيق Android TV فقط) */
+/** تشغيل الشاشة وحدها (في تطبيق Android TV فقط) */
 function TvAutoStart() {
   const b = bridge()!
   const [auto, setAuto] = useState(() => { try { return b.getAutostart() } catch { return false } })
-  const [msg, setMsg] = useState('')
+  const [idle, setIdle] = useState(() => { try { return b.getIdleTakeover?.() ?? true } catch { return true } })
+  const [allowed, setAllowed] = useState(() => { try { return b.canOpenFromBackground?.() ?? true } catch { return true } })
+  // بعد العودة من إعدادات التلفاز يُعاد فحص الإذن
+  useEffect(() => {
+    const t = setInterval(() => { try { setAllowed(b.canOpenFromBackground?.() ?? true) } catch { /* لا شيء */ } }, 2000)
+    return () => clearInterval(t)
+  }, [b])
   return (
-    <section className="tv-auto">
-      <h2>تشغيل الشاشة تلقائيًا</h2>
-      <p className="tv-muted">لتظهر المواقيت وحدها حين يُترك التلفاز دون استخدام: اختر «شاشة رفيق المسلم» شاشةً للتوقف (Screen saver)، وحدد بعد كم دقيقة تبدأ.</p>
-      <div className="tv-setup-actions">
-        <button className="tv-btn primary" onClick={() => setMsg(b.openScreensaverSettings() ? 'اختر «شاشة رفيق المسلم» من قائمة شاشة التوقف، ثم حدد وقت البدء.' : 'تعذر فتح الإعدادات: افتح إعدادات التلفاز ← تفضيلات الجهاز ← شاشة التوقف.')}>فتح إعدادات شاشة التوقف</button>
+    <>
+      <h2>فتح الشاشة وحدها</h2>
+      <div className={'tv-permission' + (allowed ? ' ok' : '')}>
+        {allowed
+          ? '✓ مسموح للتطبيق بالظهور فوق التطبيقات الأخرى: تُفتح الشاشة وحدها عند عدم استخدام التلفاز وعند دخول وقت الصلاة.'
+          : 'خطوة واحدة مطلوبة: اسمح لـ«شاشة رفيق المسلم» بـ«الظهور فوق التطبيقات الأخرى»، ثم ارجع بزر الرجوع.'}
       </div>
-      {msg && <p className="tv-muted">{msg}</p>}
-      <label className="tv-check"><input type="checkbox" checked={auto} onChange={(e) => { b.setAutostart(e.target.checked); setAuto(e.target.checked) }} /> فتح الشاشة تلقائيًا عند تشغيل التلفاز</label>
-    </section>
+      {!allowed && <button className="tv-choice on big" onClick={() => b.openOverlaySettings?.()}>فتح إعداد «الظهور فوق التطبيقات الأخرى»</button>}
+      <Toggle on={idle} onChange={(v) => { b.setIdleTakeover?.(v); setIdle(v) }} label="فتح الشاشة عند بدء شاشة التوقف في التلفاز (عدم الاستخدام)" />
+      <Toggle on={auto} onChange={(v) => { b.setAutostart(v); setAuto(v) }} label="فتح الشاشة عند تشغيل التلفاز" />
+      <p className="tv-muted">لتعمل عند عدم الاستخدام: يجب أن تكون «شاشة التوقف» أو «الوضع المحيطي» مفعّلة في إعدادات التلفاز (مثلًا بعد 5 دقائق)، فتظهر شاشة المواقيت بدلها. الأذان يُرفع في وقته ولو كان التلفاز على تطبيق آخر.</p>
+      <p className="tv-muted">إن لم يظهر إعداد «الظهور فوق التطبيقات» في تلفازك: الإعدادات ← التطبيقات ← وصول خاص للتطبيقات ← الظهور فوق التطبيقات الأخرى.</p>
+    </>
   )
 }

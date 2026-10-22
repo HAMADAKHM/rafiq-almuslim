@@ -84,6 +84,36 @@ final class TvWeb {
         @JavascriptInterface
         public boolean getAutostart() { return autostart(ctx); }
 
+        /** هل يُسمح بفتح الشاشة من الخلفية (إذن الظهور فوق التطبيقات) */
+        @JavascriptInterface
+        public boolean canOpenFromBackground() { return TvService.canOpenFromBackground(ctx); }
+
+        @JavascriptInterface
+        public boolean openOverlaySettings() {
+            Intent[] tries = {
+                new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + ctx.getPackageName())),
+                new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + ctx.getPackageName())),
+                new Intent(Settings.ACTION_SETTINGS),
+            };
+            for (Intent i : tries) {
+                try { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true; } catch (Exception ignored) { /* التالي */ }
+            }
+            return false;
+        }
+
+        @JavascriptInterface
+        public boolean getIdleTakeover() { return TvService.prefs(ctx).getBoolean(TvService.KEY_IDLE, true); }
+
+        @JavascriptInterface
+        public void setIdleTakeover(boolean on) { TvService.prefs(ctx).edit().putBoolean(TvService.KEY_IDLE, on).apply(); }
+
+        /** جدول الأذان للأيام القادمة (تحسبه الواجهة) لتفتح الخدمة الشاشة عند دخول الوقت */
+        @JavascriptInterface
+        public void setSchedule(String json) {
+            TvService.prefs(ctx).edit().putString(TvService.KEY_SCHEDULE, json).apply();
+            TvService.start(ctx);
+        }
+
         @JavascriptInterface
         public void setAutostart(boolean on) {
             SharedPreferences.Editor e = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit();

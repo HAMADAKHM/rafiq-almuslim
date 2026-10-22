@@ -12,6 +12,10 @@ describe('تلاوة شاشة التلفاز', () => {
     const q = reciteQueue('surah', meta, { day: '2026-10-22', hour: 9, surah: 112, from: 3 })
     expect(q).toEqual([{ surah: 112, ayah: 3 }, { surah: 112, ayah: 4 }])
     expect(nextSurah(112)).toBe(113)
+    // من أول السورة: البسملة أولًا (عدا الفاتحة والتوبة)
+    expect(reciteQueue('surah', meta, { day: '2026-10-22', hour: 9, surah: 112 })[0]).toEqual({ surah: 112, ayah: 0 })
+    expect(reciteQueue('surah', meta, { day: '2026-10-22', hour: 9, surah: 9 })[0]).toEqual({ surah: 9, ayah: 1 })
+    expect(reciteQueue('surah', meta, { day: '2026-10-22', hour: 9, surah: 1 })[0]).toEqual({ surah: 1, ayah: 1 })
     expect(nextSurah(114)).toBe(1)
   })
   it('آيات الأذكار من المصحف فقط، بحسب وقت اليوم (الصباح فيه آية الكرسي)', () => {
