@@ -1,3 +1,4 @@
+import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core'
 // صوت الأذان: اختيار الصوت لكل صلاة، وربطه بإشعارات الهاتف، والصوت المستورد من الجهاز.
 // - Android: لكل صوت مدمج قناة إشعارات بصوت الأذان (الصوت في Android 8+ يتبع القناة لا الإشعار).
 // - iOS: النظام لا يشغّل في الإشعار أكثر من 30 ثانية، فيُستخدم مقطع قصير من الأذان.
@@ -6,7 +7,6 @@ import { ADHAN_VOICES, VOICE_DEVICE, VOICE_SAME, VOICE_TONE, voiceById, type Adh
 import type { PrayerKey, Settings } from '../state/settings'
 import type { Reminder } from './reminders'
 import { kv } from '../db/repos'
-import { registerPlugin } from '@capacitor/core'
 import { platformName } from '../platform'
 
 const AdhanSound = registerPlugin<{
@@ -173,3 +173,22 @@ export async function playableUrl(id: string): Promise<string | null> {
 }
 
 export const hasBundledVoices = () => ADHAN_VOICES.length > 0
+
+/** ينزّل أذانًا من الإنترنت إلى الجهاز ثم يستخدمه مثل الملف المختار من الجهاز (للتشغيل وإشعارات الصلاة) */
+export async function downloadOnlineAdhan(v: { name: string; url: string }): Promise<boolean> {
+  let blob: Blob
+  if (Capacitor.isNativePlatform()) {
+    const r = await CapacitorHttp.get({ url: v.url, responseType: 'blob', connectTimeout: 20000, readTimeout: 60000 })
+    if (r.status >= 400) throw new Error(`تعذر التنزيل (${r.status})`)
+    const bin = atob(String(r.data))
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    blob = new Blob([bytes], { type: 'audio/mpeg' })
+  } else {
+    const res = await fetch(v.url)
+    if (!res.ok) throw new Error(`تعذر التنزيل (${res.status})`)
+    blob = await res.blob()
+  }
+  if (blob.size < 10_000) throw new Error('الملف المنزّل غير صالح')
+  return saveDeviceVoice(new File([blob], `${v.name}.mp3`, { type: 'audio/mpeg' }))
+}

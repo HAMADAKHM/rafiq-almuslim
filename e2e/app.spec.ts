@@ -626,6 +626,13 @@ test.describe('تجربة 0.4', () => {
 })
 
 test.describe('صوت الأذان', () => {
+  test('تنزيل أذان منصور الزهراني من الإنترنت واختياره لتنبيه الصلاة', async ({ page }) => {
+    const big = Buffer.concat(Array.from({ length: 4 }, () => TONE))
+    await page.route(/cdn\.aladhan\.com/, (r) => r.fulfill({ status: 200, contentType: 'audio/mpeg', body: big, headers: { 'access-control-allow-origin': '*' } }))
+    await page.goto('/reminders')
+    await page.getByRole('button', { name: 'تنزيل أذان منصور الزهراني' }).click()
+    await expect(page.getByRole('radio', { name: /من جهازي: منصور الزهراني\.mp3/ })).toBeChecked()
+  })
   test('اختيار ملف أذان من الجهاز وتجربته، ويبقى بعد إعادة التحميل', async ({ page }) => {
     await page.goto('/reminders')
     await expect(page.getByRole('radio', { name: /نغمة الإشعار فقط/ })).toBeChecked()

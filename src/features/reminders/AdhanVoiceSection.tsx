@@ -1,9 +1,10 @@
+import { ONLINE_ADHANS, type OnlineAdhan } from '../../content/onlineAdhans'
 import { useEffect, useRef, useState } from 'react'
-import { Play, Square, Upload, Trash2, Volume2, AlarmClock } from 'lucide-react'
+import { Play, Square, Upload, Trash2, Volume2, AlarmClock, Download } from 'lucide-react'
 import { useSettings } from '../../state/SettingsContext'
 import { toast, useLive } from '../../hooks'
 import { ADHAN_VOICES, VOICE_DEVICE, VOICE_SAME, VOICE_TONE } from '../../content/adhanVoices'
-import { DEVICE_VOICE_KEY, DEVICE_NATIVE_KEY, loadDeviceNative, loadDeviceVoice, playableUrl, removeDeviceVoice, saveDeviceVoice, validateDeviceFile, type DeviceVoice } from '../../services/adhan'
+import { downloadOnlineAdhan, DEVICE_VOICE_KEY, DEVICE_NATIVE_KEY, loadDeviceNative, loadDeviceVoice, playableUrl, removeDeviceVoice, saveDeviceVoice, validateDeviceFile, type DeviceVoice } from '../../services/adhan'
 import { exactAlarmStatus, isNative, platformName, requestExactAlarm } from '../../platform'
 import type { NotificationSettings } from '../../state/settings'
 import { rescheduleNative } from '../../services/notifications'
@@ -64,6 +65,20 @@ export function AdhanVoiceSection() {
     }
   }
 
+  const download = async (v: OnlineAdhan) => {
+    setBusy(true)
+    try {
+      const ok = await downloadOnlineAdhan(v)
+      set({ adhanVoice: VOICE_DEVICE })
+      if (isNative()) rescheduleNative({ ...settings, notifications: { ...n, adhanVoice: VOICE_DEVICE } }).catch(() => {})
+      toast(!isNative() || ok ? `نُزّل أذان ${v.name} واختير لتنبيه الصلاة` : 'نُزّل الصوت للتشغيل داخل التطبيق، وتعذّر ربطه بإشعارات الجهاز')
+    } catch (e) {
+      toast((e as Error).message || 'تعذر تنزيل الأذان — تحقق من الاتصال')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const options = [
     { id: VOICE_TONE, label: 'نغمة الإشعار فقط', hint: 'بلا أذان — نغمة الجهاز الافتراضية' },
     ...ADHAN_VOICES.map((v) => ({ id: v.id, label: v.name, hint: [v.muezzin, fmtDuration(v.durationSec)].filter(Boolean).join(' • ') })),
@@ -100,9 +115,18 @@ export function AdhanVoiceSection() {
       </div>
       {ADHAN_VOICES.length === 0 && (
         <p className="alert alert-gold small" style={{ marginTop: 10 }}>
-          لم تُدمج أصوات مؤذنين في هذه النسخة بعد (تُضاف فقط من تسجيلات معروفة المصدر ومسموح باستخدامها). يمكنك الآن اختيار ملف أذان من جهازك.
+          لم تُدمج أصوات مؤذنين داخل ملف التطبيق. يمكنك تنزيل أذان من القائمة أدناه، أو اختيار ملف أذان من جهازك.
         </p>
       )}
+      <div className="stack" style={{ marginTop: 10, gap: 6 }}>
+        <strong className="small">أصوات أذان للتنزيل</strong>
+        {ONLINE_ADHANS.map((v) => (
+          <div key={v.id} className="voice-row">
+            <span style={{ flex: 1 }}>أذان {v.name}<small>يُنزَّل على جهازك عند الطلب (نحو دقيقة بحسب الاتصال) — المصدر: {v.source}</small></span>
+            <button className="btn btn-sm btn-primary" disabled={busy} onClick={() => download(v)} aria-label={`تنزيل أذان ${v.name}`}><Download size={15} /> {device?.name === `${v.name}.mp3` ? 'إعادة التنزيل' : 'تنزيل واستخدام'}</button>
+          </div>
+        ))}
+      </div>
       <div className="row" style={{ marginTop: 10 }}>
         <button className="btn" disabled={busy} onClick={() => fileRef.current?.click()}><Upload size={16} /> {device ? 'استبدال ملف الأذان من جهازي' : 'اختيار ملف أذان من جهازي'}</button>
         <input ref={fileRef} type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg" hidden aria-label="استيراد صوت أذان من الجهاز" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = '' }} />
