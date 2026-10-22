@@ -116,3 +116,5 @@ button, input, select { font: inherit; }
 .tv-step { width: 4vw; height: 4vw; border-radius: 50%; border: 0.12vw solid rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.12); color: #fff; font-size: 2vw; cursor: pointer; line-height: 1; }
 .tv-permission { padding: 1vw 1.4vw; border-radius: 1vw; background: rgba(226, 194, 126, 0.15); border: 0.12vw solid #E2C27E; font-size: 1.3vw; margin: 0.6vw 0; }
 .tv-permission.ok { background: rgba(80, 180, 120, 0.18); border-color: #7fd2af; }
+.tv-status { display: flex; flex-wrap: wrap; align-items: center; margin: 0.8vw 0; font-size: 1.15vw; }
+.tv-status > * { margin-left: 1.6vw; margin-bottom: 0.4vw; }

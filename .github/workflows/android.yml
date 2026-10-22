@@ -46,7 +46,7 @@ jobs:
           name: rafiq-almuslim-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
       # تطبيق شاشة التلفاز (Android TV) — مستقل عن تطبيق الهاتف
-      - run: npm run build:tv && npm run tv:assets
+      - run: npm run build:tv && npm run tv:assets && npm run tv:tizen
       - name: Build Android TV APK
         working-directory: android-tv
         run: chmod +x gradlew && ./gradlew assembleDebug
@@ -77,7 +77,8 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           cp android/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslim-beta.apk
           cp android-tv/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslim-TV.apk
-          gh release create "beta-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslim-beta.apk RafiqAlMuslim-TV.apk \
+          cp dist-tizen/RafiqAlMuslim-Samsung.wgt RafiqAlMuslim-Samsung.wgt
+          gh release create "beta-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslim-beta.apk RafiqAlMuslim-TV.apk RafiqAlMuslim-Samsung.wgt \
             --target "${{ github.sha }}" --prerelease \
             --title "رفيق المسلم $VERSION — نسخة معاينة (${{ github.ref_name }})" \
-            --notes "نسخة معاينة من فرع التطوير. للهاتف: RafiqAlMuslim-beta.apk. لشاشة التلفاز بنظام Android TV: RafiqAlMuslim-TV.apk. مجاني بالكامل — صدقة جارية."
+            --notes "نسخة معاينة من فرع التطوير. للهاتف: RafiqAlMuslim-beta.apk. لشاشة التلفاز بنظام Android TV: RafiqAlMuslim-TV.apk. لتلفاز Samsung (Tizen، يُثبَّت من Tizen Studio): RafiqAlMuslim-Samsung.wgt. مجاني بالكامل — صدقة جارية."

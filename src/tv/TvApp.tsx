@@ -20,13 +20,21 @@ const TV_VERSION = typeof __TV_VERSION__ === 'string' ? __TV_VERSION__ : ''
 const ADHAN_URL = ONLINE_ADHANS[0].url
 const ROTATE_MS = 25_000
 /** داخل تطبيق Android TV: الصوت مسموح دون ضغطة، والشاشة كاملة أصلًا */
-const IN_APP = typeof location !== 'undefined' && new URLSearchParams(location.search).has('app')
+/** تطبيق Samsung (Tizen): الصوت مسموح دون ضغطة، والشاشة كاملة */
+const TIZEN = typeof window !== 'undefined' && 'tizen' in window
+const IN_APP = TIZEN || (typeof location !== 'undefined' && new URLSearchParams(location.search).has('app'))
 /** وضع شاشة التوقف في تطبيق Android TV: عرض فقط بلا أزرار */
 const DREAM = typeof location !== 'undefined' && new URLSearchParams(location.search).has('dream')
 /** جسر تطبيق Android TV (غير موجود في المتصفح) */
 type Bridge = {
   openScreensaverSettings(): boolean; getAutostart(): boolean; setAutostart(on: boolean): void
   canOpenFromBackground?(): boolean; openOverlaySettings?(): boolean; getIdleTakeover?(): boolean; setIdleTakeover?(on: boolean): void; setSchedule?(json: string): void
+  getStatus?(): string; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void
+}
+interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; idleMinutes?: number; events?: Record<string, number> }
+const EVENT_LABELS: Record<string, string> = {
+  service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', dream: 'شاشة توقف التلفاز',
+  open_screen: 'فتح شاشة المواقيت', open_blocked: 'مُنع الفتح (ينقص إذن)', adhan_background: 'أذان من الخلفية', accessibility_on: 'تفعيل مراقب عدم الاستخدام',
 }
 const bridge = (): Bridge | null => (window as unknown as { RafiqTV?: Bridge }).RafiqTV ?? null
 
@@ -77,6 +85,22 @@ export function TvApp() {
   // بدأت الواجهة: تُخفى رسالة التحميل
   useEffect(() => { const b = document.getElementById('boot'); if (b && !document.getElementById('boot-err')) b.style.display = 'none' }, [])
   useEffect(() => { const t = setInterval(() => setSlide((x) => x + 1), ROTATE_MS); return () => clearInterval(t) }, [])
+
+  // Samsung: منع شاشة التوقف، وزر الرجوع يغلق الإعدادات أو التطبيق
+  useEffect(() => {
+    if (!TIZEN) return
+    type W = { webapis?: { appcommon?: { setScreenSaver(s: number): void; AppCommonScreenSaverState: { SCREEN_SAVER_OFF: number } } }; tizen?: { application: { getCurrentApplication(): { exit(): void } } } }
+    const w = window as unknown as W
+    try { w.webapis?.appcommon?.setScreenSaver(w.webapis.appcommon.AppCommonScreenSaverState.SCREEN_SAVER_OFF) } catch { /* غير متاح */ }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.keyCode !== 10009) return
+      e.preventDefault()
+      if (document.querySelector('.tv-setup')) { (document.querySelector('.tv-setup-nav .tv-nav.save') as HTMLButtonElement | null)?.click(); return }
+      try { w.tizen?.application.getCurrentApplication().exit() } catch { /* لا شيء */ }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // إبقاء الشاشة مضاءة حين يدعمها المتصفح
   useEffect(() => {
@@ -374,30 +398,41 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
   )
 }
 
-/** تشغيل الشاشة وحدها (في تطبيق Android TV فقط) */
+/** تشغيل الشاشة وحدها (في تطبيق Android TV فقط): خطوات واضحة وحالة الخدمات */
 function TvAutoStart() {
   const b = bridge()!
+  const read = (): NativeStatus => { try { return JSON.parse(b.getStatus?.() || '{}') as NativeStatus } catch { return {} } }
+  const [st, setSt] = useState<NativeStatus>(read)
   const [auto, setAuto] = useState(() => { try { return b.getAutostart() } catch { return false } })
-  const [idle, setIdle] = useState(() => { try { return b.getIdleTakeover?.() ?? true } catch { return true } })
-  const [allowed, setAllowed] = useState(() => { try { return b.canOpenFromBackground?.() ?? true } catch { return true } })
-  // بعد العودة من إعدادات التلفاز يُعاد فحص الإذن
   useEffect(() => {
-    const t = setInterval(() => { try { setAllowed(b.canOpenFromBackground?.() ?? true) } catch { /* لا شيء */ } }, 2000)
+    try { b.startService?.() } catch { /* لا شيء */ }
+    const t = setInterval(() => setSt(read()), 2000)
     return () => clearInterval(t)
-  }, [b])
+  }, [b]) // eslint-disable-line react-hooks/exhaustive-deps
+  const minutes = st.idleMinutes ?? 5
+  const fmt = (t: number) => new Intl.DateTimeFormat('ar-u-nu-latn', { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(t))
+  const events = Object.entries(st.events ?? {}).sort((a, c) => c[1] - a[1]).slice(0, 5)
   return (
     <>
-      <h2>فتح الشاشة وحدها</h2>
-      <div className={'tv-permission' + (allowed ? ' ok' : '')}>
-        {allowed
-          ? '✓ مسموح للتطبيق بالظهور فوق التطبيقات الأخرى: تُفتح الشاشة وحدها عند عدم استخدام التلفاز، ووقت الصلاة يظهر شريط صغير يوقف الأذان بأي زر.'
-          : 'خطوة واحدة مطلوبة: اسمح لـ«شاشة رفيق المسلم» بـ«الظهور فوق التطبيقات الأخرى»، ثم ارجع بزر الرجوع.'}
+      <h2>١. مراقب عدم الاستخدام (مطلوب)</h2>
+      <div className={'tv-permission' + (st.accessibility ? ' ok' : '')}>
+        {st.accessibility
+          ? '✓ مفعّل: تُفتح شاشة المواقيت بعد دقائق من ترك التلفاز، وتُفتح عند تشغيله، وأي زر يوقف الأذان.'
+          : 'افتح «إمكانية الوصول» ثم اختر «شاشة رفيق المسلم» وفعّلها ووافق، ثم ارجع بزر الرجوع. (يعرف وقت آخر ضغطة فقط، ولا يقرأ الشاشة)'}
       </div>
-      {!allowed && <button className="tv-choice on big" onClick={() => b.openOverlaySettings?.()}>فتح إعداد «الظهور فوق التطبيقات الأخرى»</button>}
-      <Toggle on={idle} onChange={(v) => { b.setIdleTakeover?.(v); setIdle(v) }} label="فتح الشاشة عند بدء شاشة التوقف في التلفاز (عدم الاستخدام)" />
-      <Toggle on={auto} onChange={(v) => { b.setAutostart(v); setAuto(v) }} label="فتح الشاشة عند تشغيل التلفاز" />
-      <p className="tv-muted">لتعمل عند عدم الاستخدام: يجب أن تكون «شاشة التوقف» أو «الوضع المحيطي» مفعّلة في إعدادات التلفاز (مثلًا بعد 5 دقائق)، فتظهر شاشة المواقيت بدلها. وقت الصلاة والتلفاز على يوتيوب أو تطبيق آخر: لا تُفتح الشاشة، يُرفع الأذان فقط (ويتوقف صوت يوتيوب مؤقتًا)، وأي زر في جهاز التحكم يوقفه.</p>
-      <p className="tv-muted">إن لم يظهر إعداد «الظهور فوق التطبيقات» في تلفازك: الإعدادات ← التطبيقات ← وصول خاص للتطبيقات ← الظهور فوق التطبيقات الأخرى.</p>
+      {!st.accessibility && <button className="tv-choice on big" onClick={() => b.openAccessibilitySettings?.()}>فتح إعدادات إمكانية الوصول</button>}
+      <h2>٢. تُفتح المواقيت بعد عدم الاستخدام</h2>
+      <Choices label="مدة عدم الاستخدام" cols={5} value={minutes} onChange={(m) => { b.setIdleMinutes?.(m); setSt({ ...st, idleMinutes: m }) }}
+        options={[{ id: 5, label: '5 دقائق' }, { id: 10, label: '10 دقائق' }, { id: 15, label: '15 دقيقة' }, { id: 30, label: '30 دقيقة' }, { id: 0, label: 'إيقاف' }]} />
+      <Toggle on={auto} onChange={(v) => { b.setAutostart(v); setAuto(v) }} label="فتح المواقيت عند تشغيل التلفاز" />
+      <div className="tv-status">
+        <span>{st.service ? '✓' : '✗'} خدمة الخلفية</span>
+        <span>{st.accessibility ? '✓' : '✗'} مراقب عدم الاستخدام</span>
+        <span>{st.overlay ? '✓' : '—'} الظهور فوق التطبيقات (اختياري: شريط الأذان)</span>
+        {!st.overlay && <button className="tv-btn" onClick={() => b.openOverlaySettings?.()}>منح إذن الظهور فوق التطبيقات</button>}
+      </div>
+      {events.length > 0 && <p className="tv-muted">آخر الأحداث: {events.map(([k, t]) => `${EVENT_LABELS[k] ?? k} (${fmt(t)})`).join(' • ')}</p>}
+      <p className="tv-muted">لا تُقاطَع مشاهدة فيلم أو فيديو: تُفتح المواقيت فقط إن لم يكن شيء يعمل بصوت.</p>
     </>
   )
 }

@@ -14,6 +14,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import androidx.webkit.WebViewAssetLoader;
+import org.json.JSONObject;
 
 /** إنشاء متصفح الشاشة المشترك بين التطبيق وشاشة التوقف، وجسر صغير لإعدادات التلفاز */
 final class TvWeb {
@@ -100,6 +101,35 @@ final class TvWeb {
             }
             return false;
         }
+
+        /** حالة الخدمات للتشخيص: {"service":…, "overlay":…, "accessibility":…, "idleMinutes":…, "events":{…}} */
+        @JavascriptInterface
+        public String getStatus() {
+            try {
+                JSONObject o = new JSONObject();
+                o.put("service", TvService.running);
+                o.put("overlay", android.os.Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(ctx));
+                o.put("accessibility", IdleWatcher.connected);
+                o.put("idleMinutes", TvService.prefs(ctx).getInt(TvService.KEY_IDLE_MIN, 5));
+                o.put("events", new JSONObject(TvService.prefs(ctx).getString(TvService.KEY_EVENTS, "{}")));
+                return o.toString();
+            } catch (Exception e) { return "{}"; }
+        }
+
+        @JavascriptInterface
+        public boolean openAccessibilitySettings() {
+            String[] actions = { Settings.ACTION_ACCESSIBILITY_SETTINGS, Settings.ACTION_SETTINGS };
+            for (String a : actions) {
+                try { ctx.startActivity(new Intent(a).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); return true; } catch (Exception ignored) { /* التالي */ }
+            }
+            return false;
+        }
+
+        @JavascriptInterface
+        public void setIdleMinutes(int m) { TvService.prefs(ctx).edit().putInt(TvService.KEY_IDLE_MIN, m).apply(); }
+
+        @JavascriptInterface
+        public void startService() { TvService.start(ctx); }
 
         @JavascriptInterface
         public boolean getIdleTakeover() { return TvService.prefs(ctx).getBoolean(TvService.KEY_IDLE, true); }

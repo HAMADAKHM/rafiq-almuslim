@@ -18,7 +18,8 @@
     "android:apk": "npm run cap:sync && cd android && ./gradlew assembleDebug",
     "ios:open": "npx cap open ios",
     "build:tv": "vite build --config vite.tv.config.ts && node scripts/tv-index.mjs",
-    "tv:assets": "node -e \"const fs=require('fs');fs.rmSync('android-tv/app/src/main/assets/tv',{recursive:true,force:true});fs.mkdirSync('android-tv/app/src/main/assets',{recursive:true});fs.cpSync('dist-tv','android-tv/app/src/main/assets/tv',{recursive:true})\""
+    "tv:assets": "node -e \"const fs=require('fs');fs.rmSync('android-tv/app/src/main/assets/tv',{recursive:true,force:true});fs.mkdirSync('android-tv/app/src/main/assets',{recursive:true});fs.cpSync('dist-tv','android-tv/app/src/main/assets/tv',{recursive:true})\"",
+    "tv:tizen": "node scripts/tizen-pack.mjs"
   },
   "dependencies": {
     "@capacitor-community/speech-recognition": "^7.0.1",

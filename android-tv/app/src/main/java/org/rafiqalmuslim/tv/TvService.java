@@ -43,6 +43,12 @@ import org.json.JSONObject;
 public class TvService extends Service {
     static final String KEY_SCHEDULE = "schedule";
     static final String KEY_IDLE = "idle_takeover";
+    static final String KEY_IDLE_MIN = "idle_minutes";
+    static final String KEY_EVENTS = "events";
+    /** الأذان يُرفع الآن من الخلفية (تستخدمه خدمة الإتاحة لإيقافه بأي زر) */
+    static volatile boolean adhanActive = false;
+    static volatile boolean running = false;
+    private static TvService instance;
     private static final String CHANNEL = "tv_background";
     private static final long TICK_MS = 15_000;
     private static final long WINDOW_MS = 120_000;
@@ -63,13 +69,29 @@ public class TvService extends Service {
     static SharedPreferences prefs(Context c) { return c.getSharedPreferences(TvWeb.PREFS, Context.MODE_PRIVATE); }
 
     static boolean canOpenFromBackground(Context c) {
-        return Build.VERSION.SDK_INT < 29 || Settings.canDrawOverlays(c);
+        return Build.VERSION.SDK_INT < 29 || Settings.canDrawOverlays(c) || IdleWatcher.connected;
+    }
+
+    /** سجل مختصر لآخر الأحداث (للتشخيص في الإعدادات) */
+    static void log(Context c, String event) {
+        try {
+            SharedPreferences p = prefs(c);
+            JSONObject o = new JSONObject(p.getString(KEY_EVENTS, "{}"));
+            o.put(event, System.currentTimeMillis());
+            p.edit().putString(KEY_EVENTS, o.toString()).apply();
+        } catch (Exception ignored) { /* لا شيء */ }
+    }
+
+    static void requestStopAdhan(Context c) {
+        TvService s = instance;
+        if (s != null) s.handler.post(s::stopAdhan);
     }
 
     /** يفتح الشاشة فوق أي تطبيق؛ يعيد false إن لم يكن ذلك مسموحًا */
     static boolean openScreen(Context c) {
         if (MainActivity.visible) return true;
-        if (!canOpenFromBackground(c)) return false;
+        if (!canOpenFromBackground(c)) { log(c, "open_blocked"); return false; }
+        log(c, "open_screen");
         try {
             c.startActivity(new Intent(c, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
             return true;
@@ -81,14 +103,28 @@ public class TvService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        instance = this;
+        running = true;
         startAsForeground();
+        log(this, "service_start");
         dreamRx = new BroadcastReceiver() {
             @Override
             public void onReceive(Context ctx, Intent intent) {
-                if (Intent.ACTION_DREAMING_STARTED.equals(intent.getAction()) && prefs(ctx).getBoolean(KEY_IDLE, true)) openScreen(ctx);
+                String a = intent.getAction();
+                if (Intent.ACTION_DREAMING_STARTED.equals(a)) {
+                    log(ctx, "dream");
+                    if (prefs(ctx).getBoolean(KEY_IDLE, true)) openScreen(ctx);
+                } else if (Intent.ACTION_SCREEN_ON.equals(a) || Intent.ACTION_USER_PRESENT.equals(a)) {
+                    // التلفاز يستيقظ من وضع الاستعداد (أغلب التلفزيونات لا تُعيد التشغيل كاملًا عند فتحها)
+                    log(ctx, "screen_on");
+                    IdleWatcher.lastKeyAt = System.currentTimeMillis();
+                    if (TvWeb.autostart(ctx)) handler.postDelayed(() -> openScreen(ctx), 2500);
+                }
             }
         };
         IntentFilter f = new IntentFilter(Intent.ACTION_DREAMING_STARTED);
+        f.addAction(Intent.ACTION_SCREEN_ON);
+        f.addAction(Intent.ACTION_USER_PRESENT);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(dreamRx, f, Context.RECEIVER_EXPORTED); else registerReceiver(dreamRx, f);
         handler.post(tick);
     }
@@ -111,6 +147,7 @@ public class TvService extends Service {
         @Override
         public void run() {
             try { checkPrayer(); } catch (Exception ignored) { /* جدول غير صالح */ }
+            try { checkIdle(); } catch (Exception ignored) { /* لا شيء */ }
             handler.postDelayed(this, TICK_MS);
         }
     };
@@ -137,6 +174,21 @@ public class TvService extends Service {
         }
     }
 
+    /** عدم الاستخدام: لا ضغطة منذ دقائق، ولا فيديو أو صوت يعمل → تُفتح شاشة المواقيت */
+    private void checkIdle() {
+        if (!IdleWatcher.connected || MainActivity.visible || adhanActive) return;
+        if (!prefs(this).getBoolean(KEY_IDLE, true)) return;
+        int min = prefs(this).getInt(KEY_IDLE_MIN, 5);
+        if (min <= 0) return;
+        long idle = System.currentTimeMillis() - IdleWatcher.lastKeyAt;
+        if (idle < min * 60_000L) return;
+        AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+        if (am != null && am.isMusicActive()) return; // يشاهد فيلمًا أو يستمع: لا نقاطع
+        log(this, "idle");
+        IdleWatcher.lastKeyAt = System.currentTimeMillis();
+        openScreen(this);
+    }
+
     // ---------- الأذان من الخلفية ----------
     private AudioManager audioManager;
     private AudioFocusRequest focusRequest;
@@ -155,6 +207,9 @@ public class TvService extends Service {
             player.setOnCompletionListener(mp -> stopAdhan());
             player.setOnErrorListener((mp, what, extra) -> { stopAdhan(); return true; });
             player.prepareAsync();
+            adhanActive = true;
+            log(this, "adhan_background");
+            // مع خدمة الإتاحة يُلتقط أي زر دون شريط يأخذ التركيز؛ وبدونها يظهر الشريط
             showOverlay(prayer);
             startMediaSession();
         } catch (Exception e) {
@@ -164,6 +219,7 @@ public class TvService extends Service {
 
     /** يوقف الأذان ويعيد الصوت للتطبيق السابق (يوتيوب وغيره يستأنف) */
     void stopAdhan() {
+        adhanActive = false;
         if (player != null) { try { player.stop(); } catch (Exception ignored) { /* لم يبدأ بعد */ } player.release(); player = null; }
         if (overlay != null) {
             try { ((WindowManager) getSystemService(WINDOW_SERVICE)).removeView(overlay); } catch (Exception ignored) { /* أُزيل */ }
@@ -235,7 +291,8 @@ public class TvService extends Service {
         int type = Build.VERSION.SDK_INT >= 26 ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY : WindowManager.LayoutParams.TYPE_PHONE;
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT, type,
-            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            // مع خدمة الإتاحة تُلتقط الأزرار هناك، فلا يأخذ الشريط التركيز من التطبيق الحالي
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN | (IdleWatcher.connected ? WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE : 0),
             PixelFormat.TRANSLUCENT);
         lp.gravity = Gravity.TOP;
         try {
@@ -252,6 +309,8 @@ public class TvService extends Service {
 
     @Override
     public void onDestroy() {
+        running = false;
+        instance = null;
         handler.removeCallbacks(tick);
         if (dreamRx != null) unregisterReceiver(dreamRx);
         stopAdhan();
