@@ -28,3 +28,7 @@ playwright-report
 dist-standalone
 scripts/.tmp/
 dist-tv/
+android-tv/app/src/main/assets/tv/
+android-tv/.gradle/
+android-tv/app/build/
+android-tv/build/

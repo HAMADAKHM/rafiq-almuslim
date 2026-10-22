@@ -38,6 +38,15 @@ jobs:
         with:
           name: rafiq-almuslim-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+      # تطبيق شاشة التلفاز (Android TV) — مستقل عن تطبيق الهاتف
+      - run: npm run build:tv && npm run tv:assets
+      - name: Build Android TV APK
+        working-directory: android-tv
+        run: chmod +x gradlew && ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rafiq-almuslim-tv-apk
+          path: android-tv/app/build/outputs/apk/debug/app-debug.apk
       # على الفرع الرئيسي فقط: يُنشر الملف كإصدار (Release) برابط ثابت:
       # https://github.com/<المالك>/<المستودع>/releases/latest/download/RafiqAlMuslim.apk
       - name: Publish release
@@ -60,7 +69,8 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           cp android/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslim-beta.apk
-          gh release create "beta-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslim-beta.apk \
+          cp android-tv/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslim-TV.apk
+          gh release create "beta-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslim-beta.apk RafiqAlMuslim-TV.apk \
             --target "${{ github.sha }}" --prerelease \
             --title "رفيق المسلم $VERSION — نسخة معاينة (${{ github.ref_name }})" \
-            --notes "نسخة معاينة من فرع التطوير لنظام Android. نزّل RafiqAlMuslim-beta.apk وثبّته. مجاني بالكامل — صدقة جارية."
+            --notes "نسخة معاينة من فرع التطوير. للهاتف: RafiqAlMuslim-beta.apk. لشاشة التلفاز بنظام Android TV: RafiqAlMuslim-TV.apk. مجاني بالكامل — صدقة جارية."

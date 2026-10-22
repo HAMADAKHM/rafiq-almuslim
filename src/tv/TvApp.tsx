@@ -14,6 +14,8 @@ import { loadTv, saveTv, tvPhase, TV_PRAYERS, type TvPrayer, type TvSettings } f
 
 const ADHAN_URL = ONLINE_ADHANS[0].url
 const ROTATE_MS = 25_000
+/** داخل تطبيق Android TV: الصوت مسموح دون ضغطة، والشاشة كاملة أصلًا */
+const IN_APP = typeof location !== 'undefined' && new URLSearchParams(location.search).has('app')
 
 function toneFor(p?: PrayerName): PaintTone {
   if (p === 'fajr' || p === 'sunrise') return 'dawn'
@@ -52,7 +54,7 @@ export function TvApp() {
   const [s, setS] = useState<TvSettings>(() => loadTv())
   const [setup, setSetup] = useState(() => !loadTv().city)
   const [data, setData] = useState<QuranData | null>(null)
-  const [unlocked, setUnlocked] = useState(false)
+  const [unlocked, setUnlocked] = useState(IN_APP)
   const [slide, setSlide] = useState(0)
   const now = useNow()
   const audio = useRef<HTMLAudioElement | null>(null)
@@ -148,7 +150,7 @@ export function TvApp() {
         <span className="tv-sadaqah">{SADAQAH_LINE} — {HOME_CARD.prayer}</span>
         <span className="tv-actions">
           {!unlocked && s.adhan && <span className="tv-hint">اضغط أي زر في جهاز التحكم لتفعيل صوت الأذان</span>}
-          <button className="tv-btn" onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})}>ملء الشاشة</button>
+          {!IN_APP && <button className="tv-btn" onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})}>ملء الشاشة</button>}
           <button className="tv-btn" onClick={() => setSetup(true)}>الإعدادات</button>
         </span>
       </footer>

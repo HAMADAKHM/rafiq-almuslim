@@ -1,0 +1,32 @@
+apply plugin: 'com.android.application'
+
+// رقم الإصدار من package.json (نفس رقم تطبيق الهاتف)
+def pkg = new groovy.json.JsonSlurper().parse(file('../../package.json'))
+
+android {
+    namespace 'org.rafiqalmuslim.tv'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'org.rafiqalmuslim.tv'
+        minSdk 21
+        targetSdk 36
+        versionCode 1
+        versionName pkg.version
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.14.0'
+}
+
+// واجهة الشاشة تُبنى بـ npm run build:tv ثم تُنسخ إلى الأصول قبل البناء
+tasks.register('checkTvAssets') {
+    doLast {
+        if (!file('src/main/assets/tv/tv.html').exists()) throw new GradleException('شغّل أولًا: npm run build:tv && npm run tv:assets')
+    }
+}
+preBuild.dependsOn 'checkTvAssets'

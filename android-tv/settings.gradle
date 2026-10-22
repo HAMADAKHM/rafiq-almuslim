@@ -1,0 +1,3 @@
+// تطبيق «شاشة رفيق المسلم» لأجهزة Android TV (مثل Muller وTCL وSony وغيرها): مشروع مستقل عن تطبيق الهاتف.
+rootProject.name = 'RafiqAlMuslimTV'
+include ':app'
