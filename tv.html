@@ -6,8 +6,36 @@
     <meta name="theme-color" content="#073B32" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <title>رفيق المسلم — شاشة المواقيت</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #073B32; color: #F5F0E6; font-family: Tahoma, Arial, sans-serif; }
+      #boot { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2vw; text-align: center; padding: 4vw; }
+      #boot h1 { color: #E9CF8E; font-size: 4vw; margin: 0; }
+      #boot p { font-size: 1.8vw; margin: 0; }
+      #boot pre { direction: ltr; white-space: pre-wrap; font-size: 1.3vw; color: #ffd2c4; max-width: 90vw; }
+    </style>
+    <script>
+      // تشخيص على الشاشة: إن تعذر تشغيل الواجهة يظهر الخطأ بدل شاشة سوداء (لتصويره وإرساله)
+      (function () {
+        function show(msg) {
+          var b = document.getElementById('boot')
+          if (!b) return
+          b.style.display = 'flex'
+          var pre = document.getElementById('boot-err') || document.createElement('pre')
+          pre.id = 'boot-err'
+          pre.textContent = (pre.textContent ? pre.textContent + '\n' : '') + msg
+          b.appendChild(pre)
+        }
+        window.addEventListener('error', function (e) { show('خطأ: ' + (e.message || '') + ' ' + (e.filename || '') + ':' + (e.lineno || '')) }, true)
+        window.addEventListener('unhandledrejection', function (e) { show('خطأ: ' + (e.reason && e.reason.message || e.reason)) })
+        setTimeout(function () {
+          var r = document.getElementById('root')
+          if (!r || !r.firstChild) show('لم تبدأ الواجهة بعد 20 ثانية. المتصفح: ' + navigator.userAgent)
+        }, 20000)
+      })()
+    </script>
   </head>
   <body>
+    <div id="boot"><h1>رفيق المسلم</h1><p>جارٍ تحميل شاشة المواقيت…</p></div>
     <div id="root"></div>
     <script type="module" src="/src/tv/main.tsx"></script>
   </body>

@@ -6,6 +6,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -35,16 +36,20 @@ public class MainActivity extends Activity {
         ws.setJavaScriptEnabled(true);
         ws.setDomStorageEnabled(true);
         ws.setMediaPlaybackRequiresUserGesture(false);
+        ws.setAllowFileAccess(false);
+        WebView.setWebContentsDebuggingEnabled(true);
+        web.setWebChromeClient(new WebChromeClient());
         web.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return loader.shouldInterceptRequest(request.getUrl());
+                return withMime(request.getUrl(), loader.shouldInterceptRequest(request.getUrl()));
             }
 
             @Override
             @SuppressWarnings("deprecation")
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-                return loader.shouldInterceptRequest(Uri.parse(url));
+                Uri u = Uri.parse(url);
+                return withMime(u, loader.shouldInterceptRequest(u));
             }
         });
         web.setFocusable(true);
@@ -54,6 +59,28 @@ public class MainActivity extends Activity {
         // app=1: داخل التطبيق يُسمح بالصوت مباشرة، ولا حاجة لزر «ملء الشاشة»
         web.loadUrl("https://appassets.androidplatform.net/assets/tv/tv.html?app=1");
         web.requestFocus();
+    }
+
+    /**
+     * بعض أجهزة التلفاز (Android قديم) لا تعرف نوع ملفات ‎.js‎، فيرفض المتصفح تشغيل الواجهة (شاشة سوداء):
+     * نحدد النوع صراحة من امتداد الملف.
+     */
+    private static WebResourceResponse withMime(Uri uri, WebResourceResponse r) {
+        if (r == null || uri.getPath() == null) return r;
+        String p = uri.getPath().toLowerCase();
+        String mime = null;
+        if (p.endsWith(".js") || p.endsWith(".mjs")) mime = "text/javascript";
+        else if (p.endsWith(".css")) mime = "text/css";
+        else if (p.endsWith(".html")) mime = "text/html";
+        else if (p.endsWith(".json")) mime = "application/json";
+        else if (p.endsWith(".svg")) mime = "image/svg+xml";
+        else if (p.endsWith(".woff2")) mime = "font/woff2";
+        else if (p.endsWith(".woff")) mime = "font/woff";
+        else if (p.endsWith(".png")) mime = "image/png";
+        if (mime == null) return r;
+        WebResourceResponse out = new WebResourceResponse(mime, "UTF-8", r.getData());
+        out.setResponseHeaders(java.util.Collections.singletonMap("Access-Control-Allow-Origin", "*"));
+        return out;
     }
 
     private void hideSystemUi() {

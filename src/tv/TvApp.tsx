@@ -61,6 +61,8 @@ export function TvApp() {
   const playedFor = useRef<string>('')
 
   useEffect(() => { loadQuran().then(setData).catch(() => {}) }, [])
+  // بدأت الواجهة: تُخفى رسالة التحميل
+  useEffect(() => { const b = document.getElementById('boot'); if (b && !document.getElementById('boot-err')) b.style.display = 'none' }, [])
   useEffect(() => { const t = setInterval(() => setSlide((x) => x + 1), ROTATE_MS); return () => clearInterval(t) }, [])
 
   // إبقاء الشاشة مضاءة حين يدعمها المتصفح

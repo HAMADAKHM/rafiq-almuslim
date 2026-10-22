@@ -10,7 +10,7 @@ android {
         applicationId 'org.rafiqalmuslim.tv'
         minSdk 21
         targetSdk 36
-        versionCode 1
+        versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger())
         versionName pkg.version
     }
     compileOptions {
