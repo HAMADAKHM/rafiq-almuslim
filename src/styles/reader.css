@@ -223,3 +223,48 @@
   --frame-a: #1c1912; --frame-b: #d4af37; --hl: rgba(212, 175, 55, 0.1); --hl-play: rgba(212, 175, 55, 0.2);
   --cart-bg: #1c1912; --cart-ink: #e9c766; --stage: #050505; color-scheme: dark;
 }
+
+/* ===================== المصحف: الصفحة الكاملة =====================
+   الصفحة تملأ الشاشة داخل إطار زخرفي، ويُختار الخط آليًا لتتسع الصفحة كلها دون تمرير. */
+.reader-app.immersive { --dock-h: calc(66px + env(safe-area-inset-bottom, 0px)); background: #fff; height: 100dvh; min-height: 0; overflow: hidden; }
+.reader-app.immersive.reader-bg-cream, .reader-app.immersive.reader-bg-ivory { background: var(--paper-2); }
+.reader-app.immersive .rd-body { padding: calc(6px + env(safe-area-inset-top, 0px)) 6px 0; display: flex; }
+.mp-stage { flex: 1; height: calc(100dvh - var(--dock-h) - 10px - env(safe-area-inset-top, 0px)); display: flex; justify-content: center; }
+.mp-page {
+  position: relative; width: min(100%, 760px); height: 100%; display: flex; flex-direction: column;
+  background: var(--paper); color: var(--ink); padding: 6px 8px 16px;
+  border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+}
+.frame-classic .mp-page { border: 22px solid transparent; border-image: url('../assets/mushaf-frame.svg') 32 round; padding: 4px 6px 14px; }
+@media (min-width: 600px) { .frame-classic .mp-page { border-width: 28px; } }
+.mp-content { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
+.mp-content .q-text { font-size: var(--mp-size, 22px); line-height: 1.95; word-spacing: 0; }
+.mp-content .q-flow { text-align: justify; text-align-last: justify; }
+.mp-content section:last-child .q-flow { text-align-last: center; }
+.mp-content .q-basmala { margin: 0; text-align: center; }
+.mp-content .surah-cartouche.small { height: calc(var(--mp-size, 22px) * 2); margin: 0.15em auto; max-width: 92%; }
+.mp-content .surah-cartouche.small .cartouche-text { font-size: calc(var(--mp-size, 22px) * 0.85); }
+.mp-num { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); }
+.frame-classic .mp-num { bottom: -26px; }
+.mp-num span {
+  display: inline-block; min-width: 52px; text-align: center; padding: 1px 12px; border-radius: 999px; font-size: 0.95rem;
+  background: var(--paper); color: var(--ink); border: 1.5px solid #b48a3c; box-shadow: 0 0 0 3px #e9dcc0;
+}
+.mp-dock { position: fixed; bottom: 0; inset-inline: 0; z-index: 35; }
+@media (min-width: 901px) { .mp-dock { inset-inline-start: var(--sidebar-w); } }
+.mp-bar {
+  display: flex; align-items: center; gap: 0.6rem; height: var(--dock-h); padding: 0 0.9rem env(safe-area-inset-bottom, 0px);
+  background: var(--paper-2); color: var(--ink); border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+}
+.mp-back { color: var(--ink); display: grid; place-items: center; width: 36px; height: 44px; text-decoration: none; }
+.mp-surah { display: flex; align-items: center; gap: 0.5rem; border: 0; background: none; color: var(--ink); cursor: pointer; font: inherit; padding: 0.3rem 0.4rem; border-radius: 12px; }
+.mp-surah[aria-expanded='true'] { background: var(--hl); }
+.mp-surah-name { font-family: var(--font-classic); font-size: 1.25rem; }
+.mp-juz { flex: 1; text-align: center; color: var(--ink-soft); font-size: 1.05rem; }
+.mp-round { width: 50px; height: 50px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; color: #fff; text-decoration: none; flex-shrink: 0; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15); }
+.mp-mark { background: #e8b923; }
+.mp-mark.on { background: #c99a0e; }
+.mp-search { background: #17803d; }
+.mp-nav { background: var(--paper-2); margin: 0; padding: 0.5rem; border-top: 1px solid color-mix(in srgb, var(--gold) 30%, transparent); }
+.reader-app.immersive .rd-bar.over { bottom: var(--dock-h); padding-bottom: 0.35rem; }
+.reader-app.immersive .mp-dock:has(.mp-nav) ~ .rd-bar.over, .reader-app.immersive .rd-bar.over:has(~ .mp-dock .mp-nav) { bottom: calc(var(--dock-h) + 52px); }

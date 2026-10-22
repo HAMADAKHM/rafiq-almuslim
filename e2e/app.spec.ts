@@ -15,6 +15,21 @@ async function chooseCity(page: Page, query: string, match: RegExp) {
 }
 
 
+/** القراءة المتتابعة (الوضع الافتراضي الآن صفحة المصحف كاملة): لاختبارات تعتمد على عرض الآيات متتابعة */
+async function useFlowReader(page: Page) {
+  await page.goto('/about')
+  await page.evaluate(() => new Promise((res) => {
+    const r = indexedDB.open('islamic-companion')
+    r.onsuccess = () => {
+      const tx = r.result.transaction('kv', 'readwrite')
+      const st = tx.objectStore('kv')
+      const g = st.get('settings')
+      g.onsuccess = () => { st.put({ ...(g.result ?? {}), readerMode: 'flow' }, 'settings') }
+      tx.oncomplete = () => { r.result.close(); res(null) }
+    }
+  }))
+}
+
 /** قراءة إعداد محفوظ فعلًا في IndexedDB (للانتظار حتى يكتمل الحفظ قبل إعادة التحميل) */
 async function savedSetting(page: Page, key: string): Promise<unknown> {
   return page.evaluate((k) => new Promise((res) => {
@@ -83,10 +98,13 @@ test.describe('القرآن الكريم', () => {
     await expect(page.locator('.surah-item')).toHaveCount(114)
     await page.getByRole('link', { name: /الإخلاص/ }).click()
     await expect(page.getByRole('heading', { name: 'سورة الإخلاص' })).toBeVisible()
-    await expect(page.locator('[data-ayah]')).toHaveCount(4)
+    // يُفتح المصحف على الصفحة كاملة (604: الإخلاص والفلق والناس)
+    await expect(page).toHaveURL(/\/mushaf\/604/)
+    await expect(page.getByRole('button', { name: 'سورة الإخلاص الآية 4' })).toBeVisible()
   })
 
   test('الانتقال لآية محددة وبين السور، وحفظ آخر موضع بعد إعادة التشغيل', async ({ page }) => {
+    await useFlowReader(page)
     await page.goto('/quran/2?ayah=255')
     await expect(page.locator('#ayah-255')).toBeInViewport()
     // مقارنة بعد توحيد ترتيب علامات التشكيل (NFC)
@@ -102,6 +120,7 @@ test.describe('القرآن الكريم', () => {
   })
 
   test('العلامة المرجعية والملاحظة تبقيان بعد إعادة التحميل', async ({ page }) => {
+    await useFlowReader(page)
     await page.goto('/quran/112')
     const row = page.locator('#ayah-1')
     // الضغط على الآية يفتح قائمة الخيارات
@@ -123,6 +142,7 @@ test.describe('القرآن الكريم', () => {
   })
 
   test('تسجيل القراءة يظهر في متابعة التقدم', async ({ page }) => {
+    await useFlowReader(page)
     await page.goto('/quran/1')
     await page.getByRole('button', { name: 'أتممت قراءة السورة' }).click()
     await page.goto('/progress')
@@ -268,6 +288,7 @@ test.describe('البيانات والإعدادات', () => {
   })
 
   test('تصدير نسخة احتياطية', async ({ page }) => {
+    await useFlowReader(page)
     await page.goto('/quran/1')
     await page.locator('#ayah-1').click()
     await page.getByRole('dialog').getByRole('button', { name: 'إضافة علامة' }).click()
@@ -324,6 +345,7 @@ test.describe('الشاشات الصغيرة', () => {
 
 test.describe('الإصدار 0.2', () => {
   test('قائمة خيارات الآية: المفضلة وبطاقة الصورة والتفسير', async ({ page }) => {
+    await useFlowReader(page)
     await page.goto('/quran/112')
     await page.locator('#ayah-2').click()
     const sheet = page.getByRole('dialog')
@@ -342,6 +364,8 @@ test.describe('الإصدار 0.2', () => {
     await page.goto('/mushaf/42')
     await expect(page.getByRole('article', { name: 'الصفحة 42' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'سورة البقرة الآية 255' })).toBeVisible()
+    // الصفحة كاملة دون تمرير، وأدوات القراءة تظهر من زر السورة في الشريط السفلي
+    await page.getByRole('button', { name: 'أدوات القراءة' }).click()
     await page.getByRole('button', { name: 'الصفحة التالية' }).click()
     await expect(page).toHaveURL(/\/mushaf\/43$/)
     await page.getByRole('button', { name: 'الإعدادات' }).click()
@@ -350,6 +374,7 @@ test.describe('الإصدار 0.2', () => {
   })
 
   test('إعدادات القراءة: الخلفية والخط والإطار والترجمة تُحفظ', async ({ page }) => {
+    await useFlowReader(page)
     await page.goto('/quran/1')
     await page.getByRole('button', { name: 'الإعدادات' }).click()
     const sheet = page.getByRole('dialog')
@@ -370,6 +395,7 @@ test.describe('الإصدار 0.2', () => {
   })
 
   test('وضع التركيز: آية واحدة والتنقل بينها، ويُحفظ الوضع', async ({ page }) => {
+    await useFlowReader(page)
     await page.goto('/quran/112')
     await page.getByRole('button', { name: 'الإعدادات' }).click()
     await page.getByRole('dialog').getByRole('radio', { name: /التركيز/ }).click()
@@ -389,7 +415,7 @@ test.describe('الإصدار 0.2', () => {
     await expect(page.getByLabel('بيانات السورة')).toContainText('مكية')
     await expect(page.getByLabel('بيانات السورة')).toContainText('١١٠')
     await page.getByRole('link', { name: /ابدأ القراءة|متابعة القراءة/ }).click()
-    await expect(page).toHaveURL(/\/quran\/18/)
+    await expect(page).toHaveURL(/\/(quran\/18|mushaf\/293)/)
   })
 
   test('خطة ختمة بمدة 30 يومًا وتسجيل الورد', async ({ page }) => {
@@ -587,6 +613,7 @@ test.describe('تجربة 0.4', () => {
   })
 
   test('خيار إبقاء الشاشة مضاءة في إعدادات القراءة', async ({ page }) => {
+    await useFlowReader(page)
     await page.goto('/quran/1')
     await page.getByRole('button', { name: 'الإعدادات' }).click()
     const sw = page.getByRole('dialog').getByRole('switch', { name: 'إبقاء الشاشة مضاءة أثناء القراءة' })
@@ -687,6 +714,7 @@ test.describe('استوديو التصاميم', () => {
   })
 
   test('من قائمة الآية في القارئ إلى الاستوديو', async ({ page }) => {
+    await useFlowReader(page)
     await page.goto('/quran/112')
     await page.locator('#ayah-2').click()
     await page.getByRole('dialog').getByRole('button', { name: 'تصميم صورة' }).click()
@@ -696,6 +724,7 @@ test.describe('استوديو التصاميم', () => {
 
 test.describe('البحث بالصوت والسمة الذهبية', () => {
   test('قراءة جزء من آية الكرسي بالصوت تجد الآية وتفتحها', async ({ page }) => {
+    await useFlowReader(page)
     // محاكاة خدمة التعرف على الكلام في المتصفح بما «سمعته» من المستخدم (إملاء حديث بلا تشكيل)
     await page.addInitScript(() => {
       class FakeSR {
@@ -780,7 +809,8 @@ test.describe('الاستوديو 0.8: البحث عن الآية وفيديو �
     const sheet = page.getByRole('dialog')
     await sheet.getByLabel('اكتب جزءًا من الآية').fill('انا اعطيناك الكوثر')
     await sheet.getByRole('link', { name: /سورة الكوثر — الآية ١/ }).click()
-    await expect(page).toHaveURL(/\/quran\/108\?ayah=1/)
+    // يُفتح المصحف على صفحة الآية (الكوثر في الصفحة 602)
+    await expect(page).toHaveURL(/\/(quran\/108\?ayah=1|mushaf\/602\?s=108&a=1)/)
   })
 })
 

@@ -150,7 +150,7 @@ export const DEFAULT_SETTINGS: Settings = {
   lang: 'ar',
   uiScale: 1,
   quranFontSize: 30,
-  readerMode: 'flow',
+  readerMode: 'mushaf',
   readerBg: 'cream',
   readerFrame: 'classic',
   quranFont: 'amiri-quran',

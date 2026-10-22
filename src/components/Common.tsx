@@ -1,12 +1,44 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useDocumentTitle } from '../hooks'
 
+const MOBILE = '(max-width: 900px)'
+function useMobile(): boolean {
+  const [m, setM] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.(MOBILE).matches)
+  useEffect(() => {
+    const mq = window.matchMedia?.(MOBILE)
+    if (!mq) return
+    const on = () => setM(mq.matches)
+    mq.addEventListener?.('change', on)
+    return () => mq.removeEventListener?.('change', on)
+  }, [])
+  return m
+}
+
+/** عنوان الصفحة: على الجوال يظهر في الشريط الأخضر العلوي نفسه (كما في التصميم المعتمد)، وعلى الشاشات الكبيرة في رأس الصفحة */
 export function PageHead({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
   useDocumentTitle(title)
+  const mobile = useMobile()
+  const [slot, setSlot] = useState<HTMLElement | null>(null)
+  useEffect(() => { setSlot(mobile ? document.getElementById('topbar-title') : null) }, [mobile])
+  const h1 = <h1>{title}</h1>
+  if (mobile && slot) {
+    return (
+      <>
+        {createPortal(h1, slot)}
+        {(subtitle || actions) && (
+          <div className="page-sub">
+            {subtitle && <p>{subtitle}</p>}
+            {actions && <div className="row">{actions}</div>}
+          </div>
+        )}
+      </>
+    )
+  }
   return (
     <div className="page-head">
       <div>
-        <h1>{title}</h1>
+        {h1}
         {subtitle && <p>{subtitle}</p>}
       </div>
       {actions && <div className="row">{actions}</div>}

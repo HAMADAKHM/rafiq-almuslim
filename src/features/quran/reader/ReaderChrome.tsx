@@ -20,13 +20,15 @@ export interface ReaderChromeProps {
   onModeChange: (m: ReaderMode) => void
   onTafsir: (surah: number, ayah: number) => void
   children: ReactNode
+  /** وضع الصفحة الكاملة: بلا رأس، وشريط سفلي مختصر، وأدوات القراءة تظهر عند الطلب أو أثناء التلاوة */
+  immersive?: { bar: ReactNode; toolsOpen: boolean }
 }
 
 /**
  * الإطار المشترك لصفحات القراءة: رأس بالسورة والصفحة والجزء، وشريط سفلي فيه الإعدادات وتبديل
  * طريقة العرض والتشغيل والتفسير، مع شريط تقدم التلاوة. يطبّق الخلفية والخط والإطار المختارة.
  */
-export function ReaderChrome({ title, subtitle, infoHref, current, onModeChange, onTafsir, children }: ReaderChromeProps) {
+export function ReaderChrome({ title, subtitle, infoHref, current, onModeChange, onTafsir, children, immersive }: ReaderChromeProps) {
   const { settings } = useSettings()
   const p = usePlayer()
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -41,19 +43,19 @@ export function ReaderChrome({ title, subtitle, infoHref, current, onModeChange,
   }
 
   return (
-    <div className={`reader-app reader-bg-${settings.readerBg} frame-${settings.readerFrame}`} style={{ ['--quran-family' as string]: font.family }}>
-      <header className="rd-head">
+    <div className={`reader-app reader-bg-${settings.readerBg} frame-${settings.readerFrame}` + (immersive ? ' immersive' : '')} style={{ ['--quran-family' as string]: font.family }}>
+      {!immersive && <header className="rd-head">
         <Link to="/quran" className="rd-icon" aria-label="العودة إلى فهرس السور"><ChevronRight size={22} /></Link>
         <div className="rd-title">
           <strong>{title}</strong>
           <small>{subtitle}</small>
         </div>
         {infoHref ? <Link to={infoHref} className="rd-icon" aria-label="معلومات السورة"><Info size={20} /></Link> : <span className="rd-icon" />}
-      </header>
+      </header>}
 
       <main className="rd-body">{children}</main>
 
-      <footer className="rd-bar" aria-label="أدوات القراءة">
+      {(!immersive || immersive.toolsOpen || active) && <footer className={'rd-bar' + (immersive ? ' over' : '')} aria-label="أدوات القراءة">
         {active && (
           <div className="rd-progress">
             <span className="small">{p.playingBasmala ? 'البسملة' : `الآية ${p.ayah} من ${p.to}`}</span>
@@ -87,7 +89,8 @@ export function ReaderChrome({ title, subtitle, infoHref, current, onModeChange,
           )}
           {infoHref ? <Link className="rd-tool" to={infoHref}><Info size={20} /><span>السورة</span></Link> : <span className="rd-tool" />}
         </div>
-      </footer>
+      </footer>}
+      {immersive?.bar}
 
       <ReaderSettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} onModeChange={(m) => { setSettingsOpen(false); onModeChange(m) }} />
     </div>

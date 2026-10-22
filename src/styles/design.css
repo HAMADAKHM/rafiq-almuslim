@@ -218,3 +218,15 @@
 /* الختمة: حلقة ذهبية */
 .khatma-head .ring circle:last-child { stroke: var(--gold-2); }
 .khatma-head .ring b { color: var(--gold); }
+
+/* الجوال: عنوان الصفحة في الشريط الأخضر العلوي، والشعار عند غياب العنوان */
+.topbar-center { flex: 1; min-width: 0; display: flex; justify-content: center; }
+.topbar-title { display: contents; }
+.topbar-title h1 { margin: 0; font-size: 1.2rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.topbar-center:has(.topbar-title h1) .brand { display: none; }
+@media (max-width: 900px) {
+  .topbar { border-radius: 0 0 22px 22px; padding-bottom: 0.7rem; box-shadow: 0 8px 20px rgba(7, 59, 50, 0.18); }
+  .page-sub { text-align: center; color: var(--text-muted); font-size: 0.86rem; margin: 0 0 1rem; }
+  .page-sub p { margin: 0 auto; max-width: 60ch; }
+  .page-sub .row { justify-content: center; margin-top: 0.5rem; }
+}

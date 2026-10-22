@@ -69,7 +69,7 @@ export function Layout() {
       <div className="main">
         <header className="topbar">
           <button className="btn btn-ghost icon-btn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))} aria-label="رجوع"><ChevronRight /></button>
-          <Brand />
+          <div className="topbar-center"><div id="topbar-title" className="topbar-title" /><Brand /></div>
           <Link className="btn btn-ghost icon-btn" to="/search" aria-label={t('search', lang)}><Search size={20} /></Link>
         </header>
         {!online && (
