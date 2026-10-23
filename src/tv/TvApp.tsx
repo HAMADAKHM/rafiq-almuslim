@@ -29,14 +29,14 @@ const DREAM = typeof location !== 'undefined' && new URLSearchParams(location.se
 type Bridge = {
   openScreensaverSettings(): boolean; getAutostart(): boolean; setAutostart(on: boolean): void
   canOpenFromBackground?(): boolean; openOverlaySettings?(): boolean; getIdleTakeover?(): boolean; setIdleTakeover?(on: boolean): void; setSchedule?(json: string): void
-  getStatus?(): string; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void
+  getStatus?(): string; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void; setQuietIdle?(on: boolean): void
   openAndroidSettings?(): boolean; getDevice?(): string; getHomeMode?(): boolean; setHomeMode?(on: boolean): void; pressHome?(): void
   getApps?(): string; launchApp?(pkg: string): boolean; openOriginalHome?(): boolean
 }
 interface TvAppEntry { label: string; pkg: string; icon: string }
-interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; idleMinutes?: number; events?: Record<string, number> }
+interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; quietIdle?: boolean; canOpen?: boolean; idleMinutes?: number; events?: Record<string, number> }
 const EVENT_LABELS: Record<string, string> = {
-  service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', dream: 'شاشة توقف التلفاز',
+  service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', idle_quiet: 'عدم استخدام (سكون)', dream: 'شاشة توقف التلفاز',
   open_screen: 'فتح شاشة المواقيت', open_blocked: 'مُنع الفتح (ينقص إذن)', adhan_background: 'أذان من الخلفية', accessibility_on: 'تفعيل مراقب عدم الاستخدام',
 }
 const bridge = (): Bridge | null => (window as unknown as { RafiqTV?: Bridge }).RafiqTV ?? null
@@ -134,11 +134,19 @@ export function TvApp() {
 
   // الأذان عند دخول الوقت (أولوية على التلاوة)، مرة لكل صلاة، مع إعادة المحاولة إن تعذر التحميل
   const [adhanPlaying, setAdhanPlaying] = useState(false)
+  // الشاشة مخفية (التلفاز على تطبيق آخر): تتوقف التلاوة، وخدمة التطبيق ترفع الأذان بنفسها
+  const [hidden, setHidden] = useState(() => typeof document !== 'undefined' && document.hidden)
+  useEffect(() => {
+    const on = () => setHidden(document.hidden)
+    document.addEventListener('visibilitychange', on)
+    return () => document.removeEventListener('visibilitychange', on)
+  }, [])
   useEffect(() => {
     if (phase.kind !== 'adhan' || !s.adhan) return
     const key = `${day}:${phase.prayer}`
     if (playedFor.current === key) return
     playedFor.current = key
+    if (hidden && bridge()?.setSchedule) return
     let tries = 0
     const start = () => {
       const a = new Audio(ADHAN_URL)
@@ -172,7 +180,7 @@ export function TvApp() {
 
   // التلاوة: تتوقف وقت الأذان وانتظار الإقامة، وتُستأنف بعدهما
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: city?.tz, hour: '2-digit', hour12: false }).format(now)) % 24
-  const rec = useRecitation(s, data, { day, hour }, phase.kind !== 'normal' || adhanPlaying)
+  const rec = useRecitation(s, data, { day, hour }, phase.kind !== 'normal' || adhanPlaying || hidden)
   // أزرار الوسائط في جهاز التحكم: تشغيل/إيقاف التلاوة
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (['MediaPlayPause', 'MediaPlay', 'MediaPause', 'MediaStop'].includes(e.key)) update({ reciteOn: e.key === 'MediaPlay' ? true : e.key === 'MediaPause' || e.key === 'MediaStop' ? false : !s.reciteOn }) }
@@ -444,12 +452,19 @@ function TvAutoStart() {
       <Toggle on={home} onChange={(v) => { b.setHomeMode?.(v); setHome(v); if (v) setTimeout(() => b.pressHome?.(), 400) }} label="تظهر المواقيت عند تشغيل التلفاز وعند ضغط زر Home (وواجهة التلفاز الأصلية من زر «واجهة التلفاز»)" />
       {home && <p className="tv-muted">إن ظهرت نافذة «اختر التطبيق الرئيسي»: اختر «شاشة رفيق المسلم» ثم «دائمًا». للرجوع إلى واجهة التلفاز الأصلية: أوقف هذا الخيار.</p>}
       <h2>اختياري: فتحها بعد عدم الاستخدام ووقت الأذان فوق يوتيوب</h2>
-      <div className={'tv-permission' + (st.accessibility ? ' ok' : '')}>
+      <div className={'tv-permission' + (st.accessibility || (st.quietIdle !== false && st.canOpen) ? ' ok' : '')}>
         {st.accessibility
           ? '✓ مفعّل: تُفتح شاشة المواقيت بعد دقائق من ترك التلفاز، وتُفتح عند تشغيله، وأي زر يوقف الأذان.'
-          : 'افتح «إمكانية الوصول» ثم اختر «شاشة رفيق المسلم» وفعّلها ووافق، ثم ارجع بزر الرجوع. (يعرف وقت آخر ضغطة فقط، ولا يقرأ الشاشة)'}
+          : st.canOpen
+            ? (st.quietIdle !== false
+              ? '✓ مفعّل بلا أي إذن: تُفتح شاشة المواقيت بعد المدة المختارة من ترك الشاشة إن لم يكن هناك فيديو أو صوت يعمل (يوتيوب والأفلام لا تُقاطع).'
+              : 'متوقف: فعّل الخيار التالي لتُفتح شاشة المواقيت بعد عدم الاستخدام.')
+            : 'افتح «إمكانية الوصول» ثم اختر «شاشة رفيق المسلم» وفعّلها ووافق، ثم ارجع بزر الرجوع. (يعرف وقت آخر ضغطة فقط، ولا يقرأ الشاشة)'}
       </div>
-      {!st.accessibility && (
+      {!st.accessibility && st.canOpen && (
+        <Toggle on={st.quietIdle !== false} onChange={(v) => { b.setQuietIdle?.(v); setSt({ ...st, quietIdle: v }) }} label="فتح المواقيت بعد عدم الاستخدام دون «إمكانية الوصول» (حين لا يعمل صوت أو فيديو)" />
+      )}
+      {!st.accessibility && !(st.canOpen && st.quietIdle !== false) && (
         <div className="tv-choices" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
           <button className="tv-choice on" onClick={() => b.openAccessibilitySettings?.()}>فتح إعدادات إمكانية الوصول</button>
           <button className="tv-choice" onClick={() => b.openAndroidSettings?.()}>فتح إعدادات Android الكاملة</button>
@@ -460,7 +475,7 @@ function TvAutoStart() {
       <Toggle on={auto} onChange={(v) => { b.setAutostart(v); setAuto(v) }} label="فتح المواقيت عند تشغيل التلفاز" />
       <div className="tv-status">
         <span>{st.service ? '✓' : '✗'} خدمة الخلفية</span>
-        <span>{st.accessibility ? '✓' : '✗'} مراقب عدم الاستخدام</span>
+        <span>{st.accessibility || (st.quietIdle !== false && st.canOpen) ? '✓' : '✗'} مراقب عدم الاستخدام{!st.accessibility && st.canOpen ? ' (بالسكون)' : ''}</span>
         <span>{st.overlay ? '✓' : '—'} الظهور فوق التطبيقات (اختياري: شريط الأذان)</span>
         {!st.overlay && <button className="tv-btn" onClick={() => b.openOverlaySettings?.()}>منح إذن الظهور فوق التطبيقات</button>}
       </div>

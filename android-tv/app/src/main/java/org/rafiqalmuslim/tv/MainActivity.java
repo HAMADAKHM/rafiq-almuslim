@@ -29,10 +29,16 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onResume() { super.onResume(); visible = true; }
+    protected void onResume() { super.onResume(); visible = true; if (web != null) web.onResume(); }
 
     @Override
-    protected void onPause() { visible = false; super.onPause(); }
+    protected void onPause() {
+        visible = false;
+        TvService.lastActiveAt = System.currentTimeMillis();
+        // تعلم الصفحة أنها مخفية فتتوقف التلاوة (حتى لا تعمل فوق يوتيوب، ولا تمنع اكتشاف عدم الاستخدام)
+        if (web != null) web.onPause();
+        super.onPause();
+    }
 
     private void hideSystemUi() {
         web.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);

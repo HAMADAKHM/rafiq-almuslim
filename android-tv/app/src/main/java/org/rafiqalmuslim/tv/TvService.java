@@ -45,6 +45,10 @@ public class TvService extends Service {
     static final String KEY_IDLE = "idle_takeover";
     static final String KEY_IDLE_MIN = "idle_minutes";
     static final String KEY_EVENTS = "events";
+    /** بلا «إمكانية الوصول»: عدم الاستخدام = مرور المدة منذ ترك الشاشة دون أي صوت أو فيديو يعمل */
+    static final String KEY_IDLE_QUIET = "idle_quiet";
+    /** آخر نشاط معروف: ترك شاشة المواقيت، أو صوت/فيديو يعمل، أو استيقاظ الشاشة */
+    static volatile long lastActiveAt = System.currentTimeMillis();
     /** الأذان يُرفع الآن من الخلفية (تستخدمه خدمة الإتاحة لإيقافه بأي زر) */
     static volatile boolean adhanActive = false;
     static volatile boolean running = false;
@@ -113,11 +117,12 @@ public class TvService extends Service {
                 String a = intent.getAction();
                 if (Intent.ACTION_DREAMING_STARTED.equals(a)) {
                     log(ctx, "dream");
-                    if (prefs(ctx).getBoolean(KEY_IDLE, true)) openScreen(ctx);
+                    if (prefs(ctx).getBoolean(KEY_IDLE, true)) wakeAndOpen(ctx);
                 } else if (Intent.ACTION_SCREEN_ON.equals(a) || Intent.ACTION_USER_PRESENT.equals(a)) {
                     // التلفاز يستيقظ من وضع الاستعداد (أغلب التلفزيونات لا تُعيد التشغيل كاملًا عند فتحها)
                     log(ctx, "screen_on");
                     IdleWatcher.lastKeyAt = System.currentTimeMillis();
+                    lastActiveAt = System.currentTimeMillis();
                     if (TvWeb.autostart(ctx)) handler.postDelayed(() -> openScreen(ctx), 2500);
                 }
             }
@@ -174,19 +179,39 @@ public class TvService extends Service {
         }
     }
 
-    /** عدم الاستخدام: لا ضغطة منذ دقائق، ولا فيديو أو صوت يعمل → تُفتح شاشة المواقيت */
+    /**
+     * عدم الاستخدام → تُفتح شاشة المواقيت. لا يقاطع أبدًا صوتًا أو فيديو يعمل.
+     * مع «إمكانية الوصول»: المدة منذ آخر ضغطة زر. بدونها (أغلب التلفزيونات): المدة منذ ترك الشاشة
+     * أو منذ توقف آخر صوت/فيديو.
+     */
     private void checkIdle() {
-        if (!IdleWatcher.connected || MainActivity.visible || adhanActive) return;
+        long now = System.currentTimeMillis();
+        AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+        if (am != null && am.isMusicActive()) { lastActiveAt = now; return; } // يشاهد أو يستمع: لا نقاطع
+        if (MainActivity.visible || adhanActive) return;
         if (!prefs(this).getBoolean(KEY_IDLE, true)) return;
         int min = prefs(this).getInt(KEY_IDLE_MIN, 5);
         if (min <= 0) return;
-        long idle = System.currentTimeMillis() - IdleWatcher.lastKeyAt;
-        if (idle < min * 60_000L) return;
-        AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
-        if (am != null && am.isMusicActive()) return; // يشاهد فيلمًا أو يستمع: لا نقاطع
-        log(this, "idle");
-        IdleWatcher.lastKeyAt = System.currentTimeMillis();
+        long since;
+        if (IdleWatcher.connected) since = Math.max(IdleWatcher.lastKeyAt, lastActiveAt);
+        else if (prefs(this).getBoolean(KEY_IDLE_QUIET, true) && canOpenFromBackground(this)) since = lastActiveAt;
+        else return;
+        if (now - since < min * 60_000L) return;
+        log(this, IdleWatcher.connected ? "idle" : "idle_quiet");
+        IdleWatcher.lastKeyAt = now;
+        lastActiveAt = now;
         openScreen(this);
+    }
+
+    /** شاشة توقف التلفاز بدأت: نوقظ الشاشة (ينهي شاشة التوقف) ثم نفتح المواقيت مكانها */
+    @SuppressWarnings("deprecation")
+    private void wakeAndOpen(Context ctx) {
+        try {
+            android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
+            android.os.PowerManager.WakeLock wl = pm.newWakeLock(android.os.PowerManager.SCREEN_BRIGHT_WAKE_LOCK | android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP, "rafiq:dream");
+            wl.acquire(3000);
+        } catch (Exception ignored) { /* بعض الأنظمة تمنعه؛ نحاول الفتح على أي حال */ }
+        handler.postDelayed(() -> openScreen(ctx), 600);
     }
 
     // ---------- الأذان من الخلفية ----------
