@@ -31,7 +31,7 @@ type Bridge = {
   canOpenFromBackground?(): boolean; openOverlaySettings?(): boolean; getIdleTakeover?(): boolean; setIdleTakeover?(on: boolean): void; setSchedule?(json: string): void
   getStatus?(): string; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void
   openAndroidSettings?(): boolean; getDevice?(): string; getHomeMode?(): boolean; setHomeMode?(on: boolean): void; pressHome?(): void
-  getApps?(): string; launchApp?(pkg: string): boolean
+  getApps?(): string; launchApp?(pkg: string): boolean; openOriginalHome?(): boolean
 }
 interface TvAppEntry { label: string; pkg: string; icon: string }
 interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; idleMinutes?: number; events?: Record<string, number> }
@@ -239,7 +239,9 @@ export function TvApp() {
           {!unlocked && s.adhan && <span className="tv-hint">اضغط أي زر في جهاز التحكم لتفعيل صوت الأذان</span>}
           {!IN_APP && <button className="tv-btn" onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})}>ملء الشاشة</button>}
           <button className={'tv-btn' + (s.reciteOn ? ' on' : '')} onClick={() => update({ reciteOn: !s.reciteOn })}>{s.reciteOn ? '⏸ إيقاف القراءة' : '▶ تشغيل القراءة'}</button>
-          {bridge()?.getApps && <button className="tv-btn" onClick={() => { try { setApps(JSON.parse(bridge()!.getApps!()) as TvAppEntry[]) } catch { setApps([]) } }}>التطبيقات</button>}
+          {bridge()?.openOriginalHome
+            ? <button className="tv-btn" onClick={() => { const b = bridge()!; if (!b.openOriginalHome!()) { try { setApps(JSON.parse(b.getApps?.() ?? '[]') as TvAppEntry[]) } catch { setApps([]) } } }}>واجهة التلفاز</button>
+            : bridge()?.getApps && <button className="tv-btn" onClick={() => { try { setApps(JSON.parse(bridge()!.getApps!()) as TvAppEntry[]) } catch { setApps([]) } }}>التطبيقات</button>}
           <button className="tv-btn" onClick={() => setSetup(true)}>الإعدادات</button>
           <span className="tv-hint">{TV_VERSION}</span>
         </span>}
@@ -439,7 +441,7 @@ function TvAutoStart() {
   return (
     <>
       <h2>الأسهل: شاشة المواقيت واجهةً رئيسية للتلفاز (بلا أي إذن)</h2>
-      <Toggle on={home} onChange={(v) => { b.setHomeMode?.(v); setHome(v); if (v) setTimeout(() => b.pressHome?.(), 400) }} label="تظهر المواقيت عند تشغيل التلفاز وعند ضغط زر Home (والتطبيقات من زر «التطبيقات»)" />
+      <Toggle on={home} onChange={(v) => { b.setHomeMode?.(v); setHome(v); if (v) setTimeout(() => b.pressHome?.(), 400) }} label="تظهر المواقيت عند تشغيل التلفاز وعند ضغط زر Home (وواجهة التلفاز الأصلية من زر «واجهة التلفاز»)" />
       {home && <p className="tv-muted">إن ظهرت نافذة «اختر التطبيق الرئيسي»: اختر «شاشة رفيق المسلم» ثم «دائمًا». للرجوع إلى واجهة التلفاز الأصلية: أوقف هذا الخيار.</p>}
       <h2>اختياري: فتحها بعد عدم الاستخدام ووقت الأذان فوق يوتيوب</h2>
       <div className={'tv-permission' + (st.accessibility ? ' ok' : '')}>

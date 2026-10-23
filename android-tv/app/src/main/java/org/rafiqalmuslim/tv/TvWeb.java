@@ -152,6 +152,22 @@ final class TvWeb {
             tryStart(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
         }
 
+        /** يفتح واجهة التلفاز الأصلية (الشاشة الرئيسية للشركة المصنّعة)، لا قائمة التطبيقات */
+        @JavascriptInterface
+        public boolean openOriginalHome() {
+            android.content.pm.PackageManager pm = ctx.getPackageManager();
+            Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+            for (android.content.pm.ResolveInfo ri : pm.queryIntentActivities(home, 0)) {
+                String pkg = ri.activityInfo.packageName;
+                String cls = ri.activityInfo.name;
+                // نتجاوز تطبيقنا وواجهة «الإقلاع» المؤقتة في إعدادات Android
+                if (pkg.equals(ctx.getPackageName()) || cls.endsWith("FallbackHome")) continue;
+                Intent i = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).setClassName(pkg, cls);
+                if (tryStart(i)) return true;
+            }
+            return false;
+        }
+
         /** التطبيقات المثبتة (للزر «التطبيقات» في وضع الشاشة الرئيسية): [{"label","pkg","icon"}] */
         @JavascriptInterface
         public String getApps() {
