@@ -48,7 +48,8 @@ public class MainActivity extends Activity {
     @SuppressWarnings("deprecation")
     public void onBackPressed() {
         if (web != null && web.canGoBack()) web.goBack();
-        else super.onBackPressed();
+        // في وضع الشاشة الرئيسية لا يُغلق زر الرجوع الشاشة (هي واجهة التلفاز)
+        else if (!new TvWeb.Bridge(getApplicationContext()).getHomeMode()) super.onBackPressed();
     }
 
     @Override

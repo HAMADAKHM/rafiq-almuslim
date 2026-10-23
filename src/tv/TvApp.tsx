@@ -30,7 +30,10 @@ type Bridge = {
   openScreensaverSettings(): boolean; getAutostart(): boolean; setAutostart(on: boolean): void
   canOpenFromBackground?(): boolean; openOverlaySettings?(): boolean; getIdleTakeover?(): boolean; setIdleTakeover?(on: boolean): void; setSchedule?(json: string): void
   getStatus?(): string; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void
+  openAndroidSettings?(): boolean; getDevice?(): string; getHomeMode?(): boolean; setHomeMode?(on: boolean): void; pressHome?(): void
+  getApps?(): string; launchApp?(pkg: string): boolean
 }
+interface TvAppEntry { label: string; pkg: string; icon: string }
 interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; idleMinutes?: number; events?: Record<string, number> }
 const EVENT_LABELS: Record<string, string> = {
   service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', dream: 'شاشة توقف التلفاز',
@@ -77,6 +80,7 @@ export function TvApp() {
   const [data, setData] = useState<QuranData | null>(null)
   const [unlocked, setUnlocked] = useState(IN_APP)
   const [slide, setSlide] = useState(0)
+  const [apps, setApps] = useState<TvAppEntry[] | null>(null)
   const now = useNow()
   const audio = useRef<HTMLAudioElement | null>(null)
   const playedFor = useRef<string>('')
@@ -235,10 +239,28 @@ export function TvApp() {
           {!unlocked && s.adhan && <span className="tv-hint">اضغط أي زر في جهاز التحكم لتفعيل صوت الأذان</span>}
           {!IN_APP && <button className="tv-btn" onClick={() => document.documentElement.requestFullscreen?.().catch(() => {})}>ملء الشاشة</button>}
           <button className={'tv-btn' + (s.reciteOn ? ' on' : '')} onClick={() => update({ reciteOn: !s.reciteOn })}>{s.reciteOn ? '⏸ إيقاف القراءة' : '▶ تشغيل القراءة'}</button>
+          {bridge()?.getApps && <button className="tv-btn" onClick={() => { try { setApps(JSON.parse(bridge()!.getApps!()) as TvAppEntry[]) } catch { setApps([]) } }}>التطبيقات</button>}
           <button className="tv-btn" onClick={() => setSetup(true)}>الإعدادات</button>
           <span className="tv-hint">{TV_VERSION}</span>
         </span>}
       </footer>
+
+      {apps && (
+        <div className="tv-overlay tv-apps" role="dialog" aria-label="التطبيقات" onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Backspace' || e.keyCode === 10009) setApps(null) }}>
+          <div className="tv-veil strong solid" />
+          <div className="tv-apps-body">
+            <h2>التطبيقات</h2>
+            <div className="tv-apps-grid">
+              {apps.map((a, i) => (
+                <button key={a.pkg} className="tv-app" autoFocus={i === 0} onClick={() => { bridge()?.launchApp?.(a.pkg); setApps(null) }}>
+                  <img src={a.icon} alt="" /><span>{a.label}</span>
+                </button>
+              ))}
+            </div>
+            <button className="tv-btn" onClick={() => setApps(null)}>رجوع إلى المواقيت</button>
+          </div>
+        </div>
+      )}
 
       {phase.kind === 'adhan' && (
         <div className="tv-overlay" role="alert">
@@ -410,18 +432,27 @@ function TvAutoStart() {
     return () => clearInterval(t)
   }, [b]) // eslint-disable-line react-hooks/exhaustive-deps
   const minutes = st.idleMinutes ?? 5
+  const [home, setHome] = useState(() => { try { return b.getHomeMode?.() ?? false } catch { return false } })
+  const device = (() => { try { return b.getDevice?.() ?? '' } catch { return '' } })()
   const fmt = (t: number) => new Intl.DateTimeFormat('ar-u-nu-latn', { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(t))
   const events = Object.entries(st.events ?? {}).sort((a, c) => c[1] - a[1]).slice(0, 5)
   return (
     <>
-      <h2>١. مراقب عدم الاستخدام (مطلوب)</h2>
+      <h2>الأسهل: شاشة المواقيت واجهةً رئيسية للتلفاز (بلا أي إذن)</h2>
+      <Toggle on={home} onChange={(v) => { b.setHomeMode?.(v); setHome(v); if (v) setTimeout(() => b.pressHome?.(), 400) }} label="تظهر المواقيت عند تشغيل التلفاز وعند ضغط زر Home (والتطبيقات من زر «التطبيقات»)" />
+      {home && <p className="tv-muted">إن ظهرت نافذة «اختر التطبيق الرئيسي»: اختر «شاشة رفيق المسلم» ثم «دائمًا». للرجوع إلى واجهة التلفاز الأصلية: أوقف هذا الخيار.</p>}
+      <h2>اختياري: فتحها بعد عدم الاستخدام ووقت الأذان فوق يوتيوب</h2>
       <div className={'tv-permission' + (st.accessibility ? ' ok' : '')}>
         {st.accessibility
           ? '✓ مفعّل: تُفتح شاشة المواقيت بعد دقائق من ترك التلفاز، وتُفتح عند تشغيله، وأي زر يوقف الأذان.'
           : 'افتح «إمكانية الوصول» ثم اختر «شاشة رفيق المسلم» وفعّلها ووافق، ثم ارجع بزر الرجوع. (يعرف وقت آخر ضغطة فقط، ولا يقرأ الشاشة)'}
       </div>
-      {!st.accessibility && <button className="tv-choice on big" onClick={() => b.openAccessibilitySettings?.()}>فتح إعدادات إمكانية الوصول</button>}
-      <h2>٢. تُفتح المواقيت بعد عدم الاستخدام</h2>
+      {!st.accessibility && (
+        <div className="tv-choices" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+          <button className="tv-choice on" onClick={() => b.openAccessibilitySettings?.()}>فتح إعدادات إمكانية الوصول</button>
+          <button className="tv-choice" onClick={() => b.openAndroidSettings?.()}>فتح إعدادات Android الكاملة</button>
+        </div>
+      )}
       <Choices label="مدة عدم الاستخدام" cols={5} value={minutes} onChange={(m) => { b.setIdleMinutes?.(m); setSt({ ...st, idleMinutes: m }) }}
         options={[{ id: 5, label: '5 دقائق' }, { id: 10, label: '10 دقائق' }, { id: 15, label: '15 دقيقة' }, { id: 30, label: '30 دقيقة' }, { id: 0, label: 'إيقاف' }]} />
       <Toggle on={auto} onChange={(v) => { b.setAutostart(v); setAuto(v) }} label="فتح المواقيت عند تشغيل التلفاز" />
@@ -432,7 +463,7 @@ function TvAutoStart() {
         {!st.overlay && <button className="tv-btn" onClick={() => b.openOverlaySettings?.()}>منح إذن الظهور فوق التطبيقات</button>}
       </div>
       {events.length > 0 && <p className="tv-muted">آخر الأحداث: {events.map(([k, t]) => `${EVENT_LABELS[k] ?? k} (${fmt(t)})`).join(' • ')}</p>}
-      <p className="tv-muted">لا تُقاطَع مشاهدة فيلم أو فيديو: تُفتح المواقيت فقط إن لم يكن شيء يعمل بصوت.</p>
+      {device && <p className="tv-muted">الجهاز: {device}</p>}
     </>
   )
 }

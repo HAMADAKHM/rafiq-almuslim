@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- فتح الشاشة فوق التطبيقات الأخرى (يمنحه المستخدم من الإعدادات) -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- قائمة التطبيقات في وضع الشاشة الرئيسية (Android 11+) -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
     <!-- يعمل على التلفاز (بلا شاشة لمس) وعلى غيره -->
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
@@ -32,6 +34,19 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- وضع «الشاشة الرئيسية»: يفعّله المستخدم من الإعدادات، فتظهر المواقيت عند تشغيل التلفاز وزر Home -->
+        <activity-alias
+            android:name=".HomeAlias"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity-alias>
 
         <!-- شاشة التوقف: تظهر المواقيت حين يُترك التلفاز دون استخدام -->
         <service
