@@ -330,7 +330,12 @@ public class TvService extends Service {
     }
 
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) { return START_STICKY; }
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // بُدئت بمنبه الصلاة أو الحارس أو بعد إغلاق النظام لها: تحقق فوري من الوقت
+        handler.post(() -> { try { checkPrayer(); } catch (Exception ignored) { /* لا شيء */ } });
+        Alarms.schedule(this);
+        return START_STICKY;
+    }
 
     @Override
     public void onDestroy() {

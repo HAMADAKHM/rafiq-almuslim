@@ -253,8 +253,9 @@ final class TvWeb {
         /** جدول الأذان للأيام القادمة (تحسبه الواجهة) لتفتح الخدمة الشاشة عند دخول الوقت */
         @JavascriptInterface
         public void setSchedule(String json) {
-            TvService.prefs(ctx).edit().putString(TvService.KEY_SCHEDULE, json).apply();
+            TvService.prefs(ctx).edit().putString(TvService.KEY_SCHEDULE, json).commit();
             TvService.start(ctx);
+            Alarms.schedule(ctx);
         }
 
         @JavascriptInterface

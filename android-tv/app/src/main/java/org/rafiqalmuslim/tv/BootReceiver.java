@@ -12,6 +12,7 @@ public class BootReceiver extends BroadcastReceiver {
         if (a == null) return;
         // الخدمة تعمل دائمًا بعد التشغيل أو التحديث (الأذان وشاشة عدم الاستخدام وفتح الشاشة عند الاستيقاظ)
         TvService.start(ctx);
+        Alarms.schedule(ctx);
         TvService.log(ctx, "boot");
         if (Intent.ACTION_MY_PACKAGE_REPLACED.equals(a)) return;
         if (!TvWeb.autostart(ctx)) return;

@@ -36,7 +36,7 @@ type Bridge = {
 interface TvAppEntry { label: string; pkg: string; icon: string }
 interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; quietIdle?: boolean; canOpen?: boolean; idleMinutes?: number; events?: Record<string, number> }
 const EVENT_LABELS: Record<string, string> = {
-  service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', idle_quiet: 'عدم استخدام (سكون)', dream: 'شاشة توقف التلفاز',
+  service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', idle_quiet: 'عدم استخدام (سكون)', prayer_alarm: 'منبه وقت الصلاة', service_restart: 'إعادة تشغيل الخدمة', wake_detected: 'فتح التلفاز من الاستعداد', dream: 'شاشة توقف التلفاز',
   open_screen: 'فتح شاشة المواقيت', open_blocked: 'مُنع الفتح (ينقص إذن)', adhan_background: 'أذان من الخلفية', accessibility_on: 'تفعيل مراقب عدم الاستخدام',
 }
 const bridge = (): Bridge | null => (window as unknown as { RafiqTV?: Bridge }).RafiqTV ?? null
