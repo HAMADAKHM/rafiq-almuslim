@@ -35,6 +35,7 @@ public class MainActivity extends Activity {
     protected void onPause() {
         visible = false;
         TvService.lastActiveAt = System.currentTimeMillis();
+        TvService.onScreenLeft(getApplicationContext());
         // تعلم الصفحة أنها مخفية فتتوقف التلاوة (حتى لا تعمل فوق يوتيوب، ولا تمنع اكتشاف عدم الاستخدام)
         if (web != null) web.onPause();
         super.onPause();
@@ -53,6 +54,8 @@ public class MainActivity extends Activity {
     @Override
     @SuppressWarnings("deprecation")
     public void onBackPressed() {
+        // فُتحت تلقائيًا فوق لعبة أو قناة: زر الرجوع يعيد إلى ما كان عليه
+        if (TvService.autoOpenAt > 0 && System.currentTimeMillis() - TvService.autoOpenAt < TvService.AUTO_GRACE_MS && moveTaskToBack(true)) return;
         if (web != null && web.canGoBack()) web.goBack();
         // في وضع الشاشة الرئيسية لا يُغلق زر الرجوع الشاشة (هي واجهة التلفاز)
         else if (!new TvWeb.Bridge(getApplicationContext()).getHomeMode()) super.onBackPressed();

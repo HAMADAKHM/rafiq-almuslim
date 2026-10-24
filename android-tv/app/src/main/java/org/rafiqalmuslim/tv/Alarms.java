@@ -84,6 +84,7 @@ public class Alarms extends BroadcastReceiver {
             if (late > LATE_MS && interactive(c)) {
                 // كان التلفاز في الاستعداد وفُتح الآن
                 TvService.log(c, "wake_detected");
+                TvService.clearSnooze(c);
                 TvService.lastActiveAt = System.currentTimeMillis();
                 if (TvWeb.autostart(c)) TvService.openScreen(c);
             }

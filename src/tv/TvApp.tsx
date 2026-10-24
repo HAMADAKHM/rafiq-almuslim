@@ -34,9 +34,9 @@ type Bridge = {
   getApps?(): string; launchApp?(pkg: string): boolean; openOriginalHome?(): boolean
 }
 interface TvAppEntry { label: string; pkg: string; icon: string }
-interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; quietIdle?: boolean; canOpen?: boolean; idleMinutes?: number; events?: Record<string, number> }
+interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; quietIdle?: boolean; canOpen?: boolean; hdmi?: boolean; snoozeUntil?: number; idleMinutes?: number; events?: Record<string, number> }
 const EVENT_LABELS: Record<string, string> = {
-  service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', idle_quiet: 'عدم استخدام (سكون)', prayer_alarm: 'منبه وقت الصلاة', service_restart: 'إعادة تشغيل الخدمة', wake_detected: 'فتح التلفاز من الاستعداد', dream: 'شاشة توقف التلفاز',
+  service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', idle_quiet: 'عدم استخدام (سكون)', prayer_alarm: 'منبه وقت الصلاة', idle_snoozed: 'إيقاف مؤقت (رجعت فور الفتح)', service_restart: 'إعادة تشغيل الخدمة', wake_detected: 'فتح التلفاز من الاستعداد', dream: 'شاشة توقف التلفاز',
   open_screen: 'فتح شاشة المواقيت', open_blocked: 'مُنع الفتح (ينقص إذن)', adhan_background: 'أذان من الخلفية', accessibility_on: 'تفعيل مراقب عدم الاستخدام',
 }
 const bridge = (): Bridge | null => (window as unknown as { RafiqTV?: Bridge }).RafiqTV ?? null
@@ -457,7 +457,7 @@ function TvAutoStart() {
           ? '✓ مفعّل: تُفتح شاشة المواقيت بعد دقائق من ترك التلفاز، وتُفتح عند تشغيله، وأي زر يوقف الأذان.'
           : st.canOpen
             ? (st.quietIdle !== false
-              ? '✓ مفعّل بلا أي إذن: تُفتح شاشة المواقيت بعد المدة المختارة من ترك الشاشة إن لم يكن هناك فيديو أو صوت يعمل (يوتيوب والأفلام لا تُقاطع).'
+              ? `✓ مفعّل بلا إذن: تُفتح بعد المدة المختارة إن لم يعمل فيديو أو صوت أو جهاز HDMI (بلايستيشن)${st.hdmi ? ' — جهاز HDMI يعمل الآن' : ''}. فُتحت بالخطأ؟ اضغط «رجوع» فتعود ولا تُفتح 3 ساعات${st.snoozeUntil && st.snoozeUntil > Date.now() ? ` (متوقفة حتى ${fmt(st.snoozeUntil)})` : ''}.`
               : 'متوقف: فعّل الخيار التالي لتُفتح شاشة المواقيت بعد عدم الاستخدام.')
             : 'افتح «إمكانية الوصول» ثم اختر «شاشة رفيق المسلم» وفعّلها ووافق، ثم ارجع بزر الرجوع. (يعرف وقت آخر ضغطة فقط، ولا يقرأ الشاشة)'}
       </div>

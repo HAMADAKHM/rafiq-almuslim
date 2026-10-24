@@ -219,6 +219,8 @@ final class TvWeb {
                 o.put("accessibility", IdleWatcher.connected);
                 o.put("quietIdle", TvService.prefs(ctx).getBoolean(TvService.KEY_IDLE_QUIET, true));
                 o.put("canOpen", TvService.canOpenFromBackground(ctx));
+                o.put("hdmi", TvService.externalInputActive(ctx));
+                o.put("snoozeUntil", TvService.prefs(ctx).getLong(TvService.KEY_SNOOZE, 0));
                 o.put("idleMinutes", TvService.prefs(ctx).getInt(TvService.KEY_IDLE_MIN, 5));
                 o.put("events", new JSONObject(TvService.prefs(ctx).getString(TvService.KEY_EVENTS, "{}")));
                 return o.toString();

@@ -49,6 +49,37 @@ public class TvService extends Service {
     static final String KEY_IDLE_QUIET = "idle_quiet";
     /** آخر نشاط معروف: ترك شاشة المواقيت، أو صوت/فيديو يعمل، أو استيقاظ الشاشة */
     static volatile long lastActiveAt = System.currentTimeMillis();
+    /** وقت آخر فتح تلقائي بسبب عدم الاستخدام (للرجوع بزر Back، ولمعرفة أن المستخدم رفضه) */
+    static volatile long autoOpenAt = 0;
+    static final long AUTO_GRACE_MS = 3 * 60_000L;
+    /** خرج المستخدم من الشاشة فور فتحها تلقائيًا (يلعب أو يشاهد من جهاز HDMI): لا تُفتح ثانية حتى هذا الوقت */
+    static final String KEY_SNOOZE = "idle_snooze_until";
+    private static final long SNOOZE_MS = 3 * 60 * 60_000L;
+
+    /** المستخدم ترك الشاشة بعد فتحها تلقائيًا بقليل: إيقاف الفتح التلقائي مؤقتًا */
+    static void onScreenLeft(Context c) {
+        long now = System.currentTimeMillis();
+        if (autoOpenAt > 0 && now - autoOpenAt < AUTO_GRACE_MS) {
+            prefs(c).edit().putLong(KEY_SNOOZE, now + SNOOZE_MS).apply();
+            log(c, "idle_snoozed");
+        }
+        autoOpenAt = 0;
+    }
+
+    static void clearSnooze(Context c) { prefs(c).edit().remove(KEY_SNOOZE).apply(); }
+
+    /** جهاز موصول بمنفذ HDMI يعمل الآن (بلايستيشن، رسيفر…) حسب نظام مداخل التلفاز */
+    static boolean externalInputActive(Context c) {
+        if (Build.VERSION.SDK_INT < 24) return false;
+        try {
+            android.media.tv.TvInputManager tim = (android.media.tv.TvInputManager) c.getSystemService(Context.TV_INPUT_SERVICE);
+            if (tim == null) return false;
+            for (android.media.tv.TvInputInfo info : tim.getTvInputList()) {
+                if (info.getType() == android.media.tv.TvInputInfo.TYPE_HDMI && tim.getInputState(info.getId()) == android.media.tv.TvInputManager.INPUT_STATE_CONNECTED) return true;
+            }
+        } catch (Exception ignored) { /* التلفاز لا يدعم نظام المداخل */ }
+        return false;
+    }
     /** الأذان يُرفع الآن من الخلفية (تستخدمه خدمة الإتاحة لإيقافه بأي زر) */
     static volatile boolean adhanActive = false;
     static volatile boolean running = false;
@@ -121,6 +152,7 @@ public class TvService extends Service {
                 } else if (Intent.ACTION_SCREEN_ON.equals(a) || Intent.ACTION_USER_PRESENT.equals(a)) {
                     // التلفاز يستيقظ من وضع الاستعداد (أغلب التلفزيونات لا تُعيد التشغيل كاملًا عند فتحها)
                     log(ctx, "screen_on");
+                    clearSnooze(ctx);
                     IdleWatcher.lastKeyAt = System.currentTimeMillis();
                     lastActiveAt = System.currentTimeMillis();
                     if (TvWeb.autostart(ctx)) handler.postDelayed(() -> openScreen(ctx), 2500);
@@ -190,6 +222,9 @@ public class TvService extends Service {
         if (am != null && am.isMusicActive()) { lastActiveAt = now; return; } // يشاهد أو يستمع: لا نقاطع
         if (MainActivity.visible || adhanActive) return;
         if (!prefs(this).getBoolean(KEY_IDLE, true)) return;
+        if (now < prefs(this).getLong(KEY_SNOOZE, 0)) return;
+        // يلعب على بلايستيشن أو يشاهد من جهاز HDMI: صوته لا يظهر للتطبيق، فنعتبره نشاطًا
+        if (externalInputActive(this)) { lastActiveAt = now; return; }
         int min = prefs(this).getInt(KEY_IDLE_MIN, 5);
         if (min <= 0) return;
         long since;
@@ -200,6 +235,7 @@ public class TvService extends Service {
         log(this, IdleWatcher.connected ? "idle" : "idle_quiet");
         IdleWatcher.lastKeyAt = now;
         lastActiveAt = now;
+        autoOpenAt = now;
         openScreen(this);
     }
 
