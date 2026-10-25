@@ -41,6 +41,14 @@ public class MainActivity extends Activity {
         super.onPause();
     }
 
+    @Override
+    public boolean dispatchKeyEvent(android.view.KeyEvent e) {
+        // أذان خدمة الخلفية ما زال يُرفع (بدأ والتلفاز على تطبيق آخر): أي زر يوقفه
+        // (ويصل الزر للصفحة أيضًا فتُغلق شاشة الأذان)
+        if (TvService.adhanActive && e.getAction() == android.view.KeyEvent.ACTION_DOWN) TvService.requestStopAdhan(this);
+        return super.dispatchKeyEvent(e);
+    }
+
     private void hideSystemUi() {
         web.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
     }

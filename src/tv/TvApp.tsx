@@ -10,9 +10,10 @@ import { ayahOfDay, dhikrOfDay } from '../services/daily'
 import { loadQuran, type QuranData } from '../services/quran'
 import { dayKey, daysBetween, formatGregorian, formatHijri, formatCountdown } from '../lib/dates'
 import { toArabicDigits } from '../lib/arabic'
-import { loadTv, saveTv, tvPhase, TV_PRAYERS, type TvPrayer, type TvSettings } from './state'
+import { loadTv, saveTv, shiftedTz, tvPhase, TV_PRAYERS, type TvPrayer, type TvSettings } from './state'
 import { RECITE_MODES, TV_RECITERS } from './recite'
 import { resetRecitePos, useRecitation } from './useRecitation'
+import { voiceStatus } from './voice'
 import { reciterById } from '../content/reciters'
 
 declare const __TV_VERSION__: string
@@ -29,7 +30,7 @@ const DREAM = typeof location !== 'undefined' && new URLSearchParams(location.se
 type Bridge = {
   openScreensaverSettings(): boolean; getAutostart(): boolean; setAutostart(on: boolean): void
   canOpenFromBackground?(): boolean; openOverlaySettings?(): boolean; getIdleTakeover?(): boolean; setIdleTakeover?(on: boolean): void; setSchedule?(json: string): void
-  getStatus?(): string; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void; setQuietIdle?(on: boolean): void
+  getStatus?(): string; stopAdhan?(): void; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void; setQuietIdle?(on: boolean): void
   openAndroidSettings?(): boolean; getDevice?(): string; getHomeMode?(): boolean; setHomeMode?(on: boolean): void; pressHome?(): void
   getApps?(): string; launchApp?(pkg: string): boolean; openOriginalHome?(): boolean
 }
@@ -125,7 +126,9 @@ export function TvApp() {
     return () => { window.removeEventListener('keydown', unlock); window.removeEventListener('click', unlock) }
   }, [unlocked])
 
-  const city = s.city
+  // التوقيت الصيفي/الشتوي اليدوي يغيّر المنطقة الزمنية للعرض فقط
+  const tzView = s.city ? shiftedTz(s.city.tz, s.clockShift, now) : ''
+  const city = useMemo(() => (s.city ? { ...s.city, tz: tzView } : null), [s.city, tzView])
   const day = dayKey(now, city?.tz)
   const rotating = useRotating(data, day)
   const times = city ? todayTimes(city, s.prayer, now) : null
@@ -167,15 +170,22 @@ export function TvApp() {
     const all = upcomingDays(city, s.prayer, 7, new Date()).flatMap((d) => TV_PRAYERS.map((p) => ({ t: d.times[p].getTime(), name: PRAYER_LABELS[p] }))).filter((x) => x.t > Date.now() - 120_000)
     try { b.setSchedule(JSON.stringify({ adhan: s.adhan, url: ADHAN_URL, times: all.map((x) => x.t), names: all.map((x) => x.name) })) } catch { /* خارج التطبيق */ }
   }, [city, s.prayer, s.adhan, day]) // eslint-disable-line react-hooks/exhaustive-deps
-  const stopAdhan = () => { audio.current?.pause(); audio.current = null; setAdhanPlaying(false) }
-  // أي زر في جهاز التحكم يوقف الأذان أثناء رفعه
+  const stopAdhan = () => {
+    audio.current?.pause(); audio.current = null; setAdhanPlaying(false)
+    // أذان خدمة التطبيق (بدأ والتلفاز على تطبيق آخر ثم فُتحت الشاشة) يتوقف أيضًا
+    try { bridge()?.stopAdhan?.() } catch { /* خارج التطبيق */ }
+  }
+  // شاشة الأذان أو الإقامة ظاهرة: أي زر أو ضغطة يوقف الأذان ويغلقها فورًا (تعود الشاشة العادية)
+  const phaseKey = phase.kind === 'normal' ? '' : `${day}:${phase.kind}:${phase.prayer}`
+  const [closedPhase, setClosedPhase] = useState('')
+  const overlayOpen = phaseKey !== '' && closedPhase !== phaseKey
   useEffect(() => {
-    if (!adhanPlaying) return
-    const stop = (e: Event) => { e.preventDefault(); e.stopPropagation(); stopAdhan() }
+    if (!adhanPlaying && !overlayOpen) return
+    const stop = (e: Event) => { e.preventDefault(); e.stopPropagation(); stopAdhan(); if (phaseKey) setClosedPhase(phaseKey) }
     window.addEventListener('keydown', stop, true)
     window.addEventListener('click', stop, true)
     return () => { window.removeEventListener('keydown', stop, true); window.removeEventListener('click', stop, true) }
-  }, [adhanPlaying]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [adhanPlaying, overlayOpen, phaseKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const update = (p: Partial<TvSettings>) => setS((prev) => { const next = { ...prev, ...p }; saveTv(next); return next })
 
   // التلاوة: تتوقف وقت الأذان وانتظار الإقامة، وتُستأنف بعدهما
@@ -197,7 +207,13 @@ export function TvApp() {
     ref: `سورة ${data.meta.surahs[rec.current.surah - 1].name} • ${rec.current.ayah === 0 ? 'البسملة' : `الآية ${toArabicDigits(rec.current.ayah)}`} — ${reciterById(s.reciterId).name}`,
     quran: true,
   } : null
-  const item = playingText ?? rotating[slide % Math.max(1, rotating.length)]
+  const spoken = rec.dhikr ? {
+    title: `${rec.dhikr.title} — ${rec.dhikr.voice ? 'يُقرأ الآن' : 'اقرأ معنا'}`,
+    text: rec.dhikr.text,
+    ref: `${rec.dhikr.source}${rec.dhikr.count && rec.dhikr.count > 1 ? ` • يُقال ${toArabicDigits(rec.dhikr.count)} ${rec.dhikr.count <= 10 ? 'مرات' : 'مرة'}` : ''}`,
+    quran: false,
+  } : null
+  const item = playingText ?? spoken ?? rotating[slide % Math.max(1, rotating.length)]
   const tone = toneFor(np.name)
   const left = np.time.getTime() - now.getTime()
 
@@ -205,6 +221,7 @@ export function TvApp() {
     <div className="tv">
       <PaintedScene tone={tone} variant="hero" className="tv-art" />
       <div className="tv-veil" />
+      {s.animate && <SkyLife night={tone === 'night'} />}
 
       <header className="tv-top">
         <div className="tv-brand"><span className="tv-logo"><LogoMark size={44} /></span><div><strong>{HOME_CARD.app}</strong><small>{city.nameAr ?? city.name}</small></div></div>
@@ -222,7 +239,7 @@ export function TvApp() {
           </div>
         </section>
         {item && (
-          <section className={'tv-card' + (playingText ? ' playing' : '')} key={playingText ? `${rec.current!.surah}:${rec.current!.ayah}` : slide}>
+          <section className={'tv-card' + (playingText || spoken ? ' playing' : '')} key={playingText ? `${rec.current!.surah}:${rec.current!.ayah}` : spoken ? `d:${spoken.text.slice(0, 24)}` : slide}>
             <div className="tv-card-title">{item.title}</div>
             <p className={'tv-card-text' + (item.quran ? ' quran' : '')}>{item.quran ? `﴿${item.text}﴾` : `«${item.text}»`}</p>
             <div className="tv-card-ref">{item.ref}</div>
@@ -272,7 +289,7 @@ export function TvApp() {
         </div>
       )}
 
-      {phase.kind === 'adhan' && (
+      {phase.kind === 'adhan' && overlayOpen && (
         <div className="tv-overlay" role="alert">
           <PaintedScene tone={toneFor(phase.prayer)} variant="hero" className="tv-art" />
           <div className="tv-veil strong" />
@@ -280,21 +297,53 @@ export function TvApp() {
             <div className="tv-overlay-kicker">حان الآن وقت صلاة</div>
             <div className="tv-overlay-title">{PRAYER_LABELS[phase.prayer]}</div>
             <div className="tv-overlay-sub">{clock(phase.at, city.tz, s.hour12)} — {city.nameAr ?? city.name}</div>
-            {s.adhan && adhanPlaying && <div className="tv-overlay-sub">اضغط أي زر في جهاز التحكم لإيقاف الأذان</div>}
+            <div className="tv-overlay-sub">{adhanPlaying ? 'اضغط أي زر لإيقاف الأذان وإغلاق هذه الشاشة' : 'اضغط أي زر لإغلاق هذه الشاشة'}</div>
           </div>
         </div>
       )}
-      {phase.kind === 'iqama' && (
+      {phase.kind === 'iqama' && overlayOpen && (
         <div className="tv-overlay" role="alert">
           <div className="tv-veil strong solid" />
           <div className="tv-overlay-body">
             <div className="tv-overlay-kicker">صلاة {PRAYER_LABELS[phase.prayer]} — الإقامة بعد</div>
             <div className="tv-overlay-title mono">{formatCountdown(phase.at.getTime() - now.getTime()).replace(/^00:/, '')}</div>
             <div className="tv-overlay-sub">استووا واعتدلوا، وسدّوا الفُرَج</div>
+            <div className="tv-overlay-sub">اضغط أي زر لإغلاق هذه الشاشة</div>
           </div>
         </div>
       )}
     </div>
+  )
+}
+
+/** حياة هادئة في الخلفية: أسراب طيور تعبر السماء بأجنحة تخفق، وغيوم تسير ببطء */
+function SkyLife({ night }: { night: boolean }) {
+  const bird = (x: number, y: number, s: number, d: number) => (
+    <g transform={`translate(${x} ${y}) scale(${s})`} key={`${x}-${y}`}>
+      <path className="tv-wing" style={{ animationDelay: `${d}s` }} d="M0 6 Q6 0 12 6 Q18 0 24 6" />
+    </g>
+  )
+  const flock = (n: number) => [bird(0, 10, 1, 0), bird(30, 0, 0.8, 0.2), bird(26, 26, 0.85, 0.4), bird(58, 14, 0.7, 0.1), bird(62, 34, 0.6, 0.3)].slice(0, n)
+  return (
+    <div className={'tv-art tv-life' + (night ? ' night' : '')} aria-hidden="true">
+      <span className="tv-cloud c1" /><span className="tv-cloud c2" /><span className="tv-cloud c3" />
+      <svg className="tv-flock f1" viewBox="0 0 90 50">{flock(5)}</svg>
+      <svg className="tv-flock f2" viewBox="0 0 90 50">{flock(3)}</svg>
+      <svg className="tv-flock f3" viewBox="0 0 90 50">{flock(4)}</svg>
+    </div>
+  )
+}
+
+/** حالة الصوت العربي لقراءة الأذكار */
+function VoiceNote() {
+  const [st, setSt] = useState(voiceStatus)
+  useEffect(() => { const t = setInterval(() => setSt(voiceStatus()), 1500); return () => clearInterval(t) }, [])
+  return (
+    <p className={'tv-permission' + (st === 'ok' ? ' ok' : '')}>
+      {st === 'ok' ? '✓ يوجد صوت عربي في التلفاز: الآيات بصوت القارئ، وبقية الأذكار بالصوت العربي للتلفاز (قراءة آلية للنص الموثق كما هو).'
+        : st === 'init' ? 'جارٍ تجهيز الصوت العربي…'
+        : 'لا يوجد صوت عربي في التلفاز: تُتلى الآيات بصوت القارئ، وتظهر بقية الأذكار نصًّا. لإضافة الصوت ثبّت «Google Text-to-Speech» (خدمات Google للكلام) من متجر التطبيقات واختر العربية.'}
+    </p>
   )
 }
 
@@ -380,6 +429,11 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
                 <h2>الأذان</h2>
                 <Toggle on={draft.adhan} onChange={(v) => set({ adhan: v })} label="رفع الأذان عند دخول الوقت (منصور الزهراني)" />
                 <Toggle on={draft.hour12} onChange={(v) => set({ hour12: v })} label="نظام 12 ساعة" />
+                <Toggle on={draft.animate} onChange={(v) => set({ animate: v })} label="خلفية متحركة (طيور تحلّق وغيوم تسير)" />
+                <h2>التوقيت الصيفي والشتوي</h2>
+                <Choices label="التوقيت الصيفي والشتوي" cols={3} value={draft.clockShift} onChange={(v) => set({ clockShift: v })}
+                  options={[{ id: 0, label: 'تلقائي حسب المدينة' }, { id: 60, label: 'تقديم ساعة (+1)' }, { id: -60, label: 'تأخير ساعة (−1)' }]} />
+                {draft.city && <p className="tv-muted">الساعة على الشاشة الآن: {clock(new Date(), shiftedTz(draft.city.tz, draft.clockShift, new Date()), draft.hour12)} — غيّر هذا فقط إن كانت تختلف ساعة عن الوقت الصحيح في بلدك.</p>}
                 <h2>حساب العصر</h2>
                 <Choices label="حساب العصر" cols={2} value={draft.prayer.madhab} onChange={(v) => set({ prayer: { ...draft.prayer, madhab: v } })} options={[{ id: 'shafi', label: 'الجمهور (ظل المثل)' }, { id: 'hanafi', label: 'الحنفي (ظل المثلين)' }]} />
                 <h2>طريقة الحساب</h2>
@@ -400,6 +454,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
                 <Toggle on={draft.reciteOn} onChange={(v) => set({ reciteOn: v })} label="القراءة على الشاشة (تتوقف وقت الأذان وتُستأنف بعده)" />
                 <h2>ما يُقرأ</h2>
                 <Choices label="ما يُقرأ" cols={3} value={draft.reciteMode} onChange={(v) => set({ reciteMode: v })} options={RECITE_MODES.map((m) => ({ id: m.id, label: m.label }))} />
+                {draft.reciteMode === 'adhkar' && <VoiceNote />}
                 {draft.reciteMode === 'surah' && (
                   <>
                     <div className="tv-stepper wide" aria-label="سورة البدء">

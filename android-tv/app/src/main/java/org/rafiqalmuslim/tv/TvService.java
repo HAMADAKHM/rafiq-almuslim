@@ -271,7 +271,8 @@ public class TvService extends Service {
             adhanActive = true;
             log(this, "adhan_background");
             // مع خدمة الإتاحة يُلتقط أي زر دون شريط يأخذ التركيز؛ وبدونها يظهر الشريط
-            showOverlay(prayer);
+            // (بإذن الظهور فوق التطبيقات، وإلا فنافذة شفافة لا تحتاج إذنًا تلتقط أي زر)
+            if (!showOverlay(prayer) && !IdleWatcher.connected && canOpenFromBackground(this)) AdhanActivity.show(this, prayer);
             startMediaSession();
         } catch (Exception e) {
             stopAdhan();
@@ -287,6 +288,7 @@ public class TvService extends Service {
             overlay = null;
         }
         if (session != null) { session.setActive(false); session.release(); session = null; }
+        AdhanActivity.close();
         abandonFocus();
     }
 
@@ -328,8 +330,8 @@ public class TvService extends Service {
      * شريط صغير أعلى الشاشة فوق التطبيق الحالي: «حان وقت الصلاة — اضغط أي زر لإيقاف الأذان».
      * يأخذ ضغطات جهاز التحكم أثناء الأذان، فأي زر يوقفه ويُزال الشريط (يحتاج إذن الظهور فوق التطبيقات).
      */
-    private void showOverlay(String prayer) {
-        if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(this)) return;
+    private boolean showOverlay(String prayer) {
+        if (Build.VERSION.SDK_INT >= 23 && !Settings.canDrawOverlays(this)) return false;
         FrameLayout box = new FrameLayout(this) {
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
@@ -360,8 +362,10 @@ public class TvService extends Service {
             ((WindowManager) getSystemService(WINDOW_SERVICE)).addView(box, lp);
             overlay = box;
             box.requestFocus();
+            return true;
         } catch (Exception ignored) {
             overlay = null;
+            return false;
         }
     }
 

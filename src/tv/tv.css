@@ -126,3 +126,20 @@ button, input, select { font: inherit; }
 .tv-app:focus { outline: 0.3vw solid #E2C27E; background: rgba(226, 194, 126, 0.2); }
 /* النوافذ فوق الشاشة (الأذان، الإقامة، التطبيقات) تغطيها كاملة ولا تزاحم محتواها */
 .tv > .tv-overlay { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 5; }
+
+/* الخلفية المتحركة: خفيفة على معالج التلفاز (تحريك transform فقط) */
+.tv-life { pointer-events: none; overflow: hidden; }
+.tv-flock { position: absolute; left: 0; width: 7vw; height: 4vw; fill: none; stroke: rgba(20, 28, 26, 0.75); stroke-width: 1.6; stroke-linecap: round; will-change: transform; animation: tv-fly 46s linear infinite; }
+.tv-life.night .tv-flock { stroke: rgba(226, 194, 126, 0.35); }
+.tv-flock.f1 { top: 12%; animation-duration: 48s; animation-delay: -6s; }
+.tv-flock.f2 { top: 24%; width: 5vw; height: 3vw; animation-duration: 64s; animation-delay: -30s; }
+.tv-flock.f3 { top: 7%; width: 6vw; height: 3.4vw; animation-duration: 78s; animation-delay: -52s; animation-direction: reverse; }
+.tv-wing { transform-origin: 12px 6px; animation: tv-flap 0.9s ease-in-out infinite alternate; }
+@keyframes tv-fly { 0% { transform: translate(-12vw, 0); } 25% { transform: translate(25vw, -1.2vw); } 50% { transform: translate(55vw, 0.6vw); } 75% { transform: translate(85vw, -0.8vw); } 100% { transform: translate(112vw, 0); } }
+@keyframes tv-flap { 0% { transform: scaleY(1); } 100% { transform: scaleY(-0.5); } }
+.tv-cloud { position: absolute; left: 0; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(255, 240, 215, 0.16), rgba(255, 240, 215, 0) 70%); will-change: transform; animation: tv-drift 150s linear infinite; }
+.tv-life.night .tv-cloud { background: radial-gradient(ellipse at center, rgba(190, 210, 230, 0.08), rgba(190, 210, 230, 0) 70%); }
+.tv-cloud.c1 { top: 6%; width: 34vw; height: 9vw; animation-delay: -20s; }
+.tv-cloud.c2 { top: 18%; width: 26vw; height: 7vw; animation-duration: 190s; animation-delay: -110s; }
+.tv-cloud.c3 { top: 2%; width: 22vw; height: 6vw; animation-duration: 230s; animation-delay: -60s; }
+@keyframes tv-drift { 0% { transform: translateX(-40vw); } 100% { transform: translateX(110vw); } }

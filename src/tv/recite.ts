@@ -15,7 +15,7 @@ export const TV_RECITERS = ['husary', 'minshawi', 'alafasy', 'abdulbasit', 'ajam
 export const RECITE_MODES: { id: ReciteMode; label: string; hint: string }[] = [
   { id: 'surah', label: 'تلاوة متواصلة', hint: 'سورة تختارها ثم ما بعدها، ويُحفظ الموضع' },
   { id: 'ayah', label: 'آية اليوم', hint: 'تُتلى آية اليوم ثم تتكرر كل بضع دقائق' },
-  { id: 'adhkar', label: 'آيات الأذكار', hint: 'آيات أذكار الصباح أو المساء أو النوم بحسب الوقت (آية الكرسي والمعوذات…)' },
+  { id: 'adhkar', label: 'الأذكار بالصوت', hint: 'أذكار الصباح أو المساء أو النوم بحسب الوقت كاملة: الآيات بصوت القارئ، وبقية الأذكار بصوت عربي من التلفاز' },
 ]
 
 /** فاصل الصمت قبل إعادة آية اليوم أو آيات الأذكار */

@@ -19,6 +19,13 @@
     <uses-feature android:name="android.software.leanback" android:required="false" />
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
+    <!-- محرك الكلام العربي لقراءة الأذكار (Android 11+) -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <application
         android:label="@string/app_name"
         android:icon="@drawable/icon"
@@ -38,6 +45,17 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- شريط الأذان فوق التطبيقات الأخرى: أي زر يوقفه ويعود التطبيق السابق -->
+        <activity
+            android:name=".AdhanActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:launchMode="singleInstance"
+            android:screenOrientation="landscape" />
 
         <!-- وضع «الشاشة الرئيسية»: يفعّله المستخدم من الإعدادات، فتظهر المواقيت عند تشغيل التلفاز وزر Home -->
         <activity-alias

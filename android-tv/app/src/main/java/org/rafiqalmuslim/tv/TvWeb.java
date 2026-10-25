@@ -58,6 +58,7 @@ final class TvWeb {
             }
         });
         if (!dream) web.addJavascriptInterface(new Bridge(ctx.getApplicationContext()), "RafiqTV");
+        if (!dream) web.addJavascriptInterface(new Speech(ctx.getApplicationContext(), web), "RafiqVoice");
         // app=1: الصوت مسموح دون ضغطة؛ dream=1: وضع شاشة التوقف (بلا أزرار)
         web.loadUrl(BASE + (dream ? "?app=1&dream=1" : "?app=1"));
         return web;
@@ -236,6 +237,9 @@ final class TvWeb {
                 new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS),
                 new Intent(Settings.ACTION_SETTINGS));
         }
+
+        @JavascriptInterface
+        public void stopAdhan() { TvService.requestStopAdhan(ctx); }
 
         @JavascriptInterface
         public void setIdleMinutes(int m) { TvService.prefs(ctx).edit().putInt(TvService.KEY_IDLE_MIN, m).apply(); }

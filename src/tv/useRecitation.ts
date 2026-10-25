@@ -3,6 +3,14 @@ import { ayahAudioSources, reciterById, type Reciter } from '../content/reciters
 import type { QuranData } from '../services/quran'
 import { BASMALA_AYAH, nextSurah, reciteQueue, REPEAT_GAP_MS, type AyahRef } from './recite'
 import type { TvSettings } from './state'
+import { ADHKAR } from '../content/adhkar'
+import { adhkarForNow } from '../services/daily'
+import { speak, stopVoice } from './voice'
+
+/** الذكر المقروء الآن بالصوت (نصوص الأذكار غير القرآنية) */
+export interface SpokenDhikr { title: string; text: string; source: string; count?: number; voice: boolean }
+/** أقصى تكرار بالصوت لذكر ورد تكراره (يظهر العدد كاملًا على الشاشة) */
+const MAX_SPOKEN_REPEAT = 3
 
 const POS_KEY = 'rafiq-tv:recite-pos'
 function loadPos(): AyahRef | null { try { return JSON.parse(localStorage.getItem(POS_KEY) || 'null') } catch { return null } }
@@ -49,6 +57,7 @@ const sleep = (ms: number, alive: () => boolean) => new Promise<void>((r) => { c
 export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day: string; hour: number }, hold: boolean) {
   const [current, setCurrent] = useState<AyahRef | null>(null)
   const [failed, setFailed] = useState(false)
+  const [dhikr, setDhikr] = useState<SpokenDhikr | null>(null)
   const audio = useRef<HTMLAudioElement | null>(null)
   const run = useRef(0)
   const hourRef = useRef(ctx.hour)
@@ -58,11 +67,47 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
   useEffect(() => {
     const id = ++run.current
     const alive = () => run.current === id
-    if (!active || !data) { setCurrent(null); return () => { audio.current?.pause(); audio.current = null } }
+    if (!active || !data) { setCurrent(null); setDhikr(null); return () => { audio.current?.pause(); audio.current = null; stopVoice() } }
     const reciter = reciterById(s.reciterId)
     const vol = s.reciteVolume
     let pending: Prepared | null = null
+    // الأذكار بالصوت: أذكار الوقت كاملة بالترتيب، الآيات بصوت القارئ وبقية الأذكار بصوت عربي
+    const adhkarLoop = async () => {
+      while (alive()) {
+        const which = adhkarForNow(hourRef.current)
+        const cat = ADHKAR.find((c) => c.id === which.id)
+        let misses = 0
+        for (const it of cat?.items ?? []) {
+          if (!alive()) return
+          if (it.kind === 'quran' && it.quran) {
+            setDhikr(null)
+            for (const r of it.quran) for (let a = r.from; a <= r.to && alive(); a++) {
+              const ref = { surah: r.surah, ayah: a }
+              setCurrent(ref)
+              const ok = await playPrepared(prepare(sourcesFor(reciter, ref), vol), audio, alive)
+              misses = ok ? 0 : misses + 1
+              setFailed(misses >= 3)
+              if (misses >= 3) await sleep(60_000, alive)
+            }
+          } else if (it.text) {
+            setCurrent(null)
+            const reps = Math.min(MAX_SPOKEN_REPEAT, Math.max(1, it.count ?? 1))
+            let voice = true
+            for (let k = 0; k < reps && alive() && voice; k++) {
+              setDhikr({ title: which.title, text: it.text, source: it.source, count: it.count, voice })
+              voice = await speak(it.text, vol, alive)
+              if (voice && alive()) await sleep(1200, alive)
+            }
+            // لا يوجد صوت عربي في الجهاز: يبقى النص ظاهرًا مدة تكفي لقراءته ثم يُنتقل للتالي
+            if (!voice && alive()) { setDhikr({ title: which.title, text: it.text, source: it.source, count: it.count, voice: false }); await sleep(Math.max(8000, it.text.length * 90), alive) }
+          }
+        }
+        setCurrent(null); setDhikr(null)
+        await sleep(REPEAT_GAP_MS, alive)
+      }
+    }
     ;(async () => {
+      if (s.reciteMode === 'adhkar') return adhkarLoop()
       let surah = s.reciteSurah
       let from: number | undefined
       if (s.reciteMode === 'surah') {
@@ -96,6 +141,7 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
     return () => {
       run.current++
       audio.current?.pause(); audio.current = null
+      stopVoice()
       if (pending) { pending.el.removeAttribute('src'); pending.el.load(); pending = null }
     }
   }, [active, s.reciteMode, s.reciterId, s.reciteSurah, ctx.day, data]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -103,7 +149,7 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
   // تغيير مستوى الصوت أثناء التلاوة
   useEffect(() => { if (audio.current) audio.current.volume = s.reciteVolume }, [s.reciteVolume])
 
-  return { current: active ? current : null, failed: active && failed }
+  return { current: active ? current : null, dhikr: active ? dhikr : null, failed: active && failed }
 }
 
 /** عند تغيير سورة البدء من الإعدادات يُنسى الموضع المحفوظ */
