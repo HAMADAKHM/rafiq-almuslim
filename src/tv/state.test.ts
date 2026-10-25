@@ -32,8 +32,8 @@ describe('التوقيت الصيفي/الشتوي اليدوي', () => {
   })
   it('تقديم أو تأخير ساعة عن توقيت المدينة', () => {
     expect(tzOffsetMinutes('Asia/Hebron', winter)).toBe(120)
-    expect(shiftedTz('Asia/Hebron', 60, winter)).toBe('Etc/GMT-3')
-    expect(shiftedTz('Asia/Hebron', -60, winter)).toBe('Etc/GMT-1')
+    expect(shiftedTz('Asia/Hebron', 60, winter)).toBe('Asia/Riyadh')
+    expect(shiftedTz('Asia/Hebron', -60, winter)).toBe('Africa/Lagos')
     const hm = (tz: string) => new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(winter)
     expect(hm(shiftedTz('Asia/Hebron', 60, winter))).toBe('13:00')
     expect(hm(shiftedTz('Asia/Hebron', -60, winter))).toBe('11:00')
