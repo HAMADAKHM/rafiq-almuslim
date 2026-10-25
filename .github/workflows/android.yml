@@ -10,12 +10,39 @@ on:
         description: 'نشر نسخة معاينة (Pre-release) علنية من هذا الفرع'
         type: boolean
         default: false
+      publish_tv_page:
+        description: 'نشر شاشة التلفاز كصفحة ويب (لتلفاز سامسونج من المتصفح) في الفرع tv-page'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 jobs:
+  # شاشة التلفاز كصفحة ويب لمتصفح تلفاز سامسونج (Internet): تُنشر فقط بتشغيل يدوي يطلبها صراحة.
+  # بعد أول نشر: Settings ← Pages ← Deploy from a branch ← tv-page ← (root) ← Save
+  tv-page:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish_tv_page
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:tv
+      - run: touch dist-tv/.nojekyll
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: tv-page
+          publish_dir: ./dist-tv
+          force_orphan: true
+          commit_message: شاشة رفيق المسلم للتلفاز (صفحة ويب)
+
   build:
+    if: github.event_name != 'workflow_dispatch' || !inputs.publish_tv_page || inputs.publish_beta
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
