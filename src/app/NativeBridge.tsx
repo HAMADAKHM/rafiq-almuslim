@@ -4,6 +4,7 @@ import { useSettings } from '../state/SettingsContext'
 import { onChange } from '../db/events'
 import { isNative, onAppResume, onNotificationTap } from '../platform'
 import { rescheduleNative } from '../services/notifications'
+import { usePlus } from '../billing/PlusContext'
 import { updateDailyWidget, updatePrayerWidget } from '../platform/widget'
 
 /**
@@ -16,6 +17,7 @@ import { updateDailyWidget, updatePrayerWidget } from '../platform/widget'
 export function NativeBridge() {
   const nav = useNavigate()
   const { settings, ready } = useSettings()
+  const { entitled } = usePlus()
   const latest = useRef(settings)
   useEffect(() => { latest.current = settings }, [settings])
 
@@ -23,7 +25,7 @@ export function NativeBridge() {
     if (!ready || !isNative()) return
     const t = setTimeout(() => { rescheduleNative(settings).catch(() => {}); updatePrayerWidget(settings).catch(() => {}); updateDailyWidget(settings).catch(() => {}) }, 800)
     return () => clearTimeout(t)
-  }, [ready, settings.notifications, settings.location, settings.prayer, settings.hijriOffset]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ready, settings.notifications, settings.location, settings.prayer, settings.hijriOffset, settings.customReminders, entitled]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // تحديث ودجت الورد بعد تسجيل القراءة (بتأخير يجمع التغييرات المتتالية)
   useEffect(() => {

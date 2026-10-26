@@ -95,3 +95,47 @@ test.describe('رفيق بلس (متجر الاختبار)', () => {
     await expect(page.locator('.surah-item')).toHaveCount(114)
   })
 })
+
+test.describe('مزايا بلس الإضافية', () => {
+  test('دون اشتراك: الألوان والتذكيرات الخاصة والإحصاءات مقفلة', async ({ page }) => {
+    for (const [route, f] of [['/plus/themes', 'themes'], ['/plus/reminders', 'reminders'], ['/plus/insights', 'insights']] as const) {
+      await page.goto(route)
+      await expect(page.locator(`[data-plus-lock="${f}"]`)).toBeVisible()
+    }
+  })
+
+  test('مع اشتراك: لوحة الألوان تُطبَّق وتزول عند الانتهاء، وتذكير خاص يُحفظ، والإحصاءات تظهر', async ({ page }) => {
+    await page.clock.install()
+    await page.goto('/plus')
+    await page.getByRole('button', { name: /اشترك بـ/ }).click()
+    await expect(page.getByRole('status')).toContainText('تم تفعيل')
+
+    await page.goto('/plus/themes')
+    await page.getByRole('radio', { name: 'الياقوت الأزرق' }).click()
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'sapphire')
+    await page.reload()
+    await expect(page.locator('html')).toHaveAttribute('data-palette', 'sapphire')
+
+    await page.goto('/plus/reminders')
+    await page.getByRole('button', { name: 'إضافة تذكير' }).click()
+    await page.getByLabel('النص').fill('قراءة سورة الكهف')
+    await page.getByRole('button', { name: 'الأحد' }).click()
+    await page.reload()
+    await expect(page.getByLabel('النص')).toHaveValue('قراءة سورة الكهف')
+    await expect(page.getByRole('button', { name: 'الأحد' })).toHaveAttribute('aria-pressed', 'false')
+
+    await page.goto('/plus/insights')
+    await expect(page.getByText('أيام متتالية الآن')).toBeVisible()
+    await expect(page.getByLabel('خريطة النشاط').locator('i')).toHaveCount(84)
+
+    // انتهاء الاشتراك: تعود ألوان التطبيق الأصلية، وتبقى الإعدادات محفوظة لمن يعود
+    await page.goto('/plus')
+    await page.getByRole('button', { name: /إلغاء التجديد/ }).click()
+    await expect(page.getByText(/أُلغي التجديد، وينتهي في/)).toBeVisible()
+    await page.clock.fastForward('06:00')
+    await expect(page.getByRole('heading', { name: 'غير مشترك' })).toBeVisible({ timeout: 15_000 })
+    await expect(page.locator('html')).not.toHaveAttribute('data-palette', /.+/)
+    await page.goto('/plus/reminders')
+    await expect(page.locator('[data-plus-lock="reminders"]')).toBeVisible()
+  })
+})

@@ -6,8 +6,9 @@ import { PRAYER_LABELS, prayerTimesFor } from './prayer'
 import type { PrayerKey, Settings } from '../state/settings'
 import { addDays, dateParts, dayKey } from '../lib/dates'
 import { toHijri, occasionsFor } from './calendar'
+import { plusActive } from '../billing/active'
 
-export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary'
+export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom'
 
 export interface Reminder {
   /** معرّف رقمي ثابت لنفس التذكير في نفس اليوم (يمنع التكرار ويسمح بالاستبدال) */
@@ -27,8 +28,10 @@ export interface Reminder {
 
 /** حد iOS للإشعارات المحلية المجدولة هو 64؛ نترك هامشًا */
 export const MAX_SCHEDULED = 60
+/** أقصى عدد للتذكيرات الخاصة (رفيق بلس) */
+export const MAX_CUSTOM = 10
 
-const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion'>, { title: string; body: string }[]> = {
+const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom'>, { title: string; body: string }[]> = {
   morning: [
     { title: 'حان وقت أذكار الصباح', body: 'دقائق قليلة تبدأ بها يومك' },
     { title: 'أذكار الصباح', body: 'أذكارك بانتظارك في رفيق المسلم' },
@@ -101,7 +104,7 @@ export function inQuietHours(d: Date, tz: string, quiet: Settings['notifications
   return s <= e ? t >= s && t < e : t >= s || t < e
 }
 
-const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11 }
+const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12 }
 const PRAYER_CODE: Record<PrayerKey, number> = { fajr: 1, dhuhr: 2, asr: 3, maghrib: 4, isha: 5 }
 
 function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, slot = 0): number {
@@ -111,7 +114,7 @@ function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, sl
 
 const ROUTES: Record<ReminderKind, string> = {
   prayer: '/prayer', 'prayer-before': '/prayer', morning: '/adhkar-alert/morning', evening: '/adhkar-alert/evening', sleep: '/adhkar-alert/sleep',
-  ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress',
+  ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress', custom: '/',
 }
 
 /**
@@ -155,6 +158,14 @@ export function buildSchedule(settings: Settings, from: Date, days = 7): Reminde
       const occ = occasionsFor(toHijri(tomorrow, 'UTC', settings.hijriOffset), tomorrow.getUTCDay())
       const main = occ.find((o) => !o.title.startsWith('يوم الاثنين') && !o.title.startsWith('يوم الخميس')) ?? occ[0]
       if (main) add({ id: makeId(day, 'occasion'), at: atLocalTime(day, n.occasions, loc.tz), kind: 'occasion', title: `غدًا: ${main.title}`, body: main.note ? `${main.note} — بحسب التقويم المحسوب، وقد يختلف بحسب الرؤية` : 'بحسب التقويم المحسوب', route: ROUTES.occasion })
+    }
+    // رفيق بلس: التذكيرات الخاصة (حتى 10)، في أيامها المختارة فقط، ومع اشتراك ساري فقط
+    if (plusActive() && !n.reduce) {
+      const weekday = new Date(Date.UTC(day.y, day.m - 1, day.d)).getUTCDay()
+      ;(settings.customReminders ?? []).slice(0, MAX_CUSTOM).forEach((c, slot) => {
+        if (!c.enabled || !c.title.trim() || !/^\d{2}:\d{2}$/.test(c.time) || !c.days.includes(weekday)) return
+        add({ id: makeId(day, 'custom', slot), at: atLocalTime(day, c.time, loc.tz), kind: 'custom', title: c.title.trim().slice(0, 80), body: 'تذكير خاص — رفيق بلس', route: c.route || '/' })
+      })
     }
   }
   return [...out.values()].sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, MAX_SCHEDULED)

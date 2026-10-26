@@ -99,6 +99,23 @@ export interface Settings {
   displayName: string
   /** مجموعات الأذكار اليومية الظاهرة في الرئيسية (من أقسام الأذكار الثابتة فقط) */
   dailyAdhkar: string[]
+  /** رفيق بلس: لوحة الألوان والخلفية الإضافية ('' = ألوان التطبيق الأصلية). تُطبَّق فقط مع اشتراك ساري */
+  plusPalette: string
+  /** رفيق بلس: تذكيرات خاصة يكتبها المستخدم (تُجدول فقط مع اشتراك ساري) */
+  customReminders: CustomReminder[]
+}
+
+export interface CustomReminder {
+  id: string
+  /** نص يكتبه المستخدم */
+  title: string
+  /** HH:MM بتوقيت المدينة */
+  time: string
+  /** أيام الأسبوع: 0 الأحد … 6 السبت */
+  days: number[]
+  /** الصفحة التي تُفتح عند الضغط على التذكير */
+  route: string
+  enabled: boolean
 }
 
 export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques', '/hadith', '/assistant']
@@ -175,6 +192,8 @@ export const DEFAULT_SETTINGS: Settings = {
   trackPrayers: false,
   trackActivity: true,
   displayName: '',
+  plusPalette: '',
+  customReminders: [],
   dailyAdhkar: DEFAULT_DAILY_ADHKAR,
 }
 

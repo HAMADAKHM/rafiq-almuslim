@@ -39,6 +39,9 @@ const AssistantPage = page(() => import('../features/assistant/AssistantPage'), 
 const LearnPage = page(() => import('../features/learn/LearnPage'), 'LearnPage')
 const LessonPage = page(() => import('../features/learn/LearnPage'), 'LessonPage')
 const PlusPage = page(() => import('../features/plus/PlusPage'), 'PlusPage')
+const PlusThemesPage = page(() => import('../features/plus/PlusFeatures'), 'PlusThemesPage')
+const PlusRemindersPage = page(() => import('../features/plus/PlusFeatures'), 'PlusRemindersPage')
+const PlusInsightsPage = page(() => import('../features/plus/PlusFeatures'), 'PlusInsightsPage')
 const StoriesPage = page(() => import('../features/stories/StoriesPage'), 'StoriesPage')
 const StoryPlayerPage = page(() => import('../features/stories/StoryPlayer'), 'StoryPlayerPage')
 
@@ -79,6 +82,9 @@ export function AppRoutes() {
         <Route path="assistant" element={<AssistantPage />} />
         <Route path="adhkar-alert/:category" element={<AdhkarAlertPage />} />
         <Route path="plus" element={<PlusPage />} />
+        <Route path="plus/themes" element={<PlusThemesPage />} />
+        <Route path="plus/reminders" element={<PlusRemindersPage />} />
+        <Route path="plus/insights" element={<PlusInsightsPage />} />
         <Route path="stories" element={<StoriesPage />} />
         <Route path="stories/surah/:surah" element={<StoryPlayerPage />} />
         <Route path="stories/:id" element={<StoryPlayerPage />} />

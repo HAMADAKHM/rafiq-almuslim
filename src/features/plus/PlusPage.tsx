@@ -1,7 +1,8 @@
 // صفحة «رفيق بلس»: اشتراك اختياري بمزايا إضافية. لا ضغط ولا عدّ تنازلي ولا ربط بالأجر،
 // ويمكن إغلاقها والاستمرار مجانًا. لا إعلانات في هذه الصفحة أبدًا.
 import { useNavigate } from 'react-router-dom'
-import { Gem, BookOpenText, Check, RotateCcw, ExternalLink, X } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Gem, BookOpenText, Check, RotateCcw, ExternalLink, X, Palette, BellPlus, ChartNoAxesColumn } from 'lucide-react'
 import { PageHead } from '../../components/Common'
 import { usePlus } from '../../billing/PlusContext'
 import { isEntitled } from '../../billing/entitlement'
@@ -9,7 +10,10 @@ import { SandboxPanel } from './SandboxPanel'
 
 /** المزايا المنفّذة فعلًا فقط */
 const BENEFITS = [
-  { icon: BookOpenText, title: 'التفسير كالقصة', text: 'قصص القرآن وسوره مشهدًا مشهدًا: الآية بصوت القارئ ثم تفسيرها الميسّر، قراءةً أو استماعًا.' },
+  { icon: BookOpenText, to: '/stories', title: 'التفسير كالقصة', text: 'قصص القرآن وسوره مشهدًا مشهدًا: الآية بصوت القارئ ثم تفسيرها الميسّر، قراءةً أو استماعًا.' },
+  { icon: Palette, to: '/plus/themes', title: 'ألوان وخلفيات إضافية', text: 'خمس لوحات ألوان بخلفيات زخرفية هادئة للتطبيق كله، في الوضع الفاتح والداكن.' },
+  { icon: BellPlus, to: '/plus/reminders', title: 'تذكيرات خاصة', text: 'حتى عشرة تذكيرات تكتبها بنفسك، بالأيام والأوقات التي تختارها، وتفتح الصفحة التي تريد.' },
+  { icon: ChartNoAxesColumn, to: '/plus/insights', title: 'إحصاءاتي', text: 'متتالية الأيام، وخريطة نشاط ١٢ أسبوعًا، ونسبة ما قرأت من القرآن، والأذكار، وأوقات القراءة — على جهازك فقط.' },
 ]
 
 const fmtDate = (t: number) => new Intl.DateTimeFormat('ar-u-nu-latn', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(t))
@@ -46,7 +50,7 @@ export function PlusPage() {
         <h2>المزايا</h2>
         <ul className="plus-benefits">
           {BENEFITS.map((b) => (
-            <li key={b.title}><b.icon size={22} aria-hidden="true" /><div><b>{b.title}</b><p className="muted">{b.text}</p></div></li>
+            <li key={b.title}><b.icon size={22} aria-hidden="true" /><div><b>{active ? <Link to={b.to}>{b.title}</Link> : b.title}</b><p className="muted">{b.text}</p></div></li>
           ))}
         </ul>
         <p className="muted small">تُضاف مزايا أخرى لاحقًا، ولا تُذكر هنا إلا بعد توفرها فعلًا.</p>

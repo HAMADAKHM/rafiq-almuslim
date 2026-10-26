@@ -2,6 +2,9 @@
 // المحفوظ على الجهاز يُستخدم فقط دون إنترنت ولمدة محدودة بعد آخر تحقق ناجح (انظر entitlement.ts).
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { kv } from '../db/repos'
+import { useSettings } from '../state/SettingsContext'
+import { setPlusActive } from './active'
+import { isPlusPalette } from './palettes'
 import { billing } from './index'
 import { fromCache, isEntitled, type CachedEntitlement } from './entitlement'
 import { BillingError, NO_ENTITLEMENT, type BillingProvider, type Entitlement, type Offer } from './types'
@@ -118,7 +121,21 @@ export function PlusProvider({ children, provider = billing() }: { children: Rea
     purchase, restore, refresh, clearMessage: () => setMessage(null),
   }), [provider, ready, entitlement, offer, verifiedAt, busy, message, now, purchase, restore, refresh])
 
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>
+  useEffect(() => { setPlusActive(value.entitled) }, [value.entitled])
+
+  return <Ctx.Provider value={value}><PlusPaletteApplier entitled={value.entitled} />{children}</Ctx.Provider>
+}
+
+/** لوحة الألوان الإضافية تُطبَّق مع اشتراك ساري فقط، وتعود ألوان التطبيق الأصلية عند انتهائه */
+function PlusPaletteApplier({ entitled }: { entitled: boolean }) {
+  const { settings } = useSettings()
+  useEffect(() => {
+    const root = document.documentElement
+    const id = settings.plusPalette
+    if (entitled && id && isPlusPalette(id)) root.dataset.palette = id
+    else delete root.dataset.palette
+  }, [entitled, settings.plusPalette])
+  return null
 }
 
 export function usePlus(): PlusState {
