@@ -15,4 +15,9 @@
     <string name="daily_wird_pending">لم يُسجَّل بعد</string>
     <string name="daily_no_wird">ابدأ خطة ختمة لتظهر هنا</string>
     <string name="widget_empty">افتح رفيق المسلم واختر مدينتك لعرض المواقيت</string>
+    <string name="weather_description">رفيق بلس: الطقس في مدينتك والصلاة القادمة</string>
+    <string name="progress_description">رفيق بلس: أيامك المتتالية وورد اليوم والأذكار</string>
+    <string name="progress_streak">أيام متتالية</string>
+    <string name="plus_locked">من مزايا رفيق بلس — اضغط لفتح التطبيق</string>
+    <string name="plus_empty">افتح رفيق المسلم بلس مرة لتحديث هذه البطاقة</string>
 </resources>

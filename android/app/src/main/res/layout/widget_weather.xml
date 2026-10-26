@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ودجت بلس: الطقس والصلاة القادمة -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/w_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:layoutDirection="rtl"
+    android:padding="12dp">
+
+    <TextView android:id="@+id/w_empty" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:textColor="#FFFFFF" android:textSize="13sp" android:visibility="gone" />
+
+    <LinearLayout android:id="@+id/w_content" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:id="@+id/w_icon" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="30sp" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="8dp" android:orientation="vertical">
+                <TextView android:id="@+id/w_temp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="24sp" android:textStyle="bold" />
+                <TextView android:id="@+id/w_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#D9E6DF" android:textSize="11sp" android:maxLines="1" android:ellipsize="end" />
+            </LinearLayout>
+            <TextView android:id="@+id/w_city" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F0D68F" android:textSize="11sp" android:maxLines="1" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/widget_cell" android:gravity="center_vertical" android:orientation="horizontal" android:padding="8dp">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/widget_next" android:textColor="#F0D68F" android:textSize="10sp" />
+                <TextView android:id="@+id/w_prayer" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" android:maxLines="1" />
+            </LinearLayout>
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:gravity="end" android:orientation="vertical">
+                <TextView android:id="@+id/w_prayer_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="14sp" android:textStyle="bold" />
+                <Chronometer android:id="@+id/w_countdown" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layoutDirection="ltr" android:textColor="#F0D68F" android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

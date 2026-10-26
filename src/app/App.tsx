@@ -42,6 +42,7 @@ const PlusPage = page(() => import('../features/plus/PlusPage'), 'PlusPage')
 const PlusThemesPage = page(() => import('../features/plus/PlusFeatures'), 'PlusThemesPage')
 const PlusRemindersPage = page(() => import('../features/plus/PlusFeatures'), 'PlusRemindersPage')
 const PlusInsightsPage = page(() => import('../features/plus/PlusFeatures'), 'PlusInsightsPage')
+const WeatherPage = page(() => import('../features/weather/WeatherPage'), 'WeatherPage')
 const StoriesPage = page(() => import('../features/stories/StoriesPage'), 'StoriesPage')
 const StoryPlayerPage = page(() => import('../features/stories/StoryPlayer'), 'StoryPlayerPage')
 
@@ -86,6 +87,7 @@ export function AppRoutes() {
         <Route path="plus/reminders" element={<PlusRemindersPage />} />
         <Route path="plus/insights" element={<PlusInsightsPage />} />
         <Route path="stories" element={<StoriesPage />} />
+        <Route path="weather" element={<WeatherPage />} />
         <Route path="stories/surah/:surah" element={<StoryPlayerPage />} />
         <Route path="stories/:id" element={<StoryPlayerPage />} />
         <Route path="*" element={<Empty>الصفحة غير موجودة. <Link to="/">العودة إلى الرئيسية</Link></Empty>} />

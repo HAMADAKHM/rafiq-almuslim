@@ -23,17 +23,19 @@ export function PlusPage() {
   const nav = useNavigate()
   const e = p.entitlement
   const active = p.entitled
+  const subscribed = p.realEntitled
   const close = () => (window.history.length > 1 ? nav(-1) : nav('/'))
 
   return (
     <div className="page plus-page">
       <PageHead title="رفيق بلس" subtitle="عضوية اختيارية بمزايا إضافية" actions={<button className="icon-btn" onClick={close} aria-label="إغلاق والاستمرار مجانًا"><X size={20} /></button>} />
 
+      {p.previewUnlocked && <p className="notice" role="note">نسخة تجريبية: كل مزايا رفيق بلس مفتوحة الآن للتجربة دون اشتراك. تُقفل لاحقًا وتُفتح عند الاشتراك.</p>}
       {p.provider.test && <p className="notice" role="note">وضع تجريبي: لا يوجد أي دفع حقيقي. «الشهر» هنا 5 دقائق لتجربة التجديد والإلغاء والانتهاء.</p>}
 
       <section className="card plus-status" aria-label="حالة الاشتراك">
         <Gem size={26} aria-hidden="true" />
-        {active ? (
+        {subscribed ? (
           <div>
             <h3>اشتراكك في رفيق بلس فعّال</h3>
             {e.expiresAt && <p className="muted">{e.willRenew ? `يتجدد تلقائيًا في ${fmtDate(e.expiresAt)}` : `أُلغي التجديد، وينتهي في ${fmtDate(e.expiresAt)}`}</p>}
@@ -61,7 +63,7 @@ export function PlusPage() {
         <p>قراءة القرآن الكريم والتنقل فيه، والتلاوة والاستماع، والأذكار والأدعية، ومواقيت الصلاة وتنبيهاتها، وكل ما في التطبيق الآن.</p>
       </section>
 
-      {!active && (
+      {!subscribed && (
         <section className="card plus-offer" aria-label="الاشتراك">
           {p.offer ? (
             <>

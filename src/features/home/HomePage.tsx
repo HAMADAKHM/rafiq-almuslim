@@ -16,6 +16,7 @@ import { ADHKAR } from '../../content/adhkar'
 import { catIcon } from '../adhkar/AdhkarPage'
 import { MAX_DAILY_ADHKAR } from '../../state/settings'
 import { LogoMark } from '../../components/Art'
+import { WeatherChip } from '../weather/WeatherPage'
 import { PaintedScene, type PaintTone } from '../../components/Scene'
 import type { PrayerName } from '../../services/prayer'
 import { nextPrayer, PRAYER_LABELS, PRAYERS, todayTimes } from '../../services/prayer'
@@ -231,6 +232,7 @@ export function HomePage() {
             {settings.displayName.trim() && <div className="hero-sub">{greeting(hour, today)}</div>}
             <div className="hero-sub">{formatGregorian(now, loc?.tz)}</div>
             <div className="hero-hijri">{formatHijri(now, loc?.tz, settings.hijriOffset)}</div>
+            <WeatherChip />
           </div>
           <Link to="/about" className="hero-icon" aria-label="رسالة الوفاء"><Heart size={20} /></Link>
         </div>

@@ -46,6 +46,7 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
         int[] ids = manager.getAppWidgetIds(new ComponentName(context, PrayerWidgetProvider.class));
         for (int id : ids) render(context, manager, id);
         if (ids.length > 0) scheduleNext(context);
+        PlusWidgets.refreshAll(context);
     }
 
     private static JSONObject load(Context context) {

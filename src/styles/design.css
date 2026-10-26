@@ -343,3 +343,19 @@ span.aa-icon { border: 0; background: none; }
 /* موضع الإعلان: مسافة بقدر الشريط حتى لا يغطي المحتوى */
 .ad-spacer { height: 64px; }
 .ad-preview { margin: 1rem 0; padding: 0.9rem; border: 1px dashed var(--border); border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+/* الطقس */
+.weather-chip { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.35rem; padding: 0.2rem 0.6rem; border-radius: 999px; background: rgba(255, 255, 255, 0.14); color: #fff; font-size: 0.85rem; text-decoration: none; }
+.weather-card .weather-head { display: flex; justify-content: space-between; align-items: center; }
+.weather-card h2 { margin: 0; font-size: 1.1rem; }
+.weather-now { display: flex; align-items: center; gap: 0.7rem; margin-top: 0.4rem; }
+.weather-now strong { font-size: 2.1rem; color: var(--primary); }
+.weather-now div { display: grid; }
+.weather-icon { font-size: 2rem; }
+.weather-card.big .weather-now strong { font-size: 3rem; }
+.weather-card.big .weather-icon { font-size: 3rem; }
+.weather-meta { display: flex; gap: 1rem; margin: 0.6rem 0; color: var(--text-muted); font-size: 0.9rem; }
+.weather-meta span { display: inline-flex; gap: 0.3rem; align-items: center; }
+.weather-hours { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; text-align: center; }
+.weather-hours div { display: grid; gap: 0.15rem; background: var(--surface-2); border-radius: 12px; padding: 0.4rem 0.2rem; }
+.weather-hours span { font-size: 1.3rem; }
+.weather-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.8rem; }

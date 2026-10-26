@@ -5,9 +5,10 @@ import { buildDailyWidgetData, buildWidgetData } from '../services/widget'
 import { loadQuran } from '../services/quran'
 import { activePlan, dailyTarget, loadKhatmas, progress } from '../services/khatma'
 import { dayKey } from '../lib/dates'
+import { toArabicDigits } from '../lib/arabic'
 import type { Settings } from '../state/settings'
 
-const PrayerWidget = registerPlugin<{ update(o: { data: string }): Promise<void>; updateDaily(o: { data: string }): Promise<void> }>('PrayerWidget')
+const PrayerWidget = registerPlugin<{ update(o: { data: string }): Promise<void>; updateDaily(o: { data: string }): Promise<void>; updatePlus(o: { data: string }): Promise<void> }>('PrayerWidget')
 
 export async function updatePrayerWidget(settings: Settings): Promise<void> {
   if (platformName() !== 'android') return
@@ -23,4 +24,37 @@ export async function updateDailyWidget(settings: Settings): Promise<void> {
   const t = plan ? dailyTarget(plan, dayKey(new Date(), tz)) : null
   const wird = plan && t ? { from: t.from, to: t.to, doneToday: t.doneToday >= t.pages, percent: progress(plan) * 100 } : null
   await PrayerWidget.updateDaily({ data: JSON.stringify(buildDailyWidgetData(quran, wird, tz)) })
+}
+
+/** ودجتات رفيق بلس: الطقس والصلاة القادمة، والتقدّم (الأيام المتتالية والورد والأذكار). دون اشتراك تعرض «من مزايا رفيق بلس» */
+export async function updatePlusWidgets(settings: Settings, entitled: boolean): Promise<void> {
+  if (platformName() !== 'android') return
+  if (!entitled) { await PrayerWidget.updatePlus({ data: JSON.stringify({ entitled: false }) }); return }
+  const tz = settings.location?.tz
+  const today = dayKey(new Date(), tz)
+  const [{ getWeather }, { computeInsights }, repos, k, quran] = await Promise.all([
+    import('../services/weather'), import('../services/insights'), import('../db/repos'), loadKhatmas(), loadQuran(),
+  ])
+  let weather: Record<string, string> | null = null
+  if (settings.location) {
+    try {
+      const w = await getWeather(settings.location.lat, settings.location.lng)
+      weather = { icon: w.icon, temp: toArabicDigits(w.temp), label: w.label, range: `${toArabicDigits(w.high)}° / ${toArabicDigits(w.low)}°`, city: settings.location.nameAr ?? settings.location.name }
+    } catch { weather = null }
+  }
+  const [read, listen, adhkar, memoLogs] = await Promise.all([repos.reading.all(), repos.listening.all(), repos.adhkarLog.all(), repos.memo.logs()])
+  const ins = computeInsights({ read, listen, adhkar, memo: memoLogs }, today, quran.meta.surahs.map((x) => x.count))
+  const plan = activePlan(k)
+  const t = plan ? dailyTarget(plan, today) : null
+  const todays = new Set(adhkar.filter((a) => a.date === today).map((a) => a.category))
+  const progressData = {
+    date: today,
+    streak: toArabicDigits(ins.currentStreak),
+    wird: plan && t ? `الصفحات ${toArabicDigits(t.from)}–${toArabicDigits(t.to)}` : null,
+    wirdDone: !!(t && t.doneToday >= t.pages),
+    percent: plan ? Math.round(progress(plan) * 100) : 0,
+    morning: todays.has('morning'),
+    evening: todays.has('evening'),
+  }
+  await PrayerWidget.updatePlus({ data: JSON.stringify({ entitled: true, weather, progress: progressData }) })
 }

@@ -48,6 +48,8 @@ jobs:
       # رفيق بلس قبل ربط حسابات المتاجر: متجر الاختبار فقط (بلا أي دفع حقيقي).
       # عند ربط RevenueCat يُزال هذا ويُضاف VITE_RC_ANDROID_KEY (مفتاح عام، ليس سرًّا).
       VITE_BILLING_SANDBOX: '1'
+      # نسخة التجربة لصاحب التطبيق: كل مزايا بلس مفتوحة حتى يطلب قفلها (تُزال هذه السطر عندها)
+      VITE_PLUS_UNLOCK: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

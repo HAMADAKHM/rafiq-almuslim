@@ -37,4 +37,19 @@ public class WidgetBridgePlugin extends Plugin {
         DailyWidgetProvider.refreshAll(ctx);
         call.resolve();
     }
+
+    /** بيانات ودجتات رفيق بلس (الطقس والتقدّم) وحالة الاشتراك */
+    @PluginMethod
+    public void updatePlus(PluginCall call) {
+        String data = call.getString("data");
+        if (data == null) {
+            call.reject("data is required");
+            return;
+        }
+        Context ctx = getContext();
+        ctx.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE)
+            .edit().putString(PlusWidgets.KEY, data).apply();
+        PlusWidgets.refreshAll(ctx);
+        call.resolve();
+    }
 }

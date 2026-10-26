@@ -1,12 +1,20 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion,
+  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
 export type NavItem = { to: string; key: StringKey; icon: typeof House }
 
 export const NAV: { group: StringKey; items: NavItem[] }[] = [
+  { group: 'groupPlus', items: [
+    { to: '/plus', key: 'plus', icon: Gem },
+    { to: '/stories', key: 'stories', icon: BookOpenText },
+    { to: '/weather', key: 'weather', icon: CloudSun },
+    { to: '/plus/themes', key: 'plusThemes', icon: PaletteIcon },
+    { to: '/plus/reminders', key: 'plusReminders', icon: BellPlus },
+    { to: '/plus/insights', key: 'plusInsights', icon: ChartNoAxesColumn },
+  ] },
   { group: 'groupDaily', items: [
     { to: '/', key: 'home', icon: House },
     { to: '/wird', key: 'wird', icon: CalendarCheck },
@@ -16,7 +24,6 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
     { to: '/memorize', key: 'memorize', icon: Brain },
     { to: '/listen', key: 'listen', icon: Headphones },
     { to: '/learn', key: 'learn', icon: GraduationCap },
-    { to: '/stories', key: 'stories', icon: BookOpenText },
     { to: '/studio', key: 'studio', icon: Palette },
   ] },
   { group: 'groupWorship', items: [
@@ -37,7 +44,6 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
     { to: '/search', key: 'search', icon: Search },
     { to: '/reminders', key: 'reminders', icon: Bell },
     { to: '/settings', key: 'settings', icon: Settings },
-    { to: '/plus', key: 'plus', icon: Gem },
     { to: '/about', key: 'about', icon: Heart },
   ] },
 ]
@@ -48,7 +54,7 @@ export const TABS: (NavItem & { short: string; match: RegExp })[] = [
   { to: '/quran', key: 'quran', icon: BookOpen, short: 'القرآن', match: /^\/(quran|mushaf|memorize|listen|learn|stories|studio)/ },
   { to: '/prayer', key: 'prayer', icon: Clock, short: 'المواقيت', match: /^\/(prayer|qibla|calendar|mosques)/ },
   { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|hadith|tasbih|my-adhkar)/ },
-  { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|assistant|search|reminders|settings|plus|about)/ },
+  { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|assistant|search|reminders|settings|plus|weather|about)/ },
 ]
 
 /** بيانات الاختصارات (العنوان القصير والأيقونة) لكل مسار يمكن وضعه في الوصول السريع */

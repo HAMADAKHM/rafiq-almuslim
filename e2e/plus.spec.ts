@@ -139,3 +139,31 @@ test.describe('مزايا بلس الإضافية', () => {
     await expect(page.locator('[data-plus-lock="reminders"]')).toBeVisible()
   })
 })
+
+test.describe('الطقس (رفيق بلس)', () => {
+  const met = {
+    properties: { timeseries: Array.from({ length: 30 }, (_, i) => ({
+      time: new Date(Date.now() - 1800_000 + i * 3_600_000).toISOString().replace(/\.\d{3}Z$/, 'Z'),
+      data: { instant: { details: { air_temperature: 18 + (i % 6), wind_speed: 4, relative_humidity: 60 } }, next_1_hours: { summary: { symbol_code: 'clearsky_day' } } },
+    })) },
+  }
+  test('مقفل دون اشتراك، ومع الاشتراك يظهر طقس المدينة وفي الرئيسية', async ({ page }) => {
+    await page.route(/api\.met\.no\/weatherapi\/locationforecast/, (r) => r.fulfill({ status: 200, body: JSON.stringify(met), headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*' } }))
+    await page.goto('/weather')
+    await expect(page.locator('[data-plus-lock="weather"]')).toBeVisible()
+    await page.goto('/prayer')
+    await page.getByLabel('اسم المدينة').fill('نابلس')
+    await page.getByRole('button', { name: /نابلس/ }).first().click()
+    await expect(page.getByText(/تم حفظ الموقع/)).toBeVisible()
+    await page.goto('/')
+    await expect(page.locator('.weather-chip')).toHaveCount(0)
+    await page.goto('/plus')
+    await page.getByRole('button', { name: /اشترك بـ/ }).click()
+    await expect(page.getByRole('status')).toContainText('تم تفعيل')
+    await page.goto('/weather')
+    await expect(page.getByText('صافٍ').first()).toBeVisible()
+    await expect(page.getByText(/MET Norway/)).toBeVisible()
+    await page.goto('/')
+    await expect(page.locator('.weather-chip')).toContainText('صافٍ')
+  })
+})

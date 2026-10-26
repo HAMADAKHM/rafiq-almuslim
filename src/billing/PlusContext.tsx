@@ -10,14 +10,20 @@ import { fromCache, isEntitled, type CachedEntitlement } from './entitlement'
 import { BillingError, NO_ENTITLEMENT, type BillingProvider, type Entitlement, type Offer } from './types'
 
 const CACHE_KEY = 'billing:entitlement'
+/** نسخة معاينة لصاحب التطبيق: كل مزايا بلس مفتوحة للتجربة (VITE_PLUS_UNLOCK=1)، ولا تُستخدم في النسخ المنشورة */
+const PREVIEW_UNLOCK = import.meta.env.VITE_PLUS_UNLOCK === '1'
 const REFRESH_MS = 15 * 60_000
 
 export interface PlusState {
   provider: BillingProvider
   /** انتهى أول تحقق (أو تعذر) */
   ready: boolean
-  /** المزايا المدفوعة مفتوحة الآن */
+  /** المزايا المدفوعة مفتوحة الآن (اشتراك ساري، أو نسخة معاينة مفتوحة للتجربة) */
   entitled: boolean
+  /** اشتراك ساري فعلًا من المتجر (تعتمد عليه الإعلانات) */
+  realEntitled: boolean
+  /** نسخة تجريبية: كل المزايا مفتوحة دون اشتراك */
+  previewUnlocked: boolean
   entitlement: Entitlement
   offer: Offer | null
   /** آخر تحقق ناجح من المتجر */
@@ -117,7 +123,9 @@ export function PlusProvider({ children, provider = billing() }: { children: Rea
 
   const value = useMemo<PlusState>(() => ({
     provider, ready, entitlement, offer, verifiedAt, busy, message,
-    entitled: isEntitled(entitlement, now),
+    entitled: PREVIEW_UNLOCK || isEntitled(entitlement, now),
+    realEntitled: isEntitled(entitlement, now),
+    previewUnlocked: PREVIEW_UNLOCK,
     purchase, restore, refresh, clearMessage: () => setMessage(null),
   }), [provider, ready, entitlement, offer, verifiedAt, busy, message, now, purchase, restore, refresh])
 

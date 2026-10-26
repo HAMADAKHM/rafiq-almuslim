@@ -13,7 +13,7 @@ const TABBAR_DP = 64
 
 export function AdSlot({ placement }: { placement: AdPlacement }) {
   const { pathname } = useLocation()
-  const { entitled, ready } = usePlus()
+  const { realEntitled: entitled, ready } = usePlus()
   const audio = useSyncExternalStore(player.subscribe, player.getSnapshot)
   const audioPlaying = audio.status === 'playing' || audio.status === 'loading'
   const allowed = ready && adAllowed(pathname, placement, { entitled, audioPlaying })
