@@ -89,10 +89,13 @@ describe('رسالة الوفاء ثابتة', () => {
   })
 })
 
-describe('مجانية التطبيق وخلوه من التتبع', () => {
-  it('لا توجد مكتبات إعلانات أو تحليلات أو مدفوعات', () => {
+describe('خلو التطبيق من التتبع (نسخة رفيق بلس)', () => {
+  it('لا مكتبات تحليلات أو تتبع، والدفع عبر المتجر الرسمي (RevenueCat) فقط', () => {
     const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'))
-    const deps = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }).join(' ')
-    expect(deps).not.toMatch(/admob|adsense|analytics|gtag|mixpanel|segment|amplitude|sentry|stripe|paypal|revenuecat|firebase|hotjar/i)
+    const names = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
+    const deps = names.join(' ')
+    expect(deps).not.toMatch(/adsense|analytics|gtag|mixpanel|segment|amplitude|sentry|stripe|paypal|firebase|hotjar/i)
+    // مكتبة الدفع الوحيدة المسموحة: اشتراكات المتجر الرسمية عبر RevenueCat
+    expect(names.filter((n) => /revenuecat|billing|purchase/i.test(n))).toEqual(['@revenuecat/purchases-capacitor'])
   })
 })

@@ -22,6 +22,8 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run build && npx vite preview --port 4173 --strictPort',
+    // متجر الاختبار لرفيق بلس (بلا أي دفع حقيقي) لاختبار الشراء والاستعادة والإلغاء والانتهاء
+    env: { VITE_BILLING_SANDBOX: '1' },
     url: 'http://localhost:4173',
     reuseExistingServer: false, // نبني دائمًا نسخة جديدة حتى لا نختبر نسخة قديمة
     timeout: 180_000,

@@ -4,7 +4,7 @@ android {
     namespace = "org.rafiqalmuslim.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "org.rafiqalmuslim.app"
+        applicationId "org.rafiqalmuslim.plus"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 95

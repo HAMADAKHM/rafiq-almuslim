@@ -44,6 +44,10 @@ jobs:
   build:
     if: github.event_name != 'workflow_dispatch' || !inputs.publish_tv_page || inputs.publish_beta
     runs-on: ubuntu-latest
+    env:
+      # رفيق بلس قبل ربط حسابات المتاجر: متجر الاختبار فقط (بلا أي دفع حقيقي).
+      # عند ربط RevenueCat يُزال هذا ويُضاف VITE_RC_ANDROID_KEY (مفتاح عام، ليس سرًّا).
+      VITE_BILLING_SANDBOX: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -102,11 +106,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          cp android/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslim-beta.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslimPlus-beta.apk
           cp android-tv/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslim-TV.apk
           cp dist-tizen/RafiqAlMuslim-Samsung.wgt RafiqAlMuslim-Samsung.wgt
           cp scripts/samsung/install-samsung.bat install-samsung.bat
-          gh release create "beta-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslim-beta.apk RafiqAlMuslim-TV.apk RafiqAlMuslim-Samsung.wgt install-samsung.bat \
+          gh release create "beta-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslimPlus-beta.apk RafiqAlMuslim-TV.apk RafiqAlMuslim-Samsung.wgt install-samsung.bat \
             --target "${{ github.sha }}" --prerelease \
             --title "رفيق المسلم $VERSION — نسخة معاينة (${{ github.ref_name }})" \
-            --notes "نسخة معاينة من فرع التطوير. للهاتف: RafiqAlMuslim-beta.apk. لشاشة التلفاز بنظام Android TV: RafiqAlMuslim-TV.apk. لتلفاز Samsung (Tizen): RafiqAlMuslim-Samsung.wgt مع install-samsung.bat للتثبيت من حاسوب Windows عليه Tizen Studio. مجاني بالكامل — صدقة جارية."
+            --notes "نسخة معاينة من فرع التطوير. للهاتف (رفيق المسلم بلس — متجر اختبار بلا دفع حقيقي، يُثبَّت بجانب التطبيق المجاني): RafiqAlMuslimPlus-beta.apk. لشاشة التلفاز بنظام Android TV: RafiqAlMuslim-TV.apk. لتلفاز Samsung (Tizen): RafiqAlMuslim-Samsung.wgt مع install-samsung.bat للتثبيت من حاسوب Windows عليه Tizen Studio. القرآن والأذكار والأدعية والمواقيت مجانية دائمًا — صدقة جارية."

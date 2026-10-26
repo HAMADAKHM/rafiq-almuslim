@@ -251,3 +251,58 @@ span.aa-icon { border: 0; background: none; }
 .aa-play { width: 72px; height: 72px; border-radius: 50%; border: 0; background: #E2C27E; color: #2a2208; display: grid; place-items: center; cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); }
 .aa-open { align-self: center; display: inline-flex; gap: 0.4rem; align-items: center; color: #fff; text-decoration: none; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px; padding: 0.45rem 1.1rem; }
 .aa-note { margin: 0; text-align: center; color: rgba(245, 240, 230, 0.75); font-size: 0.8rem; }
+
+/* رفيق بلس */
+.plus-page .notice, .notice { background: var(--surface-2, rgba(201, 162, 74, 0.12)); border: 1px solid rgba(201, 162, 74, 0.45); border-radius: 12px; padding: 0.7rem 0.9rem; margin: 0 0 0.8rem; }
+.plus-status { display: flex; gap: 0.9rem; align-items: flex-start; }
+.plus-status svg, .plus-lock > svg { color: var(--gold, #C9A24A); flex: none; }
+.plus-status h3 { margin: 0 0 0.2rem; }
+.plus-benefits { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.8rem; }
+.plus-benefits li { display: flex; gap: 0.8rem; align-items: flex-start; }
+.plus-benefits li svg { color: var(--primary); flex: none; margin-top: 0.2rem; }
+.plus-benefits p { margin: 0.15rem 0 0; }
+.plus-price { font-size: 1.15rem; margin: 0 0 0.4rem; }
+.plus-price b { font-size: 1.7rem; color: var(--primary); }
+.btn-block { width: 100%; justify-content: center; }
+.plus-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin: 0.8rem 0; }
+.plus-msg { padding: 0.7rem 0.9rem; border-radius: 12px; display: flex; gap: 0.4rem; align-items: center; }
+.plus-msg.ok { background: rgba(31, 122, 92, 0.12); }
+.plus-msg.error { background: rgba(180, 60, 50, 0.12); }
+.plus-msg.info { background: rgba(120, 120, 120, 0.12); }
+.plus-note { margin-top: 1rem; line-height: 1.9; }
+.plus-lock { text-align: center; display: grid; justify-items: center; gap: 0.5rem; padding: 1.4rem; }
+.plus-lock h3 { margin: 0; }
+.sandbox-panel { border-style: dashed; }
+.sandbox-panel .row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* التفسير كالقصة */
+.stories-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.9rem; margin-bottom: 1rem; }
+.story-card { display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: var(--card, #fff); border: 1px solid var(--border, rgba(0,0,0,0.08)); color: inherit; text-decoration: none; }
+.story-card .story-art { width: 100%; height: 110px; display: block; }
+.story-body { display: grid; gap: 0.25rem; padding: 0.8rem 0.9rem 1rem; }
+.story-body b { font-family: var(--font-classic); font-size: 1.15rem; color: var(--primary); }
+.story-player { display: grid; gap: 0.8rem; }
+.story-stage { position: relative; border-radius: 20px; overflow: hidden; min-height: 60vh; color: #fbf6ea; }
+.story-stage-art { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 0.8s ease; }
+.story-stage-veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3, 18, 15, 0.55), rgba(3, 18, 15, 0.82) 55%, rgba(3, 18, 15, 0.92)); }
+.story-stage-body { position: relative; padding: 1rem 1.2rem 1.6rem; display: grid; gap: 0.6rem; }
+.story-top { display: flex; align-items: center; gap: 0.7rem; }
+.story-top h1 { margin: 0; font-family: var(--font-classic); font-size: 1.5rem; color: #E2C27E; }
+.story-top .icon-btn { color: #fbf6ea; }
+.story-scene { animation: story-in 0.7s ease both; display: grid; gap: 0.6rem; }
+@keyframes story-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.story-ayah { color: #fff; font-size: calc(var(--quran-size, 1.6rem) * 1.05); line-height: 2.2; text-align: center; margin: 0.4rem 0; }
+.story-ayah .ayah-num { color: #E2C27E; font-size: 0.8em; }
+.story-meaning-h { margin: 0.4rem 0 0; font-size: 1rem; color: #E2C27E; letter-spacing: 0.5px; }
+.story-meaning { font-family: var(--font-classic); font-size: 1.22rem; line-height: 2.1; margin: 0; color: #f3ead6; }
+.story-ref { color: rgba(251, 246, 234, 0.7); }
+.story-error { background: rgba(180, 60, 50, 0.35); padding: 0.6rem 0.8rem; border-radius: 10px; }
+.story-controls { display: grid; gap: 0.6rem; }
+.story-progress { height: 6px; border-radius: 3px; background: rgba(127, 127, 127, 0.25); overflow: hidden; }
+.story-progress span { display: block; height: 100%; background: var(--gold, #C9A24A); transition: width 0.4s ease; }
+.story-buttons { display: flex; align-items: center; justify-content: center; gap: 1rem; }
+.story-play { min-width: 12rem; justify-content: center; }
+.story-options { display: grid; gap: 0.5rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip { border: 1px solid var(--border); background: var(--surface); color: inherit; border-radius: 999px; padding: 0.35rem 0.8rem; font: inherit; font-size: 0.9rem; cursor: pointer; }
+.chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }

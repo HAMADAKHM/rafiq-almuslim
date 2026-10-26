@@ -11,6 +11,7 @@ import { PrayerPage } from '../features/prayer/PrayerPage'
 import { ContentLibrary } from '../features/adhkar/AdhkarPage'
 import { Empty } from '../components/Common'
 import { NativeBridge } from './NativeBridge'
+import { PlusProvider } from '../billing/PlusContext'
 import { lazy, type ComponentType } from 'react'
 
 // الصفحات الأقل استخدامًا تُحمَّل عند فتحها فقط (أول فتح أسرع)؛ وكلها مخزنة للعمل دون اتصال
@@ -37,6 +38,9 @@ const AdhkarAlertPage = page(() => import('../components/AdhkarAlert'), 'AdhkarA
 const AssistantPage = page(() => import('../features/assistant/AssistantPage'), 'AssistantPage')
 const LearnPage = page(() => import('../features/learn/LearnPage'), 'LearnPage')
 const LessonPage = page(() => import('../features/learn/LearnPage'), 'LessonPage')
+const PlusPage = page(() => import('../features/plus/PlusPage'), 'PlusPage')
+const StoriesPage = page(() => import('../features/stories/StoriesPage'), 'StoriesPage')
+const StoryPlayerPage = page(() => import('../features/stories/StoryPlayer'), 'StoryPlayerPage')
 
 export function AppRoutes() {
   return (
@@ -74,6 +78,10 @@ export function AppRoutes() {
         <Route path="mosques" element={<MosquesPage />} />
         <Route path="assistant" element={<AssistantPage />} />
         <Route path="adhkar-alert/:category" element={<AdhkarAlertPage />} />
+        <Route path="plus" element={<PlusPage />} />
+        <Route path="stories" element={<StoriesPage />} />
+        <Route path="stories/surah/:surah" element={<StoryPlayerPage />} />
+        <Route path="stories/:id" element={<StoryPlayerPage />} />
         <Route path="*" element={<Empty>الصفحة غير موجودة. <Link to="/">العودة إلى الرئيسية</Link></Empty>} />
       </Route>
     </Routes>
@@ -83,10 +91,12 @@ export function AppRoutes() {
 export function App() {
   return (
     <SettingsProvider>
-      <Router>
-        <AppRoutes />
-        <NativeBridge />
-      </Router>
+      <PlusProvider>
+        <Router>
+          <AppRoutes />
+          <NativeBridge />
+        </Router>
+      </PlusProvider>
     </SettingsProvider>
   )
 }

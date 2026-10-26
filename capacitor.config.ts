@@ -2,8 +2,8 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 // إعداد تطبيقي Android وiOS: يغلّفان نسخة الويب نفسها (مجلد dist) مع إضافات أصلية.
 const config: CapacitorConfig = {
-  appId: 'org.rafiqalmuslim.app',
-  appName: 'رفيق المسلم',
+  appId: 'org.rafiqalmuslim.plus',
+  appName: 'رفيق المسلم بلس',
   webDir: 'dist',
   android: { allowMixedContent: false },
   plugins: {

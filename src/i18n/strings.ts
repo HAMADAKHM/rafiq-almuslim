@@ -25,6 +25,8 @@ const STRINGS = {
   search: { ar: 'البحث', en: 'Search' },
   settings: { ar: 'الإعدادات', en: 'Settings' },
   about: { ar: 'عن التطبيق ورسالة الوفاء', en: 'About & Dedication' },
+  plus: { ar: 'رفيق بلس', en: 'Rafiq Plus' },
+  stories: { ar: 'التفسير كالقصة', en: 'Quran Stories' },
   groupDaily: { ar: 'يومي', en: 'Daily' },
   groupQuran: { ar: 'القرآن', en: 'Quran' },
   groupWorship: { ar: 'العبادات', en: 'Worship' },
