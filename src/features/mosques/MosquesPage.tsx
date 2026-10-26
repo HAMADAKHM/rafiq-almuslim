@@ -7,6 +7,7 @@ import { getCurrentPosition } from '../../platform'
 import { useLive } from '../../hooks'
 import { FAV_KEY, bearingDeg, directionName, directionsUrl, distanceM, findMosques, formatDistance, lastMosques, loadFavMosques, radarPoint, saveFavMosques, toggleFav, type FavMosque, type Mosque, type MosqueResult } from '../../services/mosques'
 import { cityLabel, loadCities, searchCities, type City } from '../../services/cities'
+import { AdSlot } from '../../ads/AdSlot'
 
 /** رادار مصغّر: موقعك في المركز والشمال للأعلى، وكل نقطة مسجد بحسب المسافة والاتجاه (ليس خريطة) */
 function Radar({ mosques, radius }: { mosques: Mosque[]; radius: number }) {
@@ -150,6 +151,7 @@ export function MosquesPage() {
       <p className="small muted" style={{ marginTop: '1rem' }}>
         البيانات من <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">© مساهمي OpenStreetMap</a> (ترخيص ODbL) عبر Overpass API. يضيفها متطوعون، فقد تكون ناقصة أو غير دقيقة، ولا تتضمن أوقات فتح المساجد. المسافة خط مستقيم تقريبي، وقد يكون الموقع التقريبي للهاتف بعيدًا عن موقعك الفعلي مئات الأمتار.
       </p>
+      <AdSlot placement="mosques" />
     </>
   )
 }

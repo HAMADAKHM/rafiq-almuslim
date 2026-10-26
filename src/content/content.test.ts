@@ -90,12 +90,13 @@ describe('رسالة الوفاء ثابتة', () => {
 })
 
 describe('خلو التطبيق من التتبع (نسخة رفيق بلس)', () => {
-  it('لا مكتبات تحليلات أو تتبع، والدفع عبر المتجر الرسمي (RevenueCat) فقط', () => {
+  it('لا مكتبات تحليلات أو تتبع، والدفع عبر المتجر الرسمي (RevenueCat) فقط، والإعلانات عبر AdMob فقط', () => {
     const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../package.json'), 'utf8'))
     const names = Object.keys({ ...pkg.dependencies, ...pkg.devDependencies })
     const deps = names.join(' ')
     expect(deps).not.toMatch(/adsense|analytics|gtag|mixpanel|segment|amplitude|sentry|stripe|paypal|firebase|hotjar/i)
     // مكتبة الدفع الوحيدة المسموحة: اشتراكات المتجر الرسمية عبر RevenueCat
     expect(names.filter((n) => /revenuecat|billing|purchase/i.test(n))).toEqual(['@revenuecat/purchases-capacitor'])
+    expect(names.filter((n) => /admob|ads|adsense|applovin|unity-ads|facebook/i.test(n))).toEqual(['@capacitor-community/admob'])
   })
 })

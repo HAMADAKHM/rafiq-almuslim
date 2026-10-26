@@ -4,6 +4,7 @@ import { DedicationCard } from '../../components/DedicationCard'
 import { NAV } from '../../app/nav'
 import { t } from '../../i18n/strings'
 import { useSettings } from '../../state/SettingsContext'
+import { AdSlot } from '../../ads/AdSlot'
 
 /** «المزيد»: كل أقسام التطبيق في شبكة واحدة (بديل القائمة الجانبية على الجوال) */
 export function MorePage() {
@@ -27,6 +28,7 @@ export function MorePage() {
         ))}
         <DedicationCard />
       </div>
+      <AdSlot placement="more" />
     </>
   )
 }

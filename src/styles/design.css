@@ -340,3 +340,6 @@ span.aa-icon { border: 0; background: none; }
 .stat-row strong { display: block; font-size: 1.6rem; color: var(--primary); }
 .creminder { display: grid; gap: 0.5rem; }
 .creminder .days { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+/* موضع الإعلان: مسافة بقدر الشريط حتى لا يغطي المحتوى */
+.ad-spacer { height: 64px; }
+.ad-preview { margin: 1rem 0; padding: 0.9rem; border: 1px dashed var(--border); border-radius: 12px; text-align: center; color: var(--text-muted); font-size: 0.85rem; }

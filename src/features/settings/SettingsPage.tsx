@@ -14,6 +14,10 @@ import { RECITERS } from '../../content/reciters'
 import { TAFSIR_EDITIONS } from '../../services/tafsir'
 import { formatHijri } from '../../lib/dates'
 import { activeSyncAdapter } from '../../sync/sync'
+import { AdSlot } from '../../ads/AdSlot'
+import { showAdPrivacyOptions } from '../../ads/admob'
+import { Capacitor } from '@capacitor/core'
+const isNativePlatform = () => Capacitor.isNativePlatform()
 
 export function SettingsPage() {
   const { settings, update } = useSettings()
@@ -177,12 +181,13 @@ export function SettingsPage() {
         <section className="card" id="privacy">
           <h2>الخصوصية</h2>
           <ul className="small">
-            <li>لا حسابات، ولا تتبّع، ولا إعلانات، ولا أدوات تحليل.</li>
+            <li>لا حسابات، ولا أدوات تحليل. في رفيق المسلم بلس: إعلان شريطي صغير لغير المشتركين في صفحات المزيد والمساجد والتقويم والإعدادات فقط، وبعد موافقتك على خيارات الإعلانات؛ ولا إعلانات أبدًا في القرآن والأذكار والأدعية والتلاوة.</li>
             <li>الموقع يُطلب فقط عند ضغطك «استخدم موقعي الحالي»، ويُحفظ على جهازك.</li>
             <li>الاتصالات الخارجية: ملفات التلاوة من everyayah.com، والتفسير من مستودع tafsir_api (jsDelivr / GitHub) عند طلبك فقط.</li>
           </ul>
           <label className="check"><input type="checkbox" className="switch-input" role="switch" checked={settings.trackActivity} onChange={(e) => update({ trackActivity: e.target.checked })} aria-label="متابعة رحلتي الإيمانية" /> متابعة رحلتي الإيمانية (سجل القراءة والاستماع وإتمام الأذكار)</label>
           <p className="small muted" style={{ margin: 0 }}>عند الإيقاف لا يُسجَّل أي نشاط جديد، ويبقى السجل السابق على جهازك كما هو. موضعك في الختمة والحفظ لا يتأثر.</p>
+          {isNativePlatform() && <button className="btn" onClick={() => { showAdPrivacyOptions().then((ok) => { if (!ok) alert('خيارات الإعلانات غير متاحة الآن (تظهر بعد أول إعلان، أو حسب بلدك).') }) }}>خيارات الخصوصية للإعلانات</button>}
         </section>
 
         <section className="card" id="sources">
@@ -197,6 +202,7 @@ export function SettingsPage() {
           <Link to="/about" className="small">التفاصيل في صفحة «عن التطبيق»</Link>
         </section>
       </div>
+      <AdSlot placement="settings" />
     </>
   )
 }

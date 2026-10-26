@@ -6,6 +6,10 @@
 	<string>$(CAPACITOR_DEBUG)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>ar</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>يُستخدم فقط لعرض إعلانات أنسب في صفحات قليلة غير تعبدية. يمكنك الرفض، وتبقى كل الميزات تعمل.</string>
 	<key>CFBundleDisplayName</key>
 	<string>رفيق المسلم بلس</string>
 	<key>CFBundleExecutable</key>

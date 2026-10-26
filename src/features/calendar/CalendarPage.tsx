@@ -6,6 +6,7 @@ import { useSettings } from '../../state/SettingsContext'
 import { HIJRI_MONTHS, monthDays, toHijri, upcomingOccasions } from '../../services/calendar'
 import { dateParts } from '../../lib/dates'
 import { toArabicDigits } from '../../lib/arabic'
+import { AdSlot } from '../../ads/AdSlot'
 
 const WEEKDAYS = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت']
 
@@ -79,6 +80,7 @@ export function CalendarPage() {
           <p className="small muted">يمكنك تفعيل تذكير مسبق بالمناسبات من <Link to="/reminders">إعدادات التذكير</Link>.</p>
         </section>
       </div>
+      <AdSlot placement="calendar" />
     </>
   )
 }
