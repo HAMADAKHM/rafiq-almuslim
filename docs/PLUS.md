@@ -65,7 +65,7 @@
 ## إضافات الدفعة الثالثة
 | الميزة | الملفات |
 |---|---|
-| وضع الفيلم للقصص + حفظ فيديو (MP4/WebM) بصوت القارئ والمعنى مكتوبًا | `services/storyFilm.ts`، `features/stories/StoryFilm.tsx` |
+| وضع الفيلم للقصص + حفظ فيديو (MP4/WebM) بصوت القارئ، وصوت قراءة المعنى (Android: محرك الكلام يكتب الصوت إلى ملف — NarrationPlugin.java)، والمعنى مكتوبًا | `services/storyFilm.ts`، `features/stories/StoryFilm.tsx` |
 | وضع رمضان: السحور والإفطار والعدّ، وجدول الشهر، وختمة رمضان، وتذكيرات السحور والإفطار | `services/ramadan.ts`، `features/ramadan/`، `reminders.ts` (`ramadan`) |
 | تذكيرات صيام التطوع: عرفة، تاسوعاء وعاشوراء، الست من شوال، الأيام البيض، الاثنين والخميس (لا تذكير في العيدين والتشريق) | `reminders.ts` (`fasting`) |
 | خطة الحفظ الذكية فوق المراجعة المتباعدة الموجودة | `services/memoPlan.ts`، `features/plus/MemoPlanPage.tsx` |

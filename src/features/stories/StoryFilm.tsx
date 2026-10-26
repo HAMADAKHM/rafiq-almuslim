@@ -6,6 +6,7 @@ import { loadStudioFonts } from '../../services/studio'
 import { loadRecitation, MAX_VIDEO_AYAHS, extFor } from '../../services/studioVideo'
 import { reciterById } from '../../content/reciters'
 import { shareImage } from '../../platform'
+import { narrationAvailable, synthesizeNarration } from '../../platform/narration'
 import { toArabicDigits } from '../../lib/arabic'
 import type { PaintTone } from '../../components/Scene'
 
@@ -28,7 +29,7 @@ interface Props {
   onClose(): void
 }
 
-type Save = { s: 'idle' } | { s: 'loading'; done: number; total: number } | { s: 'recording'; p: number } | { s: 'done'; blob: Blob; url: string } | { s: 'error'; msg: string }
+type Save = { s: 'idle' } | { s: 'loading'; done: number; total: number } | { s: 'voice'; done: number; total: number } | { s: 'recording'; p: number } | { s: 'done'; blob: Blob; url: string } | { s: 'error'; msg: string }
 
 export function StoryFilm(p: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -39,6 +40,10 @@ export function StoryFilm(p: Props) {
   const themes = useMemo(() => p.scenes.map((s) => sceneTheme(p.verses.slice(s.from - 1, s.to).join(' ') + ' ' + s.text, p.tone)), [p.scenes, p.verses, p.tone])
   const state = useRef({ ...p, phaseAt: performance.now() })
   const [save, setSave] = useState<Save>({ s: 'idle' })
+  const [voiceInVideo, setVoiceInVideo] = useState(true)
+  const [canVoice, setCanVoice] = useState(false)
+  const [voiceUsed, setVoiceUsed] = useState(false)
+  useEffect(() => { narrationAvailable().then(setCanVoice) }, [])
   const abort = useRef<AbortController | null>(null)
 
   // آخر حالة للرسم (دون إعادة تشغيل حلقة الرسم)
@@ -106,13 +111,24 @@ export function StoryFilm(p: Props) {
       setSave({ s: 'loading', done: 0, total: ayahs.length })
       const bufs = await loadRecitation(actx, p.reciterId, ayahs.map((a) => ({ surah: p.surah, ayah: a, text: p.verses[a - 1] })), (done, total) => setSave({ s: 'loading', done, total }))
       if (ctrl.signal.aborted) return
+      // صوت قراءة المعنى لكل مشهد (إن أمكن)؛ إن تعذر لمشهد يبقى المعنى مكتوبًا فيه فقط
+      let narration: (AudioBuffer | null)[] | undefined
+      if (voiceInVideo && canVoice) {
+        narration = []
+        for (let k = 0; k < range.length; k++) {
+          setSave({ s: 'voice', done: k, total: range.length })
+          narration.push(await synthesizeNarration(actx, range[k].text).catch(() => null))
+          if (ctrl.signal.aborted) return
+        }
+      }
+      setVoiceUsed(!!narration?.some(Boolean))
       const c = saveCanvas.current!
       c.width = W; c.height = H
       setSave({ s: 'recording', p: 0 })
       let last = 0
       const blob = await recordStoryVideo({
         canvas: c, format, scenes: range, themes: themes.slice(p.index, p.index + range.length), verses: (a) => p.verses[a - 1],
-        surahName: p.surahName, reciterName: reciterById(p.reciterId).name, buffers: new Map(ayahs.map((a, i) => [a, bufs[i]])), actx, signal: ctrl.signal,
+        surahName: p.surahName, reciterName: reciterById(p.reciterId).name, buffers: new Map(ayahs.map((a, i) => [a, bufs[i]])), narration, actx, signal: ctrl.signal,
         onProgress: (x) => { if (x - last > 0.01 || x === 1) { last = x; setSave({ s: 'recording', p: x }) } },
       })
       setSave({ s: 'done', blob, url: URL.createObjectURL(blob) })
@@ -120,7 +136,7 @@ export function StoryFilm(p: Props) {
       setSave((e as Error).name === 'AbortError' ? { s: 'idle' } : { s: 'error', msg: (e as Error).message || 'تعذر إنشاء الفيديو' })
     } finally { actx.close().catch(() => {}) }
   }
-  const busy = save.s === 'loading' || save.s === 'recording'
+  const busy = save.s === 'loading' || save.s === 'recording' || save.s === 'voice'
   const ayahCount = range.reduce((n, s) => n + s.to - s.from + 1, 0)
 
   return (
@@ -136,10 +152,12 @@ export function StoryFilm(p: Props) {
         <button className="film-btn play" onClick={() => (p.playing ? p.onStop() : p.onPlay())} disabled={busy}>{p.playing ? <><Pause size={20} /> إيقاف</> : <><Play size={20} /> شاهد واستمع</>}</button>
         <button className="film-btn" onClick={() => { p.onStop(); p.onGo(p.index + 1) }} disabled={p.index >= p.scenes.length - 1 || busy} aria-label="المشهد التالي"><ChevronLeft size={26} /></button>
         <button className="film-btn" onClick={makeVideo} disabled={busy}><Clapperboard size={18} /> حفظ فيديو</button>
+        {canVoice && <label className="film-btn film-check"><input type="checkbox" checked={voiceInVideo} disabled={busy} onChange={(e) => setVoiceInVideo(e.target.checked)} /> صوت المعنى في الفيديو</label>}
       </div>
       {save.s !== 'idle' && (
         <div className="film-save" role="status">
           {save.s === 'loading' && <p>جارٍ تحميل التلاوة… {toArabicDigits(save.done)} / {toArabicDigits(save.total)}</p>}
+          {save.s === 'voice' && <p>جارٍ تجهيز صوت قراءة المعنى… {toArabicDigits(save.done)} / {toArabicDigits(save.total)}</p>}
           {save.s === 'recording' && <p>جارٍ تسجيل الفيديو ({toArabicDigits(ayahCount)} آية) — {toArabicDigits(Math.round(save.p * 100))}٪. أبقِ الشاشة مفتوحة.</p>}
           {save.s === 'error' && <p>{save.msg}</p>}
           {save.s === 'done' && (
@@ -149,7 +167,7 @@ export function StoryFilm(p: Props) {
                 <button className="btn btn-gold" onClick={async () => { await shareImage(save.blob, `qissa-${p.surah}-${range[0].from}.${extFor(save.blob.type)}`, `${p.title} — سورة ${p.surahName}`) }}><Share2 size={16} /> مشاركة أو حفظ</button>
                 <button className="btn" onClick={() => setSave({ s: 'idle' })}>إغلاق</button>
               </div>
-              <p className="small">في الفيديو: الآيات بصوت {reciterById(p.reciterId).name}، والمعنى مكتوب من التفسير كما هو.</p>
+              <p className="small">في الفيديو: الآيات بصوت {reciterById(p.reciterId).name}{voiceUsed ? '، ثم المعنى بصوت قراءة الهاتف (قراءة آلية للنص كما هو)، ومكتوبًا أيضًا.' : '، والمعنى مكتوب من التفسير كما هو.'}</p>
             </>
           )}
           {busy && <button className="btn" onClick={() => abort.current?.abort()}>إلغاء</button>}

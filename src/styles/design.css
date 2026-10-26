@@ -385,3 +385,4 @@ span.aa-icon { border: 0; background: none; }
 .dl-row > div:first-child { display: grid; gap: 0.15rem; }
 .dl-progress { display: grid; gap: 0.3rem; min-width: 220px; flex: 1; }
 .family-member { display: grid; gap: 0.35rem; padding: 0.5rem 0; border-top: 1px solid var(--border); }
+.film-check input { accent-color: #C9A24A; width: 1rem; height: 1rem; }

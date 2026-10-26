@@ -1,6 +1,6 @@
 // «وضع الفيلم» للتفسير كالقصة (رفيق بلس): مشاهد متحركة مرسومة بالشيفرة (بحر، نجوم، جبال، جنات…)،
 // تظهر الآية مع تلاوة القارئ، ثم معناها من التفسير المعتمد كما هو. يُعرض في التطبيق، ويُحفظ فيديو.
-// في الفيديو: صوت القارئ فقط، والمعنى مكتوب (صوت قراءة الجهاز الآلية لا يمكن تسجيله داخل الملف).
+// في الفيديو: صوت القارئ، ثم صوت قراءة المعنى (يُحوَّل إلى ملف بمحرك الكلام في الهاتف على Android)، والمعنى مكتوبًا أيضًا.
 import { drawStudioFrame, fitText, type StudioStyle } from './studio'
 import { suggestTheme, type ThemeId } from './sceneThemes'
 import { pickVideoMime } from './studioVideo'
@@ -23,12 +23,14 @@ const GAP = 0.4
 export type FilmCue = { scene: number; kind: 'ayah'; ayah: number; start: number; end: number } | { scene: number; kind: 'meaning'; start: number; end: number }
 
 /** جدول الفيلم: كل آية بمدة تلاوتها، ثم المعنى */
-export function filmTimeline(scenes: FilmScene[], ayahSeconds: (surahAyah: number) => number): FilmCue[] {
+export function filmTimeline(scenes: FilmScene[], ayahSeconds: (surahAyah: number) => number, meaningOf: (scene: number) => number | null = () => null): FilmCue[] {
   const out: FilmCue[] = []
   let t = 0
   scenes.forEach((s, i) => {
     for (let a = s.from; a <= s.to; a++) { const d = ayahSeconds(a); out.push({ scene: i, kind: 'ayah', ayah: a, start: t, end: t + d }); t += d + GAP }
-    const m = meaningSeconds(s.text)
+    // مع صوت المعنى: يبقى ظاهرًا مدة قراءته (ولا يقل عن مدة قراءته بالعين)
+    const spoken = meaningOf(i)
+    const m = spoken != null ? Math.max(spoken + 0.8, 3) : meaningSeconds(s.text)
     out.push({ scene: i, kind: 'meaning', start: t, end: t + m }); t += m + GAP
   })
   return out
@@ -97,6 +99,8 @@ export interface StoryVideoJob {
   reciterName: string
   /** تلاوة كل آية بالترتيب (ayah → buffer) */
   buffers: Map<number, AudioBuffer>
+  /** صوت قراءة المعنى لكل مشهد (إن توفر محرك كلام عربي) */
+  narration?: (AudioBuffer | null)[]
   actx: AudioContext
   onProgress?: (p: number) => void
   signal?: AbortSignal
@@ -109,7 +113,7 @@ export function recordStoryVideo(job: StoryVideoJob): Promise<Blob> {
   const { canvas, actx } = job
   const ctx = canvas.getContext('2d')!
   const W = canvas.width, H = canvas.height
-  const tl = filmTimeline(job.scenes, (a) => job.buffers.get(a)?.duration ?? 4)
+  const tl = filmTimeline(job.scenes, (a) => job.buffers.get(a)?.duration ?? 4, (i) => job.narration?.[i]?.duration ?? null)
   const total = tl[tl.length - 1].end + 0.8
   const dest = actx.createMediaStreamDestination()
   const stream = canvas.captureStream(30)
@@ -147,8 +151,7 @@ export function recordStoryVideo(job: StoryVideoJob): Promise<Blob> {
     actx.resume().then(() => {
       t0 = actx.currentTime + 0.25
       for (const c of tl) {
-        if (c.kind !== 'ayah') continue
-        const buf = job.buffers.get(c.ayah)
+        const buf = c.kind === 'ayah' ? job.buffers.get(c.ayah) : job.narration?.[c.scene] ?? null
         if (!buf) continue
         const src = actx.createBufferSource()
         src.buffer = buf

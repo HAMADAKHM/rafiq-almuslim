@@ -21,3 +21,14 @@ describe('وضع الفيلم', () => {
     expect(sceneTheme('نص بلا كلمات حسية', 'day')).toBe('garden')
   })
 })
+
+describe('صوت المعنى في الفيديو', () => {
+  it('مدة المعنى = مدة صوته عند توفره، وإلا بحسب طول النص', () => {
+    const scenes = [{ from: 1, to: 1, text: 'نص' }, { from: 2, to: 2, text: 'نص آخر' }]
+    const tl = filmTimeline(scenes, () => 2, (i) => (i === 0 ? 9 : null))
+    const m0 = tl.find((c) => c.kind === 'meaning' && c.scene === 0)!
+    const m1 = tl.find((c) => c.kind === 'meaning' && c.scene === 1)!
+    expect(m0.end - m0.start).toBeCloseTo(9.8)
+    expect(m1.end - m1.start).toBeCloseTo(meaningSeconds('نص آخر'))
+  })
+})
