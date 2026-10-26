@@ -9,7 +9,7 @@ export type AdPlacement = keyof typeof AD_PAGES
 /** حماية إضافية: لا إعلان أبدًا تحت هذه المسارات حتى لو أُضيف موضع بالخطأ */
 export const NEVER_AD_PREFIXES = [
   '/quran', '/mushaf', '/adhkar', '/adhkar-alert', '/duas', '/hadith', '/listen', '/tasbih', '/memorize', '/my-adhkar',
-  '/stories', '/learn', '/wird', '/prayer', '/qibla', '/plus', '/assistant',
+  '/stories', '/learn', '/for-the-deceased', '/ramadan', '/weather', '/wird', '/prayer', '/qibla', '/plus', '/assistant',
 ]
 
 export const adsEnabled = () => import.meta.env.VITE_ADS !== '0'

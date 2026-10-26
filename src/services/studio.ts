@@ -11,7 +11,9 @@ export const FORMATS: Record<StudioFormat, { w: number; h: number; label: string
   landscape: { w: 1920, h: 1080, label: 'عرضي — يوتيوب' },
 }
 
-export type StudioBg = 'scene-sunset' | 'scene-night' | 'scene-dawn' | 'scene-day' | `theme-${ThemeId}` | 'emerald' | 'night' | 'gold' | 'ivory' | 'parchment' | 'photo' | 'video'
+export type StudioBg = 'scene-sunset' | 'scene-night' | 'scene-dawn' | 'scene-day' | `theme-${ThemeId}` | 'emerald' | 'night' | 'gold' | 'ivory' | 'parchment' | 'photo' | 'video' | PlusBg
+/** خلفيات رفيق بلس الإضافية للاستوديو (تظهر للمشتركين فقط) */
+export type PlusBg = 'plus-sapphire' | 'plus-rose' | 'plus-sand' | 'plus-olive' | 'plus-midnight' | 'plus-marble'
 export const BACKGROUNDS: { id: StudioBg; label: string; swatch: string }[] = [
   { id: 'scene-sunset', label: 'غروب', swatch: 'linear-gradient(#2f6656,#f3c676)' },
   { id: 'scene-night', label: 'ليل', swatch: 'linear-gradient(#06161a,#1d4a40)' },
@@ -26,13 +28,21 @@ export const BACKGROUNDS: { id: StudioBg; label: string; swatch: string }[] = [
   { id: 'photo', label: 'صورتي', swatch: 'repeating-linear-gradient(45deg,#ccc 0 6px,#eee 6px 12px)' },
   { id: 'video', label: 'فيديو من جهازي', swatch: 'repeating-linear-gradient(90deg,#222 0 8px,#555 8px 10px)' },
 ]
+export const PLUS_BACKGROUNDS: { id: PlusBg; label: string; swatch: string }[] = [
+  { id: 'plus-sapphire', label: 'ياقوتي', swatch: 'linear-gradient(135deg,#123a63,#071a30)' },
+  { id: 'plus-rose', label: 'ورد دمشقي', swatch: 'linear-gradient(135deg,#6e3346,#2e1019)' },
+  { id: 'plus-sand', label: 'رمال', swatch: 'linear-gradient(135deg,#d9b98a,#8a6a35)' },
+  { id: 'plus-olive', label: 'زيتوني', swatch: 'linear-gradient(135deg,#4a5c2e,#1d2512)' },
+  { id: 'plus-midnight', label: 'ليل الأندلس', swatch: 'linear-gradient(135deg,#2b2752,#0d0b20)' },
+  { id: 'plus-marble', label: 'رخام أبيض', swatch: 'linear-gradient(135deg,#fdfcf8,#e4e0d6)' },
+]
 export const isScene = (b: StudioBg) => b.startsWith('scene-')
 /** المشاهد المتحركة المرسومة بالشيفرة */
 export const isTheme = (b: StudioBg) => b.startsWith('theme-')
 /** خلفيات المشاهد (مساجد أو طبيعة): النص في الجزء العلوي فوق الأفق */
 const isLandscape = (b: StudioBg) => isScene(b) || isTheme(b)
 export const sceneTone = (b: StudioBg) => b.replace('scene-', '') as 'sunset' | 'night' | 'dawn' | 'day'
-const isLight = (b: StudioBg) => b === 'ivory' || b === 'parchment'
+const isLight = (b: StudioBg) => b === 'ivory' || b === 'parchment' || b === 'plus-marble' || b === 'plus-sand'
 
 export interface StudioStyle {
   format: StudioFormat
@@ -185,7 +195,10 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
     ctx.fillStyle = g
     ctx.fillRect(0, 0, W, H)
   } else {
-    const colors: Record<string, [string, string]> = { emerald: ['#0f5a44', '#0a3f30'], night: ['#0f1f33', '#07111d'], gold: ['#1d1b17', '#050505'], ivory: ['#fbf7ec', '#efe6cf'], parchment: ['#f7f0de', '#e9dcbc'] }
+    const colors: Record<string, [string, string]> = {
+      emerald: ['#0f5a44', '#0a3f30'], night: ['#0f1f33', '#07111d'], gold: ['#1d1b17', '#050505'], ivory: ['#fbf7ec', '#efe6cf'], parchment: ['#f7f0de', '#e9dcbc'],
+      'plus-sapphire': ['#123a63', '#071a30'], 'plus-rose': ['#6e3346', '#2e1019'], 'plus-sand': ['#efdcbc', '#cfae78'], 'plus-olive': ['#4a5c2e', '#1d2512'], 'plus-midnight': ['#2b2752', '#0d0b20'], 'plus-marble': ['#fdfcf8', '#e4e0d6'],
+    }
     const [a, b] = colors[style.bg] ?? colors.emerald
     const g = ctx.createLinearGradient(0, 0, W, H)
     g.addColorStop(0, a); g.addColorStop(1, b)

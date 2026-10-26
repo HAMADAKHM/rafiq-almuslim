@@ -56,5 +56,14 @@ export async function updatePlusWidgets(settings: Settings, entitled: boolean): 
     morning: todays.has('morning'),
     evening: todays.has('evening'),
   }
-  await PrayerWidget.updatePlus({ data: JSON.stringify({ entitled: true, weather, progress: progressData }) })
+  // رمضان: أيام الشهر المتبقية (الفجر والمغرب) ليحسب الودجت العدّ بنفسه، وخارجه الأيام المتبقية
+  const { ramadanStatus, ramadanTable } = await import('../services/ramadan')
+  const { formatTime } = await import('../lib/dates')
+  const rs = ramadanStatus(new Date(), tz, settings.hijriOffset)
+  const rt = rs.inRamadan ? ramadanTable(settings, rs.start, 0).filter((d) => d.maghrib.getTime() > Date.now()) : []
+  const ramadan = {
+    label: rs.inRamadan ? '' : rs.daysUntil != null ? `بقي نحو ${toArabicDigits(rs.daysUntil)} يومًا` : '',
+    days: rt.map((d) => ({ day: d.day, fajr: d.fajr.getTime(), maghrib: d.maghrib.getTime(), fajrTime: formatTime(d.fajr, tz), maghribTime: formatTime(d.maghrib, tz) })),
+  }
+  await PrayerWidget.updatePlus({ data: JSON.stringify({ entitled: true, weather, progress: progressData, ramadan }) })
 }

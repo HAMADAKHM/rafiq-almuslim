@@ -359,3 +359,29 @@ span.aa-icon { border: 0; background: none; }
 .weather-hours div { display: grid; gap: 0.15rem; background: var(--surface-2); border-radius: 12px; padding: 0.4rem 0.2rem; }
 .weather-hours span { font-size: 1.3rem; }
 .weather-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.8rem; }
+/* وضع الفيلم */
+.story-film { position: fixed; inset: 0; z-index: 100; background: #020a08; display: grid; place-items: center; }
+.film-canvas { width: 100vw; height: 100vh; object-fit: contain; }
+.film-top { position: absolute; top: 0; right: 0; left: 0; display: flex; align-items: center; justify-content: space-between; padding: calc(0.7rem + env(safe-area-inset-top, 0px)) 0.9rem 0.6rem; color: #f3ead6; background: linear-gradient(180deg, rgba(0,0,0,0.55), transparent); }
+.film-bar { position: absolute; bottom: 0; right: 0; left: 0; display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; align-items: center; padding: 0.8rem 0.8rem calc(0.9rem + env(safe-area-inset-bottom, 0px)); background: linear-gradient(0deg, rgba(0,0,0,0.6), transparent); }
+.film-btn { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid rgba(226, 194, 126, 0.55); background: rgba(4, 22, 18, 0.65); color: #fbf6ea; border-radius: 999px; padding: 0.55rem 0.9rem; font: inherit; cursor: pointer; }
+.film-btn.play { background: #C9A24A; color: #1b1405; border-color: #C9A24A; font-weight: 700; padding: 0.6rem 1.3rem; }
+.film-btn:disabled { opacity: 0.45; }
+.film-save { position: absolute; inset: auto 1rem 6rem; margin: auto; max-width: 560px; background: rgba(4, 22, 18, 0.92); color: #fbf6ea; border: 1px solid rgba(226, 194, 126, 0.5); border-radius: 18px; padding: 1rem; display: grid; gap: 0.6rem; justify-items: center; text-align: center; }
+.film-result { max-width: 100%; max-height: 50vh; border-radius: 12px; }
+/* وضع رمضان */
+.ramadan-hero { position: relative; border-radius: 22px; overflow: hidden; min-height: 220px; color: #fbf6ea; margin-bottom: 1rem; }
+.ramadan-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ramadan-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(3,18,15,0.35), rgba(3,18,15,0.85)); }
+.ramadan-hero-body { position: relative; z-index: 1; padding: 1.2rem; display: grid; gap: 0.3rem; text-align: center; justify-items: center; }
+.ramadan-hero-body h2 { margin: 0; font-family: var(--font-classic); color: #E2C27E; }
+.ramadan-hero-body p { margin: 0; }
+.ramadan-count { font-size: 2.6rem; letter-spacing: 1px; direction: ltr; }
+.table-wrap { overflow-x: auto; }
+.ramadan-table { width: 100%; border-collapse: collapse; font-size: 0.92rem; text-align: center; }
+.ramadan-table th, .ramadan-table td { padding: 0.45rem 0.3rem; border-bottom: 1px solid var(--border); }
+.ramadan-table tr.today { background: var(--gold-soft); font-weight: 700; }
+.dl-row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; justify-content: space-between; }
+.dl-row > div:first-child { display: grid; gap: 0.15rem; }
+.dl-progress { display: grid; gap: 0.3rem; min-width: 220px; flex: 1; }
+.family-member { display: grid; gap: 0.35rem; padding: 0.5rem 0; border-top: 1px solid var(--border); }

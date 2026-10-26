@@ -61,3 +61,16 @@
 - في لوحة AdMob: يُنصح بحظر فئات المقامرة والكحول والمواعدة والمحتوى الحساس من «Blocking controls».
 
 الاختبارات: `src/ads/ads.test.ts` (6) و`e2e/ads.spec.ts` (2) و`e2e/free-core.spec.ts`.
+
+## إضافات الدفعة الثالثة
+| الميزة | الملفات |
+|---|---|
+| وضع الفيلم للقصص + حفظ فيديو (MP4/WebM) بصوت القارئ والمعنى مكتوبًا | `services/storyFilm.ts`، `features/stories/StoryFilm.tsx` |
+| وضع رمضان: السحور والإفطار والعدّ، وجدول الشهر، وختمة رمضان، وتذكيرات السحور والإفطار | `services/ramadan.ts`، `features/ramadan/`، `reminders.ts` (`ramadan`) |
+| تذكيرات صيام التطوع: عرفة، تاسوعاء وعاشوراء، الست من شوال، الأيام البيض، الاثنين والخميس (لا تذكير في العيدين والتشريق) | `reminders.ts` (`fasting`) |
+| خطة الحفظ الذكية فوق المراجعة المتباعدة الموجودة | `services/memoPlan.ts`، `features/plus/MemoPlanPage.tsx` |
+| ختمة العائلة: توزيع الأجزاء ومشاركته برسالة (بلا خادم) | `services/familyKhatma.ts`، `features/plus/FamilyKhatmaPage.tsx` |
+| تنزيل الأجزاء والمصحف كاملًا (السورة الواحدة تبقى مجانية) | `features/plus/DownloadsPage.tsx` |
+| ست خلفيات إضافية في الاستوديو للمشتركين | `services/studio.ts` (`PLUS_BACKGROUNDS`) |
+| ودجتا المسبحة ورمضان | `TasbihWidgetProvider.java`، `RamadanWidgetProvider.java` |
+| «دعاء لفقيدي» — **مجاني للجميع** | `features/deceased/` |

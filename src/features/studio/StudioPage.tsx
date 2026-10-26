@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import { usePlus } from '../../billing/PlusContext'
 import { Share2, Film, ImageIcon, Upload, X, Bookmark, Trash2 } from 'lucide-react'
 import { PageHead, Spinner, Tabs, ProgressBar } from '../../components/Common'
 import { MosqueScene } from '../../components/Art'
@@ -9,7 +10,7 @@ import { RECITERS, reciterById } from '../../content/reciters'
 import { shareImage } from '../../platform'
 import { isEmbeddedPreview } from '../../services/audio'
 import {
-  BACKGROUNDS, FORMATS, canvasToBlob, drawStudioFrame, isScene, loadStudioFonts, referenceText, sceneTone, svgToImage, versesText,
+  BACKGROUNDS, PLUS_BACKGROUNDS, FORMATS, canvasToBlob, drawStudioFrame, isScene, loadStudioFonts, referenceText, sceneTone, svgToImage, versesText,
   type StudioBg, type StudioFormat, type StudioStyle, type Verse,
 } from '../../services/studio'
 import { MAX_VIDEO_AYAHS, extFor, loadRecitation, pickVideoMime, recordVideo, silentDurations } from '../../services/studioVideo'
@@ -39,6 +40,7 @@ type VideoState =
   | { phase: 'error'; message: string }
 
 export function StudioPage() {
+  const plus = usePlus()
   const { data } = useQuran()
   const { settings } = useSettings()
   const [params] = useSearchParams()
@@ -257,13 +259,14 @@ export function StudioPage() {
           <div>
             <div className="small muted" style={{ marginBottom: 4 }}>الخلفية</div>
             <div className="bg-swatches" role="radiogroup" aria-label="الخلفية">
-              {BACKGROUNDS.map((bg) => (
+              {[...BACKGROUNDS, ...(plus.entitled ? PLUS_BACKGROUNDS : [])].map((bg) => (
                 <button key={bg.id} role="radio" aria-checked={style.bg === bg.id} aria-label={bg.label} disabled={busy} className={'bg-sw' + (style.bg === bg.id ? ' on' : '')}
                   onClick={() => { if (bg.id === 'photo' && !photo) photoInput.current?.click(); else if (bg.id === 'video' && !bgVideo) videoInput.current?.click(); else set({ bg: bg.id as StudioBg }) }}>
                   <span style={{ background: bg.swatch }} />{bg.label}
                 </button>
               ))}
             </div>
+            {!plus.entitled && <p className="small muted" style={{ margin: '0.3rem 0 0' }}>ست خلفيات إضافية في <Link to="/plus">رفيق بلس</Link>.</p>}
             <input ref={photoInput} type="file" accept="image/*" hidden aria-label="اختيار صورة خلفية" onChange={(e) => {
               const f = e.target.files?.[0]; e.target.value = ''
               if (!f) return

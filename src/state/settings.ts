@@ -103,6 +103,10 @@ export interface Settings {
   plusPalette: string
   /** رفيق بلس: تذكيرات خاصة يكتبها المستخدم (تُجدول فقط مع اشتراك ساري) */
   customReminders: CustomReminder[]
+  /** رفيق بلس — وضع رمضان: تذكير السحور قبل الفجر بدقائق، والإفطار قبل المغرب بدقائق (0 = بلا تذكير)، والإمساك الاحتياطي */
+  ramadan: { suhoorMinutes: number; iftarMinutes: number; imsakMinutes: number }
+  /** رفيق بلس — تذكيرات الصيام (الليلة السابقة): الأيام البيض، والاثنين والخميس، وعرفة، وعاشوراء، وست شوال */
+  fasting: { enabled: boolean; time: string; beed: boolean; monThu: boolean; arafah: boolean; ashura: boolean; shawwal: boolean }
 }
 
 export interface CustomReminder {
@@ -194,6 +198,8 @@ export const DEFAULT_SETTINGS: Settings = {
   displayName: '',
   plusPalette: '',
   customReminders: [],
+  ramadan: { suhoorMinutes: 45, iftarMinutes: 10, imsakMinutes: 10 },
+  fasting: { enabled: false, time: '21:00', beed: true, monThu: false, arafah: true, ashura: true, shawwal: true },
   dailyAdhkar: DEFAULT_DAILY_ADHKAR,
 }
 
@@ -224,6 +230,8 @@ export function mergeSettings(saved: Partial<Settings> | null | undefined): Sett
       perPrayer: { ...DEFAULT_NOTIFICATIONS.perPrayer, ...s.notifications?.perPrayer },
       quiet: { ...DEFAULT_NOTIFICATIONS.quiet, ...s.notifications?.quiet },
     },
+    ramadan: { ...DEFAULT_SETTINGS.ramadan, ...s.ramadan },
+    fasting: { ...DEFAULT_SETTINGS.fasting, ...s.fasting },
     homeCards: normalizeHomeCards(s.homeCards),
     quickLinks: normalizeQuickLinks(s.quickLinks),
     dailyAdhkar: normalizeDailyAdhkar(s.dailyAdhkar),

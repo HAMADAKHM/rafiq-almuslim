@@ -43,6 +43,11 @@ const PlusThemesPage = page(() => import('../features/plus/PlusFeatures'), 'Plus
 const PlusRemindersPage = page(() => import('../features/plus/PlusFeatures'), 'PlusRemindersPage')
 const PlusInsightsPage = page(() => import('../features/plus/PlusFeatures'), 'PlusInsightsPage')
 const WeatherPage = page(() => import('../features/weather/WeatherPage'), 'WeatherPage')
+const RamadanPage = page(() => import('../features/ramadan/RamadanPage'), 'RamadanPage')
+const DownloadsPage = page(() => import('../features/plus/DownloadsPage'), 'DownloadsPage')
+const MemoPlanPage = page(() => import('../features/plus/MemoPlanPage'), 'MemoPlanPage')
+const FamilyKhatmaPage = page(() => import('../features/plus/FamilyKhatmaPage'), 'FamilyKhatmaPage')
+const DeceasedPage = page(() => import('../features/deceased/DeceasedPage'), 'DeceasedPage')
 const StoriesPage = page(() => import('../features/stories/StoriesPage'), 'StoriesPage')
 const StoryPlayerPage = page(() => import('../features/stories/StoryPlayer'), 'StoryPlayerPage')
 
@@ -88,6 +93,11 @@ export function AppRoutes() {
         <Route path="plus/insights" element={<PlusInsightsPage />} />
         <Route path="stories" element={<StoriesPage />} />
         <Route path="weather" element={<WeatherPage />} />
+        <Route path="ramadan" element={<RamadanPage />} />
+        <Route path="plus/downloads" element={<DownloadsPage />} />
+        <Route path="plus/memorize" element={<MemoPlanPage />} />
+        <Route path="plus/family" element={<FamilyKhatmaPage />} />
+        <Route path="for-the-deceased" element={<DeceasedPage />} />
         <Route path="stories/surah/:surah" element={<StoryPlayerPage />} />
         <Route path="stories/:id" element={<StoryPlayerPage />} />
         <Route path="*" element={<Empty>الصفحة غير موجودة. <Link to="/">العودة إلى الرئيسية</Link></Empty>} />

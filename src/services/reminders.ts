@@ -8,7 +8,7 @@ import { addDays, dateParts, dayKey } from '../lib/dates'
 import { toHijri, occasionsFor } from './calendar'
 import { plusActive } from '../billing/active'
 
-export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom'
+export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom' | 'ramadan' | 'fasting'
 
 export interface Reminder {
   /** معرّف رقمي ثابت لنفس التذكير في نفس اليوم (يمنع التكرار ويسمح بالاستبدال) */
@@ -31,7 +31,7 @@ export const MAX_SCHEDULED = 60
 /** أقصى عدد للتذكيرات الخاصة (رفيق بلس) */
 export const MAX_CUSTOM = 10
 
-const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom'>, { title: string; body: string }[]> = {
+const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom' | 'ramadan' | 'fasting'>, { title: string; body: string }[]> = {
   morning: [
     { title: 'حان وقت أذكار الصباح', body: 'دقائق قليلة تبدأ بها يومك' },
     { title: 'أذكار الصباح', body: 'أذكارك بانتظارك في رفيق المسلم' },
@@ -104,7 +104,7 @@ export function inQuietHours(d: Date, tz: string, quiet: Settings['notifications
   return s <= e ? t >= s && t < e : t >= s || t < e
 }
 
-const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12 }
+const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12, ramadan: 13, fasting: 14 }
 const PRAYER_CODE: Record<PrayerKey, number> = { fajr: 1, dhuhr: 2, asr: 3, maghrib: 4, isha: 5 }
 
 function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, slot = 0): number {
@@ -114,7 +114,7 @@ function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, sl
 
 const ROUTES: Record<ReminderKind, string> = {
   prayer: '/prayer', 'prayer-before': '/prayer', morning: '/adhkar-alert/morning', evening: '/adhkar-alert/evening', sleep: '/adhkar-alert/sleep',
-  ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress', custom: '/',
+  ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress', custom: '/', ramadan: '/ramadan', fasting: '/calendar',
 }
 
 /**
@@ -158,6 +158,34 @@ export function buildSchedule(settings: Settings, from: Date, days = 7): Reminde
       const occ = occasionsFor(toHijri(tomorrow, 'UTC', settings.hijriOffset), tomorrow.getUTCDay())
       const main = occ.find((o) => !o.title.startsWith('يوم الاثنين') && !o.title.startsWith('يوم الخميس')) ?? occ[0]
       if (main) add({ id: makeId(day, 'occasion'), at: atLocalTime(day, n.occasions, loc.tz), kind: 'occasion', title: `غدًا: ${main.title}`, body: main.note ? `${main.note} — بحسب التقويم المحسوب، وقد يختلف بحسب الرؤية` : 'بحسب التقويم المحسوب', route: ROUTES.occasion })
+    }
+    // رفيق بلس: وضع رمضان (السحور والإفطار) وتذكيرات الصيام في الليلة السابقة
+    if (plusActive() && !n.reduce) {
+      const noon = atLocalTime(day, '12:00', loc.tz)
+      const h = toHijri(noon, loc.tz, settings.hijriOffset)
+      const rm = settings.ramadan
+      if (h.month === 9 && rm) {
+        if (rm.suhoorMinutes > 0) add({ id: makeId(day, 'ramadan', 0), at: new Date(times.fajr.getTime() - rm.suhoorMinutes * 60_000), kind: 'ramadan', title: 'وقت السحور', body: `بقي ${rm.suhoorMinutes} دقيقة على أذان الفجر — «تسحّروا فإن في السحور بركة» (متفق عليه)`, route: ROUTES.ramadan })
+        if (rm.iftarMinutes > 0) add({ id: makeId(day, 'ramadan', 1), at: new Date(times.maghrib.getTime() - rm.iftarMinutes * 60_000), kind: 'ramadan', title: 'اقترب موعد الإفطار', body: `بعد ${rm.iftarMinutes} دقائق — ${place}`, route: ROUTES.ramadan })
+      }
+      const f = settings.fasting
+      if (f?.enabled) {
+        const next = addDays(noon, 1)
+        const h2 = toHijri(next, loc.tz, settings.hijriOffset)
+        const wd = new Date(Date.UTC(day.y, day.m - 1, day.d)).getUTCDay()
+        const tomorrowWd = (wd + 1) % 7
+        // لا تذكير بصيام في يومي العيد وأيام التشريق
+        const forbidden = (h2.month === 10 && h2.day === 1) || (h2.month === 12 && h2.day >= 10 && h2.day <= 13)
+        let msg: { title: string; body: string } | null = null
+        if (!forbidden) {
+          if (f.arafah && h2.month === 12 && h2.day === 9) msg = { title: 'غدًا يوم عرفة', body: '«صيام يوم عرفة، أحتسب على الله أن يكفّر السنة التي قبله والسنة التي بعده» — رواه مسلم (1162)' }
+          else if (f.ashura && h2.month === 1 && (h2.day === 9 || h2.day === 10)) msg = { title: h2.day === 10 ? 'غدًا يوم عاشوراء' : 'غدًا تاسوعاء (التاسع من محرم)', body: '«صيام يوم عاشوراء، أحتسب على الله أن يكفّر السنة التي قبله» — رواه مسلم (1162)' }
+          else if (f.shawwal && h2.month === 10 && h2.day === 2) msg = { title: 'صيام الست من شوال', body: 'تبدأ من الغد لمن أراد صيامها — «من صام رمضان ثم أتبعه ستًّا من شوال كان كصيام الدهر» رواه مسلم (1164)' }
+          else if (f.beed && h2.month !== 9 && h2.day >= 13 && h2.day <= 15) msg = { title: 'غدًا من الأيام البيض', body: `اليوم ${h2.day} من الشهر الهجري (بحسب التقويم المحسوب)` }
+          else if (f.monThu && h2.month !== 9 && (tomorrowWd === 1 || tomorrowWd === 4)) msg = { title: tomorrowWd === 1 ? 'غدًا الاثنين' : 'غدًا الخميس', body: 'يوم صيام تطوّع لمن أراد' }
+        }
+        if (msg && /^\d{2}:\d{2}$/.test(f.time)) add({ id: makeId(day, 'fasting'), at: atLocalTime(day, f.time, loc.tz), kind: 'fasting', title: msg.title, body: msg.body, route: ROUTES.fasting })
+      }
     }
     // رفيق بلس: التذكيرات الخاصة (حتى 10)، في أيامها المختارة فقط، ومع اشتراك ساري فقط
     if (plusActive() && !n.reduce) {

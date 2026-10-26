@@ -2,7 +2,8 @@
 // «استمع»: تلاوة الآيات بصوت القارئ، ثم قراءة التفسير بصوت الجهاز (قراءة آلية للنص كما هو)، ثم المشهد التالي.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ChevronRight, ChevronLeft, Play, Pause, ArrowRight } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Play, Pause, ArrowRight, Clapperboard } from 'lucide-react'
+import { StoryFilm, type FilmPhase } from './StoryFilm'
 import { PaintedScene, type PaintTone } from '../../components/Scene'
 import { PlusGate } from '../../billing/PlusGate'
 import { Spinner } from '../../components/Common'
@@ -56,6 +57,8 @@ function StoryPlayer() {
   const [playing, setPlaying] = useState(false)
   const [withRecitation, setWithRecitation] = useState(true)
   const [voiceOk, setVoiceOk] = useState(true)
+  const [phase, setPhase] = useState<FilmPhase>({ kind: 'idle' })
+  const [film, setFilm] = useState(false)
   const audio = useRef<HTMLAudioElement | null>(null)
   const run = useRef(0)
 
@@ -78,6 +81,7 @@ function StoryPlayer() {
     audio.current?.pause(); audio.current = null
     stopSpeaking().catch(() => {})
     setPlaying(false)
+    setPhase({ kind: 'idle' })
   }, [])
   useEffect(() => stop, [stop])
 
@@ -90,13 +94,14 @@ function StoryPlayer() {
     for (let k = start; k < scenes.length && alive(); k++) {
       go(k)
       const s = scenes[k]
-      if (withRecitation) for (let a = s.from; a <= s.to && alive(); a++) await playAyah(ayahAudioSources(reciter, surah, a), audio, alive)
+      if (withRecitation) for (let a = s.from; a <= s.to && alive(); a++) { setPhase({ kind: 'ayah', ayah: a }); await playAyah(ayahAudioSources(reciter, surah, a), audio, alive) }
       if (!alive()) break
+      setPhase({ kind: 'meaning' })
       if (voiceOk) { try { await speakArabic(s.text, 0.85) } catch { setVoiceOk(false) } }
       else await wait(Math.max(6000, s.text.length * 70), alive)
       if (alive()) await wait(900, alive)
     }
-    if (alive()) setPlaying(false)
+    if (alive()) { setPlaying(false); setPhase({ kind: 'idle' }) }
   }
 
   if (!data) return <Spinner />
@@ -135,6 +140,7 @@ function StoryPlayer() {
           <div className="story-buttons">
             <button className="icon-btn" onClick={() => { stop(); go(i - 1) }} disabled={i === 0} aria-label="المشهد السابق"><ChevronRight size={24} /></button>
             <button className="btn btn-gold story-play" onClick={() => (playing ? stop() : listen(i))}>{playing ? <><Pause size={18} /> إيقاف</> : <><Play size={18} /> استمع كالقصة</>}</button>
+            <button className="btn story-film-btn" onClick={() => setFilm(true)}><Clapperboard size={18} /> وضع الفيلم</button>
             <button className="icon-btn" onClick={() => { stop(); go(i + 1) }} disabled={i >= scenes.length - 1} aria-label="المشهد التالي"><ChevronLeft size={24} /></button>
           </div>
           <div className="story-options">
@@ -144,6 +150,10 @@ function StoryPlayer() {
             </div>
           </div>
           {!voiceOk && <p className="muted small">لا يوجد صوت عربي في الجهاز لقراءة التفسير: تُتلى الآيات ويبقى المعنى مكتوبًا مدة تكفي لقراءته. يمكن تثبيت العربية من إعدادات «تحويل النص إلى كلام» في الهاتف.</p>}
+          {film && (
+            <StoryFilm title={title} surah={surah} surahName={data.meta.surahs[surah - 1].name} verses={data.verses[surah - 1]} scenes={scenes} tone={story?.tone ?? 'sunset'}
+              index={i} phase={phase} playing={playing} reciterId={settings.reciterId} onPlay={() => listen(i)} onStop={stop} onGo={go} onClose={() => setFilm(false)} />
+          )}
           <p className="muted small">التفسير: {EDITIONS.find((e) => e.slug === edition)?.name} — {EDITIONS.find((e) => e.slug === edition)?.author}. يُقرأ بصوت الجهاز قراءةً آلية للنص كما هو، والآيات بصوت القارئ.</p>
         </div>
       )}

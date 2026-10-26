@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ودجت بلس: رمضان — السحور والإفطار مع عدّ تنازلي -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/r_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:layoutDirection="rtl"
+    android:padding="12dp">
+    <TextView android:id="@+id/r_empty" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:textColor="#FFFFFF" android:textSize="13sp" android:visibility="gone" />
+    <LinearLayout android:id="@+id/r_content" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="vertical">
+        <TextView android:id="@+id/r_title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F0D68F" android:textSize="13sp" android:textStyle="bold" />
+        <TextView android:id="@+id/r_label" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:textColor="#D9E6DF" android:textSize="11sp" />
+        <Chronometer android:id="@+id/r_countdown" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layoutDirection="ltr" android:textColor="#FFFFFF" android:textSize="28sp" android:textStyle="bold" />
+        <TextView android:id="@+id/r_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F0D68F" android:textSize="12sp" />
+    </LinearLayout>
+</FrameLayout>

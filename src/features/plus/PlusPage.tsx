@@ -2,7 +2,7 @@
 // ويمكن إغلاقها والاستمرار مجانًا. لا إعلانات في هذه الصفحة أبدًا.
 import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
-import { Gem, BookOpenText, Check, RotateCcw, ExternalLink, X, Palette, BellPlus, ChartNoAxesColumn } from 'lucide-react'
+import { Gem, BookOpenText, Check, RotateCcw, ExternalLink, X, Palette, BellPlus, ChartNoAxesColumn, Clapperboard, MoonStar, BrainCircuit, UsersRound, HardDriveDownload, CloudSun, LayoutGrid, Ban } from 'lucide-react'
 import { PageHead } from '../../components/Common'
 import { usePlus } from '../../billing/PlusContext'
 import { isEntitled } from '../../billing/entitlement'
@@ -10,10 +10,18 @@ import { SandboxPanel } from './SandboxPanel'
 
 /** المزايا المنفّذة فعلًا فقط */
 const BENEFITS = [
-  { icon: BookOpenText, to: '/stories', title: 'التفسير كالقصة', text: 'قصص القرآن وسوره مشهدًا مشهدًا: الآية بصوت القارئ ثم تفسيرها الميسّر، قراءةً أو استماعًا.' },
-  { icon: Palette, to: '/plus/themes', title: 'ألوان وخلفيات إضافية', text: 'خمس لوحات ألوان بخلفيات زخرفية هادئة للتطبيق كله، في الوضع الفاتح والداكن.' },
-  { icon: BellPlus, to: '/plus/reminders', title: 'تذكيرات خاصة', text: 'حتى عشرة تذكيرات تكتبها بنفسك، بالأيام والأوقات التي تختارها، وتفتح الصفحة التي تريد.' },
-  { icon: ChartNoAxesColumn, to: '/plus/insights', title: 'إحصاءاتي', text: 'متتالية الأيام، وخريطة نشاط ١٢ أسبوعًا، ونسبة ما قرأت من القرآن، والأذكار، وأوقات القراءة — على جهازك فقط.' },
+  { icon: BookOpenText, to: '/stories', title: 'التفسير كالقصة', text: '١٤ قصة من القرآن وأي سورة، مشهدًا مشهدًا: الآية بصوت القارئ ثم معناها من التفسير الميسّر، قراءةً أو استماعًا.' },
+  { icon: Clapperboard, to: '/stories', title: 'وضع الفيلم وحفظ الفيديو', text: 'القصة بملء الشاشة على مشاهد متحركة (بحر، نجوم، جبال، جنات)، واحفظها فيديو بصوت القارئ لتشاركها.' },
+  { icon: MoonStar, to: '/ramadan', title: 'وضع رمضان والصيام', text: 'السحور والإفطار مع العدّ التنازلي، وجدول الشهر، وختمة رمضان، وتذكيرات عرفة وعاشوراء والأيام البيض.' },
+  { icon: BrainCircuit, to: '/plus/memorize', title: 'خطة الحفظ الذكية', text: 'اختر السور وموعد الختم، فتأتيك حصة كل يوم وتنتقل إلى المراجعة المتباعدة.' },
+  { icon: UsersRound, to: '/plus/family', title: 'ختمة العائلة', text: 'وزّع الأجزاء الثلاثين على أهلك، وشارك التوزيع على واتساب، وتابع الإتمام — مع إهداء لمن تحب.' },
+  { icon: HardDriveDownload, to: '/plus/downloads', title: 'تنزيل الأجزاء والمصحف كاملًا', text: 'جزء عمّ أو تبارك أو المصحف كله بصوت قارئك، للاستماع في السفر والمسجد دون إنترنت.' },
+  { icon: CloudSun, to: '/weather', title: 'حالة الطقس', text: 'طقس مدينتك وحتى ٨ مدن أخرى، الآن والساعات القادمة، وفي أعلى الرئيسية.' },
+  { icon: LayoutGrid, to: '/plus', title: 'أربع ودجتات جديدة', text: 'الطقس والصلاة القادمة، وتقدّمي، والمسبحة بالضغط على الشاشة، وعدّاد رمضان.' },
+  { icon: Palette, to: '/plus/themes', title: 'ألوان وخلفيات وتصاميم', text: 'خمس لوحات ألوان للتطبيق كله، وست خلفيات إضافية في استوديو التصاميم.' },
+  { icon: BellPlus, to: '/plus/reminders', title: 'تذكيرات خاصة', text: 'حتى عشرة تذكيرات تكتبها بنفسك، بالأيام والأوقات التي تختارها.' },
+  { icon: ChartNoAxesColumn, to: '/plus/insights', title: 'إحصاءاتي', text: 'أيامك المتتالية، وخريطة ١٢ أسبوعًا، ونسبة ما قرأت من القرآن — على جهازك فقط.' },
+  { icon: Ban, to: '/plus', title: 'بلا إعلانات', text: 'لا يظهر أي إعلان للمشتركين.' },
 ]
 
 const fmtDate = (t: number) => new Intl.DateTimeFormat('ar-u-nu-latn', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(t))

@@ -167,3 +167,62 @@ test.describe('الطقس (رفيق بلس)', () => {
     await expect(page.locator('.weather-chip')).toContainText('صافٍ')
   })
 })
+
+test.describe('مزايا بلس الجديدة', () => {
+  test('مقفلة دون اشتراك', async ({ page }) => {
+    for (const [route, f] of [['/ramadan', 'ramadan'], ['/plus/memorize', 'memo-plan'], ['/plus/family', 'family'], ['/plus/downloads', 'downloads']] as const) {
+      await page.goto(route)
+      await expect(page.locator(`[data-plus-lock="${f}"]`)).toBeVisible()
+    }
+  })
+
+  test('مع الاشتراك: رمضان، وخطة الحفظ، وختمة العائلة، والتنزيلات، ووضع الفيلم', async ({ page }) => {
+    await page.route(/tafsir_api.*\/ar-tafsir-muyassar\/37\.json/, (r) => r.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(Array.from({ length: 182 }, (_, i) => ({ surah: 37, ayah: i + 1, text: `تفسير تجريبي للآية ${i + 1}` }))) }))
+    await page.goto('/prayer')
+    await page.getByLabel('اسم المدينة').fill('نابلس')
+    await page.getByRole('button', { name: /نابلس/ }).first().click()
+    await expect(page.getByText(/تم حفظ الموقع/)).toBeVisible()
+    await page.goto('/plus')
+    await page.getByRole('button', { name: /اشترك بـ/ }).click()
+    await expect(page.getByRole('status')).toContainText('تم تفعيل')
+
+    await page.goto('/ramadan')
+    await expect(page.getByText(/بقي على رمضان نحو/)).toBeVisible()
+    expect(await page.locator('.ramadan-table tbody tr').count()).toBeGreaterThanOrEqual(29)
+
+    await page.goto('/plus/memorize')
+    await page.getByRole('button', { name: 'جزء عمّ من الناس' }).click()
+    await page.getByRole('button', { name: 'ابدأ الخطة' }).click()
+    await expect(page.getByText(/سورة الناس: الآيات/)).toBeVisible()
+    await page.getByRole('button', { name: /حفظتها/ }).click()
+    await expect(page.getByText('أتممت حصة اليوم.')).toBeVisible()
+
+    await page.goto('/plus/family')
+    await page.getByLabel('المشارك 1').fill('أحمد')
+    await page.getByLabel('المشارك 2').fill('محمد')
+    await page.getByRole('button', { name: 'إنشاء الختمة وتوزيع الأجزاء' }).click()
+    await expect(page.getByRole('button', { name: /الجزء ١٥/ })).toBeVisible()
+    await page.getByRole('button', { name: 'الجزء ١', exact: true }).click()
+    await expect(page.getByText('تمّ ١ من ٣٠ جزءًا')).toBeVisible()
+
+    await page.goto('/plus/downloads')
+    await expect(page.getByText('جزء عمّ (النبأ – الناس)')).toBeVisible()
+
+    await page.goto('/stories/yunus')
+    await page.getByRole('button', { name: /وضع الفيلم/ }).click()
+    await expect(page.getByRole('dialog', { name: /وضع الفيلم/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /حفظ فيديو/ })).toBeVisible()
+    await page.getByRole('button', { name: 'إغلاق وضع الفيلم' }).click()
+  })
+
+  test('دعاء لفقيدي: مجاني، والاسم يبقى بعد إعادة الفتح، وبلا إعلانات', async ({ page }) => {
+    await page.goto('/for-the-deceased')
+    await expect(page.locator('[data-plus-lock]')).toHaveCount(0)
+    await expect(page.getByText('رواه مسلم (963)', { exact: false })).toBeVisible()
+    await page.getByLabel('اسم الفقيد').fill('قصي')
+    await page.getByRole('button', { name: 'إضافة' }).click()
+    await page.reload()
+    await expect(page.getByRole('button', { name: 'إزالة قصي' })).toBeVisible()
+    expect(await page.locator('[data-ad-slot]').count()).toBe(0)
+  })
+})

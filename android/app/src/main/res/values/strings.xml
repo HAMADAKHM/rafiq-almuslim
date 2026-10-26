@@ -20,4 +20,7 @@
     <string name="progress_streak">أيام متتالية</string>
     <string name="plus_locked">من مزايا رفيق بلس — اضغط لفتح التطبيق</string>
     <string name="plus_empty">افتح رفيق المسلم بلس مرة لتحديث هذه البطاقة</string>
+    <string name="tasbih_description">رفيق بلس: المسبحة على الشاشة — اضغط للعدّ</string>
+    <string name="tasbih_reset">تصفير</string>
+    <string name="ramadan_description">رفيق بلس: رمضان — العدّ التنازلي للسحور والإفطار</string>
 </resources>

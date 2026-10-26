@@ -30,6 +30,8 @@ final class PlusWidgets {
         AppWidgetManager m = AppWidgetManager.getInstance(c);
         for (int id : m.getAppWidgetIds(new ComponentName(c, WeatherWidgetProvider.class))) WeatherWidgetProvider.render(c, m, id);
         for (int id : m.getAppWidgetIds(new ComponentName(c, ProgressWidgetProvider.class))) ProgressWidgetProvider.render(c, m, id);
+        for (int id : m.getAppWidgetIds(new ComponentName(c, TasbihWidgetProvider.class))) TasbihWidgetProvider.render(c, m, id);
+        for (int id : m.getAppWidgetIds(new ComponentName(c, RamadanWidgetProvider.class))) RamadanWidgetProvider.render(c, m, id);
     }
 
     /** «من مزايا رفيق بلس» أو «افتح التطبيق مرة» */
