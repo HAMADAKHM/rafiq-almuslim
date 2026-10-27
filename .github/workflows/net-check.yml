@@ -23,3 +23,13 @@ jobs:
           grep '^REVIEW ' map.txt | sed 's/^REVIEW //' | tr -d ':' | sed 's/ ¦ /\n/g' > rev.txt
           split -l 6 rev.txt part_
           for f in part_*; do echo "::notice::R $(tr '\n' '¦' < $f)"; done
+      - name: hisn-durations
+        run: |
+          sudo apt-get install -y -qq ffmpeg > /dev/null 2>&1 || true
+          out=""
+          for n in 12 79 77 86 96 98 106 216 1; do
+            curl -s -m 30 -o a.mp3 "https://www.hisnmuslim.com/audio/ar/$n.mp3"
+            d=$(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 a.mp3 2>/dev/null | cut -c1-5)
+            out="$out #$n=${d}s"
+          done
+          echo "::notice::durations$out"
