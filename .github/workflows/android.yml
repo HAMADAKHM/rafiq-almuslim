@@ -85,7 +85,7 @@ jobs:
       - run: npm run build:tv && npm run tv:assets && npm run tv:tizen
       - name: Build Android TV APK
         working-directory: android-tv
-        run: chmod +x gradlew && ./gradlew assembleDebug
+        run: chmod +x gradlew && ./gradlew testDebugUnitTest assembleDebug
       - uses: actions/upload-artifact@v4
         with:
           name: rafiq-almuslim-tv-apk

@@ -223,10 +223,16 @@ final class TvWeb {
                 o.put("hdmi", TvService.externalInputActive(ctx));
                 o.put("snoozeUntil", TvService.prefs(ctx).getLong(TvService.KEY_SNOOZE, 0));
                 o.put("idleMinutes", TvService.prefs(ctx).getInt(TvService.KEY_IDLE_MIN, 5));
+                o.put("idleReason", TvService.lastIdleReason == null ? "" : TvService.lastIdleReason);
+                o.put("idleSince", Math.max(IdleWatcher.connected ? IdleWatcher.lastKeyAt : 0, TvService.lastActiveAt));
                 o.put("events", new JSONObject(TvService.prefs(ctx).getString(TvService.KEY_EVENTS, "{}")));
                 return o.toString();
             } catch (Exception e) { return "{}"; }
         }
+
+        /** إلغاء الإيقاف المؤقت للفتح التلقائي */
+        @JavascriptInterface
+        public void clearSnooze() { TvService.clearSnooze(ctx); TvService.log(ctx, "snooze_cleared"); }
 
         @JavascriptInterface
         public boolean openAccessibilitySettings() {
@@ -245,7 +251,7 @@ final class TvWeb {
         public void setIdleMinutes(int m) { TvService.prefs(ctx).edit().putInt(TvService.KEY_IDLE_MIN, m).apply(); }
 
         @JavascriptInterface
-        public void setQuietIdle(boolean on) { TvService.prefs(ctx).edit().putBoolean(TvService.KEY_IDLE_QUIET, on).apply(); TvService.lastActiveAt = System.currentTimeMillis(); }
+        public void setQuietIdle(boolean on) { TvService.prefs(ctx).edit().putBoolean(TvService.KEY_IDLE_QUIET, on).apply(); TvService.markActive(ctx, null); }
 
         @JavascriptInterface
         public void startService() { TvService.start(ctx); }

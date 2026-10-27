@@ -843,7 +843,7 @@ test.describe('المساجد القريبة', () => {
 
   test('البحث حول الموقع: ترتيب بالمسافة والاتجاه ورابط المسار ومصدر البيانات', async ({ page }) => {
     let query = ''
-    await page.route(/overpass/, (r) => { query = decodeURIComponent(r.request().url()); return r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } }) })
+    await page.route(/overpass/, (r) => { query = decodeURIComponent(r.request().postData() ?? ''); return r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } }) })
     await page.goto('/mosques')
     await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
     const list = page.getByRole('list', { name: 'المساجد' })
@@ -859,12 +859,30 @@ test.describe('المساجد القريبة', () => {
     await expect(page.getByText(/نتائج محفوظة من/)).toBeVisible()
   })
 
-  test('فشل الخادمين: رسالة واضحة دون نتائج مختلقة', async ({ page }) => {
-    await page.route(/overpass/, (r) => r.fulfill({ status: 503, body: 'busy' }))
+  test('فشل الخوادم: رسالة واضحة دون نتائج مختلقة، وكل الخوادم البديلة تُجرَّب بطلب POST', async ({ page }) => {
+    const hosts: string[] = []
+    await page.route(/overpass/, (r) => { hosts.push(`${r.request().method()} ${new URL(r.request().url()).host}`); return r.fulfill({ status: 503, body: 'busy' }) })
     await page.goto('/mosques')
     await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
-    await expect(page.getByRole('alert')).toContainText('تعذر الوصول إلى خادم بيانات الخرائط')
+    await expect(page.getByRole('alert')).toContainText('تأخر خادم الخرائط في الرد')
     await expect(page.getByRole('list', { name: 'المساجد' })).toHaveCount(0)
+    expect(hosts).toEqual(['POST overpass-api.de', 'POST overpass.private.coffee', 'POST overpass.kumi.systems'])
+  })
+
+  test('فشل البحث بعد نجاح سابق: تُعرض آخر نتائج محفوظة مع توضيح، وإعادة المحاولة تنجح', async ({ page }) => {
+    let fail = false
+    await page.route(/overpass/, (r) => (fail ? r.fulfill({ status: 429, body: 'rate' }) : r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } })))
+    await page.goto('/mosques')
+    await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
+    await expect(page.getByRole('list', { name: 'المساجد' }).getByRole('listitem')).toHaveCount(2)
+    fail = true
+    await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
+    await expect(page.getByRole('alert')).toContainText('مزدحمة الآن')
+    await expect(page.getByText(/نتائج محفوظة من/)).toBeVisible()
+    await expect(page.getByRole('list', { name: 'المساجد' }).getByRole('listitem')).toHaveCount(2)
+    fail = false
+    await page.getByRole('alert').getByRole('button', { name: /إعادة المحاولة/ }).click()
+    await expect(page.getByText(/نتائج محفوظة من/)).toHaveCount(0)
   })
 })
 
@@ -981,7 +999,7 @@ test.describe('1.0: المساعد والمساجد المفضلة والمتا�
   test('المساجد: الرادار والمفضلة والبحث في مدينة أخرى', async ({ page }) => {
     const OSM = { elements: [{ type: 'way', id: 22, center: { lat: 32.2221, lon: 35.2544 }, tags: { 'name:ar': 'المسجد القريب' } }] }
     let query = ''
-    await page.route(/overpass/, (r) => { query = decodeURIComponent(r.request().url()); return r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } }) })
+    await page.route(/overpass/, (r) => { query = decodeURIComponent(r.request().postData() ?? ''); return r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } }) })
     await page.goto('/mosques')
     await page.getByLabel('البحث عن المساجد في مدينة').fill('نابلس')
     await page.getByRole('button', { name: /نابلس، فلسطين/ }).first().click()

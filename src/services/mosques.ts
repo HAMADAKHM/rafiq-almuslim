@@ -6,7 +6,13 @@ import { kv } from '../db/repos'
 export interface Mosque { id: string; name: string; named: boolean; lat: number; lng: number; distance: number; bearing: number }
 export interface MosqueResult { at: number; center: { lat: number; lng: number; label: string }; radius: number; mosques: Mosque[] }
 
-export const OVERPASS_ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']
+// ثلاثة خوادم عامة مجانية بالترتيب؛ إن فشل أحدها جُرّب التالي
+export const OVERPASS_ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']
+/**
+ * منذ 2026 يرفض الخادم الرئيسي (406) الطلبات التي تحمل معرّف مكتبة عامًا (مثل Dalvik/okhttp في Android)،
+ * فيجب أن يعرّف التطبيق نفسه. (المتصفح لا يسمح بتغيير المعرّف، فيُرسل معرّفه المعتاد.)
+ */
+export const OVERPASS_USER_AGENT = 'RafiqAlMuslim/1.0 (Islamic companion app; +https://github.com/HAMADAKHM/rafiq-almuslim)'
 export const CACHE_KEY = 'mosques:last'
 const MAX_RESULTS = 60
 
@@ -49,24 +55,47 @@ export function parseOverpass(json: { elements?: OsmElement[] }, from: { lat: nu
   return out.sort((a, b) => a.distance - b.distance).slice(0, MAX_RESULTS)
 }
 
-async function getJson(url: string, signal?: AbortSignal): Promise<{ elements?: OsmElement[] }> {
+export class OverpassError extends Error {
+  status: number
+  constructor(status: number) {
+    super(String(status))
+    this.status = status
+  }
+}
+
+/** POST كما توصي وثائق Overpass (الاستعلام في جسم الطلب لا في الرابط) */
+async function postQuery(url: string, query: string, signal?: AbortSignal): Promise<{ elements?: OsmElement[] }> {
+  const body = 'data=' + encodeURIComponent(query)
   if (Capacitor.isNativePlatform()) {
-    const r = await CapacitorHttp.get({ url, responseType: 'json', connectTimeout: 15000, readTimeout: 30000 })
-    if (r.status >= 400) throw new Error(String(r.status))
+    const r = await CapacitorHttp.post({
+      url, data: body, responseType: 'json', connectTimeout: 15000, readTimeout: 35000,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': OVERPASS_USER_AGENT, Accept: 'application/json' },
+    })
+    if (r.status >= 400) throw new OverpassError(r.status)
     return typeof r.data === 'string' ? JSON.parse(r.data) : r.data
   }
-  const res = await fetch(url, { signal })
-  if (!res.ok) throw new Error(String(res.status))
+  const res = await fetch(url, { method: 'POST', body, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal })
+  if (!res.ok) throw new OverpassError(res.status)
   return res.json()
+}
+
+/** رسالة واضحة بحسب سبب الفشل */
+export function mosqueErrorMessage(e: unknown, offline = typeof navigator !== 'undefined' && navigator.onLine === false): string {
+  if (offline) return 'لا يوجد اتصال بالإنترنت. اتصل ثم أعد المحاولة.'
+  const st = e instanceof OverpassError ? e.status : 0
+  if (st === 429) return 'خوادم الخرائط المجانية مزدحمة الآن. انتظر دقيقة ثم أعد المحاولة.'
+  if (st === 504 || st === 503 || st === 502) return 'تأخر خادم الخرائط في الرد. جرّب نطاقًا أصغر أو أعد المحاولة بعد قليل.'
+  if (st === 406 || st === 403) return 'رفض خادم الخرائط الطلب. أعد المحاولة لاحقًا، وإن تكرر فأخبرنا.'
+  return 'تعذر الوصول إلى خوادم بيانات الخرائط. تحقق من الاتصال وأعد المحاولة.'
 }
 
 /** يبحث في الخادم الأول ثم البديل، ويحفظ آخر نتيجة لعرضها دون اتصال */
 export async function findMosques(center: { lat: number; lng: number; label: string }, radius: number, signal?: AbortSignal): Promise<MosqueResult> {
-  const q = encodeURIComponent(overpassQuery(center.lat, center.lng, radius))
+  const q = overpassQuery(center.lat, center.lng, radius)
   let lastErr: unknown
   for (const ep of OVERPASS_ENDPOINTS) {
     try {
-      const json = await getJson(`${ep}?data=${q}`, signal)
+      const json = await postQuery(ep, q, signal)
       const result: MosqueResult = { at: Date.now(), center, radius, mosques: parseOverpass(json, center).filter((m) => m.distance <= radius) }
       kv.set(CACHE_KEY, result).catch(() => {})
       return result
@@ -75,7 +104,9 @@ export async function findMosques(center: { lat: number; lng: number; label: str
       lastErr = e
     }
   }
-  throw new Error(`تعذر الوصول إلى خادم بيانات الخرائط (${String((lastErr as Error)?.message ?? lastErr)}). تحقق من الاتصال وأعد المحاولة.`)
+  const err = new Error(mosqueErrorMessage(lastErr))
+  ;(err as Error & { cause?: unknown }).cause = lastErr
+  throw err
 }
 
 export const lastMosques = () => kv.get<MosqueResult | null>(CACHE_KEY, null)

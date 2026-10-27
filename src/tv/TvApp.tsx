@@ -30,15 +30,25 @@ const DREAM = typeof location !== 'undefined' && new URLSearchParams(location.se
 type Bridge = {
   openScreensaverSettings(): boolean; getAutostart(): boolean; setAutostart(on: boolean): void
   canOpenFromBackground?(): boolean; openOverlaySettings?(): boolean; getIdleTakeover?(): boolean; setIdleTakeover?(on: boolean): void; setSchedule?(json: string): void
-  getStatus?(): string; stopAdhan?(): void; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void; setQuietIdle?(on: boolean): void
+  getStatus?(): string; stopAdhan?(): void; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void; setQuietIdle?(on: boolean): void; clearSnooze?(): void
   openAndroidSettings?(): boolean; getDevice?(): string; getHomeMode?(): boolean; setHomeMode?(on: boolean): void; pressHome?(): void
   getApps?(): string; launchApp?(pkg: string): boolean; openOriginalHome?(): boolean
 }
 interface TvAppEntry { label: string; pkg: string; icon: string }
-interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; quietIdle?: boolean; canOpen?: boolean; hdmi?: boolean; snoozeUntil?: number; idleMinutes?: number; events?: Record<string, number> }
+interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; quietIdle?: boolean; canOpen?: boolean; hdmi?: boolean; snoozeUntil?: number; idleMinutes?: number; idleReason?: string; idleSince?: number; events?: Record<string, number> }
 const EVENT_LABELS: Record<string, string> = {
   service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', idle_quiet: 'عدم استخدام (سكون)', prayer_alarm: 'منبه وقت الصلاة', idle_snoozed: 'إيقاف مؤقت (رجعت فور الفتح)', service_restart: 'إعادة تشغيل الخدمة', wake_detected: 'فتح التلفاز من الاستعداد', dream: 'شاشة توقف التلفاز',
   open_screen: 'فتح شاشة المواقيت', open_blocked: 'مُنع الفتح (ينقص إذن)', adhan_background: 'أذان من الخلفية', accessibility_on: 'تفعيل مراقب عدم الاستخدام',
+  idle_snoozed_60min: 'إيقاف مؤقت ساعة (رجعت فور الفتح)', snooze_cleared: 'إلغاء الإيقاف المؤقت', idle_open_failed: 'تعذّر الفتح', active_screen_on: 'استيقاظ الشاشة', active_wake: 'فتح التلفاز',
+  idle_skip_media_active: 'لم تُفتح: فيديو أو صوت يعمل', idle_skip_hdmi_foreground: 'لم تُفتح: التلفاز على جهاز HDMI', idle_skip_snoozed: 'لم تُفتح: إيقاف مؤقت',
+  idle_skip_needs_overlay_permission: 'لم تُفتح: ينقص إذن الظهور فوق التطبيقات', idle_skip_needs_accessibility: 'لم تُفتح: فعّل إمكانية الوصول', idle_skip_disabled: 'الفتح التلقائي متوقف',
+  idle_skip_adhan: 'لم تُفتح: الأذان يُرفع', adhan_media_keys_only: 'الأذان: يوقفه زر التشغيل/الإيقاف فقط',
+}
+/** حالة مؤقت عدم الاستخدام الآن، بلغة واضحة */
+const IDLE_STATE: Record<string, string> = {
+  waiting: 'ينتظر عدم الاستخدام', media_active: 'متوقف: فيديو أو صوت يعمل الآن', hdmi_foreground: 'متوقف: التلفاز على جهاز HDMI', snoozed: 'متوقف مؤقتًا',
+  needs_overlay_permission: 'لا يعمل: ينقص إذن «الظهور فوق التطبيقات»', needs_accessibility: 'لا يعمل: فعّل «إمكانية الوصول» أو خيار السكون', disabled: 'متوقف من الإعدادات',
+  screen_visible: 'الشاشة ظاهرة الآن', adhan: 'الأذان يُرفع',
 }
 const bridge = (): Bridge | null => (window as unknown as { RafiqTV?: Bridge }).RafiqTV ?? null
 
@@ -500,7 +510,8 @@ function TvAutoStart() {
   const [home, setHome] = useState(() => { try { return b.getHomeMode?.() ?? false } catch { return false } })
   const device = (() => { try { return b.getDevice?.() ?? '' } catch { return '' } })()
   const fmt = (t: number) => new Intl.DateTimeFormat('ar-u-nu-latn', { weekday: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(t))
-  const events = Object.entries(st.events ?? {}).sort((a, c) => c[1] - a[1]).slice(0, 5)
+  const events = Object.entries(st.events ?? {}).sort((a, c) => c[1] - a[1]).slice(0, 8)
+  const left = st.idleSince && minutes > 0 && st.idleReason === 'waiting' ? Math.max(0, Math.ceil((st.idleSince + minutes * 60_000 - Date.now()) / 60_000)) : null
   return (
     <>
       <h2>الأسهل: شاشة المواقيت واجهةً رئيسية للتلفاز (بلا أي إذن)</h2>
@@ -512,7 +523,7 @@ function TvAutoStart() {
           ? '✓ مفعّل: تُفتح شاشة المواقيت بعد دقائق من ترك التلفاز، وتُفتح عند تشغيله، وأي زر يوقف الأذان.'
           : st.canOpen
             ? (st.quietIdle !== false
-              ? `✓ مفعّل بلا إذن: تُفتح بعد المدة المختارة إن لم يعمل فيديو أو صوت أو جهاز HDMI (بلايستيشن)${st.hdmi ? ' — جهاز HDMI يعمل الآن' : ''}. فُتحت بالخطأ؟ اضغط «رجوع» فتعود ولا تُفتح 3 ساعات${st.snoozeUntil && st.snoozeUntil > Date.now() ? ` (متوقفة حتى ${fmt(st.snoozeUntil)})` : ''}.`
+              ? `✓ مفعّل بلا إذن: تُفتح بعد المدة المختارة إن لم يعمل فيديو أو صوت أو جهاز HDMI (بلايستيشن)${st.hdmi ? ' — جهاز HDMI يعمل الآن' : ''}. فُتحت بالخطأ؟ اضغط «رجوع» فتعود ولا تُفتح ساعة${st.snoozeUntil && st.snoozeUntil > Date.now() ? ` (متوقفة حتى ${fmt(st.snoozeUntil)})` : ''}.`
               : 'متوقف: فعّل الخيار التالي لتُفتح شاشة المواقيت بعد عدم الاستخدام.')
             : 'افتح «إمكانية الوصول» ثم اختر «شاشة رفيق المسلم» وفعّلها ووافق، ثم ارجع بزر الرجوع. (يعرف وقت آخر ضغطة فقط، ولا يقرأ الشاشة)'}
       </div>
@@ -534,6 +545,9 @@ function TvAutoStart() {
         <span>{st.overlay ? '✓' : '—'} الظهور فوق التطبيقات (اختياري: شريط الأذان)</span>
         {!st.overlay && <button className="tv-btn" onClick={() => b.openOverlaySettings?.()}>منح إذن الظهور فوق التطبيقات</button>}
       </div>
+      {st.idleReason ? <p className="tv-muted">مؤقت عدم الاستخدام الآن: {IDLE_STATE[st.idleReason] ?? st.idleReason}{left != null ? ` — تُفتح بعد نحو ${left} دقيقة دون استخدام` : ''}</p> : null}
+      {st.snoozeUntil && st.snoozeUntil > Date.now() ? <button className="tv-btn" onClick={() => { b.clearSnooze?.(); setSt({ ...st, snoozeUntil: 0 }) }}>إلغاء الإيقاف المؤقت الآن</button> : null}
+      <p className="tv-muted">الأذان فوق يوتيوب والقنوات: لا يخرج من المحتوى. {st.accessibility ? 'أي زر يوقف الأذان.' : st.overlay ? 'يظهر شريط علوي وأي زر يوقف الأذان.' : 'يوقفه زر التشغيل/الإيقاف ▶❚❚. لإيقافه بأي زر: فعّل «إمكانية الوصول» أو إذن «الظهور فوق التطبيقات».'}</p>
       {events.length > 0 && <p className="tv-muted">آخر الأحداث: {events.map(([k, t]) => `${EVENT_LABELS[k] ?? k} (${fmt(t)})`).join(' • ')}</p>}
       {device && <p className="tv-muted">الجهاز: {device}</p>}
     </>

@@ -54,14 +54,30 @@ public class TvService extends Service {
     static final long AUTO_GRACE_MS = 3 * 60_000L;
     /** خرج المستخدم من الشاشة فور فتحها تلقائيًا (يلعب أو يشاهد من جهاز HDMI): لا تُفتح ثانية حتى هذا الوقت */
     static final String KEY_SNOOZE = "idle_snooze_until";
-    private static final long SNOOZE_MS = 3 * 60 * 60_000L;
+    private static final long SNOOZE_MS = 60 * 60_000L;
+    /** آخر نشاط محفوظ (حتى لا يبدأ العدّ من الصفر إذا أغلق النظام العملية وأعادها) */
+    static final String KEY_LAST_ACTIVE = "last_active_at";
+    private static long savedActiveAt = 0;
+    /** آخر سبب لعدم الفتح (يُسجَّل عند تغيّره فقط) */
+    static volatile String lastIdleReason = null;
+
+    /** نشاط معروف (صوت يعمل، ترك الشاشة، استيقاظ التلفاز): يعيد عدّ عدم الاستخدام ويحفظه */
+    static void markActive(Context c, String why) {
+        long now = System.currentTimeMillis();
+        lastActiveAt = now;
+        if (now - savedActiveAt > 60_000L) {
+            savedActiveAt = now;
+            prefs(c).edit().putLong(KEY_LAST_ACTIVE, now).apply();
+        }
+        if (why != null) log(c, "active_" + why);
+    }
 
     /** المستخدم ترك الشاشة بعد فتحها تلقائيًا بقليل: إيقاف الفتح التلقائي مؤقتًا */
     static void onScreenLeft(Context c) {
         long now = System.currentTimeMillis();
         if (autoOpenAt > 0 && now - autoOpenAt < AUTO_GRACE_MS) {
             prefs(c).edit().putLong(KEY_SNOOZE, now + SNOOZE_MS).apply();
-            log(c, "idle_snoozed");
+            log(c, "idle_snoozed_60min");
         }
         autoOpenAt = 0;
     }
@@ -142,6 +158,9 @@ public class TvService extends Service {
         running = true;
         startAsForeground();
         log(this, "service_start");
+        // بعد إعادة النظام تشغيل العملية: نكمل العدّ من آخر نشاط محفوظ بدل البدء من الصفر
+        long saved = prefs(this).getLong(KEY_LAST_ACTIVE, 0);
+        if (saved > 0 && saved < System.currentTimeMillis()) { lastActiveAt = saved; savedActiveAt = saved; }
         dreamRx = new BroadcastReceiver() {
             @Override
             public void onReceive(Context ctx, Intent intent) {
@@ -154,7 +173,7 @@ public class TvService extends Service {
                     log(ctx, "screen_on");
                     clearSnooze(ctx);
                     IdleWatcher.lastKeyAt = System.currentTimeMillis();
-                    lastActiveAt = System.currentTimeMillis();
+                    markActive(ctx, "screen_on");
                     if (TvWeb.autostart(ctx)) handler.postDelayed(() -> openScreen(ctx), 2500);
                 }
             }
@@ -213,30 +232,41 @@ public class TvService extends Service {
 
     /**
      * عدم الاستخدام → تُفتح شاشة المواقيت. لا يقاطع أبدًا صوتًا أو فيديو يعمل.
-     * مع «إمكانية الوصول»: المدة منذ آخر ضغطة زر. بدونها (أغلب التلفزيونات): المدة منذ ترك الشاشة
-     * أو منذ توقف آخر صوت/فيديو.
+     * القرار في IdleRules (مختبر)، وكل سبب لعدم الفتح يُسجَّل عند تغيّره في سجل التشخيص.
      */
     private void checkIdle() {
         long now = System.currentTimeMillis();
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
-        if (am != null && am.isMusicActive()) { lastActiveAt = now; return; } // يشاهد أو يستمع: لا نقاطع
-        if (MainActivity.visible || adhanActive) return;
-        if (!prefs(this).getBoolean(KEY_IDLE, true)) return;
-        if (now < prefs(this).getLong(KEY_SNOOZE, 0)) return;
-        // يلعب على بلايستيشن أو يشاهد من جهاز HDMI: صوته لا يظهر للتطبيق، فنعتبره نشاطًا
-        if (externalInputActive(this)) { lastActiveAt = now; return; }
-        int min = prefs(this).getInt(KEY_IDLE_MIN, 5);
-        if (min <= 0) return;
-        long since;
-        if (IdleWatcher.connected) since = Math.max(IdleWatcher.lastKeyAt, lastActiveAt);
-        else if (prefs(this).getBoolean(KEY_IDLE_QUIET, true) && canOpenFromBackground(this)) since = lastActiveAt;
-        else return;
-        if (now - since < min * 60_000L) return;
+        IdleRules.Input in = new IdleRules.Input();
+        in.now = now;
+        in.mediaActive = am != null && am.isMusicActive();
+        if (in.mediaActive) markActive(this, null);
+        // جهاز HDMI (بلايستيشن…) يُعدّ نشاطًا فقط إذا كان مدخله هو الظاهر الآن (يُعرف مع خدمة الإتاحة).
+        // سابقًا كان أي جهاز موصول — ولو مطفأ أو على مدخل آخر — يمنع الفتح دائمًا.
+        in.externalForeground = IdleWatcher.connected && IdleRules.isTvInputPackage(IdleWatcher.foregroundPkg) && externalInputActive(this);
+        if (in.externalForeground) markActive(this, null);
+        in.lastKeyAt = IdleWatcher.lastKeyAt;
+        in.lastActiveAt = lastActiveAt;
+        in.accessibility = IdleWatcher.connected;
+        in.quietMode = prefs(this).getBoolean(KEY_IDLE_QUIET, true);
+        in.canOpen = canOpenFromBackground(this);
+        in.screenVisible = MainActivity.visible;
+        in.adhanActive = adhanActive;
+        in.takeoverEnabled = prefs(this).getBoolean(KEY_IDLE, true);
+        in.snoozeUntil = prefs(this).getLong(KEY_SNOOZE, 0);
+        in.minutes = prefs(this).getInt(KEY_IDLE_MIN, 5);
+        String reason = IdleRules.decide(in);
+        if (reason != null) {
+            if (!reason.equals(lastIdleReason) && !"waiting".equals(reason)) log(this, "idle_skip_" + reason);
+            lastIdleReason = reason;
+            return;
+        }
+        lastIdleReason = null;
         log(this, IdleWatcher.connected ? "idle" : "idle_quiet");
         IdleWatcher.lastKeyAt = now;
-        lastActiveAt = now;
+        markActive(this, null);
         autoOpenAt = now;
-        openScreen(this);
+        if (!openScreen(this)) log(this, "idle_open_failed");
     }
 
     /** شاشة توقف التلفاز بدأت: نوقظ الشاشة (ينهي شاشة التوقف) ثم نفتح المواقيت مكانها */
@@ -270,9 +300,13 @@ public class TvService extends Service {
             player.prepareAsync();
             adhanActive = true;
             log(this, "adhan_background");
-            // مع خدمة الإتاحة يُلتقط أي زر دون شريط يأخذ التركيز؛ وبدونها يظهر الشريط
-            // (بإذن الظهور فوق التطبيقات، وإلا فنافذة شفافة لا تحتاج إذنًا تلتقط أي زر)
-            if (!showOverlay(prayer) && !IdleWatcher.connected && canOpenFromBackground(this)) AdhanActivity.show(this, prayer);
+            // لا تُفتح أي شاشة (Activity) فوق التطبيق الحالي: فتحها من الخلفية كان يجعل النظام يعود إلى
+            // الشاشة الرئيسية عند إغلاقها (يخرج من يوتيوب أو القناة). بدلًا من ذلك:
+            // - خدمة الإتاحة: أي زر يوقف الأذان دون أن يصل للتطبيق.
+            // - إذن الظهور فوق التطبيقات: شريط علوي يلتقط أي زر.
+            // - بدونهما: زر التشغيل/الإيقاف في جهاز التحكم (جلسة الوسائط)، ويتوقف الأذان وحده عند انتهائه.
+            boolean bar = showOverlay(prayer);
+            if (!bar && !IdleWatcher.connected) log(this, "adhan_media_keys_only");
             startMediaSession();
         } catch (Exception e) {
             stopAdhan();

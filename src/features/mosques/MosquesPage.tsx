@@ -38,7 +38,7 @@ function CitySearch({ disabled, onPick }: { disabled: boolean; onPick: (c: City)
   )
 }
 
-type State = { phase: 'idle' } | { phase: 'locating' } | { phase: 'loading' } | { phase: 'done'; result: MosqueResult; cached?: boolean } | { phase: 'error'; message: string }
+type State = { phase: 'idle' } | { phase: 'locating' } | { phase: 'loading' } | { phase: 'done'; result: MosqueResult; cached?: boolean; warning?: string } | { phase: 'error'; message: string }
 const RADII = [1000, 3000, 5000, 10000]
 
 export function MosquesPage() {
@@ -55,7 +55,9 @@ export function MosquesPage() {
     return () => abort.current?.abort()
   }, [])
 
+  const lastCenter = useRef<{ lat: number; lng: number; label: string } | null>(null)
   const search = async (center: { lat: number; lng: number; label: string }) => {
+    lastCenter.current = center
     abort.current?.abort()
     const ctrl = new AbortController()
     abort.current = ctrl
@@ -63,9 +65,13 @@ export function MosquesPage() {
     try {
       setState({ phase: 'done', result: await findMosques(center, radius, ctrl.signal) })
     } catch (e) {
-      if ((e as Error).name !== 'AbortError') setState({ phase: 'error', message: (e as Error).message })
+      if ((e as Error).name === 'AbortError') return
+      // فشل البحث: تُعرض آخر نتائج ناجحة محفوظة (مع توضيح أنها قديمة) بدل صفحة خطأ فارغة
+      const cached = await lastMosques().catch(() => null)
+      setState(cached ? { phase: 'done', result: cached, cached: true, warning: (e as Error).message } : { phase: 'error', message: (e as Error).message })
     }
   }
+  const retry = () => (lastCenter.current ? search(lastCenter.current) : nearMe())
   const nearMe = async () => {
     setState({ phase: 'locating' })
     try {
@@ -101,11 +107,17 @@ export function MosquesPage() {
         {state.phase === 'error' && (
           <div className="alert alert-error small" role="alert">
             {state.message}
-            <div className="row" style={{ marginTop: 8 }}><button className="btn btn-sm" onClick={nearMe}><RotateCcw size={14} /> إعادة المحاولة</button></div>
+            <div className="row" style={{ marginTop: 8 }}><button className="btn btn-sm" onClick={retry}><RotateCcw size={14} /> إعادة المحاولة</button></div>
           </div>
         )}
         {state.phase === 'done' && (
           <>
+            {state.warning && (
+              <div className="alert alert-gold small" role="alert">
+                {state.warning} نعرض لك آخر نتائج محفوظة.
+                <div className="row" style={{ marginTop: 8 }}><button className="btn btn-sm" onClick={retry}><RotateCcw size={14} /> إعادة المحاولة</button></div>
+              </div>
+            )}
             <p className="small muted">
               {state.result.mosques.length} مسجدًا ضمن {formatDistance(state.result.radius)} حول {state.result.center.label}
               {state.cached && <> • نتائج محفوظة من {new Date(state.result.at).toLocaleString('ar')}</>}

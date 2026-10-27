@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bearingDeg, directionName, directionsUrl, distanceM, formatDistance, overpassQuery, parseOverpass } from './mosques'
+import { OverpassError, OVERPASS_USER_AGENT, mosqueErrorMessage, bearingDeg, directionName, directionsUrl, distanceM, formatDistance, overpassQuery, parseOverpass } from './mosques'
 
 describe('دليل المساجد', () => {
   it('المسافة: مكة–المدينة نحو 339 كم بخط مستقيم', () => {
@@ -40,5 +40,13 @@ describe('دليل المساجد', () => {
     expect(formatDistance(3000)).toBe('3 كم')
     expect(directionsUrl({ lat: 1, lng: 2 }, 'ios')).toContain('maps.apple.com')
     expect(directionsUrl({ lat: 1, lng: 2 }, 'android')).toContain('google.com/maps/dir')
+  })
+  it('رسائل الأخطاء بحسب السبب، والتطبيق يعرّف نفسه للخادم', () => {
+    expect(mosqueErrorMessage(new OverpassError(429), false)).toContain('مزدحمة')
+    expect(mosqueErrorMessage(new OverpassError(504), false)).toContain('تأخر')
+    expect(mosqueErrorMessage(new OverpassError(406), false)).toContain('رفض')
+    expect(mosqueErrorMessage(new TypeError('Failed to fetch'), false)).toContain('تعذر الوصول')
+    expect(mosqueErrorMessage(null, true)).toContain('لا يوجد اتصال')
+    expect(OVERPASS_USER_AGENT).toMatch(/^RafiqAlMuslim\/\S+ \(.+\)$/)
   })
 })

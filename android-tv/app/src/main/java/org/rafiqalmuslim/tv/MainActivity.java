@@ -34,7 +34,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         visible = false;
-        TvService.lastActiveAt = System.currentTimeMillis();
+        TvService.markActive(getApplicationContext(), null);
         TvService.onScreenLeft(getApplicationContext());
         // تعلم الصفحة أنها مخفية فتتوقف التلاوة (حتى لا تعمل فوق يوتيوب، ولا تمنع اكتشاف عدم الاستخدام)
         if (web != null) web.onPause();

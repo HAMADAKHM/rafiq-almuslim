@@ -15,6 +15,8 @@ import android.view.accessibility.AccessibilityEvent;
 public class IdleWatcher extends AccessibilityService {
     static volatile long lastKeyAt = System.currentTimeMillis();
     static volatile boolean connected = false;
+    /** اسم حزمة التطبيق الظاهر (من أحداث تغيّر النافذة فقط، لا محتوى الشاشة): لمعرفة أن التلفاز على مدخل HDMI أو القنوات */
+    static volatile String foregroundPkg = null;
 
     @Override
     protected void onServiceConnected() {
@@ -42,7 +44,13 @@ public class IdleWatcher extends AccessibilityService {
     }
 
     @Override
-    public void onAccessibilityEvent(AccessibilityEvent event) { /* لا نقرأ محتوى الشاشة */ }
+    public void onAccessibilityEvent(AccessibilityEvent event) {
+        // لا نقرأ محتوى الشاشة: اسم التطبيق الظاهر فقط
+        if (event != null && event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && event.getPackageName() != null) {
+            String pkg = event.getPackageName().toString();
+            if (!pkg.equals(getPackageName())) foregroundPkg = pkg;
+        }
+    }
 
     @Override
     public void onInterrupt() {}
