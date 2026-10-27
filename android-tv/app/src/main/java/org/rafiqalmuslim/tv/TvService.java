@@ -183,6 +183,8 @@ public class TvService extends Service {
         f.addAction(Intent.ACTION_USER_PRESENT);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(dreamRx, f, Context.RECEIVER_EXPORTED); else registerReceiver(dreamRx, f);
         handler.post(tick);
+        // «التحكم من الجوال» عبر الشبكة المنزلية
+        try { RemoteServer.get(this).start(); } catch (Exception ignored) { /* لا شيء */ }
     }
 
     private void startAsForeground() {
@@ -417,6 +419,7 @@ public class TvService extends Service {
         instance = null;
         handler.removeCallbacks(tick);
         if (dreamRx != null) unregisterReceiver(dreamRx);
+        try { RemoteServer.get(this).stop(); } catch (Exception ignored) { /* لا شيء */ }
         stopAdhan();
         super.onDestroy();
     }

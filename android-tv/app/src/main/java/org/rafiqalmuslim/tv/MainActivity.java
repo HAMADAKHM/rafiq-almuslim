@@ -29,11 +29,22 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onResume() { super.onResume(); visible = true; if (web != null) web.onResume(); }
+    protected void onResume() {
+        super.onResume();
+        visible = true;
+        if (web != null) web.onResume();
+        // أوامر الجوال تُطبَّق فورًا على الشاشة الظاهرة
+        RemoteServer.screen = new RemoteServer.ScreenHook() {
+            public void applyNow() { runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.__rafiqRemoteApply&&window.__rafiqRemoteApply()", null); }); }
+            public boolean nextScene() { runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.__rafiqNextScene&&window.__rafiqNextScene()", null); }); return true; }
+        };
+        if (web != null) web.evaluateJavascript("window.__rafiqRemoteApply&&window.__rafiqRemoteApply()", null);
+    }
 
     @Override
     protected void onPause() {
         visible = false;
+        RemoteServer.screen = null;
         TvService.markActive(getApplicationContext(), null);
         TvService.onScreenLeft(getApplicationContext());
         // تعلم الصفحة أنها مخفية فتتوقف التلاوة (حتى لا تعمل فوق يوتيوب، ولا تمنع اكتشاف عدم الاستخدام)

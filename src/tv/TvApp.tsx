@@ -12,7 +12,7 @@ import { ayahOfDay, dhikrOfDay } from '../services/daily'
 import { loadQuran, type QuranData } from '../services/quran'
 import { dayKey, daysBetween, formatGregorian, formatHijri, formatCountdown } from '../lib/dates'
 import { toArabicDigits } from '../lib/arabic'
-import { DEFAULT_TV, loadTv, saveTv, shiftedTz, tvPhase, TV_PRAYERS, type TvPrayer, type TvSettings } from './state'
+import { DEFAULT_TV, loadTv, normalizeTv, saveTv, shiftedTz, tvPhase, TV_PRAYERS, type TvPrayer, type TvSettings } from './state'
 import { RECITE_MODES, TV_RECITERS } from './recite'
 import { resetRecitePos, useRecitation } from './useRecitation'
 import { voiceStatus } from './voice'
@@ -35,6 +35,7 @@ type Bridge = {
   getStatus?(): string; stopAdhan?(): void; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void; setQuietIdle?(on: boolean): void; clearSnooze?(): void
   openAndroidSettings?(): boolean; getDevice?(): string; getHomeMode?(): boolean; setHomeMode?(on: boolean): void; pressHome?(): void
   getApps?(): string; launchApp?(pkg: string): boolean; openOriginalHome?(): boolean
+  startPairing?(): string; stopPairing?(): void; getRemoteStatus?(): string; removeRemoteDevice?(id: string): void; setRemoteSnapshot?(json: string): void; takeRemotePatch?(): string
 }
 interface TvAppEntry { label: string; pkg: string; icon: string }
 interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; quietIdle?: boolean; canOpen?: boolean; hdmi?: boolean; snoozeUntil?: number; idleMinutes?: number; idleReason?: string; idleSince?: number; events?: Record<string, number> }
@@ -200,6 +201,29 @@ export function TvApp() {
   }, [adhanPlaying, overlayOpen, phaseKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const update = (p: Partial<TvSettings>) => setS((prev) => { const next = { ...prev, ...p }; saveTv(next); return next })
 
+  // «التحكم من الجوال»: تعديلات تصل من تطبيق رفيق المسلم بلس عبر خدمة التلفاز، وتُطبَّق وتُحفظ هنا
+  useEffect(() => {
+    const b = bridge()
+    if (!b?.takeRemotePatch) return
+    const apply = () => {
+      try {
+        const raw = b.takeRemotePatch!()
+        if (!raw) return
+        const patch = JSON.parse(raw) as Partial<TvSettings>
+        setS((prev) => { const next = normalizeTv({ ...prev, ...patch }); saveTv(next); return next })
+      } catch { /* تعديل غير صالح يُتجاهل */ }
+    }
+    const w = window as unknown as { __rafiqRemoteApply?: () => void; __rafiqNextScene?: () => void }
+    w.__rafiqRemoteApply = apply
+    w.__rafiqNextScene = () => window.dispatchEvent(new Event('rafiq-next-scene'))
+    apply()
+    const vis = () => { if (document.visibilityState === 'visible') apply() }
+    document.addEventListener('visibilitychange', vis)
+    return () => { document.removeEventListener('visibilitychange', vis); delete w.__rafiqRemoteApply; delete w.__rafiqNextScene }
+  }, [])
+  // ما يراه الجوال من إعدادات الشاشة
+  useEffect(() => { try { bridge()?.setRemoteSnapshot?.(JSON.stringify(remoteView(s))) } catch { /* لا شيء */ } }, [s])
+
   // التلاوة: تتوقف وقت الأذان وانتظار الإقامة، وتُستأنف بعدهما
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: city?.tz, hour: '2-digit', hour12: false }).format(now)) % 24
   const rec = useRecitation(s, data, { day, hour }, phase.kind !== 'normal' || adhanPlaying || hidden)
@@ -359,7 +383,56 @@ function VoiceNote() {
   )
 }
 
-type SetupPage = 'city' | 'prayer' | 'iqama' | 'scenes' | 'recite' | 'voice' | 'auto'
+type SetupPage = 'city' | 'prayer' | 'iqama' | 'scenes' | 'remote' | 'recite' | 'voice' | 'auto'
+
+/** الإعدادات التي يقرؤها الجوال ويستطيع تعديلها (RemoteCore.validate في Java يقبل هذه فقط) */
+function remoteView(s: TvSettings) {
+  return {
+    scene: s.scene, playlist: s.playlist, rotateMin: s.rotateMin, shuffle: s.shuffle, quality: s.quality, animate: s.animate,
+    adhan: s.adhan, hour12: s.hour12, reciteOn: s.reciteOn, reciteVolume: s.reciteVolume, clockShift: s.clockShift,
+    city: s.city ? (s.city.nameAr ?? s.city.name) : '',
+  }
+}
+
+/** ربط الجوال: رمز من 6 أرقام يظهر هنا ويُكتب في تطبيق رفيق المسلم بلس، وقائمة الأجهزة المرتبطة */
+function TvRemotePage() {
+  const b = bridge()!
+  type St = { pairing?: boolean; code?: string; until?: number; ip?: string; port?: number; devices?: { id: string; name: string; at: number; seen?: number }[] }
+  const read = (): St => { try { return JSON.parse(b.getRemoteStatus?.() || '{}') as St } catch { return {} } }
+  const [st, setSt] = useState<St>(read)
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => { const t = setInterval(() => { setSt(read()); setNow(Date.now()) }, 1000); return () => clearInterval(t) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const left = st.pairing && st.until ? Math.max(0, Math.round((st.until - now) / 1000)) : 0
+  const fmt = (t: number) => new Intl.DateTimeFormat('ar-u-nu-latn', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(t))
+  return (
+    <>
+      <h2>التحكم من الجوال</h2>
+      <p className="tv-muted">من تطبيق «رفيق المسلم بلس» في جوالك (على شبكة الواي فاي نفسها): غيّر المشهد والمدة والجودة، وأوقف الأذان، وغيّر مدة عدم الاستخدام — دون جهاز التحكم.</p>
+      {st.pairing && st.code ? (
+        <div className="tv-pair-box">
+          <span className="tv-muted">اكتب هذا الرمز في الجوال</span>
+          <b className="tv-pair-code" dir="ltr">{st.code.slice(0, 3)} {st.code.slice(3)}</b>
+          <span className="tv-muted">ينتهي بعد {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</span>
+          <button className="tv-btn" onClick={() => { b.stopPairing?.(); setSt(read()) }}>إلغاء الربط</button>
+        </div>
+      ) : (
+        <button className="tv-choice on" style={{ width: '100%' }} onClick={() => { try { b.startPairing?.() } catch { /* لا شيء */ } setSt(read()) }}>📱 ربط جوال جديد</button>
+      )}
+      <p className="tv-muted">عنوان التلفاز في الشبكة (للإدخال اليدوي إن لم يظهر تلقائيًا): <b dir="ltr">{st.ip || '—'}{st.port ? `:${st.port}` : ''}</b></p>
+      <h2>الأجهزة المرتبطة</h2>
+      {st.devices && st.devices.length ? (
+        <div className="tv-choices" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 1fr))' }}>
+          {st.devices.map((d) => (
+            <button key={d.id} className="tv-choice" onClick={() => { b.removeRemoteDevice?.(d.id); setSt(read()) }}>
+              {d.name} — {d.seen ? `آخر اتصال ${fmt(d.seen)}` : `رُبط ${fmt(d.at)}`} • اضغط للإزالة
+            </button>
+          ))}
+        </div>
+      ) : <p className="tv-muted">لا يوجد جوال مرتبط.</p>}
+      <p className="tv-muted">الأمان: الرمز لا يُرسل عبر الشبكة، وكل أمر بعد الربط موقّع ومؤقّت، والاتصال من الشبكة المنزلية فقط. يمكنك إزالة أي جهاز من هنا.</p>
+    </>
+  )
+}
 
 /** مكتبة المشاهد: معاينة حية للمشهد المحدد بالأسهم، وعرض مشهد واحد أو التنقل بين المفضلة */
 function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSettings>) => void }) {
@@ -451,6 +524,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
     { id: 'prayer', label: '🕌 الصلاة والأذان' },
     { id: 'iqama', label: '⏱ الإقامة' },
     { id: 'scenes', label: '🌌 المشاهد' },
+    ...(b?.startPairing ? [{ id: 'remote' as const, label: '📱 التحكم من الجوال' }] : []),
     { id: 'recite', label: '📖 القراءة' },
     { id: 'voice', label: '🎙 القارئ والصوت' },
     ...(b ? [{ id: 'auto' as const, label: '⚡ التشغيل التلقائي' }] : []),
@@ -470,6 +544,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
           </nav>
           <section className="tv-setup-page">
             {page === 'scenes' && <TvScenesPage draft={draft} set={set} />}
+            {page === 'remote' && <TvRemotePage />}
             {page === 'city' && (
               <>
                 <h2>المدينة</h2>

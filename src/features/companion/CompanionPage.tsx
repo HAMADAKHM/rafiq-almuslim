@@ -1,5 +1,7 @@
 // «رفيقي يذكّرني» (رفيق بلس): كل إعدادات التذكير الذكي في مكان واحد.
-import { useMemo, useState } from 'react'
+import { getRecording } from '../../services/dhikrAudio'
+import { playBlob } from '../../services/tafsirAudio'
+import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { BellRing, BookOpen, Check, Hourglass, Pause, Play, Volume2, VolumeX } from 'lucide-react'
 import { PageHead } from '../../components/Common'
@@ -94,7 +96,7 @@ export function CompanionPage() {
               <h2 id="cmp-adhkar" style={{ margin: 0 }}><BellRing size={18} aria-hidden="true" /> ذكّرني بالذكر</h2>
               <label className="check switch"><input type="checkbox" className="switch-input" role="switch" checked={c.adhkar.enabled} onChange={(e) => set('adhkar', { enabled: e.target.checked })} aria-label="تفعيل تذكير الأذكار الدوري" /></label>
             </div>
-            <p className="small muted">ذكر قصير من السنة كل مدة تختارها، بترتيب متناوب لا يكرر الذكر نفسه، ولا يُعاد عليك ذكر أكملته اليوم.</p>
+            <p className="small muted">ذكر قصير من السنة كل مدة تختارها، بترتيب متناوب لا يكرر الذكر نفسه، ولا يُعاد عليك ذكر أكملته اليوم. لسماع الأذكار بصوت قارئ تملك إذنه: <Link to="/adhkar-audio">تسجيلات الأذكار</Link>.</p>
             {c.adhkar.enabled && (
               <div className="stack" style={{ gap: 10 }}>
                 <div className="field"><span>كل</span>
@@ -278,6 +280,7 @@ export function CompanionDhikrPage() {
   const done = useLive(() => loadDoneToday(settings.location?.tz), ['kv:companion:done'], { date: '', ids: [] as string[] })
   const [count, setCount] = useState(0)
   const [speaking, setSpeaking] = useState(false)
+  const recAudio = useRef<HTMLAudioElement | null>(null)
   if (!found) {
     return (
       <div className="page">
@@ -290,7 +293,15 @@ export function CompanionDhikrPage() {
   const isDone = done.ids.includes(item.id)
   const favKind = COMPANION_GROUPS.find((g) => g.id === group)?.source === 'adhkar' ? 'dhikr' : 'dua'
   const listen = async () => {
-    if (speaking) { await stopSpeaking(); setSpeaking(false); return }
+    if (speaking) { await stopSpeaking(); recAudio.current?.pause(); setSpeaking(false); return }
+    // تسجيل بشري مرخّص أضافه المستخدم لهذا الذكر، وإلا صوت الجهاز
+    const rec = await getRecording(item.id).catch(() => null)
+    if (rec) {
+      setSpeaking(true)
+      await playBlob(rec.blob, recAudio, () => true)
+      setSpeaking(false)
+      return
+    }
     if (!(await voiceAvailable())) { toast('لا يتوفر صوت عربي على هذا الجهاز'); return }
     setSpeaking(true)
     try { await speakArabic(item.text ?? '') } catch { toast('تعذّر تشغيل الصوت') }
@@ -308,7 +319,7 @@ export function CompanionDhikrPage() {
           <button className="btn" onClick={listen} aria-pressed={speaking}><Volume2 size={16} aria-hidden="true" /> {speaking ? 'إيقاف' : 'استمع'}</button>
           <Link className="btn btn-ghost" to="/companion">إعدادات التذكير</Link>
         </div>
-        <p className="small muted">«استمع» يقرأ النص بصوت جهازك العربي (ليس تسجيلًا لقارئ). المصدر مذكور أسفل الذكر.</p>
+        <p className="small muted">«استمع» يشغّل تسجيلًا بشريًا إن أضفته لهذا الذكر من <Link to="/adhkar-audio">تسجيلات الأذكار</Link>، وإلا يقرأ النص بصوت جهازك العربي. المصدر مذكور أسفل الذكر.</p>
       </div>
     </div>
   )

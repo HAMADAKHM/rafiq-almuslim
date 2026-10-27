@@ -156,3 +156,6 @@ button, input, select { font: inherit; }
 .tv-scene-fav { border: 0; background: rgba(0, 0, 0, 0.35); color: #f1e4c0; font: inherit; font-size: 0.95vw; padding: 0.45vw; cursor: pointer; }
 .tv-scene-fav.on { background: rgba(226, 194, 126, 0.25); }
 .tv-scene-fav:focus { outline: 0.2vw solid #e2c27e; }
+.tv-pair-box { display: flex; flex-direction: column; align-items: center; padding: 1.2vw; border-radius: 1vw; background: rgba(0, 0, 0, 0.35); border: 0.15vw solid #e2c27e; }
+.tv-pair-box > * + * { margin-top: 0.6vw; }
+.tv-pair-code { font-size: 5vw; letter-spacing: 0.6vw; color: #f5e7bf; font-family: monospace; }

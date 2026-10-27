@@ -59,10 +59,10 @@ export function SceneCanvas({ scene, playlist, rotateMin, shuffle, quality, clas
       const t = (now - t0) / 1000
       const pr = props.current
       // تنقل تلقائي في القائمة
-      if (!pr.scene && pr.rotateMin > 0 && !incoming && now >= switchAt) {
+      if (!pr.scene && (pr.rotateMin > 0 || switchAt === 0) && !incoming && now >= switchAt) {
         const id = nextScene(pr.playlist, current, pr.shuffle)
         if (id !== current) { incoming = { id, p: createScene(id, w, h), at: now }; back.style.opacity = '1'; front.style.opacity = '0' }
-        switchAt = now + pr.rotateMin * 60_000
+        switchAt = now + Math.max(1, pr.rotateMin) * 60_000
       }
       try { painter.frame(fctx, t) } catch { /* مشهد فشل: يبقى آخر إطار */ }
       if (incoming) {
@@ -93,7 +93,11 @@ export function SceneCanvas({ scene, playlist, rotateMin, shuffle, quality, clas
       painter = createScene(current, w, h)
     }
     window.addEventListener('resize', onResize)
+    // «المشهد التالي» من الجوال: في وضع التنقل ينتقل فورًا
+    const onNext = () => { if (!props.current.scene) switchAt = 0 }
+    window.addEventListener('rafiq-next-scene', onNext)
     return () => {
+      window.removeEventListener('rafiq-next-scene', onNext)
       stopped = true
       cancelAnimationFrame(raf)
       document.removeEventListener('visibilitychange', vis)

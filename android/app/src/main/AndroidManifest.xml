@@ -131,6 +131,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- إيجاد شاشة التلفاز في الشبكة المنزلية (التحكم بالتلفاز) -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!-- الموقع التقريبي يكفي لحساب المواقيت والقبلة؛ يُطلب فقط عند ضغط «استخدم موقعي الحالي» -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />

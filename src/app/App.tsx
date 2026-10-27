@@ -47,6 +47,8 @@ const RamadanPage = page(() => import('../features/ramadan/RamadanPage'), 'Ramad
 const DownloadsPage = page(() => import('../features/plus/DownloadsPage'), 'DownloadsPage')
 const MemoPlanPage = page(() => import('../features/plus/MemoPlanPage'), 'MemoPlanPage')
 const FamilyKhatmaPage = page(() => import('../features/plus/FamilyKhatmaPage'), 'FamilyKhatmaPage')
+const AdhkarAudioPage = page(() => import('../features/adhkaraudio/AdhkarAudioPage'), 'AdhkarAudioPage')
+const TvRemotePage = page(() => import('../features/tvremote/TvRemotePage'), 'TvRemotePage')
 const CompanionPage = page(() => import('../features/companion/CompanionPage'), 'CompanionPage')
 const CompanionDhikrPage = page(() => import('../features/companion/CompanionPage'), 'CompanionDhikrPage')
 const DeceasedPage = page(() => import('../features/deceased/DeceasedPage'), 'DeceasedPage')
@@ -100,6 +102,8 @@ export function AppRoutes() {
         <Route path="plus/memorize" element={<MemoPlanPage />} />
         <Route path="plus/family" element={<FamilyKhatmaPage />} />
         <Route path="companion" element={<CompanionPage />} />
+        <Route path="tv-remote" element={<TvRemotePage />} />
+        <Route path="adhkar-audio" element={<AdhkarAudioPage />} />
         <Route path="companion/dhikr/:id" element={<CompanionDhikrPage />} />
         <Route path="for-the-deceased" element={<DeceasedPage />} />
         <Route path="stories/surah/:surah" element={<StoryPlayerPage />} />

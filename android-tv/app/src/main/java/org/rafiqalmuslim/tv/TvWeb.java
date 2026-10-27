@@ -230,6 +230,48 @@ final class TvWeb {
             } catch (Exception e) { return "{}"; }
         }
 
+        // ---------- التحكم من الجوال ----------
+        /** يبدأ الربط ويعيد {code, until, ip, port} */
+        @JavascriptInterface
+        public String startPairing() {
+            try {
+                RemoteServer rs = RemoteServer.get(ctx);
+                rs.start();
+                String code = rs.core.startPairing(System.currentTimeMillis());
+                return new JSONObject().put("code", code).put("until", rs.core.pairingUntil()).put("ip", RemoteServer.localIp()).put("port", rs.port()).toString();
+            } catch (Exception e) { return "{}"; }
+        }
+
+        @JavascriptInterface
+        public void stopPairing() { RemoteServer.get(ctx).core.stopPairing(); }
+
+        /** {pairing, code, until, ip, port, devices:[{id,name,at,seen}]} */
+        @JavascriptInterface
+        public String getRemoteStatus() {
+            try {
+                RemoteServer rs = RemoteServer.get(ctx);
+                long now = System.currentTimeMillis();
+                return new JSONObject().put("pairing", rs.core.pairingOpen(now)).put("code", rs.core.currentCode(now) == null ? "" : rs.core.currentCode(now))
+                    .put("until", rs.core.pairingUntil()).put("ip", RemoteServer.localIp()).put("port", rs.port()).put("devices", rs.core.deviceList()).toString();
+            } catch (Exception e) { return "{}"; }
+        }
+
+        @JavascriptInterface
+        public void removeRemoteDevice(String id) { RemoteServer.get(ctx).core.removeDevice(id); }
+
+        /** الشاشة تحفظ هنا إعداداتها الحالية ليقرأها الجوال */
+        @JavascriptInterface
+        public void setRemoteSnapshot(String json) { TvService.prefs(ctx).edit().putString(RemoteServer.KEY_SNAPSHOT, json == null ? "{}" : json).apply(); }
+
+        /** تعديلات وصلت من الجوال ولم تطبقها الشاشة بعد (تُقرأ مرة واحدة) */
+        @JavascriptInterface
+        public String takeRemotePatch() {
+            SharedPreferences p = TvService.prefs(ctx);
+            String s = p.getString(RemoteServer.KEY_PATCH, "");
+            p.edit().remove(RemoteServer.KEY_PATCH).apply();
+            return s == null ? "" : s;
+        }
+
         /** إلغاء الإيقاف المؤقت للفتح التلقائي */
         @JavascriptInterface
         public void clearSnooze() { TvService.clearSnooze(ctx); TvService.log(ctx, "snooze_cleared"); }

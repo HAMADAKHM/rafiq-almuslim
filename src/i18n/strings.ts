@@ -32,6 +32,7 @@ const STRINGS = {
   forDeceased: { ar: 'دعاء لفقيدي', en: 'For the Departed' },
   plusFamily: { ar: 'ختمة العائلة', en: 'Family Khatma' },
   companion: { ar: 'رفيقي يذكّرني', en: 'My Companion Reminds Me' },
+  tvRemote: { ar: 'التحكم بالتلفاز', en: 'TV Remote' },
   plusDownloads: { ar: 'تنزيل الأجزاء والمصحف', en: 'Downloads' },
   plusReminders: { ar: 'تذكيراتي الخاصة', en: 'My Reminders' },
   plusInsights: { ar: 'إحصاءاتي', en: 'My Insights' },

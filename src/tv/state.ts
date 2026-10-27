@@ -61,6 +61,13 @@ export function loadTv(): TvSettings {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) || 'null') as Partial<TvSettings> | null
     if (!raw) return DEFAULT_TV
+    return normalizeTv(raw)
+  } catch { return DEFAULT_TV }
+}
+
+/** دمج آمن مع القيم الافتراضية (للتخزين ولأوامر الجوال) */
+export function normalizeTv(raw: Partial<TvSettings>): TvSettings {
+  try {
     const playlist = Array.isArray(raw.playlist) ? raw.playlist.filter((x): x is SceneId => SCENES.some((sc) => sc.id === x)) : []
     const scene = raw.scene === 'rotate' || raw.scene === 'classic' || SCENES.some((sc) => sc.id === raw.scene) ? raw.scene! : DEFAULT_TV.scene
     return { ...DEFAULT_TV, ...raw, scene, playlist, prayer: { ...DEFAULT_TV.prayer, ...raw.prayer, adjustments: { ...DEFAULT_TV.prayer.adjustments, ...raw.prayer?.adjustments } }, iqama: { ...DEFAULT_TV.iqama, ...raw.iqama } }
