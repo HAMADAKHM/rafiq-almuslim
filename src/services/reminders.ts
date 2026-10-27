@@ -7,8 +7,9 @@ import type { PrayerKey, Settings } from '../state/settings'
 import { addDays, dateParts, dayKey } from '../lib/dates'
 import { toHijri, occasionsFor } from './calendar'
 import { plusActive } from '../billing/active'
+import { amountText, companionPool, dhikrBody, intervalId, intervalMinutes, pickForSlot, positionRoute, positionText, prayerEnds, PRAYER_END_NOTE, travelActive, type QuranPosition } from './companion'
 
-export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom' | 'ramadan' | 'fasting'
+export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end'
 
 export interface Reminder {
   /** معرّف رقمي ثابت لنفس التذكير في نفس اليوم (يمنع التكرار ويسمح بالاستبدال) */
@@ -24,14 +25,31 @@ export interface Reminder {
   /** قناة Android وصوت الإشعار (يُحددان عند الجدولة على الهاتف بحسب صوت الأذان المختار) */
   channelId?: string
   sound?: string
+  /** أزرار الإشعار (Android/iOS): 'dhikr' افتح/تمّ، و'quran' افتح/ذكّرني لاحقًا */
+  actions?: 'dhikr' | 'quran'
+  /** false = إشعار مكتوب بلا صوت */
+  silent?: boolean
+  /** معرّف الذكر في التذكير الدوري */
+  itemId?: string
 }
+
+/** معلومات من خارج الإعدادات تُعرض في الإشعارات (تُقرأ من الجهاز قبل الجدولة) */
+export interface ScheduleContext {
+  /** آخر موضع قراءة فعلية (أو آخر موضع مفتوح إن لم يوجد) */
+  position?: QuranPosition | null
+  /** الأذكار التي أكملها المستخدم اليوم من التذكير الدوري: لا تُعاد عليه في اليوم نفسه */
+  doneToday?: { date: string; ids: string[] } | null
+}
+
+/** التذكير الدوري يغطي 48 ساعة فقط ويُعاد عند كل فتح؛ والتذكيرات الأخرى لها الأولوية في حد الإشعارات */
+export const INTERVAL_HORIZON_MS = 48 * 3600_000
 
 /** حد iOS للإشعارات المحلية المجدولة هو 64؛ نترك هامشًا */
 export const MAX_SCHEDULED = 60
 /** أقصى عدد للتذكيرات الخاصة (رفيق بلس) */
 export const MAX_CUSTOM = 10
 
-const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom' | 'ramadan' | 'fasting'>, { title: string; body: string }[]> = {
+const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end'>, { title: string; body: string }[]> = {
   morning: [
     { title: 'حان وقت أذكار الصباح', body: 'دقائق قليلة تبدأ بها يومك' },
     { title: 'أذكار الصباح', body: 'أذكارك بانتظارك في رفيق المسلم' },
@@ -104,7 +122,7 @@ export function inQuietHours(d: Date, tz: string, quiet: Settings['notifications
   return s <= e ? t >= s && t < e : t >= s || t < e
 }
 
-const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12, ramadan: 13, fasting: 14 }
+const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12, ramadan: 13, fasting: 14, 'dhikr-interval': 15, 'quran-time': 16, 'prayer-end': 17 }
 const PRAYER_CODE: Record<PrayerKey, number> = { fajr: 1, dhuhr: 2, asr: 3, maghrib: 4, isha: 5 }
 
 function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, slot = 0): number {
@@ -115,23 +133,28 @@ function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, sl
 const ROUTES: Record<ReminderKind, string> = {
   prayer: '/prayer', 'prayer-before': '/prayer', morning: '/adhkar-alert/morning', evening: '/adhkar-alert/evening', sleep: '/adhkar-alert/sleep',
   ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress', custom: '/', ramadan: '/ramadan', fasting: '/calendar',
+  'dhikr-interval': '/companion', 'quran-time': '/quran', 'prayer-end': '/prayer',
 }
 
 /**
  * يبني جدول التذكيرات من `from` ولمدة `days` يومًا، مرتبًا زمنيًا، بلا تكرار، وبحد أقصى MAX_SCHEDULED.
  * التذكيرات التي مضى وقتها تُستبعد.
  */
-export function buildSchedule(settings: Settings, from: Date, days = 7): Reminder[] {
+export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: ScheduleContext = {}): Reminder[] {
   const n = settings.notifications
   const loc = settings.location
   if (!n.enabled || !loc) return []
   const out = new Map<number, Reminder>()
   const add = (r: Reminder) => {
     if (r.at.getTime() <= from.getTime() - 60_000) return
-    if (r.kind !== 'prayer' && r.kind !== 'prayer-before' && inQuietHours(r.at, loc.tz, n.quiet)) return
+    if (r.kind !== 'prayer' && r.kind !== 'prayer-before' && r.kind !== 'prayer-end' && inQuietHours(r.at, loc.tz, n.quiet)) return
     out.set(r.id, r)
   }
   const place = loc.nameAr ?? loc.name
+  const intervals: Reminder[] = []
+  const comp = settings.companion
+  const plus = plusActive()
+  const pool = plus && comp?.adhkar.enabled && !n.reduce ? companionPool(comp.adhkar.groups) : []
 
   for (let i = 0; i < days; i++) {
     const day = dateParts(addDays(from, i), loc.tz)
@@ -187,6 +210,49 @@ export function buildSchedule(settings: Settings, from: Date, days = 7): Reminde
         if (msg && /^\d{2}:\d{2}$/.test(f.time)) add({ id: makeId(day, 'fasting'), at: atLocalTime(day, f.time, loc.tz), kind: 'fasting', title: msg.title, body: msg.body, route: ROUTES.fasting })
       }
     }
+    // رفيق بلس — «رفيقي يذكّرني»
+    if (plus && comp) {
+      const weekday = new Date(Date.UTC(day.y, day.m - 1, day.d)).getUTCDay()
+      const today = dayKey(atLocalTime(day, '12:00', loc.tz), loc.tz)
+      // قرب خروج وقت الصلاة
+      const pe = comp.prayerEnd
+      if (pe.enabled && pe.minutesBefore > 0 && !n.reduce) {
+        const nd = dateParts(addDays(atLocalTime(day, '12:00', loc.tz), 1), loc.tz)
+        const ends = prayerEnds(times, prayerTimesFor(loc, nd, settings.prayer).fajr)
+        for (const p of Object.keys(PRAYER_CODE) as PrayerKey[]) {
+          if (!pe.perPrayer[p]) continue
+          const at = new Date(ends[p].getTime() - pe.minutesBefore * 60_000)
+          // لا معنى للتذكير قبل دخول الوقت نفسه
+          if (at.getTime() <= times[p].getTime()) continue
+          add({ id: makeId(day, 'prayer-end', PRAYER_CODE[p]), at, kind: 'prayer-end', prayer: p, title: `اقترب خروج وقت صلاة ${PRAYER_LABELS[p]}`, body: `بقي ${pe.minutesBefore} دقيقة تقريبًا — ${PRAYER_END_NOTE[p]} (بحسب طريقة الحساب)`, route: ROUTES['prayer-end'] })
+        }
+      }
+      // موعدي مع القرآن
+      const q = comp.quran
+      if (q.enabled && q.days.includes(weekday)) {
+        q.times.slice(0, 4).forEach((t, slot) => {
+          if (!/^\d{2}:\d{2}$/.test(t)) return
+          if (travelActive(comp.travel, atLocalTime(day, t, loc.tz))) return
+          add({ id: makeId(day, 'quran-time', slot), at: atLocalTime(day, t, loc.tz), kind: 'quran-time', title: 'حان موعدك مع القرآن', body: `${positionText(ctx.position)} — ${amountText(q.amount)}`, route: positionRoute(ctx.position), actions: 'quran', silent: !q.sound })
+        })
+      }
+      // الذكر الدوري: داخل ساعات المستخدم وأيامه، خارج فترة الإيقاف المؤقت، ولمدة 48 ساعة
+      const a = comp.adhkar
+      if (pool.length && a.days.includes(weekday)) {
+        const done = new Set(ctx.doneToday && ctx.doneToday.date === today ? ctx.doneToday.ids : [])
+        intervalMinutes(a.start, a.end, a.interval).forEach((mins, slot) => {
+          const at = atLocalTime(day, `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`, loc.tz)
+          if (at.getTime() <= from.getTime() || at.getTime() > from.getTime() + INTERVAL_HORIZON_MS) return
+          if (a.pausedUntil && at.getTime() < a.pausedUntil) return
+          if (travelActive(comp.travel, at)) return
+          if (inQuietHours(at, loc.tz, n.quiet)) return
+          const seq = Math.floor(at.getTime() / 60_000 / Math.max(1, a.interval))
+          const p = pickForSlot(pool, seq, done)
+          if (!p) return
+          intervals.push({ id: intervalId(day, slot), at, kind: 'dhikr-interval', title: 'رفيقي يذكّرني', body: dhikrBody(p.item), route: `/companion/dhikr/${p.item.id}`, actions: 'dhikr', silent: !a.sound, itemId: p.item.id })
+        })
+      }
+    }
     // رفيق بلس: التذكيرات الخاصة (حتى 10)، في أيامها المختارة فقط، ومع اشتراك ساري فقط
     if (plusActive() && !n.reduce) {
       const weekday = new Date(Date.UTC(day.y, day.m - 1, day.d)).getUTCDay()
@@ -196,7 +262,15 @@ export function buildSchedule(settings: Settings, from: Date, days = 7): Reminde
       })
     }
   }
-  return [...out.values()].sort((a, b) => a.at.getTime() - b.at.getTime()).slice(0, MAX_SCHEDULED)
+  const byTime = (a: Reminder, b: Reminder) => a.at.getTime() - b.at.getTime()
+  const base = [...out.values()].sort(byTime)
+  if (!intervals.length) return base.slice(0, MAX_SCHEDULED)
+  // الأولوية لتذكيرات الـ48 ساعة القادمة (الصلاة وغيرها)، ثم الذكر الدوري، ثم ما بعدها من الأيام
+  const horizon = from.getTime() + INTERVAL_HORIZON_MS
+  const near = base.filter((r) => r.at.getTime() <= horizon).slice(0, MAX_SCHEDULED)
+  const ivs = intervals.sort(byTime).slice(0, Math.max(0, MAX_SCHEDULED - near.length))
+  const later = base.filter((r) => r.at.getTime() > horizon).slice(0, Math.max(0, MAX_SCHEDULED - near.length - ivs.length))
+  return [...near, ...ivs, ...later].sort(byTime)
 }
 
 /** التذكيرات المستحقة الآن (خلال آخر 90 ثانية) — للويب عندما يكون التطبيق مفتوحًا */

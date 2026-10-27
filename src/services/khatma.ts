@@ -190,3 +190,16 @@ export function activePlan(state: KhatmaState): KhatmaPlan | undefined {
 export function completedCount(state: KhatmaState): number {
   return state.legacyCompleted + state.plans.filter((p) => p.status === 'done').length
 }
+
+/**
+ * الأيام المتبقية تقديريًا بحسب معدل القراءة الفعلي المسجَّل في الخطة خلال آخر 14 يومًا
+ * (صفحات مسجلة ÷ 14). null إن لم تُسجَّل قراءة فيها — لا تقدير بلا بيانات.
+ */
+export function actualPaceEta(plan: KhatmaPlan, today: string, windowDays = 14): { pagesPerDay: number; days: number } | null {
+  const since = shiftDayKey(today, -(windowDays - 1))
+  const pages = plan.log.filter((l) => l.date >= since && l.date <= today).reduce((n, l) => n + Math.max(0, l.to - l.from + 1), 0)
+  if (!pages) return null
+  const remaining = Math.max(0, TOTAL_PAGES - plan.nextPage + 1)
+  const rate = pages / windowDays
+  return { pagesPerDay: Math.round(rate * 10) / 10, days: Math.ceil(remaining / rate) }
+}

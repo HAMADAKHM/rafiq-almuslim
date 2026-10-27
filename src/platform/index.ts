@@ -4,6 +4,7 @@
 // الصفحات لا تعرف على أي منصة تعمل.
 import { Capacitor } from '@capacitor/core'
 import type { Reminder } from '../services/reminders'
+import { SNOOZE_ID_BASE } from '../services/companion'
 
 export const isNative = () => Capacitor.isNativePlatform()
 export const platformName = () => Capacitor.getPlatform() as 'web' | 'android' | 'ios'
@@ -83,16 +84,60 @@ export async function showNotification(title: string, body: string, tag?: string
 export async function replaceScheduledNotifications(list: Reminder[]): Promise<number> {
   if (!isNative()) return 0
   const { LocalNotifications } = await import('@capacitor/local-notifications')
+  await registerNotificationActions()
   const pending = await LocalNotifications.getPending()
-  if (pending.notifications.length) await LocalNotifications.cancel({ notifications: pending.notifications.map((n) => ({ id: n.id })) })
+  // «ذكّرني لاحقًا» يبقى كما هو؛ كل ما عداه يُستبدل بالجدول الجديد (لا تكرار ولا مواعيد قديمة)
+  const stale = pending.notifications.filter((n) => n.id < SNOOZE_ID_BASE)
+  if (stale.length) await LocalNotifications.cancel({ notifications: stale.map((n) => ({ id: n.id })) })
   if (!list.length) return 0
+  const android = platformName() === 'android'
   await LocalNotifications.schedule({
     notifications: list.map((r) => ({
-      id: r.id, title: r.title, body: r.body, schedule: { at: r.at, allowWhileIdle: true }, extra: { route: r.route },
-      ...(r.channelId ? { channelId: r.channelId } : {}), ...(r.sound ? { sound: r.sound } : {}),
+      id: r.id, title: r.title, body: r.body, schedule: { at: r.at, allowWhileIdle: true },
+      extra: { route: r.route, kind: r.kind, ...(r.itemId ? { itemId: r.itemId } : {}) },
+      ...(r.actions ? { actionTypeId: ACTION_TYPES[r.actions] } : {}),
+      ...(r.channelId ? { channelId: r.channelId } : android && r.actions ? { channelId: r.silent ? COMPANION_SILENT_CHANNEL : COMPANION_CHANNEL } : {}),
+      ...(r.sound ? { sound: r.sound } : {}),
+      ...(r.body.length > 60 ? { largeBody: r.body } : {}),
     })),
   })
   return list.length
+}
+
+export const COMPANION_CHANNEL = 'rafiq-companion-v1'
+export const COMPANION_SILENT_CHANNEL = 'rafiq-companion-silent-v1'
+const ACTION_TYPES = { dhikr: 'RAFIQ_DHIKR', quran: 'RAFIQ_QURAN' } as const
+let actionsRegistered = false
+
+/** أزرار الإشعارات وقناتا «رفيقي يذكّرني» (بصوت الإشعار الافتراضي في النظام، وبلا صوت) */
+async function registerNotificationActions() {
+  if (actionsRegistered) return
+  const { LocalNotifications } = await import('@capacitor/local-notifications')
+  await LocalNotifications.registerActionTypes({
+    types: [
+      { id: ACTION_TYPES.dhikr, actions: [{ id: 'open', title: 'افتح الذكر', foreground: true }, { id: 'done', title: 'تمّ' }] },
+      { id: ACTION_TYPES.quran, actions: [{ id: 'open', title: 'افتح المصحف', foreground: true }, { id: 'snooze', title: 'ذكّرني لاحقًا' }] },
+    ],
+  }).catch(() => {})
+  if (platformName() === 'android') {
+    // بلا حقل sound تستخدم القناة نغمة الإشعار الافتراضية التي اختارها المستخدم في النظام
+    await LocalNotifications.createChannel({ id: COMPANION_CHANNEL, name: 'رفيقي يذكّرني', description: 'تذكير الأذكار وموعد القرآن بنغمة الإشعار', importance: 4, visibility: 1, vibration: true }).catch(() => {})
+    await LocalNotifications.createChannel({ id: COMPANION_SILENT_CHANNEL, name: 'رفيقي يذكّرني — بلا صوت', description: 'إشعار مكتوب فقط', importance: 2, visibility: 1, vibration: false }).catch(() => {})
+  }
+  actionsRegistered = true
+}
+
+/** جدولة إشعار «ذكّرني لاحقًا» منفصل لا تلغيه إعادة الجدولة */
+export async function scheduleSnooze(r: { id: number; at: Date; title: string; body: string; route: string; silent?: boolean }) {
+  if (!isNative()) return
+  const { LocalNotifications } = await import('@capacitor/local-notifications')
+  await registerNotificationActions()
+  await LocalNotifications.schedule({
+    notifications: [{
+      id: r.id, title: r.title, body: r.body, schedule: { at: r.at, allowWhileIdle: true }, extra: { route: r.route, kind: 'quran-time' }, actionTypeId: ACTION_TYPES.quran,
+      ...(platformName() === 'android' ? { channelId: r.silent ? COMPANION_SILENT_CHANNEL : COMPANION_CHANNEL } : {}),
+    }],
+  })
 }
 
 /** إنشاء قنوات الإشعارات (Android فقط). إنشاء قناة موجودة لا يغيّرها، لذا تحمل المعرفات رقم إصدار. */
@@ -123,12 +168,14 @@ export async function requestExactAlarm(): Promise<'granted' | 'denied' | 'unsup
 }
 
 /** فتح الصفحة المناسبة عند الضغط على إشعار على الهاتف */
-export async function onNotificationTap(cb: (route: string) => void): Promise<() => void> {
+export interface NotificationTap { route?: string; kind?: string; itemId?: string; actionId: string; title: string; body: string }
+
+export async function onNotificationTap(cb: (route: string, tap: NotificationTap) => void): Promise<() => void> {
   if (!isNative()) return () => {}
   const { LocalNotifications } = await import('@capacitor/local-notifications')
   const h = await LocalNotifications.addListener('localNotificationActionPerformed', (e) => {
-    const route = (e.notification.extra as { route?: string } | undefined)?.route
-    if (route) cb(route)
+    const extra = (e.notification.extra ?? {}) as { route?: string; kind?: string; itemId?: string }
+    cb(extra.route ?? '', { ...extra, actionId: e.actionId, title: e.notification.title ?? '', body: e.notification.body ?? '' })
   })
   return () => { h.remove() }
 }

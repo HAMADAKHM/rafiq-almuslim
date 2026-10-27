@@ -386,3 +386,12 @@ span.aa-icon { border: 0; background: none; }
 .dl-progress { display: grid; gap: 0.3rem; min-width: 220px; flex: 1; }
 .family-member { display: grid; gap: 0.35rem; padding: 0.5rem 0; border-top: 1px solid var(--border); }
 .film-check input { accent-color: #C9A24A; width: 1rem; height: 1rem; }
+
+/* رفيقي يذكّرني */
+.card-inset { background: var(--surface-2, var(--bg)); border: 1px solid var(--border); border-radius: 12px; padding: 0.6rem 0.75rem; }
+ul.plain { list-style: none; padding: 0; margin: 0; }
+.companion-card { display: flex; flex-direction: column; gap: 0.6rem; }
+.companion-rows { display: flex; flex-direction: column; gap: 0.45rem; }
+.companion-rows li { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.95rem; line-height: 1.6; }
+.companion-rows li > svg { flex: none; margin-top: 0.3rem; color: var(--primary); }
+.companion-goal .progress { margin-top: 0.3rem; }

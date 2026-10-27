@@ -1,4 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { usePlus } from '../../billing/PlusContext'
+import { DailyCompanionCard } from '../companion/DailyCompanionCard'
 import { Link } from 'react-router-dom'
 import {
   BookOpen, Sparkles, MapPin, CircleCheck, Play, Image, SlidersHorizontal, ArrowUp, ArrowDown, Library,
@@ -62,6 +64,7 @@ function localHour(tz?: string, now = new Date()): number {
 export function HomePage() {
   useDocumentTitle('')
   const { settings, update } = useSettings()
+  const { entitled: plusEntitled } = usePlus()
   const { data } = useQuran()
   const now = useNow(1000)
   const loc = settings.location
@@ -96,6 +99,7 @@ export function HomePage() {
   const resumeTo = last ? (settings.readerMode === 'mushaf' && last.page ? `/mushaf/${last.page}` : `/quran/${last.surah}?ayah=${last.ayah}`) : '/quran/1'
 
   const cards: Record<HomeCardId, ReactNode> = {
+    companion: <DailyCompanionCard />,
     suggest: (
       <Link to={suggestion.to} className="list-card suggest-card" aria-label={`اقتراح اليوم: ${suggestion.title}`}>
         <span className="icon-chip"><Lightbulb size={22} aria-hidden="true" /></span>
@@ -205,7 +209,8 @@ export function HomePage() {
     ),
   }
 
-  const visible = settings.homeCards.filter((c) => c.visible)
+  // «رفيقي اليومي» من مزايا بلس: لا خانة فارغة ولا قفل في الرئيسية دون اشتراك
+  const visible = settings.homeCards.filter((c) => c.visible && (c.id !== 'companion' || plusEntitled))
   const move = (i: number, d: -1 | 1) => {
     const list = [...settings.homeCards]
     const j = i + d

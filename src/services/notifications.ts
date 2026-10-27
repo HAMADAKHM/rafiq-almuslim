@@ -5,6 +5,7 @@ import { ensureNotificationChannels, isNative, platformName, replaceScheduledNot
 import { channelsFor, loadDeviceNative, withAdhanSounds } from './adhan'
 import { buildSchedule, dueReminders } from './reminders'
 import type { Settings } from '../state/settings'
+import { loadDoneToday, loadPosition } from './companionStore'
 
 const fired = new Set<number>()
 
@@ -21,7 +22,8 @@ export async function rescheduleNative(settings: Settings): Promise<number> {
   const platform = platformName() === 'ios' ? 'ios' : 'android'
   if (platform === 'android') await ensureNotificationChannels(channelsFor(settings))
   const device = await loadDeviceNative().catch(() => null)
-  return replaceScheduledNotifications(withAdhanSounds(buildSchedule(settings, new Date(), 7), settings, platform, device))
+  const [position, doneToday] = await Promise.all([loadPosition().catch(() => null), loadDoneToday(settings.location?.tz).catch(() => null)])
+  return replaceScheduledNotifications(withAdhanSounds(buildSchedule(settings, new Date(), 7, { position, doneToday }), settings, platform, device))
 }
 
 export function startReminderLoop(getSettings: () => Settings): () => void {

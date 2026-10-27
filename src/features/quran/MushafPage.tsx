@@ -12,6 +12,7 @@ import type { ReaderMode } from '../../state/settings'
 import { ReaderChrome } from './reader/ReaderChrome'
 import { AyahNum, SurahTitle } from './reader/Ornaments'
 import { ReaderSheets, useReaderSheets } from './reader/ReaderSheets'
+import { useActualReading } from './useActualReading'
 
 /**
  * وضع صفحات المصحف: صفحة كاملة من مصحف المدينة (604 صفحات) بترتيبها، مع الانتقال بين الصفحات.
@@ -39,6 +40,10 @@ export function MushafPage() {
   const pinch = useRef<{ d: number; z: number } | null>(null)
   const marks = useLive(() => bookmarks.all(), ['bookmarks'], [])
   useDocumentTitle(`المصحف — الصفحة ${page}`)
+  // آخر قراءة فعلية: الآية المطلوبة إن كانت في هذه الصفحة، وإلا أول آية في الصفحة
+  const firstOnPage = data ? pageAyahs(data.meta, page)[0] : undefined
+  const onPage = data && hs && ha && ayahMeta(data.meta, hs, ha).page === page
+  useActualReading(data, onPage ? hs : firstOnPage?.surah ?? 0, onPage ? ha : firstOnPage?.from ?? 0)
 
   const go = (n: number) => { if (n >= 1 && n <= 604) nav(`/mushaf/${n}`) }
 

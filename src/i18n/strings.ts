@@ -31,6 +31,7 @@ const STRINGS = {
   plusMemorize: { ar: 'خطة الحفظ الذكية', en: 'Memorization Plan' },
   forDeceased: { ar: 'دعاء لفقيدي', en: 'For the Departed' },
   plusFamily: { ar: 'ختمة العائلة', en: 'Family Khatma' },
+  companion: { ar: 'رفيقي يذكّرني', en: 'My Companion Reminds Me' },
   plusDownloads: { ar: 'تنزيل الأجزاء والمصحف', en: 'Downloads' },
   plusReminders: { ar: 'تذكيراتي الخاصة', en: 'My Reminders' },
   plusInsights: { ar: 'إحصاءاتي', en: 'My Insights' },

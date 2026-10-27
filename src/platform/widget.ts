@@ -8,7 +8,30 @@ import { dayKey } from '../lib/dates'
 import { toArabicDigits } from '../lib/arabic'
 import type { Settings } from '../state/settings'
 
-const PrayerWidget = registerPlugin<{ update(o: { data: string }): Promise<void>; updateDaily(o: { data: string }): Promise<void>; updatePlus(o: { data: string }): Promise<void> }>('PrayerWidget')
+const PrayerWidget = registerPlugin<{
+  update(o: { data: string }): Promise<void>; updateDaily(o: { data: string }): Promise<void>; updatePlus(o: { data: string }): Promise<void>
+  updateResume(o: { data: string }): Promise<void>; consumeRoute(): Promise<{ route?: string | null }>
+}>('PrayerWidget')
+
+/** ودجت «أكمل من حيث وصلت» (رفيق بلس): آخر قراءة فعلية وتقدّم الختمة */
+export async function updateResumeWidget(settings: Settings, entitled: boolean): Promise<void> {
+  if (platformName() !== 'android') return
+  const [{ loadPosition }, { buildResumeWidgetData }, k] = await Promise.all([import('../services/companionStore'), import('../services/companion'), loadKhatmas()])
+  const plan = activePlan(k)
+  const pos = entitled ? await loadPosition() : null
+  await PrayerWidget.updateResume({ data: JSON.stringify(buildResumeWidgetData(pos, plan ? progress(plan) * 100 : null, entitled, settings.location?.tz)) })
+}
+
+/** المسار الذي فتحه الضغط على ودجت (مرة واحدة) */
+export async function consumeWidgetRoute(): Promise<string | null> {
+  if (platformName() !== 'android') return null
+  try {
+    const r = await PrayerWidget.consumeRoute()
+    return r.route && r.route.startsWith('/') && !r.route.startsWith('//') ? r.route : null
+  } catch {
+    return null
+  }
+}
 
 export async function updatePrayerWidget(settings: Settings): Promise<void> {
   if (platformName() !== 'android') return

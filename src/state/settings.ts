@@ -58,7 +58,7 @@ export const QURAN_FONTS: { id: QuranFont; label: string; family: string; note: 
   { id: 'scheherazade', label: 'شهرزاد', family: '"Scheherazade New", "Amiri Quran", serif', note: 'نسخي واضح بحروف كبيرة' },
   { id: 'noto-naskh', label: 'نسخ حديث', family: '"Noto Naskh Arabic", "Amiri Quran", serif', note: 'خط حديث بسيط' },
 ]
-export type HomeCardId = 'continue' | 'suggest' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
+export type HomeCardId = 'companion' | 'continue' | 'suggest' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
 
 export interface Settings {
   /** gold: أسود وذهبي (مبني على الوضع الداكن مع لون ذهبي بدل الأخضر) */
@@ -107,6 +107,51 @@ export interface Settings {
   ramadan: { suhoorMinutes: number; iftarMinutes: number; imsakMinutes: number }
   /** رفيق بلس — تذكيرات الصيام (الليلة السابقة): الأيام البيض، والاثنين والخميس، وعرفة، وعاشوراء، وست شوال */
   fasting: { enabled: boolean; time: string; beed: boolean; monThu: boolean; arafah: boolean; ashura: boolean; shawwal: boolean }
+  /** أقسام المكتبة التي أخفاها المستخدم من القائمة (تبقى متاحة في البحث وبالرابط المباشر) */
+  hiddenCats: string[]
+  /** رفيق بلس — «رفيقي يذكّرني»: الذكر الدوري، و«موعدي مع القرآن»، وقرب خروج وقت الصلاة (تُجدول فقط مع اشتراك ساري) */
+  companion: CompanionSettings
+}
+
+export interface CompanionSettings {
+  adhkar: {
+    enabled: boolean
+    /** الفترة بالدقائق */
+    interval: number
+    /** ساعات التذكير خلال اليوم HH:MM */
+    start: string
+    end: string
+    /** أيام الأسبوع: 0 الأحد … 6 السبت */
+    days: number[]
+    /** مجموعات الأذكار المختارة (COMPANION_GROUPS) */
+    groups: string[]
+    /** false = إشعار مكتوب بلا صوت (الوضع الهادئ) */
+    sound: boolean
+    /** إيقاف مؤقت حتى هذه اللحظة (ms) أو null */
+    pausedUntil: number | null
+  }
+  quran: {
+    enabled: boolean
+    /** مواعيد يومية HH:MM (حتى 4) */
+    times: string[]
+    days: number[]
+    amount: { unit: 'pages' | 'ayahs' | 'juz'; value: number }
+    /** دقائق «ذكّرني لاحقًا» */
+    snoozeMinutes: number
+    sound: boolean
+  }
+  /** بطاقة «رفيقي اليومي» في الرئيسية: العناصر الظاهرة */
+  card: { wird: boolean; position: boolean; dhikr: boolean; goal: boolean }
+  /** «هدف صغير» يومي: صفحات قرآن (قراءة فعلية) وأذكار مكتملة */
+  goal: { pages: number; adhkar: number }
+  /** «وضع السفر»: إيقاف الذكر الدوري وموعد القرآن مؤقتًا مع بقاء تذكيرات الصلاة (يُفعّل يدويًا) */
+  travel: { enabled: boolean; until: number | null }
+  prayerEnd: {
+    enabled: boolean
+    /** قبل خروج الوقت بكم دقيقة */
+    minutesBefore: number
+    perPrayer: Record<PrayerKey, boolean>
+  }
 }
 
 export interface CustomReminder {
@@ -130,6 +175,7 @@ export const DEFAULT_DAILY_ADHKAR = ['morning', 'evening', 'after-prayer', 'slee
 export const MAX_DAILY_ADHKAR = 6
 
 export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
+  companion: 'رفيقي اليومي (بلس)',
   suggest: 'اقتراح اليوم',
   continue: 'أكمل قراءتك',
   khatma: 'ورد القرآن',
@@ -145,7 +191,7 @@ export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
 export const LOCKED_HOME_CARDS: HomeCardId[] = ['dedication']
 
 // الترتيب الافتراضي على هيئة التصميم المعتمد: آية اليوم، ثم الورد والأذكار جنبًا إلى جنب (كل البطاقات ظاهرة)
-export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['ayah', 'khatma', 'adhkar', 'continue', 'suggest', 'summary', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
+export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['companion', 'ayah', 'khatma', 'adhkar', 'continue', 'suggest', 'summary', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
 
 export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   enabled: false,
@@ -201,6 +247,15 @@ export const DEFAULT_SETTINGS: Settings = {
   ramadan: { suhoorMinutes: 45, iftarMinutes: 10, imsakMinutes: 10 },
   fasting: { enabled: false, time: '21:00', beed: true, monThu: false, arafah: true, ashura: true, shawwal: true },
   dailyAdhkar: DEFAULT_DAILY_ADHKAR,
+  hiddenCats: [],
+  companion: {
+    adhkar: { enabled: false, interval: 60, start: '09:00', end: '21:00', days: [0, 1, 2, 3, 4, 5, 6], groups: ['salawat', 'istighfar', 'sunnah'], sound: true, pausedUntil: null },
+    quran: { enabled: false, times: ['21:00'], days: [0, 1, 2, 3, 4, 5, 6], amount: { unit: 'pages', value: 4 }, snoozeMinutes: 15, sound: true },
+    prayerEnd: { enabled: false, minutesBefore: 20, perPrayer: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true } },
+    card: { wird: true, position: true, dhikr: true, goal: true },
+    goal: { pages: 1, adhkar: 3 },
+    travel: { enabled: false, until: null },
+  },
 }
 
 /** يضمن أن قائمة بطاقات الرئيسية تحتوي كل البطاقات المعروفة مرة واحدة، وأن البطاقات المقفلة ظاهرة */
@@ -213,6 +268,8 @@ export function normalizeHomeCards(cards: Settings['homeCards'] | undefined): Se
     seen.add(c.id)
     out.push({ id: c.id, visible: LOCKED_HOME_CARDS.includes(c.id) ? true : c.visible })
   }
+  // بطاقة «رفيقي اليومي» الجديدة تظهر في الأعلى لمن لم تكن لديه، دون تغيير ترتيب بطاقاته الأخرى
+  if (!seen.has('companion') && cards?.length) { out.unshift({ id: 'companion', visible: true }); seen.add('companion') }
   for (const c of DEFAULT_HOME_CARDS) if (!seen.has(c.id)) out.push(c)
   return out
 }
@@ -232,9 +289,22 @@ export function mergeSettings(saved: Partial<Settings> | null | undefined): Sett
     },
     ramadan: { ...DEFAULT_SETTINGS.ramadan, ...s.ramadan },
     fasting: { ...DEFAULT_SETTINGS.fasting, ...s.fasting },
+    companion: mergeCompanion(s.companion),
     homeCards: normalizeHomeCards(s.homeCards),
     quickLinks: normalizeQuickLinks(s.quickLinks),
     dailyAdhkar: normalizeDailyAdhkar(s.dailyAdhkar),
+  }
+}
+
+function mergeCompanion(c: Partial<CompanionSettings> | undefined): CompanionSettings {
+  const d = DEFAULT_SETTINGS.companion
+  return {
+    adhkar: { ...d.adhkar, ...c?.adhkar },
+    quran: { ...d.quran, ...c?.quran, amount: { ...d.quran.amount, ...c?.quran?.amount } },
+    prayerEnd: { ...d.prayerEnd, ...c?.prayerEnd, perPrayer: { ...d.prayerEnd.perPrayer, ...c?.prayerEnd?.perPrayer } },
+    card: { ...d.card, ...c?.card },
+    goal: { ...d.goal, ...c?.goal },
+    travel: { ...d.travel, ...c?.travel },
   }
 }
 

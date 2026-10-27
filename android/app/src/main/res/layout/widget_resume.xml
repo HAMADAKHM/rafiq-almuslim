@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ودجت بلس: «أكمل من حيث وصلت» — آخر موضع قراءة فعلية، يفتح المصحف عنده -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/r_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:layoutDirection="rtl"
+    android:padding="12dp">
+
+    <TextView android:id="@+id/r_empty" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:textColor="#FFFFFF" android:textSize="13sp" android:visibility="gone" />
+
+    <LinearLayout android:id="@+id/r_content" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/resume_title" android:textColor="#F0D68F" android:textSize="12sp" android:textStyle="bold" />
+        <TextView android:id="@+id/r_surah" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:gravity="center_vertical" android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end" />
+        <TextView android:id="@+id/r_where" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#D9E6DF" android:textSize="12sp" android:maxLines="1" android:ellipsize="end" />
+        <TextView android:id="@+id/r_date" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#B9CCC2" android:textSize="11sp" android:maxLines="1" android:ellipsize="end" />
+        <LinearLayout android:id="@+id/r_khatma" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <ProgressBar android:id="@+id/r_bar" style="@android:style/Widget.ProgressBar.Horizontal" android:layout_width="0dp" android:layout_height="6dp" android:layout_weight="1" android:max="100" android:progressTint="#C6A15B" android:progressBackgroundTint="#33FFFFFF" />
+            <TextView android:id="@+id/r_pct" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="8dp" android:textColor="#F0D68F" android:textSize="11sp" />
+        </LinearLayout>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:background="@drawable/widget_cell_active" android:gravity="center" android:padding="5dp" android:text="@string/resume_action" android:textColor="#FFFFFF" android:textSize="12sp" android:textStyle="bold" />
+    </LinearLayout>
+</FrameLayout>

@@ -1,6 +1,7 @@
 package org.rafiqalmuslim.app;
 
 import android.content.Context;
+import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
@@ -51,5 +52,29 @@ public class WidgetBridgePlugin extends Plugin {
             .edit().putString(PlusWidgets.KEY, data).apply();
         PlusWidgets.refreshAll(ctx);
         call.resolve();
+    }
+
+    /** بيانات ودجت «أكمل من حيث وصلت» */
+    @PluginMethod
+    public void updateResume(PluginCall call) {
+        String data = call.getString("data");
+        if (data == null) {
+            call.reject("data is required");
+            return;
+        }
+        Context ctx = getContext();
+        ctx.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE)
+            .edit().putString(ResumeWidgetProvider.KEY, data).apply();
+        ResumeWidgetProvider.refreshAll(ctx);
+        call.resolve();
+    }
+
+    /** المسار الذي طلبه الضغط على ودجت (يُقرأ مرة واحدة ثم يُمسح) */
+    @PluginMethod
+    public void consumeRoute(PluginCall call) {
+        String r = MainActivity.takeRoute();
+        JSObject o = new JSObject();
+        o.put("route", r);
+        call.resolve(o);
     }
 }

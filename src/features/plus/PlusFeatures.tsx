@@ -14,6 +14,7 @@ import { useQuran } from '../../hooks'
 import { ADHKAR } from '../../content/adhkar'
 import { reciterById } from '../../content/reciters'
 import { toArabicDigits } from '../../lib/arabic'
+import { companionSummary, loadActualDays, loadDoneDays } from '../../services/companionStore'
 
 export function PlusThemesPage() {
   const { settings, update } = useSettings()
@@ -88,6 +89,15 @@ export function PlusInsightsPage() {
   const { settings } = useSettings()
   const { data } = useQuran()
   const [ins, setIns] = useState<Insights | null>(null)
+  const [cs, setCs] = useState<ReturnType<typeof companionSummary> | null>(null)
+  useEffect(() => {
+    const today = dayKey(new Date(), settings.location?.tz)
+    Promise.all([loadActualDays(), reading.all(), loadDoneDays()]).then(([a, read, done]) => {
+      const readDays: Record<string, number[]> = {}
+      for (const r of read) (readDays[r.date] ??= []).push(...r.pages)
+      setCs(companionSummary(a, readDays, done, today))
+    }).catch(() => {})
+  }, [settings.location?.tz])
   useEffect(() => {
     if (!data) return
     Promise.all([reading.all(), listening.all(), adhkarLog.all(), memo.logs()]).then(([read, listen, adhkar, m]) =>
@@ -110,6 +120,20 @@ export function PlusInsightsPage() {
               <div className="card"><strong>{toArabicDigits(ins.surahsCompleted)}</strong>سورة قرأتها كاملة</div>
               <div className="card"><strong>{toArabicDigits(ins.listenedAyat)}</strong>آية استمعت إليها</div>
             </div>
+            {cs && (
+              <section className="card">
+                <h2>القراءة الفعلية والأذكار</h2>
+                <table className="compare-table small">
+                  <thead><tr><th></th><th>آخر ٧ أيام</th><th>آخر ٣٠ يومًا</th></tr></thead>
+                  <tbody>
+                    <tr><th>أيام قرأت فيها فعلًا</th><td>{toArabicDigits(cs.week.readingDays)}</td><td>{toArabicDigits(cs.month.readingDays)}</td></tr>
+                    <tr><th>صفحات مختلفة</th><td>{toArabicDigits(cs.week.pages)}</td><td>{toArabicDigits(cs.month.pages)}</td></tr>
+                    <tr><th>أذكار «رفيقي يذكّرني» المكتملة</th><td>{toArabicDigits(cs.week.adhkar)}</td><td>{toArabicDigits(cs.month.adhkar)}</td></tr>
+                  </tbody>
+                </table>
+                <p className="small muted" style={{ margin: 0 }}>تُحتسب القراءة إذا بقيت على الصفحة ٢٠ ثانية أو سجّلت قراءتك؛ ولا يُحتسب فتح التطبيق أو وصول إشعار.</p>
+              </section>
+            )}
             <section className="card">
               <h2>آخر ١٢ أسبوعًا</h2>
               <div className="heat" aria-label="خريطة النشاط">{ins.heat.map((h) => <i key={h.date} className={'l' + h.level} title={h.date} />)}</div>

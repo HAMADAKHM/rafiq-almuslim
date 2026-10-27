@@ -91,10 +91,28 @@ export function LibraryTabs() {
 }
 
 function CategoryGrid({ cats, base, doneToday }: { cats: ContentCategory[]; base: string; doneToday?: Set<string> }) {
+  const { settings, update } = useSettings()
+  const [manage, setManage] = useState(false)
+  const hidden = new Set(settings.hiddenCats ?? [])
+  const hiddenHere = cats.filter((c) => hidden.has(c.id)).length
+  const toggle = (id: string, show: boolean) => update({ hiddenCats: show ? [...hidden].filter((x) => x !== id) : [...hidden, id] })
   return (
     <div className="list-stack cat-list">
-      {cats.map((c) => {
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn btn-ghost btn-sm" aria-pressed={manage} onClick={() => setManage(!manage)}>
+          {manage ? 'تم' : hiddenHere ? `إدارة الأقسام (${hiddenHere} مخفية)` : 'إخفاء أقسام'}
+        </button>
+      </div>
+      {manage && <p className="small muted" style={{ margin: 0 }}>أزل علامة القسم لإخفائه من القائمة. يبقى متاحًا في البحث، ويمكن إظهاره في أي وقت.</p>}
+      {cats.filter((c) => manage || !hidden.has(c.id)).map((c) => {
         const Icon = catIcon(c.id)
+        if (manage) return (
+          <label key={c.id} className="list-card check">
+            <input type="checkbox" className="switch-input" checked={!hidden.has(c.id)} onChange={(e) => toggle(c.id, e.target.checked)} aria-label={`إظهار ${c.title}`} />
+            <span className="icon-chip"><Icon size={22} aria-hidden="true" /></span>
+            <span className="lc-body"><strong>{c.title}</strong></span>
+          </label>
+        )
         return (
           <Link key={c.id} to={`${base}/${c.id}`} className="list-card">
             <span className="icon-chip"><Icon size={22} aria-hidden="true" /></span>

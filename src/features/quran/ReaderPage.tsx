@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useActualReading } from './useActualReading'
 import { BookmarkCheck, BookOpen, ChevronLeft, ChevronRight, StickyNote } from 'lucide-react'
 import { Spinner } from '../../components/Common'
 import { toast, useDocumentTitle, useLive, usePlayer, useQuran, useKeepAwake } from '../../hooks'
@@ -79,6 +80,7 @@ function Reader({ data, surah }: { data: QuranData; surah: number }) {
 
   // حفظ آخر موضع قراءة (لا يمس العلامات المرجعية)
   useEffect(() => { kv.set('quran:last', { surah, ayah: current, at: Date.now() }).catch(() => {}) }, [surah, current])
+  useActualReading(data, surah, current)
 
   const playingHere = p.status !== 'idle' && p.surah === surah && !p.playingBasmala
   const meta = ayahMeta(data.meta, surah, current)

@@ -18,6 +18,10 @@
     <string name="weather_description">رفيق بلس: الطقس في مدينتك والصلاة القادمة</string>
     <string name="progress_description">رفيق بلس: أيامك المتتالية وورد اليوم والأذكار</string>
     <string name="progress_streak">أيام متتالية</string>
+    <string name="resume_description">رفيق بلس: أكمل من حيث وصلت في المصحف</string>
+    <string name="resume_title">آخر موضع قرآني</string>
+    <string name="resume_action">أكمل من حيث وصلت</string>
+    <string name="resume_empty">اقرأ صفحة من المصحف ليظهر موضعك هنا</string>
     <string name="plus_locked">من مزايا رفيق بلس — اضغط لفتح التطبيق</string>
     <string name="plus_empty">افتح رفيق المسلم بلس مرة لتحديث هذه البطاقة</string>
     <string name="tasbih_description">رفيق بلس: المسبحة على الشاشة — اضغط للعدّ</string>

@@ -2,7 +2,7 @@
 // ويمكن إغلاقها والاستمرار مجانًا. لا إعلانات في هذه الصفحة أبدًا.
 import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
-import { Gem, BookOpenText, Check, RotateCcw, ExternalLink, X, Palette, BellPlus, ChartNoAxesColumn, Clapperboard, MoonStar, BrainCircuit, UsersRound, HardDriveDownload, CloudSun, LayoutGrid, Ban } from 'lucide-react'
+import { Gem, BookOpenText, Check, RotateCcw, ExternalLink, X, Palette, BellPlus, ChartNoAxesColumn, Clapperboard, MoonStar, BrainCircuit, UsersRound, HardDriveDownload, CloudSun, LayoutGrid, Ban, BellRing } from 'lucide-react'
 import { PageHead } from '../../components/Common'
 import { usePlus } from '../../billing/PlusContext'
 import { isEntitled } from '../../billing/entitlement'
@@ -10,6 +10,7 @@ import { SandboxPanel } from './SandboxPanel'
 
 /** المزايا المنفّذة فعلًا فقط */
 const BENEFITS = [
+  { icon: BellRing, to: '/companion', title: 'رفيقي يذكّرني ورفيقي اليومي', text: 'ذكر من السنة كل مدة تختارها بلا تكرار، وموعدك مع القرآن يفتح المصحف حيث وصلت، وتنبيه قبل خروج وقت الصلاة، وبطاقة يومية وودجت «أكمل من حيث وصلت».' },
   { icon: BookOpenText, to: '/stories', title: 'التفسير كالقصة', text: '١٤ قصة من القرآن وأي سورة، مشهدًا مشهدًا: الآية بصوت القارئ ثم معناها من التفسير الميسّر، قراءةً أو استماعًا.' },
   { icon: Clapperboard, to: '/stories', title: 'وضع الفيلم وحفظ الفيديو', text: 'القصة بملء الشاشة على مشاهد متحركة (بحر، نجوم، جبال، جنات)، واحفظها فيديو بصوت القارئ وقراءة المعنى لتشاركها.' },
   { icon: MoonStar, to: '/ramadan', title: 'وضع رمضان والصيام', text: 'السحور والإفطار مع العدّ التنازلي، وجدول الشهر، وختمة رمضان، وتذكيرات عرفة وعاشوراء والأيام البيض.' },

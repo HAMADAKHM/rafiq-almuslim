@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { BookOpen, CircleCheck } from 'lucide-react'
 import { ProgressBar, Ring } from '../../components/Common'
 import { toast, useLive } from '../../hooks'
-import { activePlan, dailyTarget, extendPlan, juzProgress, loadKhatmas, progress, recordPages, saveKhatmas, scheduleStatus, weekStats, type KhatmaState } from '../../services/khatma'
+import { activePlan, actualPaceEta, dailyTarget, extendPlan, juzProgress, loadKhatmas, progress, recordPages, saveKhatmas, scheduleStatus, weekStats, type KhatmaState } from '../../services/khatma'
 import { useMemo } from 'react'
 import { firstAyahOf, type QuranData } from '../../services/quran'
 import { dayKey } from '../../lib/dates'
@@ -35,6 +35,7 @@ export function KhatmaCard({ data, compact }: { data: QuranData; compact?: boole
     )
   }
   const t = dailyTarget(plan, today)
+  const eta = plan.status === 'active' ? actualPaceEta(plan, today) : null
   const sched = scheduleStatus(plan, today)
   const doneToday = t.doneToday >= t.pages
   const start = firstAyahOf(data.meta, 'page', Math.min(604, plan.nextPage))
@@ -68,7 +69,7 @@ export function KhatmaCard({ data, compact }: { data: QuranData; compact?: boole
       <p className="small" style={{ margin: 0 }}>
         {doneToday ? <><CircleCheck size={14} color="var(--success)" /> أتممت ورد اليوم ({t.doneToday} صفحة)</> : <>ورد اليوم: الصفحات <strong>{t.from}–{t.to}</strong> ({t.pages} صفحة){t.doneToday > 0 && ` — قرأت ${t.doneToday}`}</>}
       </p>
-      {!compact && <p className="small muted" style={{ margin: 0 }}>المتبقي {605 - plan.nextPage} صفحة{plan.mode === 'days' ? ` • ${t.daysLeft} يومًا حسب خطتك` : ''}</p>}
+      {!compact && <p className="small muted" style={{ margin: 0 }}>المتبقي {605 - plan.nextPage} صفحة{plan.mode === 'days' ? ` • ${t.daysLeft} يومًا حسب خطتك` : ''}{eta ? ` • بمعدلك الفعلي في آخر أسبوعين (${eta.pagesPerDay} صفحة يوميًا): نحو ${eta.days} يومًا` : ''}</p>}
       {!compact && sched.behind && (
         <div className="alert alert-gold small" role="status">
           لتنتهي الختمة في موعدها صار وردك {sched.currentPace} صفحة يوميًا (الوتيرة الأصلية {sched.originalPace}). يمكنك تمديد الموعد {sched.extendDays} يومًا لتعود إلى وتيرتك.
