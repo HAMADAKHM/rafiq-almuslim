@@ -10,71 +10,33 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: complex-rights
+      - name: zip-method
         run: |
-          curl -sL -m 40 -o q.html https://qurancomplex.gov.sa/books-audios/
           python3 - <<'PY'
-          import re,html
-          t=open('q.html',encoding='utf-8',errors='ignore').read()
-          t=re.sub(r'<script.*?</script>|<style.*?</style>','',t,flags=re.S)
-          x=html.unescape(re.sub(r'<[^>]+>',' ',t)); x=re.sub(r'\s+',' ',x)
-          i=x.find('حقوق الاستخدام')
-          s=x[i:i+900] if i>=0 else 'NOTFOUND'
-          for k in range(0,len(s),280): print('::notice::R'+str(k)+' '+s[k:k+280].replace(':','،'))
-          j=x.find('الميسر')
-          print('::notice::M '+x[max(0,j-200):j+300].replace(':','،'))
-          PY
-      - name: complex-zip
-        run: |
-          U=https://download.qurancomplex.gov.sa/new-sounds/TafseerMuyassar/TafseerMuyassar-ayat.zip
-          echo "::notice::HEAD $(curl -sIL -m 30 $U | grep -i -E '^(HTTP|content-length|content-type|last-modified)' | tr '\r\n' '  ' | tr -d ':')"
-          python3 - <<'PY'
-          import urllib.request,struct,zipfile,io
+          import urllib.request,struct
           U='https://download.qurancomplex.gov.sa/new-sounds/TafseerMuyassar/TafseerMuyassar-ayat.zip'
           def rng(a,b):
               r=urllib.request.Request(U,headers={'Range':f'bytes={a}-{b}','User-Agent':'Mozilla/5.0'})
-              return urllib.request.urlopen(r,timeout=60).read()
-          h=urllib.request.urlopen(urllib.request.Request(U,method='HEAD',headers={'User-Agent':'Mozilla/5.0'}),timeout=60)
-          size=int(h.headers['Content-Length'])
-          tail=rng(size-200000,size-1)
-          k=tail.rfind(b'PK\x05\x06')
-          if k<0:
-              k=tail.rfind(b'PK\x06\x06'); print('::notice::zip64?',k)
-          cd_size,cd_off=struct.unpack('<II',tail[k+12:k+20]); n=struct.unpack('<H',tail[k+10:k+12])[0]
-          print(f'::notice::size={size} entries={n} cd_size={cd_size} cd_off={cd_off}')
-          cd=rng(cd_off,cd_off+cd_size-1)
-          names=[];p=0
-          while p<len(cd) and cd[p:p+4]==b'PK\x01\x02':
-              fl,=struct.unpack('<H',cd[p+28:p+30]);el,=struct.unpack('<H',cd[p+30:p+32]);cl,=struct.unpack('<H',cd[p+32:p+34])
-              csz,=struct.unpack('<I',cd[p+20:p+24])
-              names.append((cd[p+46:p+46+fl].decode('utf-8','replace'),csz)); p+=46+fl+el+cl
-          print('::notice::first '+' | '.join(f'{a}({b})' for a,b in names[:12]))
-          print('::notice::last '+' | '.join(f'{a}({b})' for a,b in names[-6:]))
-          print('::notice::count',len(names),'mp3',sum(1 for a,_ in names if a.lower().endswith('.mp3')))
+              x=urllib.request.urlopen(r,timeout=60); return x.status,x.headers.get('Content-Range'),x.headers.get('Access-Control-Allow-Origin'),x.read()
+          st,cr,cors,cd=rng(742721293,742721293+4000)
+          meth,=struct.unpack('<H',cd[10:12]); off,=struct.unpack('<I',cd[42:46]); fl,=struct.unpack('<H',cd[28:30])
+          print(f'::notice::status={st} range={cr} cors={cors} method_first={meth} off={off} name={cd[46:46+fl].decode()}')
+          ms=set();p=0
+          while p+46<len(cd) and cd[p:p+4]==b'PK\x01\x02':
+              ms.add(struct.unpack('<H',cd[p+10:p+12])[0]); fl,el,cl=struct.unpack('<HHH',cd[p+28:p+34]); p+=46+fl+el+cl
+          print('::notice::methods',sorted(ms))
           PY
-      - name: complex-direct
+      - name: hisn-terms
         run: |
-          for f in 001001.mp3 001/001.mp3 1/1.mp3 001_001.mp3 TafseerMuyassar-ayat/001001.mp3; do
-            echo "::notice::direct $f $(curl -s -o /dev/null -m 20 -w '%{http_code} %{content_type}' https://download.qurancomplex.gov.sa/new-sounds/TafseerMuyassar/$f)"
-          done
-      - name: hisn
-        run: |
-          curl -sL -m 30 -o c.json https://www.hisnmuslim.com/api/ar/27.json
-          python3 - <<'PY'
-          import json
-          d=json.load(open('c.json',encoding='utf-8-sig')); k=list(d.keys())[0]; it=d[k]
-          print('::notice::items',len(it),json.dumps(it[0],ensure_ascii=False)[:300].replace(':','='))
-          print('::notice::audio2',it[1].get('AUDIO'))
-          PY
-          A=$(python3 -c "import json;d=json.load(open('c.json',encoding='utf-8-sig'));print(list(d.values())[0][0]['AUDIO'])")
-          echo "::notice::audio-http $(curl -sI -m 20 "$A" | head -1 | tr -d ':\r')"
-          H=$(echo "$A" | sed 's#^http://#https://#')
-          echo "::notice::audio-https $(curl -sI -m 20 "$H" | grep -i -E '^(HTTP|content-length|content-type)' | tr '\r\n' '  ' | tr -d ':')"
-          curl -sL -m 30 -o home.html https://www.hisnmuslim.com/
-          python3 - <<'PY'
-          import re,html
-          x=html.unescape(re.sub(r'<[^>]+>',' ',open('home.html',encoding='utf-8',errors='ignore').read())); x=re.sub(r'\s+',' ',x)
-          for w in ['حقوق','الحقوق','نشر','copyright','Copyright','©','مجاني','إذن']:
+          for u in https://www.hisnmuslim.com/i/ar/about https://www.hisnmuslim.com/about https://www.hisnmuslim.com/api/ https://www.hisnmuslim.com/i/ar/; do
+            code=$(curl -sL -m 20 -o p.html -w '%{http_code}' "$u")
+            python3 - "$u" "$code" <<'PY'
+          import re,html,sys
+          x=html.unescape(re.sub(r'<[^>]+>',' ',open('p.html',encoding='utf-8',errors='ignore').read())); x=re.sub(r'\s+',' ',x)
+          out=[]
+          for w in ['حقوق','copyright','Copyright','©','ترخيص','license','مجان','قارئ','بصوت','قراءة']:
               i=x.find(w)
-              if i>=0: print('::notice::H['+w+'] '+x[max(0,i-150):i+200].replace(':','،'))
+              if i>=0: out.append(w+'→'+x[max(0,i-90):i+140])
+          print('::notice::'+sys.argv[1]+' '+sys.argv[2]+' '+(' ## '.join(out)[:700] if out else x[:300]).replace(':','،'))
           PY
+          done
