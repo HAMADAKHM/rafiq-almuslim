@@ -5,7 +5,7 @@ import { Empty, PageHead, Spinner } from '../../components/Common'
 import { useSettings } from '../../state/SettingsContext'
 import { getCurrentPosition } from '../../platform'
 import { useLive } from '../../hooks'
-import { FAV_KEY, bearingDeg, directionName, directionsUrl, distanceM, findMosques, formatDistance, lastMosques, loadFavMosques, radarPoint, saveFavMosques, toggleFav, type FavMosque, type Mosque, type MosqueResult } from '../../services/mosques'
+import { FAV_KEY, bearingDeg, directionName, directionsUrl, distanceM, findMosques, findMosquesQuick, mergeMosques, formatDistance, lastMosques, loadFavMosques, radarPoint, saveFavMosques, toggleFav, type FavMosque, type Mosque, type MosqueResult } from '../../services/mosques'
 import { cityLabel, loadCities, searchCities, type City } from '../../services/cities'
 import { AdSlot } from '../../ads/AdSlot'
 
@@ -38,7 +38,7 @@ function CitySearch({ disabled, onPick }: { disabled: boolean; onPick: (c: City)
   )
 }
 
-type State = { phase: 'idle' } | { phase: 'locating' } | { phase: 'loading' } | { phase: 'done'; result: MosqueResult; cached?: boolean; warning?: string } | { phase: 'error'; message: string }
+type State = { phase: 'idle' } | { phase: 'locating' } | { phase: 'loading' } | { phase: 'done'; result: MosqueResult; cached?: boolean; warning?: string; completing?: boolean } | { phase: 'error'; message: string }
 const RADII = [1000, 3000, 5000, 10000]
 
 export function MosquesPage() {
@@ -62,11 +62,23 @@ export function MosquesPage() {
     const ctrl = new AbortController()
     abort.current = ctrl
     setState({ phase: 'loading' })
+    // 1) بحث سريع (ثانية تقريبًا) ثم 2) استكمال القائمة الكاملة من Overpass في الخلفية (قد يستغرق دقيقة)
+    let quick: MosqueResult | null = null
     try {
-      setState({ phase: 'done', result: await findMosques(center, radius, ctrl.signal) })
+      quick = await findMosquesQuick(center, radius, ctrl.signal)
+      setState({ phase: 'done', result: quick, completing: true })
     } catch (e) {
       if ((e as Error).name === 'AbortError') return
-      // فشل البحث: تُعرض آخر نتائج ناجحة محفوظة (مع توضيح أنها قديمة) بدل صفحة خطأ فارغة
+    }
+    try {
+      const full = await findMosques(center, radius, ctrl.signal)
+      if (ctrl.signal.aborted) return
+      const merged = { ...full, mosques: mergeMosques([full.mosques, quick?.mosques ?? []], radius) }
+      setState({ phase: 'done', result: merged })
+    } catch (e) {
+      if ((e as Error).name === 'AbortError' || ctrl.signal.aborted) return
+      if (quick) { setState({ phase: 'done', result: quick }); return }
+      // فشل الطريقان: آخر نتائج ناجحة محفوظة (مع توضيح أنها قديمة) بدل صفحة خطأ فارغة
       const cached = await lastMosques().catch(() => null)
       setState(cached ? { phase: 'done', result: cached, cached: true, warning: (e as Error).message } : { phase: 'error', message: (e as Error).message })
     }
@@ -121,6 +133,8 @@ export function MosquesPage() {
             <p className="small muted">
               {state.result.mosques.length} مسجدًا ضمن {formatDistance(state.result.radius)} حول {state.result.center.label}
               {state.cached && <> • نتائج محفوظة من {new Date(state.result.at).toLocaleString('ar')}</>}
+              {state.completing && <> • <span className="spin-dot" aria-hidden="true" /> نتائج سريعة — جارٍ استكمال القائمة (تشمل المساجد بلا اسم)…</>}
+              {!state.completing && !state.cached && state.result.source === 'quick' && <> • بحث بالأسماء: قد لا تظهر المساجد غير المسماة في الخريطة</>}
             </p>
             {state.result.mosques.length > 0 && <Radar mosques={state.result.mosques} radius={state.result.radius} />}
             {state.result.mosques.length === 0 ? <Empty>لم تُسجَّل مساجد في هذا النطاق على الخريطة المفتوحة. جرّب نطاقًا أوسع.</Empty> : (

@@ -836,6 +836,12 @@ test.describe('جهاز بمنطقة زمنية مختلفة', () => {
 
 test.describe('المساجد القريبة', () => {
   test.use({ geolocation: { latitude: 32.2211, longitude: 35.2544 }, permissions: ['geolocation'], serviceWorkers: 'block' })
+  /** البحث السريع (Photon وNominatim): بلا نتائج افتراضيًا حتى تأتي القائمة من Overpass المحاكى */
+  async function mockQuick(page: import('@playwright/test').Page, opts: { photon?: unknown; nominatim?: unknown; status?: () => number } = {}) {
+    const h = { 'access-control-allow-origin': '*' }
+    await page.route(/photon\.komoot\.io/, (r) => (opts.status?.() ?? 200) >= 400 ? r.fulfill({ status: opts.status!(), body: 'x' }) : r.fulfill({ json: opts.photon ?? { features: [] }, headers: h }))
+    await page.route(/nominatim\.openstreetmap\.org/, (r) => (opts.status?.() ?? 200) >= 400 ? r.fulfill({ status: opts.status!(), body: 'x' }) : r.fulfill({ json: opts.nominatim ?? [], headers: h }))
+  }
   const OSM = { elements: [
     { type: 'node', id: 11, lat: 32.2290, lon: 35.2544, tags: { name: 'المسجد البعيد' } },
     { type: 'way', id: 22, center: { lat: 32.2221, lon: 35.2544 }, tags: { 'name:ar': 'المسجد القريب', name: 'Near Mosque' } },
@@ -843,6 +849,7 @@ test.describe('المساجد القريبة', () => {
 
   test('البحث حول الموقع: ترتيب بالمسافة والاتجاه ورابط المسار ومصدر البيانات', async ({ page }) => {
     let query = ''
+    await mockQuick(page)
     await page.route(/overpass/, (r) => { query = decodeURIComponent(r.request().postData() ?? ''); return r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } }) })
     await page.goto('/mosques')
     await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
@@ -861,6 +868,7 @@ test.describe('المساجد القريبة', () => {
 
   test('فشل الخوادم: رسالة واضحة دون نتائج مختلقة، وكل الخوادم البديلة تُجرَّب بطلب POST', async ({ page }) => {
     const hosts: string[] = []
+    await mockQuick(page, { status: () => 503 })
     await page.route(/overpass/, (r) => { hosts.push(`${r.request().method()} ${new URL(r.request().url()).host}`); return r.fulfill({ status: 503, body: 'busy' }) })
     await page.goto('/mosques')
     await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
@@ -869,8 +877,33 @@ test.describe('المساجد القريبة', () => {
     expect(hosts).toEqual(['POST overpass-api.de', 'POST overpass.private.coffee', 'POST overpass.kumi.systems'])
   })
 
+  test('البحث السريع يظهر خلال ثوانٍ ثم تكتمل القائمة من Overpass (بلا تكرار، وبلا الكنائس)', async ({ page }) => {
+    let release: () => void = () => {}
+    const slow = new Promise<void>((res) => { release = res })
+    await mockQuick(page, {
+      photon: { features: [
+        { geometry: { coordinates: [35.2544, 32.2221] }, properties: { osm_type: 'W', osm_id: 22, osm_key: 'amenity', osm_value: 'place_of_worship', name: 'المسجد القريب' } },
+        { geometry: { coordinates: [35.2550, 32.2230] }, properties: { osm_type: 'N', osm_id: 77, osm_key: 'amenity', osm_value: 'place_of_worship', name: 'كنيسة البشارة' } },
+      ] },
+      nominatim: [{ osm_type: 'node', osm_id: 33, lat: '32.2240', lon: '35.2544', category: 'amenity', type: 'place_of_worship', name: 'مسجد السلام' }],
+    })
+    await page.route(/overpass/, async (r) => { await slow; return r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } }) })
+    await page.goto('/mosques')
+    await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
+    const list = page.getByRole('list', { name: 'المساجد' })
+    await expect(list.getByRole('listitem')).toHaveCount(2)
+    await expect(page.getByText(/جارٍ استكمال القائمة/)).toBeVisible()
+    await expect(list).not.toContainText('كنيسة')
+    release()
+    await expect(page.getByText(/جارٍ استكمال القائمة/)).toHaveCount(0)
+    // Overpass أضاف «المسجد البعيد»، و«المسجد القريب» لم يتكرر
+    await expect(list.getByRole('listitem')).toHaveCount(3)
+    await expect(list.getByText('المسجد القريب')).toHaveCount(1)
+  })
+
   test('فشل البحث بعد نجاح سابق: تُعرض آخر نتائج محفوظة مع توضيح، وإعادة المحاولة تنجح', async ({ page }) => {
     let fail = false
+    await mockQuick(page, { status: () => (fail ? 429 : 200) })
     await page.route(/overpass/, (r) => (fail ? r.fulfill({ status: 429, body: 'rate' }) : r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } })))
     await page.goto('/mosques')
     await page.getByRole('button', { name: 'ابحث حول موقعي' }).click()
@@ -999,6 +1032,8 @@ test.describe('1.0: المساعد والمساجد المفضلة والمتا�
   test('المساجد: الرادار والمفضلة والبحث في مدينة أخرى', async ({ page }) => {
     const OSM = { elements: [{ type: 'way', id: 22, center: { lat: 32.2221, lon: 35.2544 }, tags: { 'name:ar': 'المسجد القريب' } }] }
     let query = ''
+    const h = { 'access-control-allow-origin': '*' }
+    await page.route(/photon\.komoot\.io|nominatim\.openstreetmap\.org/, (r) => r.fulfill({ json: /photon/.test(r.request().url()) ? { features: [] } : [], headers: h }))
     await page.route(/overpass/, (r) => { query = decodeURIComponent(r.request().postData() ?? ''); return r.fulfill({ json: OSM, headers: { 'access-control-allow-origin': '*' } }) })
     await page.goto('/mosques')
     await page.getByLabel('البحث عن المساجد في مدينة').fill('نابلس')

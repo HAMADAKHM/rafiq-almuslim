@@ -395,3 +395,4 @@ ul.plain { list-style: none; padding: 0; margin: 0; }
 .companion-rows li { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.95rem; line-height: 1.6; }
 .companion-rows li > svg { flex: none; margin-top: 0.3rem; color: var(--primary); }
 .companion-goal .progress { margin-top: 0.3rem; }
+.spin-dot { display: inline-block; width: 0.7em; height: 0.7em; border-radius: 50%; border: 2px solid currentColor; border-inline-end-color: transparent; animation: spin 0.9s linear infinite; vertical-align: -0.05em; }

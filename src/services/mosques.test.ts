@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { OverpassError, OVERPASS_USER_AGENT, mosqueErrorMessage, bearingDeg, directionName, directionsUrl, distanceM, formatDistance, overpassQuery, parseOverpass } from './mosques'
+import { bbox, mergeMosques, parseNominatim, parsePhoton, OverpassError, OVERPASS_USER_AGENT, mosqueErrorMessage, bearingDeg, directionName, directionsUrl, distanceM, formatDistance, overpassQuery, parseOverpass } from './mosques'
 
 describe('دليل المساجد', () => {
   it('المسافة: مكة–المدينة نحو 339 كم بخط مستقيم', () => {
@@ -48,5 +48,28 @@ describe('دليل المساجد', () => {
     expect(mosqueErrorMessage(new TypeError('Failed to fetch'), false)).toContain('تعذر الوصول')
     expect(mosqueErrorMessage(null, true)).toContain('لا يوجد اتصال')
     expect(OVERPASS_USER_AGENT).toMatch(/^RafiqAlMuslim\/\S+ \(.+\)$/)
+  })
+  it('البحث السريع: أماكن عبادة المسلمين فقط، والمعرّف موحّد مع Overpass لمنع التكرار', () => {
+    const from = { lat: 32.22, lng: 35.25 }
+    const p = parsePhoton({ features: [
+      { geometry: { coordinates: [35.25, 32.23] }, properties: { osm_type: 'W', osm_id: 22, osm_value: 'place_of_worship', name: 'المسجد الكبير' } },
+      { geometry: { coordinates: [35.25, 32.221] }, properties: { osm_type: 'N', osm_id: 5, osm_value: 'place_of_worship', name: 'St. George Church' } },
+      { geometry: { coordinates: [35.25, 32.222] }, properties: { osm_type: 'N', osm_id: 6, osm_value: 'school', name: 'مدرسة' } },
+    ] }, from)
+    expect(p.map((m) => m.id)).toEqual(['way/22'])
+    const n = parseNominatim([
+      { osm_type: 'way', osm_id: 22, lat: '32.23', lon: '35.25', category: 'amenity', type: 'place_of_worship', name: 'المسجد الكبير' },
+      { osm_type: 'node', osm_id: 9, lat: '32.221', lon: '35.25', category: 'amenity', type: 'place_of_worship', name: 'مسجد صغير' },
+      { osm_type: 'way', osm_id: 1, lat: '32.2', lon: '35.2', category: 'highway', type: 'residential', name: 'شارع المسجد' },
+    ], from)
+    expect(n.map((m) => m.id)).toEqual(['way/22', 'node/9'])
+    const merged = mergeMosques([p, n], 5000)
+    expect(merged.map((m) => m.id)).toEqual(['node/9', 'way/22'])
+    expect(mergeMosques([n], 500).map((m) => m.id)).toEqual(['node/9'])
+  })
+  it('مربع البحث يغطي نصف القطر في كل اتجاه', () => {
+    const b = bbox({ lat: 32, lng: 35 }, 3000)
+    expect(distanceM({ lat: 32, lng: 35 }, { lat: b.maxLat, lng: 35 })).toBeCloseTo(3000, -1)
+    expect(distanceM({ lat: 32, lng: 35 }, { lat: 32, lng: b.maxLng })).toBeCloseTo(3000, -2)
   })
 })

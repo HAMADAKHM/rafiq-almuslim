@@ -4,7 +4,11 @@ import { Capacitor, CapacitorHttp } from '@capacitor/core'
 import { kv } from '../db/repos'
 
 export interface Mosque { id: string; name: string; named: boolean; lat: number; lng: number; distance: number; bearing: number }
-export interface MosqueResult { at: number; center: { lat: number; lng: number; label: string }; radius: number; mosques: Mosque[] }
+export interface MosqueResult {
+  at: number; center: { lat: number; lng: number; label: string }; radius: number; mosques: Mosque[]
+  /** 'quick': بحث سريع بالأسماء (Photon/Nominatim) — قد ينقصه مساجد بلا اسم مسجل؛ 'full': قائمة Overpass الكاملة */
+  source?: 'quick' | 'full'
+}
 
 // ثلاثة خوادم عامة مجانية بالترتيب؛ إن فشل أحدها جُرّب التالي
 export const OVERPASS_ENDPOINTS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']
@@ -64,11 +68,11 @@ export class OverpassError extends Error {
 }
 
 /** POST كما توصي وثائق Overpass (الاستعلام في جسم الطلب لا في الرابط) */
-async function postQuery(url: string, query: string, signal?: AbortSignal): Promise<{ elements?: OsmElement[] }> {
+async function postQuery(url: string, query: string, signal?: AbortSignal, readTimeout = 70000): Promise<{ elements?: OsmElement[] }> {
   const body = 'data=' + encodeURIComponent(query)
   if (Capacitor.isNativePlatform()) {
     const r = await CapacitorHttp.post({
-      url, data: body, responseType: 'json', connectTimeout: 15000, readTimeout: 35000,
+      url, data: body, responseType: 'json', connectTimeout: 15000, readTimeout,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': OVERPASS_USER_AGENT, Accept: 'application/json' },
     })
     if (r.status >= 400) throw new OverpassError(r.status)
@@ -89,14 +93,96 @@ export function mosqueErrorMessage(e: unknown, offline = typeof navigator !== 'u
   return 'تعذر الوصول إلى خوادم بيانات الخرائط. تحقق من الاتصال وأعد المحاولة.'
 }
 
-/** يبحث في الخادم الأول ثم البديل، ويحفظ آخر نتيجة لعرضها دون اتصال */
+// ---------- البحث السريع (ثانية تقريبًا) ----------
+// فحص من GitHub Actions (27 أكتوبر 2026): Overpass يرد بعد 30–50 ثانية، وPhoton وNominatim في أقل من ثانية.
+// كلاهما من بيانات OpenStreetMap نفسها، لكنهما يبحثان بالاسم: المساجد بلا اسم مسجل لا تظهر إلا في Overpass.
+export const PHOTON_URL = 'https://photon.komoot.io/api/'
+export const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search'
+const NOT_MOSQUE = /church|cathedral|chapel|synagogue|temple|monastery|convent|كنيسة|كاتدرائية|دير|كنيس|معبد/i
+
+async function getJson<T>(url: string, signal?: AbortSignal, readTimeout = 15000): Promise<T> {
+  if (Capacitor.isNativePlatform()) {
+    const r = await CapacitorHttp.get({ url, responseType: 'json', connectTimeout: 10000, readTimeout, headers: { 'User-Agent': OVERPASS_USER_AGENT, Accept: 'application/json' } })
+    if (r.status >= 400) throw new OverpassError(r.status)
+    return (typeof r.data === 'string' ? JSON.parse(r.data) : r.data) as T
+  }
+  const res = await fetch(url, { signal, headers: { Accept: 'application/json' } })
+  if (!res.ok) throw new OverpassError(res.status)
+  return res.json() as Promise<T>
+}
+
+/** مربع البحث حول المركز (بالدرجات) */
+export function bbox(c: { lat: number; lng: number }, radius: number) {
+  const dLat = radius / 111_320
+  const dLng = radius / (111_320 * Math.max(0.2, Math.cos(rad(c.lat))))
+  return { minLat: c.lat - dLat, maxLat: c.lat + dLat, minLng: c.lng - dLng, maxLng: c.lng + dLng }
+}
+
+interface PhotonFeature { geometry?: { coordinates?: [number, number] }; properties?: { osm_type?: string; osm_id?: number; osm_key?: string; osm_value?: string; name?: string } }
+interface NominatimItem { osm_type?: string; osm_id?: number; lat?: string; lon?: string; category?: string; type?: string; name?: string }
+const OSM_TYPE: Record<string, string> = { N: 'node', W: 'way', R: 'relation', node: 'node', way: 'way', relation: 'relation' }
+
+export function parsePhoton(json: { features?: PhotonFeature[] }, from: { lat: number; lng: number }): Mosque[] {
+  const out: Mosque[] = []
+  for (const f of json.features ?? []) {
+    const p = f.properties ?? {}
+    const c = f.geometry?.coordinates
+    if (!c || p.osm_value !== 'place_of_worship' || p.osm_id == null) continue
+    const name = (p.name ?? '').trim()
+    if (NOT_MOSQUE.test(name)) continue
+    const lat = c[1], lng = c[0]
+    out.push({ id: `${OSM_TYPE[p.osm_type ?? 'N'] ?? 'node'}/${p.osm_id}`, name: name || 'مسجد (بلا اسم مسجّل)', named: !!name, lat, lng, distance: distanceM(from, { lat, lng }), bearing: bearingDeg(from, { lat, lng }) })
+  }
+  return out
+}
+
+export function parseNominatim(json: NominatimItem[], from: { lat: number; lng: number }): Mosque[] {
+  const out: Mosque[] = []
+  for (const it of Array.isArray(json) ? json : []) {
+    if (it.category !== 'amenity' || it.type !== 'place_of_worship' || it.osm_id == null) continue
+    const name = (it.name ?? '').trim()
+    if (NOT_MOSQUE.test(name)) continue
+    const lat = Number(it.lat), lng = Number(it.lon)
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue
+    out.push({ id: `${OSM_TYPE[it.osm_type ?? 'node'] ?? 'node'}/${it.osm_id}`, name: name || 'مسجد (بلا اسم مسجّل)', named: !!name, lat, lng, distance: distanceM(from, { lat, lng }), bearing: bearingDeg(from, { lat, lng }) })
+  }
+  return out
+}
+
+/** دمج نتائج عدة مصادر بلا تكرار (بمعرّف OSM)، ضمن النطاق، مرتبة بالمسافة */
+export function mergeMosques(lists: Mosque[][], radius: number): Mosque[] {
+  const seen = new Map<string, Mosque>()
+  for (const l of lists) for (const m of l) if (m.distance <= radius && !seen.has(m.id)) seen.set(m.id, m)
+  return [...seen.values()].sort((a, b) => a.distance - b.distance).slice(0, MAX_RESULTS)
+}
+
+/** بحث سريع: Photon (بالعربية والإنجليزية) وNominatim معًا؛ يكفي نجاح أحدها */
+export async function findMosquesQuick(center: { lat: number; lng: number; label: string }, radius: number, signal?: AbortSignal): Promise<MosqueResult> {
+  const b = bbox(center, radius)
+  const box = `${b.minLng.toFixed(4)},${b.minLat.toFixed(4)},${b.maxLng.toFixed(4)},${b.maxLat.toFixed(4)}`
+  const lat = center.lat.toFixed(3), lng = center.lng.toFixed(3)
+  const photon = (q: string) => getJson<{ features?: PhotonFeature[] }>(`${PHOTON_URL}?q=${encodeURIComponent(q)}&lat=${lat}&lon=${lng}&bbox=${box}&limit=50&osm_tag=amenity:place_of_worship`, signal).then((j) => parsePhoton(j, center))
+  const nominatim = getJson<NominatimItem[]>(`${NOMINATIM_URL}?q=${encodeURIComponent('مسجد')}&format=jsonv2&limit=50&bounded=1&viewbox=${box}`, signal).then((j) => parseNominatim(j, center))
+  const settled = await Promise.allSettled([photon('مسجد'), photon('mosque'), nominatim])
+  const ok = settled.filter((r): r is PromiseFulfilledResult<Mosque[]> => r.status === 'fulfilled').map((r) => r.value)
+  if (!ok.length) {
+    const first = settled.find((r) => r.status === 'rejected') as PromiseRejectedResult | undefined
+    if ((first?.reason as Error)?.name === 'AbortError') throw first!.reason
+    throw new Error(mosqueErrorMessage(first?.reason))
+  }
+  const result: MosqueResult = { at: Date.now(), center, radius, mosques: mergeMosques(ok, radius), source: 'quick' }
+  kv.set(CACHE_KEY, result).catch(() => {})
+  return result
+}
+
+/** القائمة الكاملة من Overpass (تشمل المساجد بلا اسم)؛ بطيئة حاليًا (30–50 ثانية)، تُستدعى بعد البحث السريع */
 export async function findMosques(center: { lat: number; lng: number; label: string }, radius: number, signal?: AbortSignal): Promise<MosqueResult> {
   const q = overpassQuery(center.lat, center.lng, radius)
   let lastErr: unknown
   for (const ep of OVERPASS_ENDPOINTS) {
     try {
       const json = await postQuery(ep, q, signal)
-      const result: MosqueResult = { at: Date.now(), center, radius, mosques: parseOverpass(json, center).filter((m) => m.distance <= radius) }
+      const result: MosqueResult = { at: Date.now(), center, radius, mosques: parseOverpass(json, center).filter((m) => m.distance <= radius), source: 'full' }
       kv.set(CACHE_KEY, result).catch(() => {})
       return result
     } catch (e) {
