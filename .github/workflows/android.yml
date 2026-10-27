@@ -76,7 +76,9 @@ jobs:
       - run: npx cap sync android
       - name: Build debug APK
         working-directory: android
-        run: ./gradlew assembleDebug
+        run: |
+          set -o pipefail
+          ./gradlew assembleDebug 2>&1 | tee phone-build.log || { grep -E "error:|FAILED|Exception" phone-build.log | head -20 | sed 's/^/::error::/'; exit 1; }
       - uses: actions/upload-artifact@v4
         with:
           name: rafiq-almuslim-debug-apk
@@ -85,7 +87,11 @@ jobs:
       - run: npm run build:tv && npm run tv:assets && npm run tv:tizen
       - name: Build Android TV APK
         working-directory: android-tv
-        run: chmod +x gradlew && ./gradlew testDebugUnitTest assembleDebug
+        # أخطاء الترجمة والاختبارات تظهر كملاحظات في صفحة التشغيل
+        run: |
+          chmod +x gradlew
+          set -o pipefail
+          ./gradlew testDebugUnitTest assembleDebug 2>&1 | tee tv-build.log || { grep -E "error:|FAILED|Exception|expected" tv-build.log | head -20 | sed 's/^/::error::/'; exit 1; }
       - uses: actions/upload-artifact@v4
         with:
           name: rafiq-almuslim-tv-apk
