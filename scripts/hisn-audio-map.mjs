@@ -31,6 +31,16 @@ for (const o of ours) {
     if (n) { out[o.id] = Number(n); report.push(`${o.id}=${n}@${best.score.toFixed(2)}`) }
   }
 }
+// للمراجعة اليدوية: أقرب نص لكل ذكر لم يطابق تمامًا (تشابه الكلمات)
+const words = (s) => new Set(s.split(' ').filter(Boolean))
+const jac = (a, b) => { const A = words(a), B = words(b); let i = 0; for (const w of A) if (B.has(w)) i++; return i / (A.size + B.size - i) }
+for (const o of ours) {
+  if (out[o.id]) continue
+  let best = null
+  for (const h of hisn) { const j = jac(o.sk, h.sk); if (j > (best?.j ?? 0)) best = { ...h, j } }
+  if (best && best.j >= 0.5) console.log(`CAND ${o.id} ${best.j.toFixed(2)} #${/\/(\d+)\.mp3$/.exec(best.audio)?.[1]} | ${o.sk.slice(0, 110)} || ${best.sk.slice(0, 110)} | len ${o.sk.length}/${best.sk.length}`)
+  else console.log(`NONE ${o.id} ${best ? best.j.toFixed(2) : 0}`)
+}
 console.log(JSON.stringify({ hisnItems: hisn.length, ours: ours.length, matched: Object.keys(out).length }))
 console.log('MAP ' + JSON.stringify(out))
 console.log('REPORT ' + report.join(' '))

@@ -19,4 +19,6 @@ jobs:
           npx --yes tsx scripts/hisn-audio-map.mjs > map.txt 2> err.txt || true
           echo "::notice::$(head -1 map.txt) err=$(head -c 300 err.txt | tr -d ':\n')"
           grep '^MAP ' map.txt | sed 's/^MAP //' | tr -d ':' | sed 's/"//g' | fold -w 900 | while read -r l; do echo "::notice::M $l"; done
+          grep '^CAND ' map.txt | sed 's/^CAND //' | tr -d ':' | while read -r l; do echo "::notice::C $l"; done
+          echo "::notice::NONE $(grep '^NONE ' map.txt | sed 's/^NONE //' | tr '\n' ' ')"
           grep '^REPORT ' map.txt | sed 's/^REPORT //' | tr ' ' '\n' | awk -F@ '$2<1' | tr '\n' ' ' | fold -w 900 | while read -r l; do echo "::notice::P $l"; done
