@@ -22,9 +22,9 @@ jobs:
                 out=$(curl -s -m 40 -A "$UA" -o body.json -w '%{http_code} %{time_total}s' --data-urlencode "data=$Q" "$ep" || echo "ERR")
               fi
               n=$(grep -o '"type"' body.json 2>/dev/null | wc -l)
-              echo "$mode $ep -> $out elements=$n $(head -c 120 body.json | tr '\n' ' ')"
+              echo "::notice::$mode $ep -> $out elements=$n $(head -c 120 body.json | tr '\n' ' ' | tr -d ':')"
             done
-            echo "ua-default $ep -> $(curl -s -m 40 -o /dev/null -w '%{http_code}' -A 'Dalvik/2.1.0 (Linux; U; Android 14)' -G --data-urlencode "data=$Q" "$ep")"
+            echo "::notice::ua-default $ep -> $(curl -s -m 40 -o /dev/null -w '%{http_code}' -A 'Dalvik/2.1.0 (Linux; U; Android 14)' -G --data-urlencode "data=$Q" "$ep")"
           done
-          echo "photon -> $(curl -s -m 30 -A "$UA" -o p.json -w '%{http_code}' 'https://photon.komoot.io/api/?q=mosque&lat=32.221&lon=35.254&limit=20&osm_tag=amenity:place_of_worship') $(head -c 300 p.json)"
-          echo "nominatim -> $(curl -s -m 30 -A "$UA" -o n.json -w '%{http_code}' 'https://nominatim.openstreetmap.org/search?amenity=place_of_worship&q=mosque&format=jsonv2&limit=20&viewbox=35.22,32.25,35.29,32.19&bounded=1') $(head -c 300 n.json)"
+          echo "::notice::photon -> $(curl -s -m 30 -A "$UA" -o p.json -w '%{http_code}' 'https://photon.komoot.io/api/?q=mosque&lat=32.221&lon=35.254&limit=20&osm_tag=amenity:place_of_worship') $(head -c 300 p.json | tr -d ':')"
+          echo "::notice::nominatim -> $(curl -s -m 30 -A "$UA" -o n.json -w '%{http_code}' 'https://nominatim.openstreetmap.org/search?amenity=place_of_worship&q=mosque&format=jsonv2&limit=20&viewbox=35.22,32.25,35.29,32.19&bounded=1') $(head -c 300 n.json | tr -d ':')"
