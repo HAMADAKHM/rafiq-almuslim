@@ -4,6 +4,7 @@ import type { QuranData } from '../services/quran'
 import { BASMALA_AYAH, nextSurah, reciteQueue, REPEAT_GAP_MS, type AyahRef } from './recite'
 import type { TvSettings } from './state'
 import { ADHKAR } from '../content/adhkar'
+import { hisnAudioUrl } from '../content/hisnAudio'
 import { adhkarForNow } from '../services/daily'
 import { speak, stopVoice } from './voice'
 
@@ -93,9 +94,12 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
             setCurrent(null)
             const reps = Math.min(MAX_SPOKEN_REPEAT, Math.max(1, it.count ?? 1))
             let voice = true
+            // تسجيل «حصن المسلم» البشري إن طابق نص الذكر، وإلا صوت التلفاز الآلي
+            const human = hisnAudioUrl(it.id)
             for (let k = 0; k < reps && alive() && voice; k++) {
               setDhikr({ title: which.title, text: it.text, source: it.source, count: it.count, voice })
-              voice = await speak(it.text, vol, alive)
+              const played = human ? await playPrepared(prepare([human], vol), audio, alive) : false
+              if (!played) voice = await speak(it.text, vol, alive)
               if (voice && alive()) await sleep(1200, alive)
             }
             // لا يوجد صوت عربي في الجهاز: يبقى النص ظاهرًا مدة تكفي لقراءته ثم يُنتقل للتالي

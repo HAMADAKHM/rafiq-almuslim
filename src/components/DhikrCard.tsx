@@ -1,11 +1,13 @@
-import { useMemo, useState } from 'react'
-import { ChevronDown, Copy, Image, Star } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ChevronDown, Copy, Image, Pause, Star, Volume2 } from 'lucide-react'
 import type { DhikrItem } from '../content/types'
 import { QuranRefText } from './QuranRefText'
 import { ShareCardDialog } from './ShareCardDialog'
 import { copyText, vibrate } from '../platform'
 import { toast } from '../hooks'
 import { favorites } from '../db/repos'
+import { dhikrAudio, hasHumanAudio, playDhikrAudio } from '../services/dhikrVoice'
+import { HISN_AUDIO_CREDIT } from '../content/hisnAudio'
 
 export const KIND_LABEL = { quran: 'قرآن كريم', hadith: 'حديث نبوي', general: 'دعاء عام', personal: 'ذكر شخصي — ليس من المأثور' } as const
 export const kindBadge = (k: DhikrItem['kind']) => 'badge ' + (k === 'quran' ? 'badge-quran' : k === 'personal' ? 'badge-personal' : 'badge-hadith')
@@ -19,6 +21,28 @@ export interface DhikrCardProps {
   count?: number
   onCount?: (n: number) => void
   onNext?: () => void
+}
+
+/** استماع الذكر بصوت بشري (حصن المسلم، أو تسجيل أضافه المستخدم) */
+function ListenButton({ id }: { id: string }) {
+  const [on, setOn] = useState(false)
+  const holder = useRef<HTMLAudioElement | null>(null)
+  const run = useRef(0)
+  useEffect(() => () => { run.current++; holder.current?.pause() }, [])
+  const toggle = async () => {
+    if (on) { run.current++; holder.current?.pause(); setOn(false); return }
+    const a = await dhikrAudio(id)
+    if (!a) return
+    const my = ++run.current
+    setOn(true)
+    const ok = await playDhikrAudio(a, holder, () => run.current === my)
+    if (run.current === my) { setOn(false); if (!ok) toast('تعذر تشغيل التسجيل — تحقق من الاتصال بالإنترنت') }
+  }
+  return (
+    <button className="btn btn-ghost btn-sm icon-btn" aria-label={on ? 'إيقاف الاستماع' : 'استمع بصوت بشري (حصن المسلم)'} aria-pressed={on} title={HISN_AUDIO_CREDIT} onClick={toggle}>
+      {on ? <Pause size={15} /> : <Volume2 size={15} />}
+    </button>
+  )
 }
 
 export function DhikrCard({ item, fav, favKind, withCounter, count = 0, onCount, onNext }: DhikrCardProps) {
@@ -37,6 +61,7 @@ export function DhikrCard({ item, fav, favKind, withCounter, count = 0, onCount,
             <>
               <button className="btn btn-ghost btn-sm icon-btn" aria-label="نسخ" onClick={async () => toast((await copyText(`${item.text}\n— ${item.source}`)) ? 'نُسخ النص' : 'تعذر النسخ')}><Copy size={15} /></button>
               <button className="btn btn-ghost btn-sm icon-btn" aria-label="مشاركة كبطاقة" onClick={() => setShare(true)}><Image size={15} /></button>
+              {hasHumanAudio(item.id) && <ListenButton id={item.id} />}
             </>
           )}
           <button className="btn btn-ghost btn-sm icon-btn" aria-label={fav ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة'} aria-pressed={fav} onClick={() => favorites.toggle(favKind, item.id)}>

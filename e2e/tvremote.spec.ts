@@ -32,3 +32,15 @@ test('تسجيلات الأذكار: إضافة تسجيل مرخص لذكر، �
   await page.getByRole('button', { name: 'حذف' }).click()
   await expect(page.getByRole('heading', { name: 'التسجيلات المضافة (0)' })).toBeVisible()
 })
+
+test('الأذكار: زر الاستماع بصوت بشري يطلب تسجيل حصن المسلم المطابق', async ({ page }) => {
+  const asked: string[] = []
+  await page.route(/hisnmuslim\.com\/audio/, (r) => { asked.push(r.request().url()); return r.fulfill({ status: 404, body: '' }) })
+  await page.goto('/adhkar/morning')
+  await page.getByRole('tab', { name: 'قائمة' }).click()
+  const card = page.locator('#dhikr-m-sayyid')
+  await card.getByRole('button', { name: /استمع بصوت بشري/ }).click()
+  await expect.poll(() => asked).toContain('https://www.hisnmuslim.com/audio/ar/79.mp3')
+  // ذكر لم يطابق نصُّه التسجيل: بلا زر
+  await expect(page.locator('#dhikr-m-afiya').getByRole('button', { name: /استمع بصوت بشري/ })).toHaveCount(0)
+})

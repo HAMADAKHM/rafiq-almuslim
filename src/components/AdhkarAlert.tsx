@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getRecording, type DhikrRecording } from '../services/dhikrAudio'
-import { playBlob } from '../services/tafsirAudio'
+import { dhikrAudio, playDhikrAudio, type DhikrAudio } from '../services/dhikrVoice'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { X, Play, Square, ChevronRight, ChevronLeft, BookOpen } from 'lucide-react'
 import { PaintedScene, type PaintTone } from './Scene'
@@ -69,15 +68,14 @@ export function AdhkarAlert({ cat, onClose }: { cat: AlertCat; onClose: () => vo
     setPlaying(true)
     const reciter = reciterById(settings.reciterId)
     const canSpeak = await voiceAvailable()
-    let rec: DhikrRecording | null = null
+    let human: DhikrAudio | null = null
     for (let k = from; k < items.length && alive(); k++) {
       setI(k)
       const x = items[k]
       if (x.kind === 'quran' && x.quran) {
         for (const r of x.quran) for (let a = r.from; a <= r.to && alive(); a++) await playUrl(ayahAudioSources(reciter, r.surah, a), audio, alive)
-      } else if (x.text && (rec = await getRecording(x.id).catch(() => null))) {
-        // تسجيل بشري أضافه المستخدم بترخيصه: بدل الصوت الآلي
-        await playBlob(rec.blob, audio, alive)
+      } else if (x.text && (human = await dhikrAudio(x.id)) && (await playDhikrAudio(human, audio, alive))) {
+        // صوت بشري (تسجيلك أو حصن المسلم) بدل الصوت الآلي
       } else if (x.text && canSpeak) {
         try { await speakArabic(x.text) } catch { setNoVoice(true) }
       } else if (!canSpeak) {

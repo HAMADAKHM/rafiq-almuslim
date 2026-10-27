@@ -1,6 +1,5 @@
 // «رفيقي يذكّرني» (رفيق بلس): كل إعدادات التذكير الذكي في مكان واحد.
-import { getRecording } from '../../services/dhikrAudio'
-import { playBlob } from '../../services/tafsirAudio'
+import { dhikrAudio, playDhikrAudio } from '../../services/dhikrVoice'
 import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { BellRing, BookOpen, Check, Hourglass, Pause, Play, Volume2, VolumeX } from 'lucide-react'
@@ -295,12 +294,12 @@ export function CompanionDhikrPage() {
   const listen = async () => {
     if (speaking) { await stopSpeaking(); recAudio.current?.pause(); setSpeaking(false); return }
     // تسجيل بشري مرخّص أضافه المستخدم لهذا الذكر، وإلا صوت الجهاز
-    const rec = await getRecording(item.id).catch(() => null)
-    if (rec) {
+    const human = await dhikrAudio(item.id)
+    if (human) {
       setSpeaking(true)
-      await playBlob(rec.blob, recAudio, () => true)
+      const ok = await playDhikrAudio(human, recAudio, () => true)
       setSpeaking(false)
-      return
+      if (ok) return
     }
     if (!(await voiceAvailable())) { toast('لا يتوفر صوت عربي على هذا الجهاز'); return }
     setSpeaking(true)
@@ -319,7 +318,7 @@ export function CompanionDhikrPage() {
           <button className="btn" onClick={listen} aria-pressed={speaking}><Volume2 size={16} aria-hidden="true" /> {speaking ? 'إيقاف' : 'استمع'}</button>
           <Link className="btn btn-ghost" to="/companion">إعدادات التذكير</Link>
         </div>
-        <p className="small muted">«استمع» يشغّل تسجيلًا بشريًا إن أضفته لهذا الذكر من <Link to="/adhkar-audio">تسجيلات الأذكار</Link>، وإلا يقرأ النص بصوت جهازك العربي. المصدر مذكور أسفل الذكر.</p>
+        <p className="small muted">«استمع» يشغّل تسجيلًا بشريًا: تسجيلك إن أضفته من <Link to="/adhkar-audio">تسجيلات الأذكار</Link>، أو تسجيل حصن المسلم إن طابق نص الذكر، وإلا يقرأ النص بصوت جهازك. المصدر مذكور أسفل الذكر.</p>
       </div>
     </div>
   )
