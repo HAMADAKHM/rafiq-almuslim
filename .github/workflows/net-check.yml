@@ -3,36 +3,20 @@ name: net-check
 on:
   workflow_dispatch:
   push:
-    paths: ['.github/workflows/net-check.yml']
+    paths: ['.github/workflows/net-check.yml', 'scripts/hisn-audio-map.mjs']
 permissions:
   contents: read
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - name: tafsir-audio-e2e
+      - run: npm ci --ignore-scripts > /dev/null 2>&1 || npm install --ignore-scripts > /dev/null 2>&1
+      - name: hisn-audio-map
         run: |
-          cat > t.mjs <<'JS'
-          const U='https://download.qurancomplex.gov.sa/new-sounds/TafseerMuyassar/TafseerMuyassar-ayat.zip', SIZE=743525665
-          const range=async(a,b)=>{const r=await fetch(U,{headers:{Range:`bytes=${a}-${b}`}});if(r.status!==206)throw new Error('status '+r.status);return new Uint8Array(await r.arrayBuffer())}
-          const u16=(b,p)=>b[p]|(b[p+1]<<8), u32=(b,p)=>(b[p]|(b[p+1]<<8)|(b[p+2]<<16)|(b[p+3]<<24))>>>0
-          const tail=await range(SIZE-65536,SIZE-1); let e
-          for(let i=tail.length-22;i>=0;i--) if(u32(tail,i)===0x06054b50){e={size:u32(tail,i+12),off:u32(tail,i+16)};break}
-          const cd=await range(e.off,e.off+e.size-1); const idx={}; let p=0; const dec=new TextDecoder()
-          while(p+46<=cd.length&&u32(cd,p)===0x02014b50){const m=u16(cd,p+10),cs=u32(cd,p+20),sz=u32(cd,p+24),fl=u16(cd,p+28),el=u16(cd,p+30),cl=u16(cd,p+32),off=u32(cd,p+42);const n=dec.decode(cd.subarray(p+46,p+46+fl));const mm=/(?:^|\/)\d+-(\d{3})(\d{3})-\d+\.mp3$/i.exec(n);if(mm)idx[`${+mm[1]}:${+mm[2]}`]={off,cs,sz,m};p+=46+fl+el+cl}
-          console.log('::notice::index entries',Object.keys(idx).length,'2:255',JSON.stringify(idx['2:255']),'114:6',JSON.stringify(idx['114:6']))
-          let total=0; for(const s of [1,2,18,114]){const n=Object.keys(idx).filter(k=>k.startsWith(s+':')).length; total+=n; console.log('::notice::surah',s,'ayat',n)}
-          for (const key of ['18:10','1:1']) {
-            const en=idx[key]; const buf=await range(en.off,en.off+30+512+en.cs)
-            const st=30+u16(buf,26)+u16(buf,28); let data=buf.subarray(st,st+en.cs)
-            if(en.m===8){const ds=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));data=new Uint8Array(await new Response(ds).arrayBuffer())}
-            const head=[...data.subarray(0,4)].map(x=>x.toString(16).padStart(2,'0')).join(' ')
-            console.log('::notice::',key,'method',en.m,'bytes',data.length,'expected',en.sz,'head',head, data.length===en.sz?'OK':'MISMATCH')
-            await (await import('fs')).promises.writeFile(key.replace(':','_')+'.mp3', data)
-          }
-          JS
-          node t.mjs
-          sudo apt-get install -y -qq ffmpeg > /dev/null 2>&1 || true
-          for f in 18_10.mp3 1_1.mp3; do echo "::notice::$f $(ffprobe -v error -show_entries format=duration:stream=codec_name,sample_rate,channels,bit_rate -of default=nw=1 $f | tr '\n' ' ' | tr -d ':')"; done
+          npx --yes tsx scripts/hisn-audio-map.mjs > map.txt 2> err.txt || true
+          echo "::notice::$(head -1 map.txt) err=$(head -c 300 err.txt | tr -d ':\n')"
+          grep '^MAP ' map.txt | sed 's/^MAP //' | tr -d ':' | sed 's/"//g' | fold -w 900 | while read -r l; do echo "::notice::M $l"; done
+          grep '^REPORT ' map.txt | sed 's/^REPORT //' | tr ' ' '\n' | awk -F@ '$2<1' | tr '\n' ' ' | fold -w 900 | while read -r l; do echo "::notice::P $l"; done
