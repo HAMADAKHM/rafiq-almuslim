@@ -1,4 +1,4 @@
-# فحص يدوي لخوادم المساجد (لا ينشر شيئًا): يطبع حالة كل خادم بطلب حقيقي كما يرسله التطبيق
+# فحص يدوي لمصادر خارجية (لا ينشر شيئًا): يطبع ما يجده كملاحظات تُقرأ عبر واجهة GitHub
 name: net-check
 on:
   workflow_dispatch:
@@ -10,12 +10,33 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Mosque data providers
+      - name: hisnmuslim
         run: |
-          UA='RafiqAlMuslim/1.0 (Islamic companion app; +https://github.com/HAMADAKHM/rafiq-almuslim)'
-          Q='[out:json][timeout:25];(node["amenity"="place_of_worship"]["religion"="muslim"](around:3150,32.221,35.254);way["amenity"="place_of_worship"]["religion"="muslim"](around:3150,32.221,35.254););out center tags 120;'
-          echo "::notice::photon -> $(curl -s -m 30 -A "$UA" -o p.json -w '%{http_code}' -w ' %{time_total}s' 'https://photon.komoot.io/api/?q=mosque&lat=32.221&lon=35.254&limit=20&osm_tag=amenity:place_of_worship') $(head -c 300 p.json | tr -d ':')"
-          echo "::notice::nominatim -> $(curl -s -m 30 -A "$UA" -o n.json -w '%{http_code}' -w ' %{time_total}s' 'https://nominatim.openstreetmap.org/search?q=mosque&format=jsonv2&limit=40&viewbox=35.22,32.25,35.29,32.19&bounded=1') $(head -c 300 n.json | tr -d ':')"
-          echo "::notice::nominatim-ar -> $(curl -s -m 30 -A "$UA" -o n2.json -w '%{http_code} %{time_total}s' 'https://nominatim.openstreetmap.org/search?q=%D9%85%D8%B3%D8%AC%D8%AF&format=jsonv2&limit=40&viewbox=35.22,32.25,35.29,32.19&bounded=1') count=$(grep -o place_id n2.json | wc -l)"
-          echo "::notice::nominatim-en count=$(grep -o place_id n.json | wc -l) photon count=$(grep -o osm_id p.json | wc -l)"
-          echo "::notice::overpass-small -> $(curl -s -m 60 -A "$UA" -o o.json -w '%{http_code} %{time_total}s' -G --data-urlencode 'data=[out:json][timeout:20];nwr["amenity"="place_of_worship"]["religion"="muslim"](around:2000,32.221,35.254);out center 60;' https://overpass-api.de/api/interpreter) count=$(grep -o '"type"' o.json | wc -l)"
+          UA='RafiqAlMuslim/1.0 (+https://github.com/HAMADAKHM/rafiq-almuslim)'
+          curl -sL -m 30 -A "$UA" -o h.json -w '%{http_code}' https://www.hisnmuslim.com/api/ar/husn_ar.json > code.txt || true
+          echo "::notice::husn_ar.json $(cat code.txt) size=$(wc -c < h.json) $(head -c 500 h.json | tr -d ':\n')"
+          python3 - <<'PY'
+          import json,re
+          try:
+              d=json.load(open('h.json',encoding='utf-8-sig'))
+              k=list(d.keys())[0]; ch=d[k]
+              print(f"::notice::chapters={len(ch)} first={json.dumps(ch[0],ensure_ascii=False)[:400].replace(':','=')}")
+          except Exception as e: print('::notice::parse',e)
+          PY
+          curl -sL -m 30 -A "$UA" -o hp.html https://www.hisnmuslim.com/ || true
+          echo "::notice::home rights: $(grep -o '[^<>]\{0,80\}حقوق[^<>]\{0,120\}' hp.html | head -3 | tr -d ':\n')"
+          curl -sL -m 30 -A "$UA" -o ha.json -w '%{http_code}' https://www.hisnmuslim.com/api/ar/1.json > c2.txt || true
+          echo "::notice::chapter1 $(cat c2.txt) $(head -c 400 ha.json | tr -d ':\n')"
+      - name: mp3quran
+        run: |
+          curl -sL -m 30 -o t.json -w '%{http_code}' 'https://mp3quran.net/api/v3/tafasir?language=ar' > c.txt || true
+          echo "::notice::tafasir $(cat c.txt) $(head -c 700 t.json | tr -d ':\n')"
+          curl -sL -m 30 -o t1.json -w '%{http_code}' 'https://mp3quran.net/api/v3/tafsir?tafsir=1&sura=18&language=ar' > c.txt || true
+          echo "::notice::tafsir1 $(cat c.txt) $(head -c 700 t1.json | tr -d ':\n')"
+      - name: qurancomplex
+        run: |
+          curl -sL -m 40 -o q.html -w '%{http_code}' https://qurancomplex.gov.sa/books-audios/ > c.txt || true
+          echo "::notice::books-audios $(cat c.txt) size=$(wc -c < q.html)"
+          echo "::notice::rights $(grep -o '[^<>]\{0,40\}حقوق الاستخدام[^<>]\{0,40\}' q.html | head -1 | tr -d ':\n') $(sed 's/<[^>]*>/ /g' q.html | grep -o 'يتشرف المجمع[^.]\{0,300\}' | head -1 | tr -d ':\n')"
+          echo "::notice::muyassar $(grep -o 'href=\"[^\"]*\"[^<]\{0,120\}' q.html | grep -i -E 'ميسر|muyassar|tafsir|تفسير' | head -5 | tr -d ':\n')"
+          echo "::notice::links $(grep -o 'href=\"[^\"]*\(mp3\|zip\|audio\)[^\"]*\"' q.html | head -8 | tr -d ':\n')"
