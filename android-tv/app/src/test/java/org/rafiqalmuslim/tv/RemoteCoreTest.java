@@ -34,7 +34,7 @@ public class RemoteCoreTest {
         JSONObject screen = new JSONObject(), nat = new JSONObject();
         String lastAction;
         public JSONObject snapshot() { return screen; }
-        public void applyScreen(JSONObject p) { try { for (String k : JSONObject.getNames(p)) screen.put(k, p.get(k)); } catch (Exception ignored) { } }
+        public void applyScreen(JSONObject p) { try { for (java.util.Iterator<String> it = p.keys(); it.hasNext(); ) { String k = it.next(); screen.put(k, p.get(k)); } } catch (Exception ignored) { } }
         public void applyNative(JSONObject p) { nat = p; }
         public boolean action(String a) { lastAction = a; return true; }
     }
