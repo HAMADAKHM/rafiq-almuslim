@@ -1,5 +1,7 @@
 // حالة «رفيق بلس» في التطبيق: يُسأل المتجر عند الفتح وعند العودة للتطبيق وكل 15 دقيقة.
 // المحفوظ على الجهاز يُستخدم فقط دون إنترنت ولمدة محدودة بعد آخر تحقق ناجح (انظر entitlement.ts).
+import { activeSkin } from '../themes/skins'
+import { SkinScene } from '../themes/SkinScene'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { kv } from '../db/repos'
 import { useSettings } from '../state/SettingsContext'
@@ -131,7 +133,7 @@ export function PlusProvider({ children, provider = billing() }: { children: Rea
 
   useEffect(() => { setPlusActive(value.entitled) }, [value.entitled])
 
-  return <Ctx.Provider value={value}><PlusPaletteApplier entitled={value.entitled} />{children}</Ctx.Provider>
+  return <Ctx.Provider value={value}><PlusPaletteApplier entitled={value.entitled} /><SkinApplier entitled={value.entitled} />{children}</Ctx.Provider>
 }
 
 /** لوحة الألوان الإضافية تُطبَّق مع اشتراك ساري فقط، وتعود ألوان التطبيق الأصلية عند انتهائه */
@@ -144,6 +146,39 @@ function PlusPaletteApplier({ entitled }: { entitled: boolean }) {
     else delete root.dataset.palette
   }, [entitled, settings.plusPalette])
   return null
+}
+
+/** الثيم الغامر: مشهد متحرك خلف التطبيق + ألوانه ووضعه (الثيمات المدفوعة مع اشتراك ساري فقط) */
+function SkinApplier({ entitled }: { entitled: boolean }) {
+  const { settings } = useSettings()
+  const skin = activeSkin(settings.skin, entitled)
+  useEffect(() => {
+    const root = document.documentElement
+    if (skin) {
+      root.dataset.skin = skin.id
+      root.dataset.skinMode = skin.mode
+      root.dataset.theme = skin.mode
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', skin.bar)
+    } else {
+      delete root.dataset.skin
+      if (root.dataset.skinMode) {
+        delete root.dataset.skinMode
+        const dark = settings.theme === 'dark' || settings.theme === 'gold' || (settings.theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+        root.dataset.theme = dark ? 'dark' : 'light'
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', settings.theme === 'gold' ? '#0a0a0a' : dark ? '#0c1512' : '#073B32')
+      }
+    }
+    if (settings.skinStill) root.dataset.skinStill = ''
+    else delete root.dataset.skinStill
+  }, [skin, settings.skinStill, settings.theme])
+  // إيقاف الحركة مؤقتًا حين يكون التطبيق في الخلفية (توفير البطارية)
+  useEffect(() => {
+    const vis = () => { if (document.visibilityState === 'hidden') document.documentElement.dataset.hidden = ''; else delete document.documentElement.dataset.hidden }
+    document.addEventListener('visibilitychange', vis)
+    return () => document.removeEventListener('visibilitychange', vis)
+  }, [])
+  if (!skin) return null
+  return <div className="skin-backdrop"><SkinScene id={skin.id} /></div>
 }
 
 export function usePlus(): PlusState {

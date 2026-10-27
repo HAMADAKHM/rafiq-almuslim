@@ -159,7 +159,7 @@ export function mergeMosques(lists: Mosque[][], radius: number): Mosque[] {
 /** بحث سريع: Photon (بالعربية والإنجليزية) وNominatim معًا؛ يكفي نجاح أحدها */
 export async function findMosquesQuick(center: { lat: number; lng: number; label: string }, radius: number, signal?: AbortSignal): Promise<MosqueResult> {
   const b = bbox(center, radius)
-  const box = `${b.minLng.toFixed(4)},${b.minLat.toFixed(4)},${b.maxLng.toFixed(4)},${b.maxLat.toFixed(4)}`
+  const box = `${b.minLng.toFixed(3)},${b.minLat.toFixed(3)},${b.maxLng.toFixed(3)},${b.maxLat.toFixed(3)}`
   const lat = center.lat.toFixed(3), lng = center.lng.toFixed(3)
   const photon = (q: string) => getJson<{ features?: PhotonFeature[] }>(`${PHOTON_URL}?q=${encodeURIComponent(q)}&lat=${lat}&lon=${lng}&bbox=${box}&limit=50&osm_tag=amenity:place_of_worship`, signal).then((j) => parsePhoton(j, center))
   const nominatim = getJson<NominatimItem[]>(`${NOMINATIM_URL}?q=${encodeURIComponent('مسجد')}&format=jsonv2&limit=50&bounded=1&viewbox=${box}`, signal).then((j) => parseNominatim(j, center))

@@ -50,11 +50,14 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const root = document.documentElement
     const apply = () => {
-      const dark = settings.theme === 'dark' || settings.theme === 'gold' || (settings.theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
+      // الثيم الغامر يفرض وضعه (فاتح/داكن) لأنه صُمّم عليه
+      const forced = root.dataset.skinMode
+      const dark = forced ? forced === 'dark' : settings.theme === 'dark' || settings.theme === 'gold' || (settings.theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
       root.dataset.theme = dark ? 'dark' : 'light'
       // الأسود والذهبي: قاعدة الوضع الداكن مع لون مميز ذهبي
       if (settings.theme === 'gold') root.dataset.accent = 'gold'
       else delete root.dataset.accent
+      if (forced) return
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', settings.theme === 'gold' ? '#0a0a0a' : dark ? '#0c1512' : '#073B32')
     }
     apply()

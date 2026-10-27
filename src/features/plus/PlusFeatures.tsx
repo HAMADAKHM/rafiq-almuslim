@@ -4,6 +4,12 @@ import { Plus, Trash2 } from 'lucide-react'
 import { PageHead } from '../../components/Common'
 import { PlusGate } from '../../billing/PlusGate'
 import { PLUS_PALETTES } from '../../billing/palettes'
+import { usePlus } from '../../billing/PlusContext'
+import { activeSkin, SKINS, type Skin } from '../../themes/skins'
+import { SkinScene } from '../../themes/SkinScene'
+import { Link } from 'react-router-dom'
+import { createPortal } from 'react-dom'
+import { toast } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
 import type { CustomReminder } from '../../state/settings'
 import { MAX_CUSTOM } from '../../services/reminders'
@@ -18,11 +24,63 @@ import { companionSummary, loadActualDays, loadDoneDays } from '../../services/c
 
 export function PlusThemesPage() {
   const { settings, update } = useSettings()
+  const plus = usePlus()
+  const [preview, setPreview] = useState<Skin | null>(null)
+  const current = activeSkin(settings.skin, plus.entitled)
+  const apply = (s: Skin | null) => {
+    update({ skin: s ? s.id : '' })
+    setPreview(null)
+    toast(s ? `طُبّق ثيم «${s.name}»` : 'عادت ألوان التطبيق الأصلية')
+  }
   return (
     <div className="page">
-      <PageHead title="ألوان وخلفيات بلس" subtitle="لوحات ألوان وخلفيات زخرفية إضافية للتطبيق كله" />
-      <PlusGate feature="themes" title="ألوان وخلفيات إضافية">
+      <PageHead title="الثيمات" subtitle="ثيمات غامرة بمشاهد متحركة وألوان وخطوط خاصة بها، ولوحات ألوان إضافية" />
+      <section className="card" aria-labelledby="skins-h">
+        <h2 id="skins-h">ثيمات غامرة</h2>
+        <p className="small muted">كل ثيم مشهد حيّ خلف التطبيق كله، مع ألوانه وخطه وشكل بطاقاته. اضغط لمعاينته بملء الشاشة قبل التطبيق.</p>
+        <div className="skin-grid">
+          {SKINS.map((s) => {
+            const locked = !s.free && !plus.entitled
+            return (
+              <button key={s.id} type="button" className="skin-card" aria-pressed={current?.id === s.id} aria-label={`معاينة ثيم ${s.name}`} onClick={() => setPreview(s)}>
+                {!s.free && <span className="skin-badge">بلس</span>}
+                <span className={'skin-frame ' + s.mode}><SkinScene id={s.id} /><span className="skin-sample" /></span>
+                <span className="skin-meta"><strong>{s.name}{current?.id === s.id ? ' ✓' : ''}</strong><small>{locked ? 'من مزايا رفيق بلس' : s.tagline}</small></span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="row" style={{ marginTop: 10, flexWrap: 'wrap' }}>
+          {current && <button className="btn btn-sm" onClick={() => apply(null)}>العودة إلى ألوان التطبيق الأصلية</button>}
+          <label className="check small"><input type="checkbox" className="switch-input" checked={settings.skinStill} onChange={(e) => update({ skinStill: e.target.checked })} /> مشهد ثابت بلا حركة (لتوفير البطارية)</label>
+        </div>
+      </section>
+      {preview && createPortal(
+        <div className="skin-preview" role="dialog" aria-modal="true" aria-label={`معاينة ثيم ${preview.name}`}>
+          <SkinScene id={preview.id} />
+          <div className="skin-preview-body">
+            <div className={'skin-preview-card ' + preview.mode}>
+              <strong style={{ fontFamily: 'Amiri, serif', fontSize: '1.4rem' }}>{preview.name}</strong>
+              <p style={{ margin: '0.3rem 0 0' }}>{preview.tagline}</p>
+            </div>
+            <div className={'skin-preview-card ' + preview.mode}>
+              <p style={{ margin: 0, fontFamily: '"Amiri Quran", Amiri, serif', fontSize: '1.3rem', lineHeight: 2 }}>﴿أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ﴾</p>
+              <small>[الرعد: 28]</small>
+            </div>
+            <div className="row" style={{ justifyContent: 'center' }}>
+              {!preview.free && !plus.entitled
+                ? <Link className="btn btn-gold" to="/plus" onClick={() => setPreview(null)}>من مزايا رفيق بلس — تعرّف عليها</Link>
+                : <button className="btn btn-primary" onClick={() => apply(preview)}>تطبيق الثيم</button>}
+              <button className="btn" onClick={() => setPreview(null)}>إغلاق</button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+      <PlusGate feature="themes" title="لوحات ألوان إضافية">
         <section className="card">
+          <h2>لوحات ألوان</h2>
+          <p className="small muted">تلوين بسيط دون مشهد متحرك. إن اخترت ثيمًا غامرًا فله ألوانه الخاصة.</p>
           <div className="palette-grid" role="radiogroup" aria-label="لوحة الألوان">
             <button className="palette-opt" role="radio" aria-checked={!settings.plusPalette} onClick={() => update({ plusPalette: '' })}>
               <span style={{ background: 'linear-gradient(135deg,#0B4A3E,#073B32)' }} />ألوان التطبيق الأصلية

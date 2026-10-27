@@ -143,3 +143,16 @@ button, input, select { font: inherit; }
 .tv-cloud.c2 { top: 18%; width: 26vw; height: 7vw; animation-duration: 190s; animation-delay: -110s; }
 .tv-cloud.c3 { top: 2%; width: 22vw; height: 6vw; animation-duration: 230s; animation-delay: -60s; }
 @keyframes tv-drift { 0% { transform: translateX(-40vw); } 100% { transform: translateX(110vw); } }
+
+/* مشاهد الشاشة الحيّة: حجاب أخف حتى يظهر جمال المشهد، مع إبقاء النص واضحًا */
+.tv-veil.scene { background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.12) 30%, rgba(0, 0, 0, 0.12) 62%, rgba(0, 0, 0, 0.7)); }
+.tv-scene-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-gap: 0.9vw; gap: 0.9vw; }
+.tv-scene-card { display: flex; flex-direction: column; border-radius: 0.8vw; overflow: hidden; background: rgba(255, 255, 255, 0.06); border: 0.15vw solid transparent; }
+.tv-scene-card.on { border-color: #e2c27e; }
+.tv-scene-main { position: relative; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; display: block; }
+.tv-scene-main:focus { outline: 0.25vw solid #e2c27e; outline-offset: -0.25vw; }
+.tv-scene-thumb { display: block; width: 100%; height: auto; }
+.tv-scene-name { position: absolute; right: 0; left: 0; bottom: 0; padding: 0.6vw 0.8vw; font-size: 1.05vw; background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent); text-align: right; }
+.tv-scene-fav { border: 0; background: rgba(0, 0, 0, 0.35); color: #f1e4c0; font: inherit; font-size: 0.95vw; padding: 0.45vw; cursor: pointer; }
+.tv-scene-fav.on { background: rgba(226, 194, 126, 0.25); }
+.tv-scene-fav:focus { outline: 0.2vw solid #e2c27e; }

@@ -1,4 +1,5 @@
 // منطق شاشة التلفاز: الإعدادات المحلية، وحالة الشاشة (عادية / الأذان / انتظار الإقامة).
+import { SCENES, type SceneId } from './scenes'
 import { DEFAULT_PRAYER_SETTINGS, type DayTimes, type PrayerName, type PrayerSettings } from '../services/prayer'
 import type { City } from '../services/cities'
 
@@ -24,6 +25,15 @@ export interface TvSettings {
   clockShift: number
   /** خلفية متحركة: طيور تحلّق وغيوم تسير ببطء (يمكن إيقافها في التلفزيونات البطيئة) */
   animate: boolean
+  /** مشهد الشاشة: 'rotate' تنقل في القائمة، أو مشهد واحد، أو 'classic' (الرسم الأصلي بالطيور) */
+  scene: SceneId | 'rotate' | 'classic'
+  /** قائمة المشاهد المفضلة للتنقل (فارغة = كل المشاهد) */
+  playlist: SceneId[]
+  /** دقائق كل مشهد في التنقل */
+  rotateMin: number
+  shuffle: boolean
+  /** الجودة: تلقائي (1080)، اقتصادي للأجهزة الضعيفة، عالية حتى 4K */
+  quality: 'auto' | 'eco' | 'high'
 }
 
 export const DEFAULT_TV: TvSettings = {
@@ -39,6 +49,11 @@ export const DEFAULT_TV: TvSettings = {
   reciteVolume: 0.5,
   clockShift: 0,
   animate: true,
+  scene: 'rotate',
+  playlist: [],
+  rotateMin: 10,
+  shuffle: true,
+  quality: 'auto',
 }
 
 const KEY = 'rafiq-tv:settings'
@@ -46,7 +61,9 @@ export function loadTv(): TvSettings {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) || 'null') as Partial<TvSettings> | null
     if (!raw) return DEFAULT_TV
-    return { ...DEFAULT_TV, ...raw, prayer: { ...DEFAULT_TV.prayer, ...raw.prayer, adjustments: { ...DEFAULT_TV.prayer.adjustments, ...raw.prayer?.adjustments } }, iqama: { ...DEFAULT_TV.iqama, ...raw.iqama } }
+    const playlist = Array.isArray(raw.playlist) ? raw.playlist.filter((x): x is SceneId => SCENES.some((sc) => sc.id === x)) : []
+    const scene = raw.scene === 'rotate' || raw.scene === 'classic' || SCENES.some((sc) => sc.id === raw.scene) ? raw.scene! : DEFAULT_TV.scene
+    return { ...DEFAULT_TV, ...raw, scene, playlist, prayer: { ...DEFAULT_TV.prayer, ...raw.prayer, adjustments: { ...DEFAULT_TV.prayer.adjustments, ...raw.prayer?.adjustments } }, iqama: { ...DEFAULT_TV.iqama, ...raw.iqama } }
   } catch { return DEFAULT_TV }
 }
 export function saveTv(s: TvSettings) { try { localStorage.setItem(KEY, JSON.stringify(s)) } catch { /* التخزين غير متاح */ } }

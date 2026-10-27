@@ -135,6 +135,10 @@ export function SettingsPage() {
 
         <section className="card" id="appearance">
           <h2>القراءة والمظهر</h2>
+          <Link to="/plus/themes" className="list-card" style={{ marginBottom: '0.75rem' }}>
+            <span className="icon-chip"><Palette size={20} aria-hidden="true" /></span>
+            <span className="lc-body"><strong>الثيمات الغامرة</strong><small>مشاهد متحركة خلف التطبيق: ليلة القدر، قصر الحمراء، والمزيد</small></span>
+          </Link>
           <div className="grid grid-2" style={{ gap: '0.75rem' }}>
             <label className="field"><span>المظهر</span>
               <select className="select" value={settings.theme} onChange={(e) => update({ theme: e.target.value as typeof settings.theme })}>

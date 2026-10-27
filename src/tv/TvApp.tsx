@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { PaintedScene, type PaintTone } from '../components/Scene'
+import { SceneCanvas, ScenePreview } from './SceneCanvas'
+import { SCENES, sceneInfo, type SceneId } from './scenes'
 import { LogoMark } from '../components/Art'
 import { SADAQAH_LINE, HOME_CARD } from '../content/dedication'
 import { ONLINE_ADHANS } from '../content/onlineAdhans'
@@ -10,7 +12,7 @@ import { ayahOfDay, dhikrOfDay } from '../services/daily'
 import { loadQuran, type QuranData } from '../services/quran'
 import { dayKey, daysBetween, formatGregorian, formatHijri, formatCountdown } from '../lib/dates'
 import { toArabicDigits } from '../lib/arabic'
-import { loadTv, saveTv, shiftedTz, tvPhase, TV_PRAYERS, type TvPrayer, type TvSettings } from './state'
+import { DEFAULT_TV, loadTv, saveTv, shiftedTz, tvPhase, TV_PRAYERS, type TvPrayer, type TvSettings } from './state'
 import { RECITE_MODES, TV_RECITERS } from './recite'
 import { resetRecitePos, useRecitation } from './useRecitation'
 import { voiceStatus } from './voice'
@@ -229,9 +231,9 @@ export function TvApp() {
 
   return (
     <div className="tv">
-      <PaintedScene tone={tone} variant="hero" className="tv-art" />
-      <div className="tv-veil" />
-      {s.animate && <SkyLife night={tone === 'night'} />}
+      {s.scene === 'classic' || !s.animate
+        ? <><PaintedScene tone={tone} variant="hero" className="tv-art" /><div className="tv-veil" />{s.animate && <SkyLife night={tone === 'night'} />}</>
+        : <><SceneCanvas scene={s.scene === 'rotate' ? null : s.scene} playlist={s.playlist} rotateMin={s.rotateMin} shuffle={s.shuffle} quality={s.quality} className="tv-art" /><div className="tv-veil scene" /></>}
 
       <header className="tv-top">
         <div className="tv-brand"><span className="tv-logo"><LogoMark size={44} /></span><div><strong>{HOME_CARD.app}</strong><small>{city.nameAr ?? city.name}</small></div></div>
@@ -357,7 +359,54 @@ function VoiceNote() {
   )
 }
 
-type SetupPage = 'city' | 'prayer' | 'iqama' | 'recite' | 'voice' | 'auto'
+type SetupPage = 'city' | 'prayer' | 'iqama' | 'scenes' | 'recite' | 'voice' | 'auto'
+
+/** مكتبة المشاهد: معاينة حية للمشهد المحدد بالأسهم، وعرض مشهد واحد أو التنقل بين المفضلة */
+function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSettings>) => void }) {
+  const [focus, setFocus] = useState<SceneId | null>(null)
+  const inList = (id: SceneId) => draft.playlist.includes(id)
+  const toggleList = (id: SceneId) => set({ playlist: inList(id) ? draft.playlist.filter((x) => x !== id) : [...draft.playlist, id] })
+  const cats = [...new Set(SCENES.map((x) => x.category))]
+  return (
+    <>
+      <h2>مشاهد الشاشة</h2>
+      <p className="tv-muted">مشاهد حيّة مرسومة داخل التطبيق (لا تحتاج إنترنت). اختر مشهدًا واحدًا، أو دع الشاشة تتنقل بين مشاهدك المفضلة بتلاشٍ ناعم.</p>
+      <Choices label="طريقة العرض" cols={3} value={draft.scene === 'rotate' || draft.scene === 'classic' ? draft.scene : 'one'}
+        onChange={(v) => set({ scene: v === 'one' ? (focus ?? SCENES[0].id) : v as 'rotate' | 'classic' })}
+        options={[{ id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي (طيور وغيوم)' }]} />
+      {cats.map((cat) => (
+        <div key={cat}>
+          <h3 className="tv-muted" style={{ margin: '0.6rem 0 0.3rem' }}>{cat}</h3>
+          <div className="tv-scene-grid">
+            {SCENES.filter((x) => x.category === cat).map((x) => (
+              <div key={x.id} className={'tv-scene-card' + (draft.scene === x.id ? ' on' : '')}>
+                <button className="tv-scene-main" onFocus={() => setFocus(x.id)} onMouseEnter={() => setFocus(x.id)} onClick={() => set({ scene: x.id })} aria-label={`عرض مشهد ${x.name}`}>
+                  <ScenePreview id={x.id} live={focus === x.id} />
+                  <span className="tv-scene-name">{draft.scene === x.id ? '✓ ' : ''}{x.name}</span>
+                </button>
+                <button className={'tv-scene-fav' + (inList(x.id) ? ' on' : '')} onClick={() => toggleList(x.id)} aria-pressed={inList(x.id)}>{inList(x.id) ? '★ في القائمة' : '☆ أضف للتنقل'}</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+      {focus && <p className="tv-muted">{sceneInfo(focus)?.note}</p>}
+      {draft.scene === 'rotate' && (
+        <>
+          <p className="tv-muted">{draft.playlist.length ? `قائمة التنقل: ${draft.playlist.map((id) => sceneInfo(id)?.name).join('، ')}` : 'لم تختر مفضلة: تتنقل الشاشة بين كل المشاهد.'}</p>
+          <Choices label="مدة كل مشهد" cols={5} value={draft.rotateMin} onChange={(m) => set({ rotateMin: m })}
+            options={[{ id: 5, label: '5 دقائق' }, { id: 10, label: '10 دقائق' }, { id: 20, label: '20 دقيقة' }, { id: 30, label: '30 دقيقة' }, { id: 60, label: 'ساعة' }]} />
+          <Toggle on={draft.shuffle} onChange={(v) => set({ shuffle: v })} label="ترتيب عشوائي" />
+          {draft.playlist.length > 1 && <button className="tv-btn" onClick={() => set({ playlist: [] })}>مسح قائمة التنقل (العودة لكل المشاهد)</button>}
+        </>
+      )}
+      <Choices label="الجودة" cols={3} value={draft.quality} onChange={(q) => set({ quality: q })}
+        options={[{ id: 'auto', label: 'تلقائي (Full HD)' }, { id: 'eco', label: 'اقتصادي (تلفاز ضعيف)' }, { id: 'high', label: 'عالية (حتى 4K)' }]} />
+      <Toggle on={draft.animate} onChange={(v) => set({ animate: v })} label="الحركة (أوقفها في التلفزيونات البطيئة جدًا)" />
+      <button className="tv-btn" onClick={() => set({ scene: DEFAULT_TV.scene, playlist: [], rotateMin: DEFAULT_TV.rotateMin, shuffle: true, quality: 'auto', animate: true })}>إعادة الإعداد الافتراضي للمشاهد</button>
+    </>
+  )
+}
 
 /** أزرار اختيار كبيرة (أسهل من القوائم المنسدلة بجهاز التحكم) */
 function Choices<T extends string | number>({ value, options, onChange, label, cols = 3 }: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void; label: string; cols?: number }) {
@@ -401,6 +450,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
     { id: 'city', label: '📍 المدينة' },
     { id: 'prayer', label: '🕌 الصلاة والأذان' },
     { id: 'iqama', label: '⏱ الإقامة' },
+    { id: 'scenes', label: '🌌 المشاهد' },
     { id: 'recite', label: '📖 القراءة' },
     { id: 'voice', label: '🎙 القارئ والصوت' },
     ...(b ? [{ id: 'auto' as const, label: '⚡ التشغيل التلقائي' }] : []),
@@ -419,6 +469,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
             {canCancel && <button className="tv-nav" onClick={onCancel}>إلغاء</button>}
           </nav>
           <section className="tv-setup-page">
+            {page === 'scenes' && <TvScenesPage draft={draft} set={set} />}
             {page === 'city' && (
               <>
                 <h2>المدينة</h2>
@@ -439,7 +490,6 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
                 <h2>الأذان</h2>
                 <Toggle on={draft.adhan} onChange={(v) => set({ adhan: v })} label="رفع الأذان عند دخول الوقت (منصور الزهراني)" />
                 <Toggle on={draft.hour12} onChange={(v) => set({ hour12: v })} label="نظام 12 ساعة" />
-                <Toggle on={draft.animate} onChange={(v) => set({ animate: v })} label="خلفية متحركة (طيور تحلّق وغيوم تسير)" />
                 <h2>التوقيت الصيفي والشتوي</h2>
                 <Choices label="التوقيت الصيفي والشتوي" cols={3} value={draft.clockShift} onChange={(v) => set({ clockShift: v })}
                   options={[{ id: 0, label: 'تلقائي حسب المدينة' }, { id: 60, label: 'تقديم ساعة (+1)' }, { id: -60, label: 'تأخير ساعة (−1)' }]} />

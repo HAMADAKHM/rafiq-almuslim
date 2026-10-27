@@ -27,7 +27,7 @@ const STRINGS = {
   about: { ar: 'عن التطبيق ورسالة الوفاء', en: 'About & Dedication' },
   plus: { ar: 'رفيق بلس', en: 'Rafiq Plus' },
   groupPlus: { ar: 'مزايا رفيق بلس', en: 'Rafiq Plus' },
-  plusThemes: { ar: 'الألوان والخلفيات', en: 'Themes' },
+  plusThemes: { ar: 'الثيمات', en: 'Themes' },
   plusMemorize: { ar: 'خطة الحفظ الذكية', en: 'Memorization Plan' },
   forDeceased: { ar: 'دعاء لفقيدي', en: 'For the Departed' },
   plusFamily: { ar: 'ختمة العائلة', en: 'Family Khatma' },

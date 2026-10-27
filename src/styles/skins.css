@@ -1,0 +1,120 @@
+/* ===================== الثيمات الغامرة (data-skin) =====================
+   المشهد المتحرك خلف التطبيق (.skin-backdrop) + ألوان كل ثيم + شكل البطاقات + الخط.
+   الحركة: transform وopacity فقط. تتوقف مع «تقليل الحركة» أو data-skin-still. */
+
+.skin-backdrop { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.skin-scene { position: absolute; inset: 0; overflow: hidden; }
+.sk-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.sk-svg * { transform-box: view-box; }
+
+/* خلفيات المشاهد (تحت الرسم) */
+.scene-qadr { background: radial-gradient(120% 70% at 75% 15%, #1e2f66 0%, #0d1736 45%, #050915 100%); }
+.scene-andalus { background: linear-gradient(180deg, #fbf4e4 0%, #f2e4c8 60%, #ead6b3 100%); }
+.scene-desert { background: linear-gradient(180deg, #2a1b4a 0%, #7a3a5e 30%, #e0784a 58%, #f7b267 70%, #8a4a3a 100%); }
+.scene-ocean { background: linear-gradient(180deg, #0b5a6e 0%, #064457 40%, #032b3a 80%, #021c27 100%); }
+.scene-garden { background: linear-gradient(180deg, #f3f8ea 0%, #e3efd4 50%, #cfe2bd 100%); }
+.scene-ramadan { background: radial-gradient(120% 70% at 30% 20%, #2b2470 0%, #171148 50%, #0a0722 100%); }
+.scene-aurora { background: linear-gradient(180deg, #050b14 0%, #0a1a2a 55%, #0b1f2e 100%); }
+.scene-royal { background: radial-gradient(90% 60% at 50% 30%, #1d1910 0%, #0e0c08 60%, #050403 100%); }
+.sk-vignette { position: absolute; inset: 0; background: radial-gradient(100% 80% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.45)); }
+
+/* ---------- الحركات ---------- */
+.sk-stars circle { animation: sk-twinkle 5s ease-in-out infinite; }
+@keyframes sk-twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+.sk-moon { filter: drop-shadow(0 0 14px rgba(255, 236, 170, 0.6)); }
+.sk-pulse { animation: sk-pulse 7s ease-in-out infinite; transform-origin: center; }
+@keyframes sk-pulse { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+.sk-meteor { opacity: 0; animation: sk-meteor 11s ease-in infinite 3s; }
+@keyframes sk-meteor { 0%, 88% { opacity: 0; transform: translate(0, 0); } 90% { opacity: 1; } 100% { opacity: 0; transform: translate(220px, 110px); } }
+.sk-window { animation: sk-flicker 4s ease-in-out infinite; }
+@keyframes sk-flicker { 0%, 100% { opacity: 0.95; } 45% { opacity: 0.6; } 55% { opacity: 1; } }
+.sk-zellige { animation: sk-pan 60s linear infinite; }
+@keyframes sk-pan { to { transform: translate(56px, 56px); } }
+.sk-rays { opacity: 0.3; animation: sk-rays 9s ease-in-out infinite; }
+@keyframes sk-rays { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.38; } }
+.sk-drift { animation: sk-drift 70s linear infinite; }
+.sk-drift-slow { animation: sk-drift 120s linear infinite; }
+@keyframes sk-drift { to { transform: translateX(600px); } }
+.sk-caravan { animation: sk-caravan 80s linear infinite; }
+@keyframes sk-caravan { from { transform: translateX(440px); } to { transform: translateX(-120px); } }
+.sk-sand circle { animation: sk-sand 7s linear infinite; }
+@keyframes sk-sand { from { transform: translate(0, 0); opacity: 0; } 20% { opacity: 0.6; } to { transform: translate(-90px, -20px); opacity: 0; } }
+.sk-wave { animation: sk-wave 14s linear infinite; }
+.sk-wave2 { animation-duration: 10s; animation-direction: reverse; }
+.sk-wave3 { animation-duration: 7s; }
+@keyframes sk-wave { to { transform: translateX(200px); } }
+.sk-caustic ellipse { animation: sk-caustic 8s ease-in-out infinite alternate; }
+@keyframes sk-caustic { to { transform: translate(30px, 20px) scale(1.2); } }
+.sk-ray { opacity: 0.08; animation: sk-ray 6s ease-in-out infinite; }
+@keyframes sk-ray { 0%, 100% { opacity: 0.04; } 50% { opacity: 0.12; } }
+.sk-bubbles circle { animation: sk-rise 12s linear infinite; }
+@keyframes sk-rise { from { transform: translateY(0); opacity: 0; } 10% { opacity: 0.7; } to { transform: translateY(-860px); opacity: 0; } }
+.sk-leaf { animation: sk-fall 16s linear infinite; opacity: 0; }
+@keyframes sk-fall { 0% { transform: translate(0, -30px) rotate(0); opacity: 0; } 8% { opacity: 0.9; } 50% { transform: translate(-30px, 400px) rotate(180deg); } 92% { opacity: 0.9; } 100% { transform: translate(10px, 840px) rotate(360deg); opacity: 0; } }
+.sk-lantern { animation: sk-swing 5s ease-in-out infinite alternate; }
+@keyframes sk-swing { from { transform: rotate(-5deg); } to { transform: rotate(5deg); } }
+.sk-lantern-glow { animation: sk-glow 2.6s ease-in-out infinite; }
+@keyframes sk-glow { 0%, 100% { opacity: 0.65; } 50% { opacity: 1; } }
+.sk-aur1 { animation: sk-aur 14s ease-in-out infinite alternate; }
+.sk-aur2 { animation: sk-aur 18s ease-in-out infinite alternate-reverse; }
+.sk-aur3 { animation: sk-aur 22s ease-in-out infinite alternate; }
+@keyframes sk-aur { from { transform: translate(-30px, 0) scaleY(0.9); } to { transform: translate(40px, -25px) scaleY(1.25); } }
+.sk-sweep { animation: sk-sweep 9s ease-in-out infinite; }
+@keyframes sk-sweep { from { transform: translateX(-200px); } to { transform: translateX(600px); } }
+
+@media (prefers-reduced-motion: reduce) { .skin-scene *, .skin-scene { animation: none !important; } }
+:root[data-skin-still] .skin-scene, :root[data-skin-still] .skin-scene * { animation: none !important; }
+:root[data-hidden] .skin-scene, :root[data-hidden] .skin-scene * { animation-play-state: paused !important; }
+
+/* ---------- ألوان الثيمات ---------- */
+:root[data-skin] body { background: transparent; }
+:root[data-skin] { --skin-blur: blur(14px) saturate(1.15); }
+
+:root[data-skin='qadr'] { --bg: #070d22; --surface: rgba(16, 24, 56, 0.62); --surface-2: rgba(30, 42, 88, 0.6); --border: rgba(200, 210, 255, 0.14); --text: #eef0fb; --text-muted: #b8bedb; --primary: #f2cf7a; --primary-600: #f7dc98; --primary-700: #c79e45; --primary-soft: rgba(242, 207, 122, 0.14); --on-primary: #1a1530; --gold: #f2cf7a; --gold-2: #f7dc98; --gold-soft: rgba(242, 207, 122, 0.14); --hdr: #0d1736; --hdr-2: #1e2f66; --hdr-gold: #f2cf7a; --skin-heading: 'Amiri', serif; }
+:root[data-skin='andalus'] { --bg: #f6ecd8; --surface: rgba(255, 250, 238, 0.86); --surface-2: #efe0c2; --border: #d9c39b; --text: #2b2420; --text-muted: #6b5a49; --primary: #0f6e70; --primary-600: #138486; --primary-700: #0a4c4d; --primary-soft: #dcefe9; --on-primary: #fff; --gold: #8a4b26; --gold-2: #c2643d; --gold-soft: #f6e0cf; --hdr: #0f5a5c; --hdr-2: #1f7b7d; --hdr-gold: #f2d29a; --skin-heading: 'Amiri', serif; }
+:root[data-skin='desert'] { --bg: #2a1b2e; --surface: rgba(48, 24, 40, 0.6); --surface-2: rgba(80, 40, 56, 0.55); --border: rgba(255, 200, 150, 0.18); --text: #fff1e2; --text-muted: #e5c5b0; --primary: #ffb36b; --primary-600: #ffc58c; --primary-700: #e08a45; --primary-soft: rgba(255, 179, 107, 0.15); --on-primary: #2a1220; --gold: #ffcf8a; --gold-2: #ffdca8; --gold-soft: rgba(255, 207, 138, 0.15); --hdr: #3a1d2e; --hdr-2: #7a3a5e; --hdr-gold: #ffcf8a; --skin-heading: 'IBM Plex Sans Arabic', sans-serif; }
+:root[data-skin='ocean'] { --bg: #032b3a; --surface: rgba(4, 52, 68, 0.58); --surface-2: rgba(10, 82, 102, 0.5); --border: rgba(170, 240, 255, 0.16); --text: #e8fbff; --text-muted: #a9d6e2; --primary: #6fe3f5; --primary-600: #94ecf9; --primary-700: #3fb9cc; --primary-soft: rgba(111, 227, 245, 0.14); --on-primary: #022430; --gold: #ffd98a; --gold-2: #ffe4a8; --gold-soft: rgba(255, 217, 138, 0.14); --hdr: #032b3a; --hdr-2: #0b5a6e; --hdr-gold: #ffd98a; --skin-heading: 'IBM Plex Sans Arabic', sans-serif; }
+:root[data-skin='garden'] { --bg: #eef5e4; --surface: rgba(255, 255, 250, 0.82); --surface-2: #e2eed3; --border: #c9dbb4; --text: #1f2e22; --text-muted: #556957; --primary: #2f7a45; --primary-600: #3a8f53; --primary-700: #1f5530; --primary-soft: #dcefd8; --on-primary: #fff; --gold: #8a5a1a; --gold-2: #c69240; --gold-soft: #f4ead2; --hdr: #2f5d3a; --hdr-2: #3f7d4a; --hdr-gold: #f3e3a6; --skin-heading: 'Noto Naskh Arabic', serif; }
+:root[data-skin='ramadan'] { --bg: #0e0a2c; --surface: rgba(28, 20, 78, 0.6); --surface-2: rgba(50, 38, 120, 0.5); --border: rgba(255, 210, 120, 0.18); --text: #f6f1ff; --text-muted: #c4bce6; --primary: #ffcb5c; --primary-600: #ffd87f; --primary-700: #d9a234; --primary-soft: rgba(255, 203, 92, 0.15); --on-primary: #1a1240; --gold: #ffcb5c; --gold-2: #ffd87f; --gold-soft: rgba(255, 203, 92, 0.15); --hdr: #120d33; --hdr-2: #2b2470; --hdr-gold: #ffcb5c; --skin-heading: 'Amiri', serif; }
+:root[data-skin='aurora'] { --bg: #06121c; --surface: rgba(10, 26, 40, 0.6); --surface-2: rgba(20, 44, 64, 0.55); --border: rgba(120, 255, 210, 0.15); --text: #eafff8; --text-muted: #a6cfc4; --primary: #4ff0b8; --primary-600: #7ff5cc; --primary-700: #2bc993; --primary-soft: rgba(79, 240, 184, 0.13); --on-primary: #03140e; --gold: #c9b4ff; --gold-2: #dccfff; --gold-soft: rgba(201, 180, 255, 0.14); --hdr: #06121c; --hdr-2: #0a2a3a; --hdr-gold: #7ff5cc; --skin-heading: 'IBM Plex Sans Arabic', sans-serif; }
+:root[data-skin='royal'] { --bg: #0a0907; --surface: rgba(22, 19, 14, 0.82); --surface-2: rgba(36, 31, 22, 0.8); --border: rgba(201, 162, 74, 0.35); --text: #f5ecd6; --text-muted: #c9b893; --primary: #d9b45a; --primary-600: #e8c877; --primary-700: #b08a35; --primary-soft: rgba(217, 180, 90, 0.13); --on-primary: #14100a; --gold: #d9b45a; --gold-2: #e8c877; --gold-soft: rgba(217, 180, 90, 0.13); --hdr: #0a0907; --hdr-2: #241f16; --hdr-gold: #e8c877; --skin-heading: 'Amiri', serif; }
+
+/* ---------- شكل البطاقات والإطار ---------- */
+:root[data-skin] .card, :root[data-skin] .list-card { background: var(--surface); border-color: var(--border); -webkit-backdrop-filter: var(--skin-blur); backdrop-filter: var(--skin-blur); }
+:root[data-skin] .sidebar, :root[data-skin] .tabbar, :root[data-skin] .topbar { background: var(--surface); border-color: var(--border); -webkit-backdrop-filter: var(--skin-blur); backdrop-filter: var(--skin-blur); }
+:root[data-skin] h1, :root[data-skin] h2, :root[data-skin] .page-head h1, :root[data-skin] .section-title { font-family: var(--skin-heading); }
+:root[data-skin] .btn-primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+:root[data-skin] .home-hero { background: transparent; }
+:root[data-skin] .home-hero-art { opacity: 0.35; }
+:root[data-skin-mode='light'] .home-hero { background: linear-gradient(160deg, var(--hdr) 0%, var(--hdr-2) 100%); }
+:root[data-skin-mode='light'] .home-hero-art { opacity: 0.55; }
+:root[data-skin] .page, :root[data-skin] .home { animation: skin-in 0.45s ease both; }
+@keyframes skin-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { :root[data-skin] .page, :root[data-skin] .home { animation: none; } }
+
+/* زخرفة زوايا ذهبية (الذهب الملكي وقصر الحمراء) */
+:root[data-skin='royal'] .card, :root[data-skin='andalus'] .card { position: relative; }
+:root[data-skin='royal'] .card::before, :root[data-skin='royal'] .card::after,
+:root[data-skin='andalus'] .card::before, :root[data-skin='andalus'] .card::after { content: ''; position: absolute; width: 18px; height: 18px; pointer-events: none; border: 1.5px solid var(--gold-2); opacity: 0.8; }
+:root[data-skin='royal'] .card::before, :root[data-skin='andalus'] .card::before { top: 6px; inset-inline-start: 6px; border-inline-end: 0; border-bottom: 0; border-start-start-radius: 6px; }
+:root[data-skin='royal'] .card::after, :root[data-skin='andalus'] .card::after { bottom: 6px; inset-inline-end: 6px; border-inline-start: 0; border-top: 0; border-end-end-radius: 6px; }
+:root[data-skin='andalus'] .card { box-shadow: 0 0 0 4px rgba(255, 250, 238, 0.6), 0 0 0 5px #d9c39b, 0 10px 26px rgba(80, 50, 20, 0.12); }
+
+/* ---------- معرض الثيمات ---------- */
+.skin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; }
+.skin-card { position: relative; border: 2px solid var(--border); border-radius: 18px; overflow: hidden; padding: 0; background: none; cursor: pointer; text-align: start; color: inherit; font: inherit; }
+.skin-card[aria-pressed='true'] { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.skin-frame { position: relative; aspect-ratio: 9 / 13; overflow: hidden; }
+.skin-frame .skin-scene { position: absolute; inset: 0; }
+.skin-frame .skin-sample { position: absolute; inset-inline: 10%; bottom: 10%; height: 26%; border-radius: 12px; background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(6px); }
+.skin-frame.light .skin-sample { background: rgba(255, 255, 255, 0.7); border-color: rgba(0, 0, 0, 0.08); }
+.skin-meta { display: block; padding: 0.5rem 0.65rem 0.6rem; background: var(--surface); }
+.skin-meta strong { display: block; }
+.skin-meta small { color: var(--text-muted); display: block; line-height: 1.5; }
+.skin-badge { position: absolute; top: 8px; inset-inline-start: 8px; z-index: 1; font-size: 0.72rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(0, 0, 0, 0.55); color: #ffe2a0; }
+.skin-preview { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; justify-content: center; padding: 1.25rem; padding-bottom: calc(1.25rem + env(safe-area-inset-bottom)); }
+.skin-preview .skin-scene { position: absolute; inset: 0; }
+.skin-preview-body { position: relative; display: grid; gap: 0.75rem; max-width: 560px; width: 100%; margin: 0 auto; }
+.skin-preview-card { border-radius: 18px; padding: 1rem 1.1rem; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.skin-preview-card.dark { background: rgba(10, 14, 30, 0.55); color: #f4f1ea; border: 1px solid rgba(255, 255, 255, 0.14); }
+.skin-preview-card.light { background: rgba(255, 252, 244, 0.85); color: #2b2420; border: 1px solid rgba(0, 0, 0, 0.08); }

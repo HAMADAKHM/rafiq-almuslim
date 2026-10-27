@@ -99,6 +99,10 @@ export interface Settings {
   displayName: string
   /** مجموعات الأذكار اليومية الظاهرة في الرئيسية (من أقسام الأذكار الثابتة فقط) */
   dailyAdhkar: string[]
+  /** الثيم الغامر ('' = بلا ثيم): مشهد متحرك وألوان وخط. ثيمان مجانيان والباقي مع رفيق بلس */
+  skin: string
+  /** إيقاف حركة مشهد الثيم (يبقى المشهد ثابتًا) */
+  skinStill: boolean
   /** رفيق بلس: لوحة الألوان والخلفية الإضافية ('' = ألوان التطبيق الأصلية). تُطبَّق فقط مع اشتراك ساري */
   plusPalette: string
   /** رفيق بلس: تذكيرات خاصة يكتبها المستخدم (تُجدول فقط مع اشتراك ساري) */
@@ -243,6 +247,8 @@ export const DEFAULT_SETTINGS: Settings = {
   trackActivity: true,
   displayName: '',
   plusPalette: '',
+  skin: '',
+  skinStill: false,
   customReminders: [],
   ramadan: { suhoorMinutes: 45, iftarMinutes: 10, imsakMinutes: 10 },
   fasting: { enabled: false, time: '21:00', beed: true, monThu: false, arafah: true, ashura: true, shawwal: true },
