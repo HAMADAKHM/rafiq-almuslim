@@ -1,5 +1,6 @@
 // مشغّل القصة: مشهد = مقطع تفسير (آية أو عدة آيات فسّرها الكتاب معًا).
 // «استمع»: تلاوة الآيات بصوت القارئ، ثم قراءة التفسير بصوت الجهاز (قراءة آلية للنص كما هو)، ثم المشهد التالي.
+import { playBlob, tafsirAudioSupported, tafsirAyahAudio, TAFSIR_AUDIO_CREDIT, TAFSIR_AUDIO_EDITION } from '../../services/tafsirAudio'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronRight, ChevronLeft, Play, Pause, ArrowRight, Clapperboard } from 'lucide-react'
@@ -59,6 +60,8 @@ function StoryPlayer() {
   const [voiceOk, setVoiceOk] = useState(true)
   const [phase, setPhase] = useState<FilmPhase>({ kind: 'idle' })
   const [film, setFilm] = useState(false)
+  const [recordedFailed, setRecordedFailed] = useState(false)
+  const useRecorded = edition === TAFSIR_AUDIO_EDITION && tafsirAudioSupported() && !recordedFailed
   const audio = useRef<HTMLAudioElement | null>(null)
   const run = useRef(0)
 
@@ -97,8 +100,20 @@ function StoryPlayer() {
       if (withRecitation) for (let a = s.from; a <= s.to && alive(); a++) { setPhase({ kind: 'ayah', ayah: a }); await playAyah(ayahAudioSources(reciter, surah, a), audio, alive) }
       if (!alive()) break
       setPhase({ kind: 'meaning' })
-      if (voiceOk) { try { await speakArabic(s.text, 0.85) } catch { setVoiceOk(false) } }
-      else await wait(Math.max(6000, s.text.length * 70), alive)
+      // التفسير الميسّر بصوت قارئ حقيقي (مجمع الملك فهد)، آيةً آية؛ وإن تعذر فصوت الجهاز
+      let recorded = false
+      if (useRecorded) {
+        try {
+          const blobs: Blob[] = []
+          for (let a = s.from; a <= s.to && alive(); a++) { const b = await tafsirAyahAudio(surah, a); if (!b) throw new Error('missing'); blobs.push(b) }
+          for (const b of blobs) { if (!alive()) break; await playBlob(b, audio, alive) }
+          recorded = true
+        } catch { setRecordedFailed(true) }
+      }
+      if (!recorded && alive()) {
+        if (voiceOk) { try { await speakArabic(s.text, 0.85) } catch { setVoiceOk(false) } }
+        else await wait(Math.max(6000, s.text.length * 70), alive)
+      }
       if (alive()) await wait(900, alive)
     }
     if (alive()) { setPlaying(false); setPhase({ kind: 'idle' }) }
@@ -152,9 +167,10 @@ function StoryPlayer() {
           {!voiceOk && <p className="muted small">لا يوجد صوت عربي في الجهاز لقراءة التفسير: تُتلى الآيات ويبقى المعنى مكتوبًا مدة تكفي لقراءته. يمكن تثبيت العربية من إعدادات «تحويل النص إلى كلام» في الهاتف.</p>}
           {film && (
             <StoryFilm title={title} surah={surah} surahName={data.meta.surahs[surah - 1].name} verses={data.verses[surah - 1]} scenes={scenes} tone={story?.tone ?? 'sunset'}
-              index={i} phase={phase} playing={playing} reciterId={settings.reciterId} onPlay={() => listen(i)} onStop={stop} onGo={go} onClose={() => setFilm(false)} />
+              index={i} phase={phase} playing={playing} reciterId={settings.reciterId} onPlay={() => listen(i)} onStop={stop} onGo={go} onClose={() => setFilm(false)} recordedTafsir={useRecorded} />
           )}
-          <p className="muted small">التفسير: {EDITIONS.find((e) => e.slug === edition)?.name} — {EDITIONS.find((e) => e.slug === edition)?.author}. يُقرأ بصوت الجهاز قراءةً آلية للنص كما هو، والآيات بصوت القارئ.</p>
+          <p className="muted small">التفسير: {EDITIONS.find((e) => e.slug === edition)?.name} — {EDITIONS.find((e) => e.slug === edition)?.author}. {useRecorded ? `يُسمع بتسجيل بشري: ${TAFSIR_AUDIO_CREDIT} (متاح للاستخدام العام مجانًا في التطبيقات). يُحفظ كل مقطع على جهازك بعد أول سماع.` : 'يُقرأ بصوت الجهاز قراءةً آلية للنص كما هو.'} والآيات بصوت القارئ.</p>
+          {recordedFailed && edition === TAFSIR_AUDIO_EDITION && <p className="muted small">تعذر تحميل التسجيل الصوتي للتفسير الآن (تحقق من الإنترنت)، فاستُخدم صوت الجهاز. <button className="btn btn-ghost btn-sm" onClick={() => setRecordedFailed(false)}>أعد المحاولة</button></p>}
         </div>
       )}
     </div>

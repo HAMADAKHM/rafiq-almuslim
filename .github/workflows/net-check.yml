@@ -10,33 +10,29 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: zip-method
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: tafsir-audio-e2e
         run: |
-          python3 - <<'PY'
-          import urllib.request,struct
-          U='https://download.qurancomplex.gov.sa/new-sounds/TafseerMuyassar/TafseerMuyassar-ayat.zip'
-          def rng(a,b):
-              r=urllib.request.Request(U,headers={'Range':f'bytes={a}-{b}','User-Agent':'Mozilla/5.0'})
-              x=urllib.request.urlopen(r,timeout=60); return x.status,x.headers.get('Content-Range'),x.headers.get('Access-Control-Allow-Origin'),x.read()
-          st,cr,cors,cd=rng(742721293,742721293+4000)
-          meth,=struct.unpack('<H',cd[10:12]); off,=struct.unpack('<I',cd[42:46]); fl,=struct.unpack('<H',cd[28:30])
-          print(f'::notice::status={st} range={cr} cors={cors} method_first={meth} off={off} name={cd[46:46+fl].decode()}')
-          ms=set();p=0
-          while p+46<len(cd) and cd[p:p+4]==b'PK\x01\x02':
-              ms.add(struct.unpack('<H',cd[p+10:p+12])[0]); fl,el,cl=struct.unpack('<HHH',cd[p+28:p+34]); p+=46+fl+el+cl
-          print('::notice::methods',sorted(ms))
-          PY
-      - name: hisn-terms
-        run: |
-          for u in https://www.hisnmuslim.com/i/ar/about https://www.hisnmuslim.com/about https://www.hisnmuslim.com/api/ https://www.hisnmuslim.com/i/ar/; do
-            code=$(curl -sL -m 20 -o p.html -w '%{http_code}' "$u")
-            python3 - "$u" "$code" <<'PY'
-          import re,html,sys
-          x=html.unescape(re.sub(r'<[^>]+>',' ',open('p.html',encoding='utf-8',errors='ignore').read())); x=re.sub(r'\s+',' ',x)
-          out=[]
-          for w in ['حقوق','copyright','Copyright','©','ترخيص','license','مجان','قارئ','بصوت','قراءة']:
-              i=x.find(w)
-              if i>=0: out.append(w+'→'+x[max(0,i-90):i+140])
-          print('::notice::'+sys.argv[1]+' '+sys.argv[2]+' '+(' ## '.join(out)[:700] if out else x[:300]).replace(':','،'))
-          PY
-          done
+          cat > t.mjs <<'JS'
+          const U='https://download.qurancomplex.gov.sa/new-sounds/TafseerMuyassar/TafseerMuyassar-ayat.zip', SIZE=743525665
+          const range=async(a,b)=>{const r=await fetch(U,{headers:{Range:`bytes=${a}-${b}`}});if(r.status!==206)throw new Error('status '+r.status);return new Uint8Array(await r.arrayBuffer())}
+          const u16=(b,p)=>b[p]|(b[p+1]<<8), u32=(b,p)=>(b[p]|(b[p+1]<<8)|(b[p+2]<<16)|(b[p+3]<<24))>>>0
+          const tail=await range(SIZE-65536,SIZE-1); let e
+          for(let i=tail.length-22;i>=0;i--) if(u32(tail,i)===0x06054b50){e={size:u32(tail,i+12),off:u32(tail,i+16)};break}
+          const cd=await range(e.off,e.off+e.size-1); const idx={}; let p=0; const dec=new TextDecoder()
+          while(p+46<=cd.length&&u32(cd,p)===0x02014b50){const m=u16(cd,p+10),cs=u32(cd,p+20),sz=u32(cd,p+24),fl=u16(cd,p+28),el=u16(cd,p+30),cl=u16(cd,p+32),off=u32(cd,p+42);const n=dec.decode(cd.subarray(p+46,p+46+fl));const mm=/(?:^|\/)\d+-(\d{3})(\d{3})-\d+\.mp3$/i.exec(n);if(mm)idx[`${+mm[1]}:${+mm[2]}`]={off,cs,sz,m};p+=46+fl+el+cl}
+          console.log('::notice::index entries',Object.keys(idx).length,'2:255',JSON.stringify(idx['2:255']),'114:6',JSON.stringify(idx['114:6']))
+          let total=0; for(const s of [1,2,18,114]){const n=Object.keys(idx).filter(k=>k.startsWith(s+':')).length; total+=n; console.log('::notice::surah',s,'ayat',n)}
+          for (const key of ['18:10','1:1']) {
+            const en=idx[key]; const buf=await range(en.off,en.off+30+512+en.cs)
+            const st=30+u16(buf,26)+u16(buf,28); let data=buf.subarray(st,st+en.cs)
+            if(en.m===8){const ds=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));data=new Uint8Array(await new Response(ds).arrayBuffer())}
+            const head=[...data.subarray(0,4)].map(x=>x.toString(16).padStart(2,'0')).join(' ')
+            console.log('::notice::',key,'method',en.m,'bytes',data.length,'expected',en.sz,'head',head, data.length===en.sz?'OK':'MISMATCH')
+            await (await import('fs')).promises.writeFile(key.replace(':','_')+'.mp3', data)
+          }
+          JS
+          node t.mjs
+          sudo apt-get install -y -qq ffmpeg > /dev/null 2>&1 || true
+          for f in 18_10.mp3 1_1.mp3; do echo "::notice::$f $(ffprobe -v error -show_entries format=duration:stream=codec_name,sample_rate,channels,bit_rate -of default=nw=1 $f | tr '\n' ' ' | tr -d ':')"; done

@@ -7,6 +7,7 @@ import { loadRecitation, MAX_VIDEO_AYAHS, extFor } from '../../services/studioVi
 import { reciterById } from '../../content/reciters'
 import { shareImage } from '../../platform'
 import { narrationAvailable, synthesizeNarration } from '../../platform/narration'
+import { tafsirAyahAudio } from '../../services/tafsirAudio'
 import { toArabicDigits } from '../../lib/arabic'
 import type { PaintTone } from '../../components/Scene'
 
@@ -27,9 +28,31 @@ interface Props {
   onStop(): void
   onGo(i: number): void
   onClose(): void
+  /** التفسير الميسّر بتسجيل مجمع الملك فهد (بدل صوت الجهاز) */
+  recordedTafsir?: boolean
 }
 
 type Save = { s: 'idle' } | { s: 'loading'; done: number; total: number } | { s: 'voice'; done: number; total: number } | { s: 'recording'; p: number } | { s: 'done'; blob: Blob; url: string } | { s: 'error'; msg: string }
+
+/** يدمج تسجيلات آيات المشهد (مجمع الملك فهد) في مقطع صوتي واحد */
+async function recordedSceneAudio(actx: AudioContext, surah: number, from: number, to: number): Promise<AudioBuffer | null> {
+  const parts: AudioBuffer[] = []
+  for (let a = from; a <= to; a++) {
+    const blob = await tafsirAyahAudio(surah, a)
+    if (!blob) return null
+    parts.push(await actx.decodeAudioData(await blob.arrayBuffer()))
+  }
+  if (!parts.length) return null
+  const rate = parts[0].sampleRate, ch = Math.max(...parts.map((b) => b.numberOfChannels))
+  const gap = Math.round(rate * 0.25)
+  const out = actx.createBuffer(ch, parts.reduce((n, b) => n + b.length + gap, 0), rate)
+  let pos = 0
+  for (const b of parts) {
+    for (let c = 0; c < ch; c++) out.getChannelData(c).set(b.getChannelData(Math.min(c, b.numberOfChannels - 1)), pos)
+    pos += b.length + gap
+  }
+  return out
+}
 
 export function StoryFilm(p: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -113,11 +136,15 @@ export function StoryFilm(p: Props) {
       if (ctrl.signal.aborted) return
       // صوت قراءة المعنى لكل مشهد (إن أمكن)؛ إن تعذر لمشهد يبقى المعنى مكتوبًا فيه فقط
       let narration: (AudioBuffer | null)[] | undefined
-      if (voiceInVideo && canVoice) {
+      if (voiceInVideo && (canVoice || p.recordedTafsir)) {
         narration = []
         for (let k = 0; k < range.length; k++) {
           setSave({ s: 'voice', done: k, total: range.length })
-          narration.push(await synthesizeNarration(actx, range[k].text).catch(() => null))
+          let buf: AudioBuffer | null = null
+          // التسجيل البشري للتفسير الميسّر: مقاطع آيات المشهد متتالية في مقطع واحد
+          if (p.recordedTafsir) buf = await recordedSceneAudio(actx, p.surah, range[k].from, range[k].to).catch(() => null)
+          if (!buf && canVoice) buf = await synthesizeNarration(actx, range[k].text).catch(() => null)
+          narration.push(buf)
           if (ctrl.signal.aborted) return
         }
       }
@@ -152,7 +179,7 @@ export function StoryFilm(p: Props) {
         <button className="film-btn play" onClick={() => (p.playing ? p.onStop() : p.onPlay())} disabled={busy}>{p.playing ? <><Pause size={20} /> إيقاف</> : <><Play size={20} /> شاهد واستمع</>}</button>
         <button className="film-btn" onClick={() => { p.onStop(); p.onGo(p.index + 1) }} disabled={p.index >= p.scenes.length - 1 || busy} aria-label="المشهد التالي"><ChevronLeft size={26} /></button>
         <button className="film-btn" onClick={makeVideo} disabled={busy}><Clapperboard size={18} /> حفظ فيديو</button>
-        {canVoice && <label className="film-btn film-check"><input type="checkbox" checked={voiceInVideo} disabled={busy} onChange={(e) => setVoiceInVideo(e.target.checked)} /> صوت المعنى في الفيديو</label>}
+        {(canVoice || p.recordedTafsir) && <label className="film-btn film-check"><input type="checkbox" checked={voiceInVideo} disabled={busy} onChange={(e) => setVoiceInVideo(e.target.checked)} /> صوت المعنى في الفيديو</label>}
       </div>
       {save.s !== 'idle' && (
         <div className="film-save" role="status">
