@@ -40,7 +40,7 @@ export function PlusPage() {
     <div className="page plus-page">
       <PageHead title="رفيق بلس" subtitle="عضوية اختيارية بمزايا إضافية" actions={<button className="icon-btn" onClick={close} aria-label="إغلاق والاستمرار مجانًا"><X size={20} /></button>} />
 
-      {p.previewUnlocked && <p className="notice" role="note">نسخة تجريبية: كل مزايا رفيق بلس مفتوحة الآن للتجربة دون اشتراك. تُقفل لاحقًا وتُفتح عند الاشتراك.</p>}
+      {p.previewUnlocked && <p className="notice" role="note">نسخة معاينة خاصة بصاحب التطبيق: كل مزايا رفيق بلس مفتوحة للمراجعة دون اشتراك. ليست للنشر، والنسخ العامة تبقى مقفلة.</p>}
       {p.provider.test && <p className="notice" role="note">وضع تجريبي: لا يوجد أي دفع حقيقي. «الشهر» هنا 5 دقائق لتجربة التجديد والإلغاء والانتهاء.</p>}
 
       <section className="card plus-status" aria-label="حالة الاشتراك">
@@ -85,7 +85,7 @@ export function PlusPage() {
               <button className="btn btn-gold btn-block" onClick={p.purchase} disabled={p.busy != null}>{p.busy === 'purchase' ? 'جارٍ فتح المتجر…' : `اشترك بـ ${p.offer.priceString} شهريًا`}</button>
             </>
           ) : (
-            <p className="muted">{p.ready ? 'الاشتراك غير متاح حاليًا على هذا الجهاز أو دون اتصال بالمتجر. التطبيق المجاني يعمل كما هو.' : 'جارٍ جلب السعر من المتجر…'}</p>
+            <p className="muted">{p.provider.id === 'none' ? 'الاشتراك لم يُفتح بعد في هذه النسخة، ولا تُفتح مزايا بلس قبله. التطبيق المجاني يعمل كما هو.' : p.ready ? 'الاشتراك غير متاح حاليًا على هذا الجهاز أو دون اتصال بالمتجر. التطبيق المجاني يعمل كما هو.' : 'جارٍ جلب السعر من المتجر…'}</p>
           )}
         </section>
       )}

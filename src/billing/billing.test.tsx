@@ -8,6 +8,7 @@ import { fromCache, isEntitled, OFFLINE_GRACE_MS } from './entitlement'
 import { createSandbox, sandboxEntitlement, SANDBOX_PERIOD_MS } from './sandbox'
 import { PlusProvider, usePlus } from './PlusContext'
 import { PlusGate } from './PlusGate'
+import { PlusPage } from '../features/plus/PlusPage'
 import { BillingError, NO_ENTITLEMENT, type BillingProvider } from './types'
 
 beforeEach(async () => { cleanup(); await clearAll() })
@@ -122,5 +123,17 @@ describe('حالة الاشتراك في التطبيق', () => {
     await waitFor(() => expect(screen.getByTestId('state').textContent).toBe('free'))
     await act(async () => { screen.getByText('buy').click() })
     await waitFor(() => expect(screen.getByTestId('msg').textContent).toMatch(/غير متاح/))
+  })
+  it('صفحة بلس في النسخة العامة: الاشتراك لم يُفتح بعد، ولا زر شراء ولا متجر اختبار ولا فتح للمعاينة', async () => {
+    const none: BillingProvider = {
+      id: 'none', test: false, async init() {}, async getOffer() { return null }, async getEntitlement() { return NO_ENTITLEMENT },
+      async purchase() { throw new BillingError('unavailable', 'x') }, async restore() { return NO_ENTITLEMENT },
+    }
+    render(<MemoryRouter><PlusProvider provider={none}><PlusPage /></PlusProvider></MemoryRouter>)
+    await waitFor(() => expect(screen.getByText(/الاشتراك لم يُفتح بعد/)).toBeTruthy())
+    expect(screen.queryByRole('button', { name: /اشترك/ })).toBeNull()
+    expect(screen.queryByText(/نسخة معاينة خاصة/)).toBeNull()
+    expect(screen.queryByText(/أدوات الاختبار/)).toBeNull()
+    await waitFor(() => expect(screen.getByText('غير مشترك')).toBeTruthy())
   })
 })
