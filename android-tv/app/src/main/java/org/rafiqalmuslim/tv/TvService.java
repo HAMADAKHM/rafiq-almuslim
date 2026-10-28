@@ -167,7 +167,12 @@ public class TvService extends Service {
                 String a = intent.getAction();
                 if (Intent.ACTION_DREAMING_STARTED.equals(a)) {
                     log(ctx, "dream");
-                    if (prefs(ctx).getBoolean(KEY_IDLE, true)) wakeAndOpen(ctx);
+                    IdleRules.Input in = new IdleRules.Input();
+                    fillForeground(in);
+                    // شاشة التوقف بدأت فوق لعبة أو تطبيق أو HDMI (يد البلايستيشن لا يراها النظام):
+                    // نوقظ التلفاز فيعود إلى ما كان عليه، ولا نفتح المواقيت فوقه
+                    if (IdleRules.dreamOverApp(in)) { log(ctx, "dream_over_app"); wakeOnly(); }
+                    else if (prefs(ctx).getBoolean(KEY_IDLE, true)) wakeAndOpen(ctx);
                 } else if (Intent.ACTION_SCREEN_ON.equals(a) || Intent.ACTION_USER_PRESENT.equals(a)) {
                     // التلفاز يستيقظ من وضع الاستعداد (أغلب التلفزيونات لا تُعيد التشغيل كاملًا عند فتحها)
                     log(ctx, "screen_on");
@@ -236,20 +241,48 @@ public class TvService extends Service {
      * عدم الاستخدام → تُفتح شاشة المواقيت. لا يقاطع أبدًا صوتًا أو فيديو يعمل.
      * القرار في IdleRules (مختبر)، وكل سبب لعدم الفتح يُسجَّل عند تغيّره في سجل التشخيص.
      */
+    /** تطبيقات الشاشة الرئيسية في هذا التلفاز (Google TV، Android TV، أو الشاشة الرئيسية للشركة المصنعة) */
+    private static java.util.Set<String> homes;
+    static synchronized boolean isHomePackage(Context c, String pkg) {
+        if (pkg == null) return false;
+        if (pkg.equals(c.getPackageName())) return true;
+        if (homes == null) {
+            homes = new java.util.HashSet<>();
+            try {
+                Intent h = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
+                for (android.content.pm.ResolveInfo r : c.getPackageManager().queryIntentActivities(h, 0)) if (r.activityInfo != null) homes.add(r.activityInfo.packageName);
+            } catch (Exception ignored) { /* لا شيء */ }
+            homes.add("com.google.android.tvlauncher");
+            homes.add("com.google.android.apps.tv.launcherx");
+            homes.add("com.google.android.leanbacklauncher");
+        }
+        return homes.contains(pkg);
+    }
+
+    /** ما يعرفه التطبيق عن الظاهر الآن (للقرار ولشاشة التوقف) */
+    private void fillForeground(IdleRules.Input in) {
+        String fg = IdleWatcher.foregroundPkg;
+        in.accessibility = IdleWatcher.connected;
+        in.foregroundKnown = IdleWatcher.connected && fg != null;
+        in.foregroundIsHome = isHomePackage(this, fg);
+        in.hdmiConnected = externalInputActive(this);
+        in.externalForeground = IdleWatcher.connected && IdleRules.isTvInputPackage(fg) && in.hdmiConnected;
+    }
+
     private void checkIdle() {
         long now = System.currentTimeMillis();
         AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
         IdleRules.Input in = new IdleRules.Input();
+        fillForeground(in);
         in.now = now;
         in.mediaActive = am != null && am.isMusicActive();
         if (in.mediaActive) markActive(this, null);
         // جهاز HDMI (بلايستيشن…) يُعدّ نشاطًا فقط إذا كان مدخله هو الظاهر الآن (يُعرف مع خدمة الإتاحة).
         // سابقًا كان أي جهاز موصول — ولو مطفأ أو على مدخل آخر — يمنع الفتح دائمًا.
-        in.externalForeground = IdleWatcher.connected && IdleRules.isTvInputPackage(IdleWatcher.foregroundPkg) && externalInputActive(this);
-        if (in.externalForeground) markActive(this, null);
+        // تطبيق أو لعبة أو جهاز HDMI أمام المستخدم: يُعدّ استخدامًا، فيبدأ العدّ من جديد عند العودة للرئيسية
+        if (in.externalForeground || IdleRules.dreamOverApp(in)) markActive(this, null);
         in.lastKeyAt = IdleWatcher.lastKeyAt;
         in.lastActiveAt = lastActiveAt;
-        in.accessibility = IdleWatcher.connected;
         in.quietMode = prefs(this).getBoolean(KEY_IDLE_QUIET, true);
         in.canOpen = canOpenFromBackground(this);
         in.screenVisible = MainActivity.visible;
@@ -269,6 +302,16 @@ public class TvService extends Service {
         markActive(this, null);
         autoOpenAt = now;
         if (!openScreen(this)) log(this, "idle_open_failed");
+    }
+
+    /** إنهاء شاشة التوقف والعودة إلى التطبيق أو مدخل HDMI كما كان */
+    @SuppressWarnings("deprecation")
+    private void wakeOnly() {
+        try {
+            android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
+            android.os.PowerManager.WakeLock wl = pm.newWakeLock(android.os.PowerManager.SCREEN_BRIGHT_WAKE_LOCK | android.os.PowerManager.ACQUIRE_CAUSES_WAKEUP, "rafiq:keep");
+            wl.acquire(3000);
+        } catch (Exception ignored) { /* بعض الأنظمة تمنعه */ }
     }
 
     /** شاشة توقف التلفاز بدأت: نوقظ الشاشة (ينهي شاشة التوقف) ثم نفتح المواقيت مكانها */

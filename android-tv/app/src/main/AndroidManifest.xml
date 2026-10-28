@@ -24,6 +24,11 @@
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
+        <!-- معرفة تطبيق الشاشة الرئيسية: الشاشة تُفتح تلقائيًا من الرئيسية فقط، لا فوق أي تطبيق -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
     </queries>
 
     <application

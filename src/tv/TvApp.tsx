@@ -46,6 +46,8 @@ const EVENT_LABELS: Record<string, string> = {
   idle_snoozed_60min: 'إيقاف مؤقت ساعة (رجعت فور الفتح)', snooze_cleared: 'إلغاء الإيقاف المؤقت', idle_open_failed: 'تعذّر الفتح', active_screen_on: 'استيقاظ الشاشة', active_wake: 'فتح التلفاز',
   idle_skip_media_active: 'لم تُفتح: فيديو أو صوت يعمل', idle_skip_hdmi_foreground: 'لم تُفتح: التلفاز على جهاز HDMI', idle_skip_snoozed: 'لم تُفتح: إيقاف مؤقت',
   idle_skip_needs_overlay_permission: 'لم تُفتح: ينقص إذن الظهور فوق التطبيقات', idle_skip_needs_accessibility: 'لم تُفتح: فعّل إمكانية الوصول', idle_skip_disabled: 'الفتح التلقائي متوقف',
+  idle_skip_app_foreground: 'لم تُفتح: تطبيق أو لعبة أو جهاز HDMI أمامك', idle_skip_hdmi_connected: 'لم تُفتح: جهاز HDMI يعمل (فعّل إمكانية الوصول ليُعرف الظاهر)',
+  dream_over_app: 'شاشة توقف النظام فوق تطبيق: أُنهيت وعاد التلفاز إليه',
   idle_skip_adhan: 'لم تُفتح: الأذان يُرفع', adhan_media_keys_only: 'الأذان: يوقفه زر التشغيل/الإيقاف فقط',
 }
 /** حالة مؤقت عدم الاستخدام الآن، بلغة واضحة */
@@ -53,6 +55,7 @@ const IDLE_STATE: Record<string, string> = {
   waiting: 'ينتظر عدم الاستخدام', media_active: 'متوقف: فيديو أو صوت يعمل الآن', hdmi_foreground: 'متوقف: التلفاز على جهاز HDMI', snoozed: 'متوقف مؤقتًا',
   needs_overlay_permission: 'لا يعمل: ينقص إذن «الظهور فوق التطبيقات»', needs_accessibility: 'لا يعمل: فعّل «إمكانية الوصول» أو خيار السكون', disabled: 'متوقف من الإعدادات',
   screen_visible: 'الشاشة ظاهرة الآن', adhan: 'الأذان يُرفع',
+  app_foreground: 'متوقف: أنت على تطبيق أو لعبة أو جهاز HDMI (تُفتح من الشاشة الرئيسية فقط)', hdmi_connected: 'متوقف: جهاز HDMI يعمل (بلايستيشن…)',
 }
 const bridge = (): Bridge | null => (window as unknown as { RafiqTV?: Bridge }).RafiqTV ?? null
 
@@ -697,10 +700,10 @@ function TvAutoStart() {
       <h2>اختياري: فتحها بعد عدم الاستخدام ووقت الأذان فوق يوتيوب</h2>
       <div className={'tv-permission' + (st.accessibility || (st.quietIdle !== false && st.canOpen) ? ' ok' : '')}>
         {st.accessibility
-          ? '✓ مفعّل: تُفتح شاشة المواقيت بعد دقائق من ترك التلفاز، وتُفتح عند تشغيله، وأي زر يوقف الأذان.'
+          ? '✓ مفعّل: تُفتح شاشة المواقيت بعد دقائق من ترك التلفاز على الشاشة الرئيسية فقط — لا فوق يوتيوب أو أي تطبيق أو لعبة أو جهاز HDMI (بلايستيشن) — وتُفتح عند تشغيله، وأي زر يوقف الأذان.'
           : st.canOpen
             ? (st.quietIdle !== false
-              ? `✓ مفعّل بلا إذن: تُفتح بعد المدة المختارة إن لم يعمل فيديو أو صوت أو جهاز HDMI (بلايستيشن)${st.hdmi ? ' — جهاز HDMI يعمل الآن' : ''}. فُتحت بالخطأ؟ اضغط «رجوع» فتعود ولا تُفتح ساعة${st.snoozeUntil && st.snoozeUntil > Date.now() ? ` (متوقفة حتى ${fmt(st.snoozeUntil)})` : ''}.`
+              ? `✓ مفعّل بلا إذن: تُفتح بعد المدة المختارة إن لم يعمل فيديو أو صوت أو جهاز HDMI (بلايستيشن)${st.hdmi ? ' — جهاز HDMI يعمل الآن' : ''}. لأدق نتيجة (الفتح من الشاشة الرئيسية فقط) فعّل «إمكانية الوصول». فُتحت بالخطأ؟ اضغط «رجوع» فتعود ولا تُفتح ساعة${st.snoozeUntil && st.snoozeUntil > Date.now() ? ` (متوقفة حتى ${fmt(st.snoozeUntil)})` : ''}.`
               : 'متوقف: فعّل الخيار التالي لتُفتح شاشة المواقيت بعد عدم الاستخدام.')
             : 'افتح «إمكانية الوصول» ثم اختر «شاشة رفيق المسلم» وفعّلها ووافق، ثم ارجع بزر الرجوع. (يعرف وقت آخر ضغطة فقط، ولا يقرأ الشاشة)'}
       </div>

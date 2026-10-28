@@ -27,6 +27,12 @@ final class IdleRules {
         boolean mediaActive;
         /** التطبيق الظاهر هو مدخل HDMI/القنوات (معروف فقط مع خدمة الإتاحة) */
         boolean externalForeground;
+        /** نعرف التطبيق الظاهر الآن (من خدمة الإتاحة) */
+        boolean foregroundKnown;
+        /** التطبيق الظاهر هو الشاشة الرئيسية للتلفاز (أو تطبيقنا) */
+        boolean foregroundIsHome;
+        /** جهاز HDMI موصول وفيه إشارة (بلايستيشن، رسيفر…) */
+        boolean hdmiConnected;
     }
 
     static String decide(Input in) {
@@ -36,6 +42,11 @@ final class IdleRules {
         if (in.adhanActive) return "adhan";
         if (in.mediaActive) return "media_active";
         if (in.externalForeground) return "hdmi_foreground";
+        // لا تُفتح الشاشة فوق أي تطبيق أو لعبة أو مدخل HDMI: من الشاشة الرئيسية فقط.
+        // (يد البلايستيشن لا تُحسب ضغطًا على جهاز التحكم، وصوت HDMI لا يمر بنظام Android)
+        if (in.accessibility && in.foregroundKnown && !in.foregroundIsHome) return "app_foreground";
+        // لا نعرف ما الظاهر (دون خدمة الإتاحة أو قبل أول تغيّر): وجود جهاز HDMI فيه إشارة يكفي للامتناع
+        if ((!in.accessibility || !in.foregroundKnown) && in.hdmiConnected) return "hdmi_connected";
         if (in.now < in.snoozeUntil) return "snoozed";
         long since;
         if (in.accessibility) since = Math.max(in.lastKeyAt, in.lastActiveAt);
@@ -44,6 +55,19 @@ final class IdleRules {
         else since = in.lastActiveAt;
         if (in.now - since < in.minutes * 60_000L) return "waiting";
         return null;
+    }
+
+    /** نوافذ عابرة لا تغيّر «التطبيق الظاهر»: واجهة النظام، ولوحات المفاتيح، والمساعد الصوتي */
+    static boolean isTransientPackage(String pkg) {
+        if (pkg == null) return true;
+        String p = pkg.toLowerCase(java.util.Locale.ROOT);
+        return p.equals("android") || p.equals("com.android.systemui") || p.contains("inputmethod") || p.contains("keyboard") || p.contains(".ime")
+            || p.equals("com.google.android.katniss") || p.equals("com.google.android.apps.mediashell") || p.contains("toast");
+    }
+
+    /** قرار شاشة توقف النظام: إن بدأت فوق تطبيق أو جهاز HDMI نوقظ التلفاز ليعود إليه، ولا نفتح المواقيت */
+    static boolean dreamOverApp(Input in) {
+        return (in.accessibility && in.foregroundKnown && !in.foregroundIsHome) || ((!in.accessibility || !in.foregroundKnown) && in.hdmiConnected);
     }
 
     /** أسماء حزم تطبيقات القنوات ومداخل HDMI الشائعة في أجهزة Android TV / Google TV */

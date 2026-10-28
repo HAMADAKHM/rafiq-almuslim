@@ -99,6 +99,42 @@ public class IdleRulesTest {
         assertEquals("disabled", IdleRules.decide(in));
     }
 
+    @Test public void neverOpensOverAnyAppOrGame() {
+        IdleRules.Input in = base();
+        in.now = T0 + 60 * MIN; // ساعة دون ضغط جهاز التحكم (يلعب بيد البلايستيشن)
+        in.foregroundKnown = true;
+        in.foregroundIsHome = false; // مدخل HDMI باسم غير معروف، أو أي تطبيق
+        assertEquals("app_foreground", IdleRules.decide(in));
+        assertTrue(IdleRules.dreamOverApp(in));
+        in.foregroundIsHome = true; // على الشاشة الرئيسية: تُفتح
+        assertNull(IdleRules.decide(in));
+        assertFalse(IdleRules.dreamOverApp(in));
+        in.hdmiConnected = true; // جهاز موصول لكن التلفاز على الرئيسية
+        assertNull(IdleRules.decide(in));
+    }
+
+    @Test public void unknownForegroundWithHdmiSignalDoesNotOpen() {
+        IdleRules.Input in = base();
+        in.now = T0 + 60 * MIN;
+        in.hdmiConnected = true;
+        in.foregroundKnown = false; // بعد التشغيل، قبل أول تغيّر نافذة
+        assertEquals("hdmi_connected", IdleRules.decide(in));
+        in.accessibility = false; // دون خدمة الإتاحة: لا نعرف الظاهر
+        in.lastKeyAt = 0;
+        assertEquals("hdmi_connected", IdleRules.decide(in));
+        assertTrue(IdleRules.dreamOverApp(in));
+        in.hdmiConnected = false;
+        assertNull(IdleRules.decide(in));
+    }
+
+    @Test public void transientSystemWindowsAreIgnored() {
+        assertTrue(IdleRules.isTransientPackage("com.android.systemui"));
+        assertTrue(IdleRules.isTransientPackage("com.google.android.inputmethod.latin"));
+        assertTrue(IdleRules.isTransientPackage("com.google.android.katniss"));
+        assertFalse(IdleRules.isTransientPackage("com.google.android.youtube.tv"));
+        assertFalse(IdleRules.isTransientPackage("com.droidlogic.tvinput"));
+    }
+
     @Test public void knownTvInputPackages() {
         assertTrue(IdleRules.isTvInputPackage("com.google.android.tv"));
         assertTrue(IdleRules.isTvInputPackage("com.mediatek.wwtv.tvcenter"));

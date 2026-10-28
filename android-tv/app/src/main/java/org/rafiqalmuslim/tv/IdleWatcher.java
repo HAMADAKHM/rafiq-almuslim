@@ -17,6 +17,7 @@ public class IdleWatcher extends AccessibilityService {
     static volatile boolean connected = false;
     /** اسم حزمة التطبيق الظاهر (من أحداث تغيّر النافذة فقط، لا محتوى الشاشة): لمعرفة أن التلفاز على مدخل HDMI أو القنوات */
     static volatile String foregroundPkg = null;
+    static volatile long foregroundAt = 0;
 
     @Override
     protected void onServiceConnected() {
@@ -48,7 +49,8 @@ public class IdleWatcher extends AccessibilityService {
         // لا نقرأ محتوى الشاشة: اسم التطبيق الظاهر فقط
         if (event != null && event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && event.getPackageName() != null) {
             String pkg = event.getPackageName().toString();
-            if (!pkg.equals(getPackageName())) foregroundPkg = pkg;
+            // نوافذ النظام العابرة (الصوت، لوحة المفاتيح) لا تغيّر التطبيق الظاهر
+            if (!IdleRules.isTransientPackage(pkg)) { foregroundPkg = pkg; foregroundAt = System.currentTimeMillis(); }
         }
     }
 
