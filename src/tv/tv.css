@@ -96,6 +96,8 @@ button, input, select { font: inherit; }
 .tv-nav.on { background: #0B4A3E; border-color: #E2C27E; color: #E9CF8E; font-weight: 700; }
 .tv-nav.save { margin-top: auto; background: #E2C27E; color: #2a2208; border-color: #E2C27E; font-weight: 700; text-align: center; }
 .tv-nav:disabled { opacity: 0.4; }
+.tv-nav.save.wait { opacity: 0.75; }
+.tv-alert { background: rgba(226, 194, 126, 0.18); border: 0.12vw solid #E2C27E; color: #F3DFA8; border-radius: 0.8vw; padding: 0.8vw 1vw; font-size: 1.3vw; }
 .tv-nav:focus, .tv-choice:focus, .tv-toggle:focus, .tv-step:focus { outline: 0.3vw solid #fff; outline-offset: 0.15vw; }
 .tv-setup-page { flex: 1; min-width: 0; padding: 1.4vw 2vw; border-radius: 1.4vw; background: rgba(255, 253, 248, 0.07); border: 0.1vw solid rgba(226, 194, 126, 0.35); overflow: hidden; }
 .tv-setup-page h2 { margin: 1vw 0 0.6vw; }

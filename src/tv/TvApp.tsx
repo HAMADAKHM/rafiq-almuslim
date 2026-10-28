@@ -509,6 +509,20 @@ function Stepper({ value, onChange, min, max, label, suffix = '' }: { value: num
 
 const QUICK_SURAHS = [1, 2, 18, 36, 55, 56, 67, 112]
 
+/** مدن جاهزة للاختيار دون كتابة بجهاز التحكم */
+const QUICK_CITIES: [string, string][] = [
+  ['PS', 'Jerusalem (Al-Quds)'], ['PS', 'Nablus'], ['PS', 'Ramallah'], ['PS', 'Hebron'], ['PS', 'Gaza'], ['SA', 'Medina'],
+  ['JO', 'Amman'], ['SA', 'Mecca'], ['SA', 'Riyadh'], ['EG', 'Cairo'], ['AE', 'Dubai'], ['TR', 'Istanbul'],
+]
+export function quickCities(cities: City[]): City[] {
+  const out: City[] = []
+  for (const [cc, name] of QUICK_CITIES) {
+    const best = cities.filter((c) => c.country === cc && c.name === name).sort((a, b) => b.pop - a.pop)[0]
+    if (best) out.push(best)
+  }
+  return out
+}
+
 /** إعدادات الشاشة: صفحات قصيرة بأزرار كبيرة تُستخدم بأسهم جهاز التحكم وزر الموافقة، بلا تمرير */
 function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data: QuranData | null; onSave: (s: TvSettings) => void; canCancel: boolean; onCancel: () => void }) {
   const [draft, setDraft] = useState<TvSettings>(s)
@@ -516,7 +530,8 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
   const [q, setQ] = useState('')
   const [cities, setCities] = useState<City[] | null>(null)
   useEffect(() => { loadCities().then(setCities).catch(() => {}) }, [])
-  const hits = useMemo(() => (cities && q.trim().length >= 2 ? searchCities(cities, q, undefined, 9) : []), [cities, q])
+  const hits = useMemo(() => (cities && q.trim().length >= 2 ? searchCities(cities, q, undefined, 9) : cities ? quickCities(cities) : []), [cities, q])
+  const [needCity, setNeedCity] = useState(false)
   const set = (p: Partial<TvSettings>) => setDraft((d) => ({ ...d, ...p }))
   const b = bridge()
   const pages: { id: SetupPage; label: string }[] = [
@@ -539,7 +554,13 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
         <div className="tv-setup-layout">
           <nav className="tv-setup-nav" aria-label="أقسام الإعدادات">
             {pages.map((p) => <button key={p.id} className={'tv-nav' + (page === p.id ? ' on' : '')} aria-current={page === p.id ? 'page' : undefined} onClick={() => setPage(p.id)} autoFocus={page === p.id}>{p.label}</button>)}
-            <button className="tv-nav save" disabled={!draft.city} onClick={() => { if (draft.reciteSurah !== s.reciteSurah) resetRecitePos(); onSave(draft) }}>✓ حفظ وعرض الشاشة</button>
+            <button className={'tv-nav save' + (draft.city ? '' : ' wait')} onClick={() => {
+              // بلا مدينة لا تُحسب المواقيت: ينتقل إلى صفحة المدينة مع توضيح بدل زر معطل لا يستجيب
+              if (!draft.city) { setNeedCity(true); setPage('city'); return }
+              if (draft.reciteSurah !== s.reciteSurah) resetRecitePos()
+              onSave(draft)
+            }}>✓ حفظ وعرض الشاشة</button>
+            {!draft.city && <p className="tv-muted small">اختر مدينتك أولًا ليعمل الحفظ</p>}
             {canCancel && <button className="tv-nav" onClick={onCancel}>إلغاء</button>}
           </nav>
           <section className="tv-setup-page">
@@ -548,12 +569,13 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
             {page === 'city' && (
               <>
                 <h2>المدينة</h2>
-                <p className="tv-muted">{draft.city ? `المختارة: ${cityLabel(draft.city)}` : 'اكتب اسم مدينتك بلوحة المفاتيح ثم اخترها من الأزرار'}</p>
+                {needCity && !draft.city && <p className="tv-alert" role="alert">لم تُختر مدينة بعد: اختر مدينتك من الأزرار أو ابحث عنها، ثم اضغط «حفظ وعرض الشاشة».</p>}
+                <p className="tv-muted">{draft.city ? `المختارة: ${cityLabel(draft.city)}` : cities ? 'اختر من المدن التالية، أو اكتب اسم مدينتك ثم اخترها من الأزرار' : 'جارٍ تحميل قائمة المدن…'}</p>
                 <input className="tv-input" value={q} onChange={(e) => setQ(e.target.value)} placeholder="مثال: نابلس، الرياض، القاهرة" aria-label="اسم المدينة" />
                 <div className="tv-choices" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
                   {hits.map((c) => (
                     <button key={c.id} className={'tv-choice' + (draft.city?.name === c.name && draft.city?.country === c.country ? ' on' : '')}
-                      onClick={() => set({ city: { name: c.name, nameAr: c.nameAr, country: c.country, lat: c.lat, lng: c.lng, tz: c.tz }, prayer: { ...draft.prayer, method: suggestMethod(c.country) } })}>
+                      onClick={() => { set({ city: { name: c.name, nameAr: c.nameAr, country: c.country, lat: c.lat, lng: c.lng, tz: c.tz }, prayer: { ...draft.prayer, method: suggestMethod(c.country) } }); setNeedCity(false) }}>
                       {cityLabel(c)}
                     </button>
                   ))}
