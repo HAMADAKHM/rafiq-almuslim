@@ -40,7 +40,7 @@ export function PlusPage() {
     <div className="page plus-page">
       <PageHead title="رفيق بلس" subtitle="عضوية اختيارية بمزايا إضافية" actions={<button className="icon-btn" onClick={close} aria-label="إغلاق والاستمرار مجانًا"><X size={20} /></button>} />
 
-      {p.previewUnlocked && <p className="notice" role="note">نسخة معاينة خاصة بصاحب التطبيق: كل مزايا رفيق بلس مفتوحة للمراجعة دون اشتراك. ليست للنشر، والنسخ العامة تبقى مقفلة.</p>}
+      {p.previewUnlocked && <p className="notice" role="note">كل مزايا رفيق بلس مفتوحة الآن للجميع مؤقتًا دون اشتراك ودون أي دفع. قد تُقفل لاحقًا وتُفتح بالاشتراك.</p>}
       {p.provider.test && <p className="notice" role="note">وضع تجريبي: لا يوجد أي دفع حقيقي. «الشهر» هنا 5 دقائق لتجربة التجديد والإلغاء والانتهاء.</p>}
 
       <section className="card plus-status" aria-label="حالة الاشتراك">

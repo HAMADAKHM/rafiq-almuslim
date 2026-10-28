@@ -44,8 +44,10 @@ jobs:
   build:
     if: github.event_name != 'workflow_dispatch' || !inputs.publish_tv_page || inputs.publish_beta
     runs-on: ubuntu-latest
-    # النسخ العامة: مزايا بلس مقفلة، ولا متجر اختبار، ولا اشتراك حتى يُربط المتجر الحقيقي (VITE_RC_ANDROID_KEY).
-    # المعاينة الخاصة بصاحب التطبيق تُبنى في آخر هذه المهمة وتُرفع كملف بناء فقط، ولا تُرفق بأي إصدار.
+    env:
+      # بقرار صاحب التطبيق: مزايا بلس مفتوحة للجميع مؤقتًا دون اشتراك، وتُقفل لاحقًا بحذف هذا السطر.
+      # لا متجر اختبار ولا دفع في النسخ العامة.
+      VITE_PLUS_UNLOCK: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -65,6 +67,9 @@ jobs:
           key: android-debug-keystore-v1
       - run: npm ci
       - run: npm test
+        env:
+          # الاختبارات تفحص القفل الحقيقي دائمًا
+          VITE_PLUS_UNLOCK: "0"
       - run: npm run build
       - run: npx cap sync android
       - name: Hisn al-Muslim notification sounds
@@ -119,25 +124,4 @@ jobs:
           gh release create "beta-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslimPlus-beta.apk RafiqAlMuslim-TV.apk RafiqAlMuslim-Samsung.wgt install-samsung.bat \
             --target "${{ github.sha }}" --prerelease \
             --title "رفيق المسلم $VERSION — نسخة معاينة (${{ github.ref_name }})" \
-            --notes "نسخة معاينة من فرع التطوير. للهاتف (رفيق المسلم بلس — يُثبَّت بجانب التطبيق المجاني؛ مزايا بلس والاشتراك غير مفعّلة بعد في هذه النسخة): RafiqAlMuslimPlus-beta.apk. لشاشة التلفاز بنظام Android TV: RafiqAlMuslim-TV.apk. لتلفاز Samsung (Tizen): RafiqAlMuslim-Samsung.wgt مع install-samsung.bat للتثبيت من حاسوب Windows عليه Tizen Studio. القرآن والأذكار والأدعية والمواقيت مجانية دائمًا — صدقة جارية."
-      # المعاينة الخاصة بصاحب التطبيق (فروع التطوير فقط): كل مزايا بلس مفتوحة مع متجر الاختبار بلا دفع.
-      # تُبنى بعد نسخ الملفات العامة حتى لا تختلط بها، وتُرفع كملف بناء لمدة 14 يومًا، ولا تُرفق بأي إصدار.
-      - name: Build private preview APK
-        if: startsWith(github.ref, 'refs/heads/feature/')
-        env:
-          VITE_PLUS_UNLOCK: '1'
-          VITE_BILLING_SANDBOX: '1'
-        run: |
-          npm run build
-          npx cap sync android
-          sed -i 's|<string name="app_name">[^<]*</string>|<string name="app_name">بلس — معاينة خاصة</string>|' android/app/src/main/res/values/strings.xml
-          cd android
-          set -o pipefail
-          ./gradlew assembleDebug 2>&1 | tee preview-build.log || { grep -E "error:|FAILED|Exception" preview-build.log | head -20 | sed 's/^/::error::/'; exit 1; }
-          cp app/build/outputs/apk/debug/app-debug.apk ../RafiqPlus-PRIVATE-preview.apk
-      - uses: actions/upload-artifact@v4
-        if: startsWith(github.ref, 'refs/heads/feature/')
-        with:
-          name: rafiq-plus-PRIVATE-preview
-          path: RafiqPlus-PRIVATE-preview.apk
-          retention-days: 14
+            --notes "نسخة معاينة من فرع التطوير. للهاتف (رفيق المسلم بلس — يُثبَّت بجانب التطبيق المجاني؛ مزايا بلس مفتوحة للجميع مؤقتًا دون اشتراك ودون أي دفع): RafiqAlMuslimPlus-beta.apk. لشاشة التلفاز بنظام Android TV: RafiqAlMuslim-TV.apk. لتلفاز Samsung (Tizen): RafiqAlMuslim-Samsung.wgt مع install-samsung.bat للتثبيت من حاسوب Windows عليه Tizen Studio. القرآن والأذكار والأدعية والمواقيت مجانية دائمًا — صدقة جارية."
