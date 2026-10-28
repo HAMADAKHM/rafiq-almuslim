@@ -26,7 +26,8 @@ export interface TvSettings {
   /** خلفية متحركة: طيور تحلّق وغيوم تسير ببطء (يمكن إيقافها في التلفزيونات البطيئة) */
   animate: boolean
   /** مشهد الشاشة: 'rotate' تنقل في القائمة، أو مشهد واحد، أو 'classic' (الرسم الأصلي بالطيور) */
-  scene: SceneId | 'rotate' | 'classic'
+  /** photos = صور أرسلها المستخدم من الجوال */
+  scene: SceneId | 'rotate' | 'classic' | 'photos'
   /** قائمة المشاهد المفضلة للتنقل (فارغة = كل المشاهد) */
   playlist: SceneId[]
   /** دقائق كل مشهد في التنقل */
@@ -69,7 +70,7 @@ export function loadTv(): TvSettings {
 export function normalizeTv(raw: Partial<TvSettings>): TvSettings {
   try {
     const playlist = Array.isArray(raw.playlist) ? raw.playlist.filter((x): x is SceneId => SCENES.some((sc) => sc.id === x)) : []
-    const scene = raw.scene === 'rotate' || raw.scene === 'classic' || SCENES.some((sc) => sc.id === raw.scene) ? raw.scene! : DEFAULT_TV.scene
+    const scene = raw.scene === 'rotate' || raw.scene === 'classic' || raw.scene === 'photos' || SCENES.some((sc) => sc.id === raw.scene) ? raw.scene! : DEFAULT_TV.scene
     return { ...DEFAULT_TV, ...raw, scene, playlist, prayer: { ...DEFAULT_TV.prayer, ...raw.prayer, adjustments: { ...DEFAULT_TV.prayer.adjustments, ...raw.prayer?.adjustments } }, iqama: { ...DEFAULT_TV.iqama, ...raw.iqama } }
   } catch { return DEFAULT_TV }
 }

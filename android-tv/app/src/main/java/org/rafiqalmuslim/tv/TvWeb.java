@@ -58,6 +58,8 @@ final class TvWeb {
             }
         });
         if (!dream) web.addJavascriptInterface(new Bridge(ctx.getApplicationContext()), "RafiqTV");
+        // صور المستخدم للقراءة فقط: متاحة في شاشة التوقف أيضًا (بلا أي أوامر أخرى)
+        web.addJavascriptInterface(new Photos(ctx.getApplicationContext()), "RafiqPhotos");
         if (!dream) web.addJavascriptInterface(new Speech(ctx.getApplicationContext(), web), "RafiqVoice");
         // app=1: الصوت مسموح دون ضغطة؛ dream=1: وضع شاشة التوقف (بلا أزرار)
         web.loadUrl(BASE + (dream ? "?app=1&dream=1" : "?app=1"));
@@ -259,6 +261,16 @@ final class TvWeb {
         @JavascriptInterface
         public void removeRemoteDevice(String id) { RemoteServer.get(ctx).core.removeDevice(id); }
 
+        /** خلفيات المستخدم (صور أُرسلت من الجوال): المعرّفات، والصورة نفسها كرابط data، والحذف من التلفاز */
+        @JavascriptInterface
+        public String getBackgrounds() { return Backgrounds.idsJson(ctx); }
+
+        @JavascriptInterface
+        public String getBackground(String id) { return Backgrounds.dataUrl(ctx, id); }
+
+        @JavascriptInterface
+        public boolean removeBackground(String id) { return Backgrounds.remove(ctx, id); }
+
         /** الشاشة تحفظ هنا إعداداتها الحالية ليقرأها الجوال */
         @JavascriptInterface
         public void setRemoteSnapshot(String json) { TvService.prefs(ctx).edit().putString(RemoteServer.KEY_SNAPSHOT, json == null ? "{}" : json).apply(); }
@@ -339,5 +351,17 @@ final class TvWeb {
         WebResourceResponse out = new WebResourceResponse(mime, "UTF-8", r.getData());
         out.setResponseHeaders(java.util.Collections.singletonMap("Access-Control-Allow-Origin", "*"));
         return out;
+    }
+
+    /** قراءة خلفيات المستخدم فقط (لشاشة التوقف) */
+    static final class Photos {
+        private final Context ctx;
+        Photos(Context c) { ctx = c; }
+
+        @JavascriptInterface
+        public String getBackgrounds() { return Backgrounds.idsJson(ctx); }
+
+        @JavascriptInterface
+        public String getBackground(String id) { return Backgrounds.dataUrl(ctx, id); }
     }
 }

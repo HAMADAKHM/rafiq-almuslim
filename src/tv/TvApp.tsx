@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { PaintedScene, type PaintTone } from '../components/Scene'
 import { SceneCanvas, ScenePreview } from './SceneCanvas'
+import { PhotoScene, photoSource, usePhotoIds } from './PhotoScene'
 import { SCENES, sceneInfo, type SceneId } from './scenes'
 import { LogoMark } from '../components/Art'
 import { SADAQAH_LINE, HOME_CARD } from '../content/dedication'
@@ -227,6 +228,9 @@ export function TvApp() {
   // التلاوة: تتوقف وقت الأذان وانتظار الإقامة، وتُستأنف بعدهما
   const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: city?.tz, hour: '2-digit', hour12: false }).format(now)) % 24
   const rec = useRecitation(s, data, { day, hour }, phase.kind !== 'normal' || adhanPlaying || hidden)
+  // صور المستخدم من الجوال (Android TV فقط)؛ دون صور يُعرض التنقل بين المشاهد
+  const [photos] = useState(photoSource)
+  const photoCount = usePhotoIds(photos).length
   // أزرار الوسائط في جهاز التحكم: تشغيل/إيقاف التلاوة
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (['MediaPlayPause', 'MediaPlay', 'MediaPause', 'MediaStop'].includes(e.key)) update({ reciteOn: e.key === 'MediaPlay' ? true : e.key === 'MediaPause' || e.key === 'MediaStop' ? false : !s.reciteOn }) }
@@ -255,9 +259,11 @@ export function TvApp() {
 
   return (
     <div className="tv">
-      {s.scene === 'classic' || !s.animate
+      {s.scene === 'photos' && photos && photoCount > 0
+        ? <><PhotoScene src={photos} minutes={s.rotateMin} shuffle={s.shuffle} animate={s.animate} className="tv-art" /><div className="tv-veil scene" /></>
+        : s.scene === 'classic' || !s.animate
         ? <><PaintedScene tone={tone} variant="hero" className="tv-art" /><div className="tv-veil" />{s.animate && <SkyLife night={tone === 'night'} />}</>
-        : <><SceneCanvas scene={s.scene === 'rotate' ? null : s.scene} playlist={s.playlist} rotateMin={s.rotateMin} shuffle={s.shuffle} quality={s.quality} className="tv-art" /><div className="tv-veil scene" /></>}
+        : <><SceneCanvas scene={s.scene === 'rotate' || s.scene === 'photos' ? null : s.scene} playlist={s.playlist} rotateMin={s.rotateMin} shuffle={s.shuffle} quality={s.quality} className="tv-art" /><div className="tv-veil scene" /></>}
 
       <header className="tv-top">
         <div className="tv-brand"><span className="tv-logo"><LogoMark size={44} /></span><div><strong>{HOME_CARD.app}</strong><small>{city.nameAr ?? city.name}</small></div></div>
@@ -437,6 +443,7 @@ function TvRemotePage() {
 /** مكتبة المشاهد: معاينة حية للمشهد المحدد بالأسهم، وعرض مشهد واحد أو التنقل بين المفضلة */
 function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSettings>) => void }) {
   const [focus, setFocus] = useState<SceneId | null>(null)
+  const [photos] = useState(photoSource)
   const inList = (id: SceneId) => draft.playlist.includes(id)
   const toggleList = (id: SceneId) => set({ playlist: inList(id) ? draft.playlist.filter((x) => x !== id) : [...draft.playlist, id] })
   const cats = [...new Set(SCENES.map((x) => x.category))]
@@ -444,9 +451,10 @@ function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSe
     <>
       <h2>مشاهد الشاشة</h2>
       <p className="tv-muted">مشاهد حيّة مرسومة داخل التطبيق (لا تحتاج إنترنت). اختر مشهدًا واحدًا، أو دع الشاشة تتنقل بين مشاهدك المفضلة بتلاشٍ ناعم.</p>
-      <Choices label="طريقة العرض" cols={3} value={draft.scene === 'rotate' || draft.scene === 'classic' ? draft.scene : 'one'}
-        onChange={(v) => set({ scene: v === 'one' ? (focus ?? SCENES[0].id) : v as 'rotate' | 'classic' })}
-        options={[{ id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي (طيور وغيوم)' }]} />
+      <Choices label="طريقة العرض" cols={photos ? 4 : 3} value={draft.scene === 'rotate' || draft.scene === 'classic' || draft.scene === 'photos' ? draft.scene : 'one'}
+        onChange={(v) => set({ scene: v === 'one' ? (focus ?? SCENES[0].id) : v as 'rotate' | 'classic' | 'photos' })}
+        options={[{ id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي (طيور وغيوم)' }, ...(photos ? [{ id: 'photos' as const, label: 'صوري من الجوال' }] : [])]} />
+      {photos && <TvPhotosPanel src={photos} on={draft.scene === 'photos'} />}
       {cats.map((cat) => (
         <div key={cat}>
           <h3 className="tv-muted" style={{ margin: '0.6rem 0 0.3rem' }}>{cat}</h3>
@@ -464,9 +472,9 @@ function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSe
         </div>
       ))}
       {focus && <p className="tv-muted">{sceneInfo(focus)?.note}</p>}
-      {draft.scene === 'rotate' && (
+      {(draft.scene === 'rotate' || draft.scene === 'photos') && (
         <>
-          <p className="tv-muted">{draft.playlist.length ? `قائمة التنقل: ${draft.playlist.map((id) => sceneInfo(id)?.name).join('، ')}` : 'لم تختر مفضلة: تتنقل الشاشة بين كل المشاهد.'}</p>
+          {draft.scene === 'rotate' && <p className="tv-muted">{draft.playlist.length ? `قائمة التنقل: ${draft.playlist.map((id) => sceneInfo(id)?.name).join('، ')}` : 'لم تختر مفضلة: تتنقل الشاشة بين كل المشاهد.'}</p>}
           <Choices label="مدة كل مشهد" cols={5} value={draft.rotateMin} onChange={(m) => set({ rotateMin: m })}
             options={[{ id: 5, label: '5 دقائق' }, { id: 10, label: '10 دقائق' }, { id: 20, label: '20 دقيقة' }, { id: 30, label: '30 دقيقة' }, { id: 60, label: 'ساعة' }]} />
           <Toggle on={draft.shuffle} onChange={(v) => set({ shuffle: v })} label="ترتيب عشوائي" />
@@ -477,6 +485,28 @@ function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSe
         options={[{ id: 'auto', label: 'تلقائي (Full HD)' }, { id: 'eco', label: 'اقتصادي (تلفاز ضعيف)' }, { id: 'high', label: 'عالية (حتى 4K)' }]} />
       <Toggle on={draft.animate} onChange={(v) => set({ animate: v })} label="الحركة (أوقفها في التلفزيونات البطيئة جدًا)" />
       <button className="tv-btn" onClick={() => set({ scene: DEFAULT_TV.scene, playlist: [], rotateMin: DEFAULT_TV.rotateMin, shuffle: true, quality: 'auto', animate: true })}>إعادة الإعداد الافتراضي للمشاهد</button>
+    </>
+  )
+}
+
+/** صور المستخدم على التلفاز: عرضها وحذفها (الإضافة من الجوال: التحكم بالتلفاز ← خلفيات من صورك) */
+function TvPhotosPanel({ src, on }: { src: NonNullable<ReturnType<typeof photoSource>>; on: boolean }) {
+  const ids = usePhotoIds(src)
+  const [, force] = useState(0)
+  if (!on && !ids.length) return <p className="tv-muted">«صوري من الجوال»: أرسل صورك من تطبيق رفيق المسلم بلس (التحكم بالتلفاز ← خلفيات من صورك) لتظهر هنا خلفيةً للشاشة.</p>
+  return (
+    <>
+      <p className="tv-muted">{ids.length ? `صورك على التلفاز: ${ids.length} (حتى 12). تتبدل بتلاشٍ ناعم حسب «مدة كل مشهد»، بحد أقصى 10 دقائق.` : 'لا صور بعد: أرسلها من الجوال (التحكم بالتلفاز ← خلفيات من صورك). حتى وصولها تتنقل الشاشة بين المشاهد.'}</p>
+      {ids.length > 0 && (
+        <div className="tv-photo-grid">
+          {ids.map((id) => (
+            <div key={id} className="tv-photo-card">
+              <img src={src.load(id)} alt="" />
+              <button className="tv-btn" onClick={() => { src.remove(id); window.dispatchEvent(new Event('rafiq-backgrounds')); force((n) => n + 1) }}>حذف الصورة</button>
+            </div>
+          ))}
+        </div>
+      )}
     </>
   )
 }

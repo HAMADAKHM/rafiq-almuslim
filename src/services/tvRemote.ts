@@ -13,7 +13,7 @@ export interface TvSettingsView {
 }
 
 /** وسيلة الإرسال (TvLink في التطبيق، ومحاكاة في الاختبارات) */
-export type Transport = (o: { host: string; port: number; method: string; path: string; body?: string; headers?: Record<string, string> }) => Promise<{ status: number; body: string }>
+export type Transport = (o: { host: string; port: number; method: string; path: string; body?: string; headers?: Record<string, string>; timeoutMs?: number }) => Promise<{ status: number; body: string }>
 
 const KEY = 'tvremote:tvs'
 const te = new TextEncoder()
@@ -57,6 +57,11 @@ const MESSAGES: Record<string, string> = {
   wrong_code: 'الرمز غير صحيح. تأكد من الأرقام الظاهرة على التلفاز (بعد 5 محاولات خاطئة يلزم رمز جديد).',
   unknown_session: 'انتهت جلسة الربط. أعد المحاولة.',
   unauthorized: 'هذا الجوال لم يعد مرتبطًا بالتلفاز (ربما أُزيل من التلفاز). اربطه من جديد.',
+  bad_image: 'الملف ليس صورة صالحة (JPG أو PNG).',
+  too_large: 'الصورة كبيرة جدًا حتى بعد تصغيرها. جرّب صورة أخرى.',
+  too_many: 'وصلت إلى الحد الأقصى (12 صورة) على التلفاز. احذف صورة ثم أضف غيرها.',
+  write_failed: 'تعذر حفظ الصورة على التلفاز (ربما امتلأت مساحته).',
+  not_found: 'تطبيق الشاشة على التلفاز قديم: حدّثه إلى آخر نسخة لتعمل هذه الميزة.',
   unreachable: 'تعذر الوصول إلى التلفاز. تأكد أن الجوال والتلفاز على شبكة الواي فاي نفسها وأن تطبيق الشاشة مثبت.',
 }
 export const remoteMessage = (code: string) => MESSAGES[code] ?? (code.startsWith('invalid') ? 'قيمة غير مقبولة.' : 'حدث خطأ غير متوقع.')
@@ -85,14 +90,14 @@ export async function pairTv(send: Transport, host: string, port: number, code: 
 
 /** آخر وقت مرسل (ميلي ثانية) — يجب أن يتزايد دائمًا حتى لا يرفضه التلفاز كإعادة إرسال */
 let lastTime = 0
-export async function signedCall(send: Transport, tv: PairedTv, method: 'GET' | 'POST', path: string, body?: object): Promise<Record<string, unknown>> {
+export async function signedCall(send: Transport, tv: PairedTv, method: 'GET' | 'POST', path: string, body?: object, timeoutMs?: number): Promise<Record<string, unknown>> {
   const text = body ? JSON.stringify(body) : ''
   const time = Math.max(Date.now(), lastTime + 1)
   lastTime = time
   const sig = await signRequest(tv.token, method, path, time, text)
   let r: { status: number; body: string }
   try {
-    r = await send({ host: tv.host, port: tv.port, method, path, body: text, headers: { 'X-Rafiq-Device': tv.deviceId, 'X-Rafiq-Time': String(time), 'X-Rafiq-Sig': sig } })
+    r = await send({ host: tv.host, port: tv.port, method, path, body: text, headers: { 'X-Rafiq-Device': tv.deviceId, 'X-Rafiq-Time': String(time), 'X-Rafiq-Sig': sig }, ...(timeoutMs ? { timeoutMs } : {}) })
   } catch { throw new TvRemoteError('unreachable', remoteMessage('unreachable')) }
   const j = parse(r.body)
   if (r.status !== 200) { const c = String(j.error ?? 'error'); throw new TvRemoteError(c, remoteMessage(c)) }
@@ -107,6 +112,51 @@ export async function setTvSettings(send: Transport, tv: PairedTv, patch: Partia
   void _c
   return ((await signedCall(send, tv, 'POST', '/settings', clean)).settings ?? {}) as TvSettingsView
 }
+/** خلفيات الشاشة من صور المستخدم (تُحفظ على التلفاز فقط) */
+export interface TvBackground { id: string; at: number; size: number }
+export const MAX_TV_BACKGROUNDS = 12
+const items = (j: Record<string, unknown>) => (Array.isArray(j.items) ? j.items : []) as TvBackground[]
+export async function listTvBackgrounds(send: Transport, tv: PairedTv): Promise<TvBackground[]> {
+  return items(await signedCall(send, tv, 'GET', '/backgrounds'))
+}
+/** data: صورة JPEG أو PNG بترميز Base64 (بعد التصغير بـ prepareBackground) */
+export async function addTvBackground(send: Transport, tv: PairedTv, data: string): Promise<TvBackground[]> {
+  return items(await signedCall(send, tv, 'POST', '/backgrounds', { data }, 15000))
+}
+export async function removeTvBackground(send: Transport, tv: PairedTv, id: string): Promise<TvBackground[]> {
+  return items(await signedCall(send, tv, 'POST', '/backgrounds/delete', { id }))
+}
+
+/** أبعاد الصورة بعد التصغير لشاشة التلفاز: الضلع الأطول 1920 بكسل على الأكثر، دون تكبير */
+export function fitSize(w: number, h: number, max = 1920): { w: number; h: number } {
+  if (!(w > 0 && h > 0)) return { w: 0, h: 0 }
+  const k = Math.min(1, max / Math.max(w, h))
+  return { w: Math.round(w * k), h: Math.round(h * k) }
+}
+
+/** حد حجم الصورة المرسلة (يطابق MAX_IMAGE_BYTES في RemoteCore.java مع هامش) */
+export const MAX_BACKGROUND_BYTES = 2_400_000
+
+/** يصغّر الصورة ويحوّلها إلى JPEG بـ Base64 (بلا ترويسة data:) */
+export async function prepareBackground(file: Blob): Promise<string> {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = await new Promise<HTMLImageElement>((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => bad(new TvRemoteError('bad_image', remoteMessage('bad_image'))); i.src = url })
+    const { w, h } = fitSize(img.naturalWidth, img.naturalHeight)
+    if (!w) throw new TvRemoteError('bad_image', remoteMessage('bad_image'))
+    const c = document.createElement('canvas')
+    c.width = w; c.height = h
+    const ctx = c.getContext('2d')
+    if (!ctx) throw new TvRemoteError('bad_image', remoteMessage('bad_image'))
+    ctx.drawImage(img, 0, 0, w, h)
+    for (const q of [0.85, 0.72, 0.6]) {
+      const data = c.toDataURL('image/jpeg', q).split(',')[1] ?? ''
+      if (data && (data.length * 3) / 4 <= MAX_BACKGROUND_BYTES) return data
+    }
+    throw new TvRemoteError('too_large', remoteMessage('too_large'))
+  } finally { URL.revokeObjectURL(url) }
+}
+
 export async function tvAction(send: Transport, tv: PairedTv, action: 'stop_adhan' | 'open_screen' | 'next_scene'): Promise<boolean> {
   return !!(await signedCall(send, tv, 'POST', '/action', { action })).ok
 }

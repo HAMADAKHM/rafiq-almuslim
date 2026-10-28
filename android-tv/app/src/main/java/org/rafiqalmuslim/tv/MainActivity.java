@@ -37,6 +37,7 @@ public class MainActivity extends Activity {
         RemoteServer.screen = new RemoteServer.ScreenHook() {
             public void applyNow() { runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.__rafiqRemoteApply&&window.__rafiqRemoteApply()", null); }); }
             public boolean nextScene() { runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.__rafiqNextScene&&window.__rafiqNextScene()", null); }); return true; }
+            public void backgroundsChanged() { runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.dispatchEvent(new Event('rafiq-backgrounds'))", null); }); }
         };
         if (web != null) web.evaluateJavascript("window.__rafiqRemoteApply&&window.__rafiqRemoteApply()", null);
     }

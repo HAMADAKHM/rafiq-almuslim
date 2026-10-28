@@ -161,3 +161,15 @@ button, input, select { font: inherit; }
 .tv-pair-box { display: flex; flex-direction: column; align-items: center; padding: 1.2vw; border-radius: 1vw; background: rgba(0, 0, 0, 0.35); border: 0.15vw solid #e2c27e; }
 .tv-pair-box > * + * { margin-top: 0.6vw; }
 .tv-pair-code { font-size: 5vw; letter-spacing: 0.6vw; color: #f5e7bf; font-family: monospace; }
+
+/* «صوري من الجوال»: تلاشٍ ناعم بين الصور وتقريب بطيء (Ken Burns)، بلا inset لدعم المتصفحات القديمة */
+.tv-photo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 2.5s ease; }
+.tv-photo.on { opacity: 1; }
+.tv-photo.kb0 { animation: tv-kb0 60s ease-in-out infinite alternate; }
+.tv-photo.kb1 { animation: tv-kb1 60s ease-in-out infinite alternate; }
+@keyframes tv-kb0 { from { transform: scale(1); } to { transform: scale(1.12) translate(-1.5%, -1%); } }
+@keyframes tv-kb1 { from { transform: scale(1.12) translate(1.5%, 1%); } to { transform: scale(1); } }
+.tv-photo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-gap: 0.9vw; gap: 0.9vw; margin-top: 0.6vw; }
+.tv-photo-card { border-radius: 0.8vw; overflow: hidden; background: rgba(255, 255, 255, 0.06); }
+.tv-photo-card img { display: block; width: 100%; height: 8vw; object-fit: cover; }
+.tv-photo-card .tv-btn { width: 100%; border-radius: 0; margin: 0; }

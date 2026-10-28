@@ -15,6 +15,7 @@ import java.net.Socket;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Iterator;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -36,7 +37,7 @@ final class RemoteServer {
     private int port;
 
     /** شاشة المواقيت تسجّل هنا لتطبيق الإعدادات فورًا إن كانت ظاهرة */
-    interface ScreenHook { void applyNow(); boolean nextScene(); }
+    interface ScreenHook { void applyNow(); boolean nextScene(); void backgroundsChanged(); }
     static volatile ScreenHook screen;
 
     private RemoteServer(Context c) {
@@ -109,7 +110,7 @@ final class RemoteServer {
 
     private void serve(Socket client) {
         try (Socket c = client) {
-            c.setSoTimeout(8000);
+            c.setSoTimeout(20000);
             InputStream in = c.getInputStream();
             OutputStream out = c.getOutputStream();
             RemoteHttp.Request r = RemoteHttp.read(in);
@@ -155,6 +156,22 @@ final class RemoteServer {
             if (patch.has("autostart")) new TvWeb.Bridge(ctx).setAutostart(patch.optBoolean("autostart"));
             TvService.markActive(ctx, null);
         }
+
+        public JSONArray backgrounds() { return Backgrounds.list(ctx); }
+
+        public String addBackground(byte[] image) {
+            String id = Backgrounds.add(ctx, image);
+            if (!id.startsWith("!")) { notifyScreen(); TvService.log(ctx, "remote_background"); }
+            return id;
+        }
+
+        public boolean removeBackground(String id) {
+            boolean ok = Backgrounds.remove(ctx, id);
+            if (ok) notifyScreen();
+            return ok;
+        }
+
+        private void notifyScreen() { ScreenHook h = screen; if (h != null) h.backgroundsChanged(); }
 
         public boolean action(String name) {
             switch (name) {

@@ -18,6 +18,6 @@ export async function discoverTvs(timeoutMs = 4000): Promise<FoundTv[]> {
   return (await TvLink.discover({ timeoutMs })).devices ?? []
 }
 
-export function tvRequest(o: { host: string; port: number; method: string; path: string; body?: string; headers?: Record<string, string> }): Promise<TvResponse> {
-  return TvLink.request({ ...o, timeoutMs: 7000 })
+export function tvRequest(o: { host: string; port: number; method: string; path: string; body?: string; headers?: Record<string, string>; timeoutMs?: number }): Promise<TvResponse> {
+  return TvLink.request({ ...o, timeoutMs: o.timeoutMs ?? 7000 })
 }

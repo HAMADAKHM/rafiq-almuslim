@@ -1,14 +1,14 @@
 // «التحكم بالتلفاز» (رفيق بلس): إيجاد شاشة رفيق المسلم على الشبكة المنزلية، والربط برمز، ثم تغيير مشاهدها
 // وإعداداتها وإيقاف الأذان من الجوال. الإعدادات تُقرأ من التلفاز نفسه وتُحفظ هناك.
-import { useCallback, useEffect, useState } from 'react'
-import { MonitorSmartphone, RefreshCw, Search, Trash2, Tv, Wifi, WifiOff } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ImagePlus, MonitorSmartphone, RefreshCw, Search, Trash2, Tv, Wifi, WifiOff } from 'lucide-react'
 import { PageHead, Spinner } from '../../components/Common'
 import { PlusGate } from '../../billing/PlusGate'
 import { useLive, toast } from '../../hooks'
 import { discoverTvs, tvLinkSupported, tvRequest, type FoundTv } from '../../platform/tvlink'
 import {
-  getTvSettings, loadTvs, pairTv, parseAddress, pingTv, removeTv, setTvSettings, tvAction, unpairTv, updateTvAddress,
-  TvRemoteError, type PairedTv, type TvSettingsView,
+  addTvBackground, getTvSettings, listTvBackgrounds, loadTvs, pairTv, parseAddress, pingTv, prepareBackground, removeTv, removeTvBackground, setTvSettings, tvAction, unpairTv, updateTvAddress,
+  MAX_TV_BACKGROUNDS, TvRemoteError, type PairedTv, type TvBackground, type TvSettingsView,
 } from '../../services/tvRemote'
 import { SCENES } from '../../tv/scenes'
 
@@ -104,6 +104,65 @@ function AddTv({ onDone }: { onDone: (tv: PairedTv) => void }) {
   )
 }
 
+const fmtDay = (t: number) => new Intl.DateTimeFormat('ar-u-nu-latn', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }).format(new Date(t))
+
+/** «خلفيات من صورك»: صور من معرض الجوال تُصغَّر وتُرسل إلى التلفاز لتكون خلفية الشاشة */
+function TvPhotos({ tv, showing, onShow, disabled }: { tv: PairedTv; showing: boolean; onShow: () => void; disabled: boolean }) {
+  const [list, setList] = useState<TvBackground[] | null>(null)
+  const [err, setErr] = useState('')
+  const [progress, setProgress] = useState<string | null>(null)
+  const input = useRef<HTMLInputElement>(null)
+  const load = useCallback(async () => {
+    try { setList(await listTvBackgrounds(send, tv)); setErr('') } catch (e) { setErr(errMsg(e)) }
+  }, [tv])
+  useEffect(() => { if (!disabled) load() }, [load, disabled])
+  const upload = async (files: FileList | null) => {
+    if (!files?.length) return
+    const room = MAX_TV_BACKGROUNDS - (list?.length ?? 0)
+    const pick = [...files].slice(0, Math.max(0, room))
+    if (!pick.length) { toast(errMsg(new TvRemoteError('too_many', 'too_many'))); return }
+    let done = 0
+    for (const f of pick) {
+      setProgress(`جارٍ إرسال الصورة ${done + 1} من ${pick.length}…`)
+      try { setList(await addTvBackground(send, tv, await prepareBackground(f))); done++ } catch (e) { toast(e instanceof TvRemoteError ? e.message : 'تعذر إرسال الصورة'); break }
+    }
+    setProgress(null)
+    if (input.current) input.current.value = ''
+    if (done) toast(done === 1 ? 'وصلت الصورة إلى التلفاز' : `وصلت ${done} صور إلى التلفاز`)
+    if (files.length > pick.length) toast(`أُرسلت ${pick.length} فقط: الحد ${MAX_TV_BACKGROUNDS} صورة على التلفاز`)
+  }
+  const del = async (id: string) => {
+    try { setList(await removeTvBackground(send, tv, id)); toast('حُذفت الصورة من التلفاز') } catch (e) { toast(errMsg(e)) }
+  }
+  return (
+    <section className="card stack" style={{ gap: 10 }} aria-label="خلفيات من صورك">
+      <h2 style={{ margin: 0 }}><ImagePlus size={18} /> خلفيات من صورك</h2>
+      <p className="small muted" style={{ margin: 0 }}>اختر صورًا من جوالك لتكون خلفية شاشة المواقيت على التلفاز، وتتبدل بتلاشٍ ناعم. تُصغَّر الصورة قبل الإرسال، وتُحفظ على التلفاز فقط ولا تُرفع إلى أي خادم.</p>
+      {err ? <p className="small" role="alert" style={{ margin: 0 }}>{err}</p> : list === null ? <Spinner label="جارٍ قراءة صور التلفاز" /> : (
+        <>
+          <input ref={input} type="file" accept="image/*" multiple hidden onChange={(e) => upload(e.target.files)} aria-label="اختيار صور" />
+          <div className="row" style={{ flexWrap: 'wrap' }}>
+            <button className="btn btn-sm btn-primary" disabled={disabled || !!progress || list.length >= MAX_TV_BACKGROUNDS} onClick={() => input.current?.click()}><ImagePlus size={14} /> إضافة صور</button>
+            <button className="btn btn-sm" disabled={disabled || !list.length || showing} onClick={onShow}>{showing ? '✓ صورك معروضة الآن' : 'اعرض صوري على الشاشة'}</button>
+          </div>
+          {progress && <p className="small" role="status" style={{ margin: 0 }}>{progress}</p>}
+          <p className="small muted" style={{ margin: 0 }}>{list.length ? `${list.length} من ${MAX_TV_BACKGROUNDS} صور على التلفاز` : 'لا صور على التلفاز بعد.'}</p>
+          {list.length > 0 && (
+            <ul className="plain stack" style={{ gap: 4 }}>
+              {list.map((b, i) => (
+                <li key={b.id} className="spread small">
+                  <span>صورة {i + 1} • {fmtDay(b.at)} • {Math.max(1, Math.round(b.size / 1024))} ك.ب</span>
+                  <button className="btn btn-ghost btn-sm icon-btn" aria-label={`حذف الصورة ${i + 1}`} disabled={disabled} onClick={() => del(b.id)}><Trash2 size={14} /></button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
+
 function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
   const [st, setSt] = useState<TvSettingsView | null>(null)
   const [online, setOnline] = useState<boolean | null>(null)
@@ -130,7 +189,7 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
   const act = async (a: 'stop_adhan' | 'open_screen' | 'next_scene', ok: string) => {
     try { toast((await tvAction(send, tv, a)) ? ok : 'لم يُنفَّذ (الشاشة غير ظاهرة على التلفاز)') } catch (e) { toast(errMsg(e)) }
   }
-  const mode = st?.scene === 'rotate' || st?.scene === 'classic' ? st.scene : 'one'
+  const mode = st?.scene === 'rotate' || st?.scene === 'classic' || st?.scene === 'photos' ? st.scene : 'one'
   return (
     <>
       <section className="card">
@@ -148,7 +207,7 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
         <div className="row" style={{ marginTop: 10, flexWrap: 'wrap' }}>
           <button className="btn btn-sm btn-primary" disabled={!online} onClick={() => act('stop_adhan', 'أُوقف صوت الأذان')}>إيقاف الأذان الآن</button>
           <button className="btn btn-sm" disabled={!online} onClick={() => act('open_screen', 'فُتحت شاشة المواقيت على التلفاز')}>اعرض الشاشة</button>
-          <button className="btn btn-sm" disabled={!online || st?.scene !== 'rotate'} onClick={() => act('next_scene', 'انتقل إلى المشهد التالي')}>المشهد التالي</button>
+          <button className="btn btn-sm" disabled={!online || (st?.scene !== 'rotate' && st?.scene !== 'photos')} onClick={() => act('next_scene', 'انتقل إلى المشهد التالي')}>المشهد التالي</button>
         </div>
       </section>
       {st && (
@@ -156,8 +215,14 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
           <section className="card stack" style={{ gap: 10 }}>
             <h2 style={{ margin: 0 }}>المشاهد</h2>
             <Chips label="طريقة العرض" value={mode} disabled={busy} onPick={(v) => set({ scene: v === 'one' ? (SCENES.some((x) => x.id === st.scene) ? st.scene : SCENES[0].id) : v })}
-              options={[{ id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي' }]} />
+              options={[{ id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي' }, { id: 'photos', label: 'صوري' }]} />
             {mode === 'one' && <Chips label="المشهد" value={st.scene} disabled={busy} onPick={(v) => set({ scene: v })} options={SCENES.map((x) => ({ id: x.id, label: x.name }))} />}
+            {mode === 'photos' && (
+              <>
+                <Chips label="مدة كل صورة" value={st.rotateMin} disabled={busy} onPick={(v) => set({ rotateMin: v })} options={[5, 10].map((m) => ({ id: m, label: `${m} د` }))} />
+                <Switch on={st.shuffle} disabled={busy} label="ترتيب عشوائي" onChange={(v) => set({ shuffle: v })} />
+              </>
+            )}
             {mode === 'rotate' && (
               <>
                 <div className="small muted">المشاهد في التنقل (اتركها كلها بلا اختيار لعرض الجميع):</div>
@@ -174,6 +239,7 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
             <Chips label="الجودة" value={st.quality} disabled={busy} onPick={(v) => set({ quality: v })} options={[{ id: 'auto', label: 'تلقائي' }, { id: 'eco', label: 'اقتصادي' }, { id: 'high', label: 'عالية (4K)' }]} />
             <Switch on={st.animate} disabled={busy} label="الحركة" onChange={(v) => set({ animate: v })} />
           </section>
+          <TvPhotos tv={tv} showing={st.scene === 'photos'} disabled={!online} onShow={() => set({ scene: 'photos' })} />
           <section className="card stack" style={{ gap: 10 }}>
             <h2 style={{ margin: 0 }}>الشاشة والأذان</h2>
             <Switch on={st.adhan} disabled={busy} label="رفع الأذان عند دخول الوقت" onChange={(v) => set({ adhan: v })} />

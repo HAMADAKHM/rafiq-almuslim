@@ -9,9 +9,11 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/** خادم HTTP صغير جدًا للشبكة المنزلية (طلب واحد لكل اتصال، جسم حتى 64 ك.ب) — Java نقي قابل للاختبار */
+/** خادم HTTP صغير جدًا للشبكة المنزلية (طلب واحد لكل اتصال، جسم حتى 64 ك.ب، ورفع الصورة حتى 3.6 م.ب) — Java نقي قابل للاختبار */
 final class RemoteHttp {
     static final int MAX_BODY = 64 * 1024;
+    /** رفع صورة خلفية (Base64 داخل JSON) */
+    static final int MAX_UPLOAD = 3_600_000;
     private static final int MAX_LINE = 4096;
 
     static final class Request {
@@ -54,7 +56,8 @@ final class RemoteHttp {
         int len = 0;
         String cl = r.headers.get("content-length");
         try { len = cl == null ? 0 : Integer.parseInt(cl); } catch (NumberFormatException e) { return null; }
-        if (len < 0 || len > MAX_BODY) return null;
+        int max = r.method.equals("POST") && r.path.equals("/backgrounds") ? MAX_UPLOAD : MAX_BODY;
+        if (len < 0 || len > max) return null;
         byte[] body = new byte[len];
         int got = 0;
         while (got < len) {

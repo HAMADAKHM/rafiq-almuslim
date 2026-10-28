@@ -42,6 +42,10 @@ final class RemoteCore {
         void applyScreen(JSONObject patch);
         void applyNative(JSONObject patch);
         boolean action(String name);
+        /** خلفيات المستخدم: القائمة، والإضافة (المعرّف أو «!رمز الخطأ»)، والحذف */
+        JSONArray backgrounds();
+        String addBackground(byte[] image);
+        boolean removeBackground(String id);
     }
 
     private final Store store;
@@ -155,7 +159,7 @@ final class RemoteCore {
     }
 
     // ---------- الإعدادات: قائمة بيضاء بالقيم المسموحة فقط ----------
-    static final String[] SCENES = { "rotate", "classic", "night-mosque", "ocean-sunset", "desert", "aurora", "rain-window", "galaxy", "geometry", "forest" };
+    static final String[] SCENES = { "rotate", "classic", "photos", "night-mosque", "ocean-sunset", "desert", "aurora", "rain-window", "galaxy", "geometry", "forest" };
 
     /** يقسم الطلب إلى إعدادات الشاشة وإعدادات الخدمة بعد التحقق؛ أي قيمة غير صالحة ترفض الطلب كله */
     static JSONObject[] validate(JSONObject in) throws Exception {
@@ -173,7 +177,7 @@ final class RemoteCore {
                     if (a.length() > SCENES.length) throw new IllegalArgumentException(k);
                     for (int i = 0; i < a.length(); i++) {
                         String s = a.optString(i, "");
-                        if (!oneOf(s, SCENES) || s.equals("rotate") || s.equals("classic")) throw new IllegalArgumentException(k);
+                        if (!oneOf(s, SCENES) || s.equals("rotate") || s.equals("classic") || s.equals("photos")) throw new IllegalArgumentException(k);
                         ok.put(s);
                     }
                     screen.put(k, ok); break;
@@ -216,6 +220,21 @@ final class RemoteCore {
         return false;
     }
 
+    // ---------- خلفيات المستخدم ----------
+    static final int MAX_BACKGROUNDS = 12;
+    /** حد الصورة بعد فك Base64 (الجوال يصغّرها إلى 1920 بكسل قبل الإرسال) */
+    static final int MAX_IMAGE_BYTES = 2_500_000;
+
+    /** نوع الصورة من أول بايتاتها: JPEG أو PNG فقط */
+    static String imageKind(byte[] b) {
+        if (b == null || b.length < 8) return null;
+        if ((b[0] & 255) == 0xFF && (b[1] & 255) == 0xD8 && (b[2] & 255) == 0xFF) return "jpg";
+        if ((b[0] & 255) == 0x89 && b[1] == 'P' && b[2] == 'N' && b[3] == 'G') return "png";
+        return null;
+    }
+
+    static boolean validBackgroundId(String id) { return id != null && id.matches("[a-z0-9]{1,24}"); }
+
     // ---------- معالجة الطلبات ----------
     /** يعيد {status, body}؛ المسارات غير المحمية: /info و/pair/* */
     JSONObject handle(String method, String path, Map<String, String> headers, byte[] body, Applier applier, long now) {
@@ -239,6 +258,20 @@ final class RemoteCore {
                 String a = json(body).optString("action", "");
                 if (!oneOf(a, new String[] { "stop_adhan", "open_screen", "next_scene" })) return status(400, error(400, "invalid_action"));
                 return ok(new JSONObject().put("ok", applier.action(a)));
+            }
+            if (method.equals("GET") && path.equals("/backgrounds")) return ok(new JSONObject().put("items", applier.backgrounds()).put("max", MAX_BACKGROUNDS));
+            if (method.equals("POST") && path.equals("/backgrounds")) {
+                byte[] img = b64(json(body).optString("data", ""));
+                if (img.length == 0 || img.length > MAX_IMAGE_BYTES) return status(400, error(400, img.length == 0 ? "bad_image" : "too_large"));
+                if (imageKind(img) == null) return status(400, error(400, "bad_image"));
+                String id = applier.addBackground(img);
+                if (id.startsWith("!")) return status(400, error(400, id.substring(1)));
+                return ok(new JSONObject().put("ok", true).put("id", id).put("items", applier.backgrounds()));
+            }
+            if (method.equals("POST") && path.equals("/backgrounds/delete")) {
+                String id = json(body).optString("id", "");
+                if (!validBackgroundId(id)) return status(400, error(400, "bad_id"));
+                return ok(new JSONObject().put("ok", applier.removeBackground(id)).put("items", applier.backgrounds()));
             }
             if (method.equals("POST") && path.equals("/unpair")) { removeDevice(dev); return ok(new JSONObject().put("ok", true)); }
             return status(404, error(404, "not_found"));

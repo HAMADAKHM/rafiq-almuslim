@@ -37,6 +37,10 @@ public class RemoteCoreTest {
         public void applyScreen(JSONObject p) { try { for (java.util.Iterator<String> it = p.keys(); it.hasNext(); ) { String k = it.next(); screen.put(k, p.get(k)); } } catch (Exception ignored) { } }
         public void applyNative(JSONObject p) { nat = p; }
         public boolean action(String a) { lastAction = a; return true; }
+        final java.util.List<byte[]> images = new java.util.ArrayList<>();
+        public org.json.JSONArray backgrounds() { org.json.JSONArray a = new org.json.JSONArray(); for (int i = 0; i < images.size(); i++) a.put("b" + i); return a; }
+        public String addBackground(byte[] img) { if (images.size() >= RemoteCore.MAX_BACKGROUNDS) return "!too_many"; images.add(img); return "b" + (images.size() - 1); }
+        public boolean removeBackground(String id) { return id.equals("b0") && !images.isEmpty() && images.remove(0) != null; }
     }
 
     private static Map<String, String> h(String dev, long t, String sig) {
@@ -132,6 +136,47 @@ public class RemoteCoreTest {
         assertEquals(200, again.handle("POST", "/unpair", h(dev[0], t5, sign(dev[1], "POST", "/unpair", t5, new byte[0])), new byte[0], ap, t5).getInt("status"));
         long t6 = t5 + 1000;
         assertEquals(401, again.handle("GET", "/settings", h(dev[0], t6, sign(dev[1], "GET", "/settings", t6, new byte[0])), new byte[0], ap, t6).getInt("status"));
+    }
+
+    @Test public void backgroundsUploadListDeleteAndLimits() throws Exception {
+        RemoteCore core = new RemoteCore(new MemStore(), new SecureRandom(), "TV");
+        String[] dev = pair(core, core.startPairing(NOW), NOW + 1000);
+        FakeApplier ap = new FakeApplier();
+        long[] t = { NOW + 2000 };
+        java.util.function.BiFunction<String, byte[], JSONObject> call = (path, body) -> {
+            t[0] += 1000;
+            try { return core.handle("POST", path, h(dev[0], t[0], sign(dev[1], "POST", path, t[0], body)), body, ap, t[0]); } catch (Exception e) { throw new RuntimeException(e); }
+        };
+        byte[] jpg = new byte[2000];
+        jpg[0] = (byte) 0xFF; jpg[1] = (byte) 0xD8; jpg[2] = (byte) 0xFF;
+        JSONObject r = call.apply("/backgrounds", b(new JSONObject().put("data", RemoteCore.enc(jpg)).toString()));
+        assertEquals(200, r.getInt("status"));
+        assertEquals(1, ap.images.size());
+        // ملف ليس صورة، أو Base64 تالف، أو صورة أكبر من الحد
+        assertEquals("bad_image", call.apply("/backgrounds", b(new JSONObject().put("data", RemoteCore.enc(b("<html>not an image</html>"))).toString())).getJSONObject("body").getString("error"));
+        assertEquals("bad_image", call.apply("/backgrounds", b("{\"data\":\"@@@\"}")).getJSONObject("body").getString("error"));
+        byte[] big = new byte[RemoteCore.MAX_IMAGE_BYTES + 3];
+        big[0] = (byte) 0xFF; big[1] = (byte) 0xD8; big[2] = (byte) 0xFF;
+        assertEquals("too_large", call.apply("/backgrounds", b(new JSONObject().put("data", RemoteCore.enc(big)).toString())).getJSONObject("body").getString("error"));
+        // الحد الأقصى لعدد الصور
+        for (int i = 1; i < RemoteCore.MAX_BACKGROUNDS; i++) call.apply("/backgrounds", b(new JSONObject().put("data", RemoteCore.enc(jpg)).toString()));
+        assertEquals("too_many", call.apply("/backgrounds", b(new JSONObject().put("data", RemoteCore.enc(jpg)).toString())).getJSONObject("body").getString("error"));
+        // الحذف بمعرّف صالح فقط
+        assertEquals(400, call.apply("/backgrounds/delete", b("{\"id\":\"../x\"}")).getInt("status"));
+        assertTrue(call.apply("/backgrounds/delete", b("{\"id\":\"b0\"}")).getJSONObject("body").getBoolean("ok"));
+        // دون توقيع: مرفوض
+        assertEquals(401, core.handle("POST", "/backgrounds", new HashMap<>(), b("{}"), ap, t[0] + 5000).getInt("status"));
+        // المشهد «صوري» مقبول، ولا يدخل قائمة التنقل
+        assertEquals(200, call.apply("/settings", b("{\"scene\":\"photos\"}")).getInt("status"));
+        assertEquals(400, call.apply("/settings", b("{\"playlist\":[\"photos\"]}")).getInt("status"));
+    }
+
+    @Test public void uploadBodyLimitOnlyForBackgrounds() throws Exception {
+        String big = "x".repeat(200_000);
+        String up = "POST /backgrounds HTTP/1.1\r\nContent-Length: " + big.length() + "\r\n\r\n" + big;
+        assertNotNull(RemoteHttp.read(new ByteArrayInputStream(b(up))));
+        String other = "POST /settings HTTP/1.1\r\nContent-Length: " + big.length() + "\r\n\r\n" + big;
+        assertNull(RemoteHttp.read(new ByteArrayInputStream(b(other))));
     }
 
     @Test public void wrongCodeAndClosedWindow() throws Exception {
