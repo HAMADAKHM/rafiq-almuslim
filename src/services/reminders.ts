@@ -7,7 +7,8 @@ import type { PrayerKey, Settings } from '../state/settings'
 import { addDays, dateParts, dayKey } from '../lib/dates'
 import { toHijri, occasionsFor } from './calendar'
 import { plusActive } from '../billing/active'
-import { amountText, companionPool, dhikrBody, intervalId, intervalMinutes, pickForSlot, positionRoute, positionText, prayerEnds, PRAYER_END_NOTE, travelActive, type QuranPosition } from './companion'
+import { HISN_AUDIO } from '../content/hisnAudio'
+import { amountText, hisnChannel, TIMED_ADHKAR_SOUND, companionPool, dhikrBody, intervalId, intervalMinutes, pickForSlot, positionRoute, positionText, prayerEnds, PRAYER_END_NOTE, travelActive, type QuranPosition } from './companion'
 
 export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end'
 
@@ -154,7 +155,7 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
   const intervals: Reminder[] = []
   const comp = settings.companion
   const plus = plusActive()
-  const pool = plus && comp?.adhkar.enabled && !n.reduce ? companionPool(comp.adhkar.groups) : []
+  const pool = plus && comp?.adhkar.enabled && !n.reduce ? companionPool(comp.adhkar.groups, comp.adhkar.voicedOnly !== false) : []
 
   for (let i = 0; i < days; i++) {
     const day = dateParts(addDays(from, i), loc.tz)
@@ -173,7 +174,9 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
     for (const [kind, time] of timed) {
       if (!time) continue
       const msg = pick(MESSAGES[kind as keyof typeof MESSAGES], seed)
-      add({ id: makeId(day, kind), at: atLocalTime(day, time, loc.tz), kind, title: msg.title, body: msg.body, route: ROUTES[kind] })
+      // أذكار الصباح والمساء والنوم: صوت الإشعار ذكرٌ بتسجيل حصن المسلم
+      const sn = n.adhkarVoice !== false && (kind === 'morning' || kind === 'evening' || kind === 'sleep') ? TIMED_ADHKAR_SOUND[kind] : undefined
+      add({ id: makeId(day, kind), at: atLocalTime(day, time, loc.tz), kind, title: msg.title, body: msg.body, route: ROUTES[kind], ...(sn ? { channelId: hisnChannel(sn) } : {}) })
     }
     if (n.occasions && !n.reduce) {
       // تذكير مساء اليوم السابق بالمناسبة القادمة
@@ -249,7 +252,9 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
           const seq = Math.floor(at.getTime() / 60_000 / Math.max(1, a.interval))
           const p = pickForSlot(pool, seq, done)
           if (!p) return
-          intervals.push({ id: intervalId(day, slot), at, kind: 'dhikr-interval', title: 'رفيقي يذكّرني', body: dhikrBody(p.item), route: `/companion/dhikr/${p.item.id}`, actions: 'dhikr', silent: !a.sound, itemId: p.item.id })
+          // يُقرأ الذكر نفسه في الإشعار بتسجيل حصن المسلم (قناة صوتها الملف) إن وُجد
+          const voiceN = a.sound && a.voice !== false ? HISN_AUDIO[p.item.id] : undefined
+          intervals.push({ id: intervalId(day, slot), at, kind: 'dhikr-interval', title: voiceN ? 'رفيقي يذكّرني 🔊' : 'رفيقي يذكّرني', body: dhikrBody(p.item), route: `/companion/dhikr/${p.item.id}`, actions: 'dhikr', silent: !a.sound, itemId: p.item.id, ...(voiceN ? { channelId: hisnChannel(voiceN) } : {}) })
         })
       }
     }

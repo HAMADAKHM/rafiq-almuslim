@@ -131,3 +131,16 @@ export function ScenePreview({ id, live }: { id: SceneId; live: boolean }) {
   }, [id, live])
   return <canvas ref={ref} className="tv-scene-thumb" aria-hidden="true" />
 }
+
+/** إطار واحد ثابت بملء الشاشة (وضع «مشهد ثابت» لتوفير البطارية) */
+export function StillScene({ id }: { id: SceneId }) {
+  const ref = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    const c = ref.current
+    if (!c) return
+    const w = Math.min(1280, Math.round(window.innerWidth)), h = Math.round((w * window.innerHeight) / Math.max(1, window.innerWidth))
+    c.width = w; c.height = h
+    try { createScene(id, w, h).frame(c.getContext('2d')!, 8) } catch { /* لا شيء */ }
+  }, [id])
+  return <canvas ref={ref} aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+}

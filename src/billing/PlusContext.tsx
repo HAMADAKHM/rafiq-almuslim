@@ -2,6 +2,7 @@
 // المحفوظ على الجهاز يُستخدم فقط دون إنترنت ولمدة محدودة بعد آخر تحقق ناجح (انظر entitlement.ts).
 import { activeSkin } from '../themes/skins'
 import { SkinScene } from '../themes/SkinScene'
+import { SceneCanvas, StillScene } from '../tv/SceneCanvas'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { kv } from '../db/repos'
 import { useSettings } from '../state/SettingsContext'
@@ -155,12 +156,14 @@ function SkinApplier({ entitled }: { entitled: boolean }) {
   useEffect(() => {
     const root = document.documentElement
     if (skin) {
-      root.dataset.skin = skin.id
+      root.dataset.skin = skin.palette ?? skin.id
+      root.dataset.skinId = skin.id
       root.dataset.skinMode = skin.mode
       root.dataset.theme = skin.mode
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', skin.bar)
     } else {
       delete root.dataset.skin
+      delete root.dataset.skinId
       if (root.dataset.skinMode) {
         delete root.dataset.skinMode
         const dark = settings.theme === 'dark' || settings.theme === 'gold' || (settings.theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
@@ -178,7 +181,15 @@ function SkinApplier({ entitled }: { entitled: boolean }) {
     return () => document.removeEventListener('visibilitychange', vis)
   }, [])
   if (!skin) return null
-  return <div className="skin-backdrop"><SkinScene id={skin.id} /></div>
+  if (skin.live) {
+    return (
+      <div className="skin-backdrop live">
+        {settings.skinStill ? <StillScene id={skin.live} /> : <SceneCanvas scene={skin.live} playlist={[]} rotateMin={0} shuffle={false} quality="eco" />}
+        <div className="skin-live-veil" />
+      </div>
+    )
+  }
+  return <div className="skin-backdrop"><SkinScene id={skin.id as Exclude<typeof skin.id, `live-${string}`>} /></div>
 }
 
 export function usePlus(): PlusState {

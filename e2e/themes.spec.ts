@@ -42,3 +42,16 @@ test('مع اشتراك: الثيم المدفوع يُطبَّق، والمشه
   await page.getByLabel(/مشهد ثابت بلا حركة/).check()
   await expect(page.locator('html')).toHaveAttribute('data-skin-still', '')
 })
+
+test('ثيم حيّ مجاني: مشهد يتحرك خلف التطبيق ويبقى بعد إعادة الفتح، وزر الثيمات في الرئيسية', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('link', { name: 'الثيمات' }).first().click()
+  await expect(page).toHaveURL(/\/plus\/themes/)
+  await page.getByRole('button', { name: 'معاينة ثيم ليلة المسجد الحيّة' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'تطبيق الثيم' }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-skin-id', 'live-night')
+  await page.goto('/')
+  await expect(page.locator('.skin-backdrop.live canvas').first()).toBeVisible()
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-skin-id', 'live-night')
+})

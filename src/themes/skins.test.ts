@@ -3,9 +3,11 @@ import { activeSkin, SKINS } from './skins'
 import { mergeSettings } from '../state/settings'
 
 describe('الثيمات الغامرة', () => {
-  it('ثمانية ثيمات، منها اثنان مجانيان', () => {
-    expect(SKINS).toHaveLength(8)
-    expect(SKINS.filter((s) => s.free).map((s) => s.id)).toEqual(['qadr', 'andalus'])
+  it('ستة عشر ثيمًا (ثمانية حيّة)، منها ثلاثة مجانية، وكل ثيم حيّ له مشهد ولوحة ألوان', () => {
+    expect(SKINS).toHaveLength(16)
+    expect(SKINS.filter((s) => s.live)).toHaveLength(8)
+    expect(SKINS.filter((s) => s.free).map((s) => s.id)).toEqual(['qadr', 'andalus', 'live-night'])
+    for (const s of SKINS.filter((x) => x.live)) expect(s.palette).toBeTruthy()
   })
   it('الثيم المجاني يعمل دون اشتراك، والمدفوع مع اشتراك فقط', () => {
     expect(activeSkin('qadr', false)?.id).toBe('qadr')

@@ -102,6 +102,10 @@ export function RemindersPage() {
             <input type="checkbox" className="switch-input" role="switch" checked={n.adhkarScreen} onChange={(e) => set({ adhkarScreen: e.target.checked })} aria-label="شاشة تنبيه الأذكار بالصوت" />
             <span>شاشة تنبيه الأذكار بالصوت<span className="small muted"> — عند وقت أذكار الصباح والمساء والنوم تظهر شاشة كاملة تقرأ الأذكار: الآيات بصوت القارئ، والباقي بصوت الجهاز</span></span>
           </label>
+          <label className="check" style={{ marginTop: '0.5rem' }}>
+            <input type="checkbox" className="switch-input" role="switch" checked={n.adhkarVoice !== false} onChange={(e) => set({ adhkarVoice: e.target.checked })} aria-label="ذكر مسموع في الإشعار" />
+            <span>ذكر مسموع في الإشعار 🔊<span className="small muted"> — بدل النغمة: «بسم الله الذي لا يضر مع اسمه شيء…» صباحًا ومساءً، و«باسمك ربي وضعت جنبي…» للنوم، بتسجيل حصن المسلم</span></span>
+          </label>
           <Link className="btn btn-sm" style={{ marginTop: 6, alignSelf: 'start' }} to="/adhkar-alert/morning">تجربة شاشة التنبيه</Link>
         </section>
 

@@ -43,6 +43,8 @@ export interface NotificationSettings {
   adhanInApp: boolean
   /** شاشة تنبيه الأذكار (الصباح والمساء والنوم) بصوت الذكر عند حلول وقتها أو عند الضغط على الإشعار */
   adhkarScreen: boolean
+  /** صوت إشعار أذكار الصباح والمساء والنوم: ذكر بتسجيل «حصن المسلم» بدل النغمة */
+  adhkarVoice: boolean
 }
 
 /** طريقة العرض: متتابعة (آية بآية)، صفحات المصحف، أو التركيز (آية واحدة في الشاشة) */
@@ -131,6 +133,10 @@ export interface CompanionSettings {
     groups: string[]
     /** false = إشعار مكتوب بلا صوت (الوضع الهادئ) */
     sound: boolean
+    /** يُقرأ الذكر نفسه في الإشعار بتسجيل «حصن المسلم» (بدل نغمة الإشعار) */
+    voice: boolean
+    /** التناوب بين الأذكار التي لها تسجيل مسموع فقط */
+    voicedOnly: boolean
     /** إيقاف مؤقت حتى هذه اللحظة (ms) أو null */
     pausedUntil: number | null
   }
@@ -217,6 +223,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   fajrVoice: 'same',
   adhanInApp: true,
   adhkarScreen: true,
+  adhkarVoice: true,
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -255,7 +262,7 @@ export const DEFAULT_SETTINGS: Settings = {
   dailyAdhkar: DEFAULT_DAILY_ADHKAR,
   hiddenCats: [],
   companion: {
-    adhkar: { enabled: false, interval: 60, start: '09:00', end: '21:00', days: [0, 1, 2, 3, 4, 5, 6], groups: ['salawat', 'istighfar', 'sunnah'], sound: true, pausedUntil: null },
+    adhkar: { enabled: false, interval: 60, start: '09:00', end: '21:00', days: [0, 1, 2, 3, 4, 5, 6], groups: ['salawat', 'istighfar', 'sunnah'], sound: true, voice: true, voicedOnly: true, pausedUntil: null },
     quran: { enabled: false, times: ['21:00'], days: [0, 1, 2, 3, 4, 5, 6], amount: { unit: 'pages', value: 4 }, snoozeMinutes: 15, sound: true },
     prayerEnd: { enabled: false, minutesBefore: 20, perPrayer: { fajr: true, dhuhr: true, asr: true, maghrib: true, isha: true } },
     card: { wird: true, position: true, dhikr: true, goal: true },

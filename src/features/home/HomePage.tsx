@@ -28,7 +28,7 @@ import { adhkarLog, kv, memo } from '../../db/repos'
 import { KhatmaCard, useKhatmas } from '../wird/KhatmaCard'
 import { activePlan, dailyTarget } from '../../services/khatma'
 import { dailySuggestion } from '../../services/dailySuggest'
-import { Lightbulb } from 'lucide-react'
+import { Lightbulb, Palette } from 'lucide-react'
 import { useAllLogs } from '../progress/ProgressPage'
 import { computeStats, dailySeries } from '../../services/stats'
 import { adhkarForNow, ayahOfDay, greeting } from '../../services/daily'
@@ -231,6 +231,7 @@ export function HomePage() {
         <PaintedScene tone={toneFor(np?.name)} variant="hero" className="home-hero-art" />
         <div className="home-hero-row">
           <Link to="/reminders" className="hero-icon" aria-label="إعدادات التذكير"><Bell size={20} /></Link>
+          <Link to="/plus/themes" className={'hero-icon' + (settings.skin ? '' : ' theme-pulse')} aria-label="الثيمات"><Palette size={20} /></Link>
           <span className="hero-avatar" aria-hidden="true">{settings.displayName.trim() ? settings.displayName.trim()[0] : <LogoMark size={24} />}</span>
           <div className="home-hero-text">
             <div className="hero-greet">{settings.displayName.trim() ? `السلام عليكم، ${settings.displayName.trim()}` : greeting(hour, today)}</div>

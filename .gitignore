@@ -33,3 +33,6 @@ android-tv/.gradle/
 android-tv/app/build/
 android-tv/build/
 dist-tizen/
+
+# تسجيلات حصن المسلم لصوت الإشعارات (تُجلب أثناء البناء)
+android/app/src/main/res/raw/hisn_*.mp3

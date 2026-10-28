@@ -74,6 +74,8 @@ jobs:
           VITE_PLUS_UNLOCK: "0"
       - run: npm run build
       - run: npx cap sync android
+      - name: Hisn al-Muslim notification sounds
+        run: bash scripts/fetch-hisn-sounds.sh
       - name: Build debug APK
         working-directory: android
         run: |

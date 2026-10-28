@@ -7,6 +7,9 @@ import { PLUS_PALETTES } from '../../billing/palettes'
 import { usePlus } from '../../billing/PlusContext'
 import { activeSkin, SKINS, type Skin } from '../../themes/skins'
 import { SkinScene } from '../../themes/SkinScene'
+import { SceneCanvas, ScenePreview } from '../../tv/SceneCanvas'
+
+type ArtSkin = Exclude<Skin['id'], `live-${string}`>
 import { Link } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { toast } from '../../hooks'
@@ -26,6 +29,7 @@ export function PlusThemesPage() {
   const { settings, update } = useSettings()
   const plus = usePlus()
   const [preview, setPreview] = useState<Skin | null>(null)
+  const [hover, setHover] = useState<string | null>(null)
   const current = activeSkin(settings.skin, plus.entitled)
   const apply = (s: Skin | null) => {
     update({ skin: s ? s.id : '' })
@@ -38,18 +42,25 @@ export function PlusThemesPage() {
       <section className="card" aria-labelledby="skins-h">
         <h2 id="skins-h">ثيمات غامرة</h2>
         <p className="small muted">كل ثيم مشهد حيّ خلف التطبيق كله، مع ألوانه وخطه وشكل بطاقاته. اضغط لمعاينته بملء الشاشة قبل التطبيق.</p>
-        <div className="skin-grid">
-          {SKINS.map((s) => {
-            const locked = !s.free && !plus.entitled
-            return (
-              <button key={s.id} type="button" className="skin-card" aria-pressed={current?.id === s.id} aria-label={`معاينة ثيم ${s.name}`} onClick={() => setPreview(s)}>
-                {!s.free && <span className="skin-badge">بلس</span>}
-                <span className={'skin-frame ' + s.mode}><SkinScene id={s.id} /><span className="skin-sample" /></span>
-                <span className="skin-meta"><strong>{s.name}{current?.id === s.id ? ' ✓' : ''}</strong><small>{locked ? 'من مزايا رفيق بلس' : s.tagline}</small></span>
-              </button>
-            )
-          })}
-        </div>
+        {([['live', 'ثيمات حيّة — مشاهد سينمائية تتحرك باستمرار'], ['art', 'ثيمات فنية مرسومة']] as const).map(([kind, heading]) => (
+          <div key={kind}>
+            <h3 className="skin-section-title">{heading}</h3>
+            <div className="skin-grid">
+              {SKINS.filter((s) => (kind === 'live') === !!s.live).map((s) => {
+                const locked = !s.free && !plus.entitled
+                return (
+                  <button key={s.id} type="button" className="skin-card" aria-pressed={current?.id === s.id} aria-label={`معاينة ثيم ${s.name}`} onClick={() => setPreview(s)}
+                    onMouseEnter={() => setHover(s.id)} onFocus={() => setHover(s.id)}>
+                    {!s.free && <span className="skin-badge">بلس</span>}
+                    {s.live && <span className="skin-badge live">● حيّ</span>}
+                    <span className={'skin-frame ' + s.mode}>{s.live ? <ScenePreview id={s.live} live={hover === s.id} /> : <SkinScene id={s.id as ArtSkin} />}<span className="skin-sample" /></span>
+                    <span className="skin-meta"><strong>{s.name}{current?.id === s.id ? ' ✓' : ''}</strong><small>{locked ? 'من مزايا رفيق بلس' : s.tagline}</small></span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
         <div className="row" style={{ marginTop: 10, flexWrap: 'wrap' }}>
           {current && <button className="btn btn-sm" onClick={() => apply(null)}>العودة إلى ألوان التطبيق الأصلية</button>}
           <label className="check small"><input type="checkbox" className="switch-input" checked={settings.skinStill} onChange={(e) => update({ skinStill: e.target.checked })} /> مشهد ثابت بلا حركة (لتوفير البطارية)</label>
@@ -57,7 +68,7 @@ export function PlusThemesPage() {
       </section>
       {preview && createPortal(
         <div className="skin-preview" role="dialog" aria-modal="true" aria-label={`معاينة ثيم ${preview.name}`}>
-          <SkinScene id={preview.id} />
+          {preview.live ? <div className="skin-live"><SceneCanvas scene={preview.live} playlist={[]} rotateMin={0} shuffle={false} quality="eco" /></div> : <SkinScene id={preview.id as ArtSkin} />}
           <div className="skin-preview-body">
             <div className={'skin-preview-card ' + preview.mode}>
               <strong style={{ fontFamily: 'Amiri, serif', fontSize: '1.4rem' }}>{preview.name}</strong>

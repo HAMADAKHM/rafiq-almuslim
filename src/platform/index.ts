@@ -4,7 +4,7 @@
 // الصفحات لا تعرف على أي منصة تعمل.
 import { Capacitor } from '@capacitor/core'
 import type { Reminder } from '../services/reminders'
-import { SNOOZE_ID_BASE } from '../services/companion'
+import { HISN_SOUND_PREFIX, SNOOZE_ID_BASE } from '../services/companion'
 
 export const isNative = () => Capacitor.isNativePlatform()
 export const platformName = () => Capacitor.getPlatform() as 'web' | 'android' | 'ios'
@@ -91,6 +91,7 @@ export async function replaceScheduledNotifications(list: Reminder[]): Promise<n
   if (stale.length) await LocalNotifications.cancel({ notifications: stale.map((n) => ({ id: n.id })) })
   if (!list.length) return 0
   const android = platformName() === 'android'
+  if (android) await ensureHisnChannels(list.map((r) => r.channelId).filter((c): c is string => !!c && c.startsWith(HISN_SOUND_PREFIX)))
   await LocalNotifications.schedule({
     notifications: list.map((r) => ({
       id: r.id, title: r.title, body: r.body, schedule: { at: r.at, allowWhileIdle: true },
@@ -102,6 +103,19 @@ export async function replaceScheduledNotifications(list: Reminder[]): Promise<n
     })),
   })
   return list.length
+}
+
+const hisnMade = new Set<string>()
+/** قناة لكل ذكر مسموع: صوتها ملف التسجيل في res/raw (يُقرأ الذكر عند وصول الإشعار، ويحترم الصامت وعدم الإزعاج) */
+async function ensureHisnChannels(ids: string[]) {
+  const { LocalNotifications } = await import('@capacitor/local-notifications')
+  for (const id of new Set(ids)) {
+    if (hisnMade.has(id)) continue
+    const n = /rafiq-hisn-(\d+)-/.exec(id)?.[1]
+    if (!n) continue
+    await LocalNotifications.createChannel({ id, name: `ذكر مسموع (${n}) — حصن المسلم`, description: 'يُقرأ الذكر بتسجيل حصن المسلم عند وصول التذكير', sound: `hisn_${n}.mp3`, importance: 4, visibility: 1, vibration: true }).catch(() => {})
+    hisnMade.add(id)
+  }
 }
 
 export const COMPANION_CHANNEL = 'rafiq-companion-v1'

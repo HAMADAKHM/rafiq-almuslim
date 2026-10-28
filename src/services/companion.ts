@@ -3,6 +3,7 @@
 import { ADHKAR } from '../content/adhkar'
 import { DUAS } from '../content/duas'
 import type { DhikrItem } from '../content/types'
+import { HISN_AUDIO } from '../content/hisnAudio'
 import type { PrayerKey } from '../state/settings'
 
 /** مجموعات الأذكار التي يمكن التذكير بها في أي وقت (لا أذكار الصباح والمساء ولا أذكار المناسبات كالمطر والعطاس) */
@@ -21,7 +22,15 @@ export const DEFAULT_COMPANION_GROUPS = ['salawat', 'istighfar', 'sunnah']
 export interface PoolItem { group: string; item: DhikrItem }
 
 /** الأذكار المختارة بترتيب متناوب بين المجموعات (لا يتتابع ذكران من مجموعة واحدة ما أمكن). عناصر القرآن تُستثنى لأن نص الإشعار يحتاج نصًا مكتوبًا */
-export function companionPool(groups: string[]): PoolItem[] {
+export function companionPool(groups: string[], voicedOnly = false): PoolItem[] {
+  const all = companionPoolAll(groups)
+  if (!voicedOnly) return all
+  const voiced = all.filter((p) => HISN_AUDIO[p.item.id])
+  // إن لم يكن في المجموعات المختارة ذكر مسموع، يبقى التناوب على كل أذكارها
+  return voiced.length ? voiced : all
+}
+
+function companionPoolAll(groups: string[]): PoolItem[] {
   const lists = COMPANION_GROUPS.filter((g) => groups.includes(g.id)).map((g) => {
     const cats = g.source === 'adhkar' ? ADHKAR : DUAS
     const cat = cats.find((c) => c.id === g.category)
@@ -155,3 +164,9 @@ export function goalProgress(goal: { pages: number; adhkar: number }, today: { p
 export function travelActive(t: { enabled: boolean; until: number | null } | undefined, at: Date): boolean {
   return !!t?.enabled && (!t.until || at.getTime() < t.until)
 }
+
+/** قناة Android التي صوتها تسجيل الذكر (res/raw/hisn_N.mp3) */
+export const hisnChannel = (n: number) => `rafiq-hisn-${n}-v1`
+export const HISN_SOUND_PREFIX = 'rafiq-hisn-'
+/** تسجيلات إشعارات الأذكار المحددة الوقت: «بسم الله الذي لا يضر…» صباحًا ومساءً، و«باسمك ربي وضعت جنبي» للنوم */
+export const TIMED_ADHKAR_SOUND: Partial<Record<'morning' | 'evening' | 'sleep', number>> = { morning: 86, evening: 86, sleep: 102 }

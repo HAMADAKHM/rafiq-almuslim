@@ -261,3 +261,33 @@ describe('الهدف الصغير ووضع السفر وتقدير الختمة'
     expect(s.homeCards.find((c) => c.id === 'ayah')!.visible).toBe(false)
   })
 })
+
+describe('قراءة الذكر في الإشعار (حصن المسلم)', () => {
+  it('الذكر الدوري يُقرأ بتسجيله: قناة صوتها ملف الذكر، والتناوب بين الأذكار المسموعة', async () => {
+    const { HISN_AUDIO } = await import('../content/hisnAudio')
+    setPlusActive(true)
+    const s = withCompanion({ adhkar: { enabled: true, interval: 30, start: '09:00', end: '18:00' } })
+    const iv = of(buildSchedule(s, from, 1), 'dhikr-interval')
+    expect(iv.length).toBeGreaterThan(5)
+    for (const r of iv) {
+      expect(HISN_AUDIO[r.itemId!], r.itemId).toBeTruthy()
+      expect(r.channelId).toBe(`rafiq-hisn-${HISN_AUDIO[r.itemId!]}-v1`)
+    }
+  })
+  it('بلا صوت أو بإيقاف القراءة: لا قناة صوتية', () => {
+    setPlusActive(true)
+    const quiet = of(buildSchedule(withCompanion({ adhkar: { enabled: true, interval: 60, start: '09:00', end: '12:00', sound: false } }), from, 1), 'dhikr-interval')
+    expect(quiet.every((r) => !r.channelId && r.silent)).toBe(true)
+    const off = of(buildSchedule(withCompanion({ adhkar: { enabled: true, interval: 60, start: '09:00', end: '12:00', voice: false } }), from, 1), 'dhikr-interval')
+    expect(off.every((r) => !r.channelId)).toBe(true)
+  })
+  it('أذكار الصباح والمساء والنوم: صوت الإشعار ذكر مسموع', () => {
+    const d = mergeSettings(null).notifications
+    const s = withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', eveningAdhkar: '17:00', sleepAdhkar: '22:00' } })
+    const list = buildSchedule(s, new Date('2026-10-28T22:00:00Z'), 1)
+    expect(of(list, 'morning')[0].channelId).toBe('rafiq-hisn-86-v1')
+    expect(of(list, 'sleep')[0].channelId).toBe('rafiq-hisn-102-v1')
+    const plain = buildSchedule(withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', adhkarVoice: false } }), new Date('2026-10-28T22:00:00Z'), 1)
+    expect(of(plain, 'morning')[0].channelId).toBeUndefined()
+  })
+})

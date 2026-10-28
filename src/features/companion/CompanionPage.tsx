@@ -133,6 +133,12 @@ export function CompanionPage() {
                   {c.adhkar.sound ? <Volume2 size={16} aria-hidden="true" /> : <VolumeX size={16} aria-hidden="true" />}
                   <span>صوت الإشعار<span className="small muted"> — نغمة الإشعار في جهازك. أطفئه للوضع الهادئ: إشعار مكتوب فقط. وضع الصامت وعدم الإزعاج في جهازك يُحترمان دائمًا</span></span>
                 </label>
+                <label className="check"><input type="checkbox" className="switch-input" role="switch" checked={c.adhkar.voice !== false} disabled={!c.adhkar.sound} onChange={(e) => set('adhkar', { voice: e.target.checked })} aria-label="قراءة الذكر في الإشعار" />
+                  <span>قراءة الذكر في الإشعار 🔊<span className="small muted"> — يُسمع الذكر نفسه بتسجيل «حصن المسلم» عند وصول التذكير، ولو كان التطبيق مغلقًا</span></span>
+                </label>
+                <label className="check"><input type="checkbox" className="switch-input" checked={c.adhkar.voicedOnly !== false} onChange={(e) => set('adhkar', { voicedOnly: e.target.checked })} />
+                  <span>الأذكار المسموعة فقط<span className="small muted"> — التناوب بين الأذكار التي لها تسجيل</span></span>
+                </label>
                 <div className="card-inset">
                   {paused ? (
                     <div className="spread">
