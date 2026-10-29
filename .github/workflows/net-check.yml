@@ -19,7 +19,7 @@ jobs:
           sudo apt-get install -y -qq ffmpeg > /dev/null 2>&1 || true
           curl -s -m 60 -o a77.mp3 "https://www.hisnmuslim.com/audio/ar/77.mp3"
           echo "::notice::silence $(ffmpeg -hide_banner -i a77.mp3 -af silencedetect=noise=-35dB:d=0.6 -f null - 2>&1 | grep -oE 'silence_(start|end): [0-9.]+' | tr '\n' ' ')"
-          pip install -q faster-whisper > /dev/null 2>&1
+          pip install -q "av>=11,<13" faster-whisper > /dev/null 2>&1
           python3 - <<'PY' > tr.txt 2>err.txt || true
           from faster_whisper import WhisperModel
           m = WhisperModel("small", device="cpu", compute_type="int8")
