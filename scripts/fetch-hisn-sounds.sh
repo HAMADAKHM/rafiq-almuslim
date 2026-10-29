@@ -24,7 +24,7 @@ awk '/^export const HISN_CLIPS/{f=1;next} f&&/^}/{f=0} f' "$MAP" | sed -nE 's/^ 
   [ -s "$out" ] && continue
   [ -s "$in" ] || { echo "::warning::المقطع $key يحتاج التسجيل $src"; continue; }
   fade=$(awk "BEGIN{print $to-0.4}")
-  if ffmpeg -hide_banner -loglevel error -y -ss "$from" -to "$to" -i "$in" -af "afade=t=out:st=$(awk "BEGIN{print $fade-$from}"):d=0.4" -codec:a libmp3lame -q:a 3 "$out" && [ "$(wc -c < "$out")" -gt 2000 ]; then
+  if ffmpeg -nostdin -hide_banner -loglevel error -y -ss "$from" -to "$to" -i "$in" -af "afade=t=out:st=$(awk "BEGIN{print $fade-$from}"):d=0.4" -codec:a libmp3lame -q:a 3 "$out" && [ "$(wc -c < "$out")" -gt 2000 ]; then
     echo "::notice::clip $key: $(ffprobe -v error -show_entries format=duration -of default=nw=1:nk=1 "$out" | cut -c1-5)s"
   else
     rm -f "$out"; echo "::warning::تعذر قص المقطع $key"

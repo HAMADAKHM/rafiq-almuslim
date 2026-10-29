@@ -43,7 +43,10 @@ describe('المقاطع القصيرة من حصن المسلم', () => {
     const src = readFileSync('src/content/hisnAudio.ts', 'utf8')
     const lines = src.split('\n').filter((l) => /^ {2}[a-z][a-z0-9]*: \{ src: \d+, from: [\d.]+, to: [\d.]+,/.test(l))
     expect(lines.length).toBe(Object.keys(HISN_CLIPS).length)
-    expect(readFileSync('scripts/fetch-hisn-sounds.sh', 'utf8')).toMatch(/HISN_CLIPS/)
+    const script = readFileSync('scripts/fetch-hisn-sounds.sh', 'utf8')
+    expect(script).toMatch(/HISN_CLIPS/)
+    // ffmpeg داخل حلقة القراءة يبتلع بقية الأسطر إن قرأ من الإدخال (كان يُسقط مقاطع)
+    expect(script).toMatch(/ffmpeg -nostdin/)
   })
 })
 
