@@ -45,7 +45,13 @@ export interface NotificationSettings {
   adhkarScreen: boolean
   /** صوت إشعار أذكار الصباح والمساء والنوم: ذكر بتسجيل «حصن المسلم» بدل النغمة */
   adhkarVoice: boolean
+  /** من يقرأ الذكر في إشعار الصباح والمساء: تسجيل حصن المسلم، أو صوت الهاتف العربي، أو تسجيلك */
+  morningVoice?: TimedVoice
+  eveningVoice?: TimedVoice
 }
+
+/** hisn = تسجيل بشري من حصن المسلم، device = نطق الذكر بمحرك الكلام العربي في الهاتف، mine = تسجيل أضافه المستخدم */
+export type TimedVoice = 'hisn' | 'device' | 'mine'
 
 /** طريقة العرض: متتابعة (آية بآية)، صفحات المصحف، أو التركيز (آية واحدة في الشاشة) */
 export type ReaderMode = 'flow' | 'mushaf' | 'focus'
@@ -224,6 +230,10 @@ export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   adhanInApp: true,
   adhkarScreen: true,
   adhkarVoice: true,
+  // الصباح: «أصبحنا وأصبح الملك لله» بتسجيل حصن المسلم. المساء: لا يوجد تسجيل لـ«أمسينا» في حصن المسلم،
+  // فيُنطق بصوت الهاتف العربي (ويعود إلى «بسم الله الذي لا يضر…» البشري إن لم يتوفر صوت عربي)
+  morningVoice: 'hisn',
+  eveningVoice: 'device',
 }
 
 export const DEFAULT_SETTINGS: Settings = {

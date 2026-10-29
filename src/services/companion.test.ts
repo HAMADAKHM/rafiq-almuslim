@@ -285,9 +285,34 @@ describe('قراءة الذكر في الإشعار (حصن المسلم)', () =
     const d = mergeSettings(null).notifications
     const s = withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', eveningAdhkar: '17:00', sleepAdhkar: '22:00' } })
     const list = buildSchedule(s, new Date('2026-10-28T22:00:00Z'), 1)
-    expect(of(list, 'morning')[0].channelId).toBe('rafiq-hisn-86-v1')
+    // الصباح: مقطع «أصبحنا وأصبح الملك لله» من حصن المسلم، والنوم: «باسمك ربي وضعت جنبي»
+    const m = of(list, 'morning')[0], e = of(list, 'evening')[0]
+    expect(m.channelId).toBe('rafiq-hisn-m77-v1')
+    expect(m.title).toBe('حان وقت أذكار الصباح 🌅')
+    expect(m.body).toBe('🔊 «أصبحنا وأصبح الملك لله…» — ابدأ يومك بذكر الله')
+    expect(m.route).toBe('/adhkar-alert/morning')
     expect(of(list, 'sleep')[0].channelId).toBe('rafiq-hisn-102-v1')
+    // المساء دون قناة صوت الهاتف: ذكر الصباح والمساء البشري، لا «أصبحنا»
+    expect(e.channelId).toBe('rafiq-hisn-86-v1')
+    expect(e.title).toBe('حان وقت أذكار المساء 🌇')
+    expect(e.body).not.toMatch(/أصبحنا/)
+    expect(e.route).toBe('/adhkar-alert/evening')
+    // المساء بصوت الهاتف: قناته الخاصة، والنص يطابق ما يُسمع
+    const withVoice = buildSchedule(s, new Date('2026-10-28T22:00:00Z'), 1, { voiceChannels: { evening: 'rafiq-dsound-evening-abc' } })
+    expect(of(withVoice, 'evening')[0].channelId).toBe('rafiq-dsound-evening-abc')
+    expect(of(withVoice, 'evening')[0].body).toBe('🔊 «أمسينا وأمسى الملك لله…» — حان وقت ذكر الله في المساء')
+    expect(of(withVoice, 'morning')[0].channelId).toBe('rafiq-hisn-m77-v1')
     const plain = buildSchedule(withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', adhkarVoice: false } }), new Date('2026-10-28T22:00:00Z'), 1)
     expect(of(plain, 'morning')[0].channelId).toBeUndefined()
+    expect(of(plain, 'morning')[0].body).toBe('ابدأ يومك بذكر الله')
+    // أوقات مستقلة: تغيير المساء لا يمس الصباح
+    const changed = buildSchedule(withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', eveningAdhkar: '18:15' } }), new Date('2026-10-28T22:00:00Z'), 1)
+    expect(of(changed, 'morning')[0].at.getTime()).toBe(m.at.getTime())
+    expect(of(changed, 'evening')[0].at.getTime() - e.at.getTime()).toBe(75 * 60_000)
+  })
+  it('الافتراضي: الصباح بتسجيل حصن المسلم والمساء بصوت الهاتف', () => {
+    const d = mergeSettings(null).notifications
+    expect(d.morningVoice).toBe('hisn')
+    expect(d.eveningVoice).toBe('device')
   })
 })

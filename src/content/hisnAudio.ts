@@ -65,6 +65,16 @@ export const HISN_AUDIO: Record<string, number> = {
   's-tasbih': 106,
 }
 
+/**
+ * مقاطع من التسجيلات لصوت الإشعار (الذكر الطويل يُسمع أوله، ويُكمل داخل التطبيق).
+ * الحدود من نسخ آلي للكلام بطوابع زمنية ومن مواضع السكوت في الملف (net-check ← hisn-77-transcribe):
+ * التسجيل 77 من 0 إلى 17.0 ث: «أصبحنا وأصبح الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك
+ * وله الحمد وهو على كل شيء قدير»، ثم سكوت من 16.83 إلى 18.23 ث. يُقص في البناء (scripts/fetch-hisn-sounds.sh).
+ */
+export const HISN_CLIPS: Record<string, { src: number; from: number; to: number; label: string; text: string; itemId: string }> = {
+  m77: { src: 77, from: 0, to: 17.5, label: 'أذكار الصباح', text: 'أصبحنا وأصبح الملك لله، والحمد لله…', itemId: 'm-asbahna' },
+}
+
 export function hisnAudioUrl(itemId: string): string | null {
   const n = HISN_AUDIO[itemId]
   return n ? `https://www.hisnmuslim.com/audio/ar/${n}.mp3` : null

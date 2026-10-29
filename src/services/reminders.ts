@@ -40,6 +40,8 @@ export interface ScheduleContext {
   position?: QuranPosition | null
   /** الأذكار التي أكملها المستخدم اليوم من التذكير الدوري: لا تُعاد عليه في اليوم نفسه */
   doneToday?: { date: string; ids: string[] } | null
+  /** قنوات صوت الهاتف أو تسجيل المستخدم لإشعار الصباح والمساء (timedVoice.prepareVoiceChannels) */
+  voiceChannels?: Partial<Record<'morning' | 'evening', string>>
 }
 
 /** التذكير الدوري يغطي 48 ساعة فقط ويُعاد عند كل فتح؛ والتذكيرات الأخرى لها الأولوية في حد الإشعارات */
@@ -51,20 +53,9 @@ export const MAX_SCHEDULED = 60
 export const MAX_CUSTOM = 10
 
 const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end'>, { title: string; body: string }[]> = {
-  morning: [
-    { title: 'حان وقت أذكار الصباح', body: 'دقائق قليلة تبدأ بها يومك' },
-    { title: 'أذكار الصباح', body: 'أذكارك بانتظارك في رفيق المسلم' },
-    { title: 'صباح مبارك', body: 'هل قرأت أذكار الصباح اليوم؟' },
-  ],
-  evening: [
-    { title: 'لا تنسَ أذكار المساء', body: 'افتح رفيق المسلم لقراءتها' },
-    { title: 'أذكار المساء', body: 'وقت مناسب لأذكار المساء' },
-    { title: 'مساء مبارك', body: 'أذكار المساء بانتظارك' },
-  ],
-  sleep: [
-    { title: 'أذكار النوم', body: 'قبل أن تنام: أذكار النوم في دقيقتين' },
-    { title: 'قبل النوم', body: 'أذكار النوم بانتظارك' },
-  ],
+  morning: [{ title: 'حان وقت أذكار الصباح 🌅', body: 'ابدأ يومك بذكر الله' }],
+  evening: [{ title: 'حان وقت أذكار المساء 🌇', body: 'حان وقت ذكر الله في المساء' }],
+  sleep: [{ title: 'حان وقت أذكار النوم 🌙', body: 'قبل أن تنام: أذكار النوم في دقيقتين' }],
   ayah: [
     { title: 'آية اليوم', body: 'آية اليوم بانتظارك في رفيق المسلم' },
     { title: 'آية اليوم', body: 'اقرأ آية اليوم وتدبّرها' },
@@ -131,6 +122,13 @@ function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, sl
   return ((day.y % 100) * 10000 + day.m * 100 + day.d) * 1000 + KIND_CODE[kind] * 10 + slot
 }
 
+/** أول ما يُسمع في إشعار الوقت (يطابق الصوت الفعلي: صوت الهاتف أو التسجيل الشخصي يقرأ ذكر الوقت نفسه) */
+export function timedHeard(kind: 'morning' | 'evening' | 'sleep', custom: boolean): string {
+  if (kind === 'morning') return '«أصبحنا وأصبح الملك لله…»'
+  if (kind === 'evening') return custom ? '«أمسينا وأمسى الملك لله…»' : '«بسم الله الذي لا يضر مع اسمه شيء…»'
+  return '«باسمك ربي وضعت جنبي…»'
+}
+
 const ROUTES: Record<ReminderKind, string> = {
   prayer: '/prayer', 'prayer-before': '/prayer', morning: '/adhkar-alert/morning', evening: '/adhkar-alert/evening', sleep: '/adhkar-alert/sleep',
   ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress', custom: '/', ramadan: '/ramadan', fasting: '/calendar',
@@ -174,9 +172,12 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
     for (const [kind, time] of timed) {
       if (!time) continue
       const msg = pick(MESSAGES[kind as keyof typeof MESSAGES], seed)
-      // أذكار الصباح والمساء والنوم: صوت الإشعار ذكرٌ بتسجيل حصن المسلم
-      const sn = n.adhkarVoice !== false && (kind === 'morning' || kind === 'evening' || kind === 'sleep') ? TIMED_ADHKAR_SOUND[kind] : undefined
-      add({ id: makeId(day, kind), at: atLocalTime(day, time, loc.tz), kind, title: msg.title, body: msg.body, route: ROUTES[kind], ...(sn ? { channelId: hisnChannel(sn) } : {}) })
+      // أذكار الصباح والمساء والنوم: صوت الإشعار هو الذكر نفسه (تسجيل حصن المسلم، أو صوت الهاتف، أو تسجيل المستخدم)
+      const voiced = n.adhkarVoice !== false && (kind === 'morning' || kind === 'evening' || kind === 'sleep')
+      const custom = voiced && (kind === 'morning' || kind === 'evening') ? ctx.voiceChannels?.[kind] : undefined
+      const channelId = custom ?? (voiced ? hisnChannel(TIMED_ADHKAR_SOUND[kind as 'morning' | 'evening' | 'sleep']) : undefined)
+      const heard = voiced ? timedHeard(kind as 'morning' | 'evening' | 'sleep', !!custom) : ''
+      add({ id: makeId(day, kind), at: atLocalTime(day, time, loc.tz), kind, title: msg.title, body: heard ? `🔊 ${heard} — ${msg.body}` : msg.body, route: ROUTES[kind], ...(channelId ? { channelId } : {}) })
     }
     if (n.occasions && !n.reduce) {
       // تذكير مساء اليوم السابق بالمناسبة القادمة

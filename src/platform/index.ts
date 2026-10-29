@@ -4,7 +4,8 @@
 // الصفحات لا تعرف على أي منصة تعمل.
 import { Capacitor } from '@capacitor/core'
 import type { Reminder } from '../services/reminders'
-import { HISN_SOUND_PREFIX, SNOOZE_ID_BASE } from '../services/companion'
+import { HISN_SOUND_NAME_RE, HISN_SOUND_PREFIX, SNOOZE_ID_BASE } from '../services/companion'
+import { HISN_CLIPS } from '../content/hisnAudio'
 
 export const isNative = () => Capacitor.isNativePlatform()
 export const platformName = () => Capacitor.getPlatform() as 'web' | 'android' | 'ios'
@@ -105,15 +106,27 @@ export async function replaceScheduledNotifications(list: Reminder[]): Promise<n
   return list.length
 }
 
+/** إشعار تجريبي بعد ثوانٍ على قناة التذكير نفسها (يُسمع صوته الحقيقي والتطبيق في الخلفية) */
+export async function sendTestReminder(r: { title: string; body: string; route: string; channelId?: string }, delayMs = 5000): Promise<boolean> {
+  if (!isNative()) { await showNotification(r.title, r.body, 'test'); return true }
+  const { LocalNotifications } = await import('@capacitor/local-notifications')
+  if (platformName() === 'android' && r.channelId?.startsWith(HISN_SOUND_PREFIX)) await ensureHisnChannels([r.channelId])
+  await LocalNotifications.schedule({
+    notifications: [{ id: 2_145_000_000 + Math.floor(Math.random() * 2_000_000) /* فوق نطاق الجدولة: لا تلغيه إعادة الجدولة */, title: r.title, body: r.body, schedule: { at: new Date(Date.now() + delayMs), allowWhileIdle: true }, extra: { route: r.route }, ...(r.channelId ? { channelId: r.channelId } : {}) }],
+  })
+  return true
+}
+
 const hisnMade = new Set<string>()
 /** قناة لكل ذكر مسموع: صوتها ملف التسجيل في res/raw (يُقرأ الذكر عند وصول الإشعار، ويحترم الصامت وعدم الإزعاج) */
 async function ensureHisnChannels(ids: string[]) {
   const { LocalNotifications } = await import('@capacitor/local-notifications')
   for (const id of new Set(ids)) {
     if (hisnMade.has(id)) continue
-    const n = /rafiq-hisn-(\d+)-/.exec(id)?.[1]
+    const n = HISN_SOUND_NAME_RE.exec(id)?.[1]
     if (!n) continue
-    await LocalNotifications.createChannel({ id, name: `ذكر مسموع (${n}) — حصن المسلم`, description: 'يُقرأ الذكر بتسجيل حصن المسلم عند وصول التذكير', sound: `hisn_${n}.mp3`, importance: 4, visibility: 1, vibration: true }).catch(() => {})
+    const clip = HISN_CLIPS[n]
+    await LocalNotifications.createChannel({ id, name: clip ? `${clip.label} — حصن المسلم` : `ذكر مسموع (${n}) — حصن المسلم`, description: clip ? `يُقرأ «${clip.text}» بتسجيل حصن المسلم عند وصول التذكير` : 'يُقرأ الذكر بتسجيل حصن المسلم عند وصول التذكير', sound: `hisn_${n}.mp3`, importance: 4, visibility: 1, vibration: true }).catch(() => {})
     hisnMade.add(id)
   }
 }

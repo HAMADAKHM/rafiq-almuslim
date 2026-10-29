@@ -14,6 +14,7 @@ public class MainActivity extends BridgeActivity {
         // إضافات محلية: ودجت المواقيت، وصوت الأذان المختار من الجهاز
         registerPlugin(WidgetBridgePlugin.class);
         registerPlugin(AdhanSoundPlugin.class);
+        registerPlugin(DhikrSoundPlugin.class);
         // صوت قراءة المعنى في فيديو «التفسير كالقصة»
         registerPlugin(NarrationPlugin.class);
         // التحكم بشاشة التلفاز عبر الشبكة المنزلية
