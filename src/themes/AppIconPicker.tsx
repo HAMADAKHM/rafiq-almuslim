@@ -5,7 +5,7 @@ import { Check, Lock } from 'lucide-react'
 import { usePlus } from '../billing/PlusContext'
 import { toast } from '../hooks'
 import { appIconSupported, getAppIcon, setAppIcon } from '../platform/appIcon'
-import { APP_ICON_IDS, APP_ICONS, appIconDataUrl, type AppIconId } from './appIconSvg'
+import { APP_ICON_IDS, APP_ICONS, appIconUrl, type AppIconId } from './appIcons'
 
 export function AppIconPicker() {
   const plus = usePlus()
@@ -28,7 +28,7 @@ export function AppIconPicker() {
           const locked = id !== 'default' && !plus.entitled
           return (
             <button key={id} type="button" role="radio" aria-checked={cur === id} disabled={busy} className={'icon-opt' + (cur === id ? ' on' : '')} onClick={() => pick(id)} aria-label={`أيقونة ${APP_ICONS[id].name}`}>
-              <img src={appIconDataUrl(id)} alt="" width={64} height={64} />
+              <img src={appIconUrl(id)} alt="" width={64} height={64} />
               <span>{APP_ICONS[id].name}</span>
               {cur === id ? <i className="icon-state"><Check size={12} /></i> : locked ? <i className="icon-state lock"><Lock size={11} /></i> : null}
             </button>

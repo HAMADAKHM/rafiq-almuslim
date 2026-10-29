@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import { activeSkin, SKINS } from './skins'
-import { APP_ICON_IDS, APP_ICONS, aliasOf, appIconSvg } from './appIconSvg'
+import { APP_ICON_IDS, APP_ICONS, aliasOf } from './appIcons'
 import { IDENTITY_LOOK } from './IdentityScene'
 import { WIDGET_STYLES } from '../features/widgets/WidgetsPage'
 
@@ -51,10 +51,11 @@ describe('أيقونات التطبيق', () => {
     expect(main).not.toContain('category.LAUNCHER')
     expect(readFileSync('android/app/src/main/java/org/rafiqalmuslim/app/AppIconPlugin.java', 'utf8')).toContain(APP_ICON_IDS.map((i) => `"${i}"`).join(', '))
   })
-  it('الأيقونة بلا نصوص ولا شارة، والمعرّفات لا تتعارض', () => {
-    const svg = appIconSvg('royal')
-    expect(svg).not.toMatch(/<text|Plus|بلس/)
-    expect(svg).toContain('ai-royal-e')
+  it('كل أيقونة لها تصميمها المعتمد وصورتها في صفحة الاختيار', () => {
+    for (const id of APP_ICON_IDS) {
+      expect(existsSync(`scripts/brand/icons/${id}.png`), id).toBe(true)
+      expect(existsSync(`public/app-icons/${id}.png`), id).toBe(true)
+    }
   })
 })
 

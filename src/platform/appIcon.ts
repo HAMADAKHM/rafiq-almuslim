@@ -1,7 +1,7 @@
 // أيقونة التطبيق في الشاشة الرئيسية (Android فقط عبر AppIconPlugin). على iOS تحتاج نسخة مبنية على Mac.
 import { registerPlugin } from '@capacitor/core'
 import { platformName } from './index'
-import type { AppIconId } from '../themes/appIconSvg'
+import type { AppIconId } from '../themes/appIcons'
 
 const AppIcon = registerPlugin<{ get(): Promise<{ id: AppIconId }>; set(o: { id: AppIconId }): Promise<{ id: AppIconId }> }>('AppIcon')
 

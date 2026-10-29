@@ -8,7 +8,7 @@ import { t } from '../../i18n/strings'
 import { useSettings } from '../../state/SettingsContext'
 import { usePlus } from '../../billing/PlusContext'
 import { AdSlot } from '../../ads/AdSlot'
-import { appIconDataUrl } from '../../themes/appIconSvg'
+import { appIconUrl } from '../../themes/appIcons'
 import { searchSkeleton } from '../../lib/arabic'
 
 /** ألوان مربعات الأيقونات (على طريقة قوائم تطبيقات الأذكار): لون ثابت لكل قسم */
@@ -48,7 +48,7 @@ export function MorePage() {
         {!q && (
           <>
             <Link to="/about" className="more-app">
-              <img src={appIconDataUrl('default')} alt="" width={52} height={52} />
+              <img src={appIconUrl('default')} alt="" width={52} height={52} />
               <span><strong>رفيق المسلم بلس</strong><small>صدقة جارية — عن التطبيق ومصادره</small></span>
               <ChevronLeft size={18} aria-hidden="true" />
             </Link>
