@@ -31,6 +31,8 @@ const TasbihPage = page(() => import('../features/tasbih/TasbihPage'), 'TasbihPa
 const CalendarPage = page(() => import('../features/calendar/CalendarPage'), 'CalendarPage')
 const RemindersPage = page(() => import('../features/reminders/RemindersPage'), 'RemindersPage')
 const MorePage = page(() => import('../features/more/MorePage'), 'MorePage')
+const LibraryPage = page(() => import('../features/library/LibraryPage'), 'LibraryPage')
+const FavoritesPage = page(() => import('../features/library/LibraryPage'), 'FavoritesPage')
 const MyAdhkarPage = page(() => import('../features/adhkar/MyAdhkarPage'), 'MyAdhkarPage')
 const StudioPage = page(() => import('../features/studio/StudioPage'), 'StudioPage')
 const MosquesPage = page(() => import('../features/mosques/MosquesPage'), 'MosquesPage')
@@ -93,6 +95,8 @@ export function AppRoutes() {
         <Route path="settings" element={<SettingsPage />} />
         <Route path="about" element={<AboutPage />} />
         <Route path="more" element={<MorePage />} />
+        <Route path="library" element={<LibraryPage />} />
+        <Route path="favorites" element={<FavoritesPage />} />
         <Route path="my-adhkar" element={<MyAdhkarPage />} />
         <Route path="studio" element={<StudioPage />} />
         <Route path="mosques" element={<MosquesPage />} />

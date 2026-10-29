@@ -4,7 +4,7 @@ import { DailyCompanionCard } from '../companion/DailyCompanionCard'
 import { Link } from 'react-router-dom'
 import {
   BookOpen, Sparkles, MapPin, CircleCheck, Play, Image, SlidersHorizontal, ArrowUp, ArrowDown, Library,
-  ChevronLeft, Bell, Heart, LayoutGrid, BookMarked, Sun, CloudSun, Sunset, Moon, MoonStar, Sunrise,
+  ChevronLeft, LayoutGrid, BookMarked,
 } from 'lucide-react'
 import { DedicationCard } from '../../components/DedicationCard'
 import { Spinner } from '../../components/Common'
@@ -19,8 +19,6 @@ import { catIcon } from '../adhkar/AdhkarPage'
 import { MAX_DAILY_ADHKAR } from '../../state/settings'
 import { LogoMark } from '../../components/Art'
 import { WeatherChip } from '../weather/WeatherPage'
-import { PaintedScene, type PaintTone } from '../../components/Scene'
-import type { PrayerName } from '../../services/prayer'
 import { nextPrayer, PRAYER_LABELS, PRAYERS, todayTimes } from '../../services/prayer'
 import { dayKey, formatCountdown, formatGregorian, formatHijri, formatTime } from '../../lib/dates'
 import { cityLabel } from '../../services/cities'
@@ -28,26 +26,16 @@ import { adhkarLog, kv, memo } from '../../db/repos'
 import { KhatmaCard, useKhatmas } from '../wird/KhatmaCard'
 import { activePlan, dailyTarget } from '../../services/khatma'
 import { dailySuggestion } from '../../services/dailySuggest'
-import { Lightbulb, Palette } from 'lucide-react'
+import { Lightbulb } from 'lucide-react'
 import { useAllLogs } from '../progress/ProgressPage'
 import { computeStats, dailySeries } from '../../services/stats'
-import { adhkarForNow, ayahOfDay, greeting } from '../../services/daily'
+import { adhkarForNow, ayahOfDay } from '../../services/daily'
 import { loadTasbih, todayTotal } from '../../services/tasbih'
 import { toArabicDigits } from '../../lib/arabic'
 import { player } from '../../services/audio'
 import type { LastRead } from '../quran/QuranIndexPage'
 import type { AdhkarLog, MemoSegment } from '../../db/db'
 
-
-/** لون المشهد بحسب الصلاة القادمة */
-const PRAYER_ICONS: Record<PrayerName, typeof Sun> = { fajr: MoonStar, sunrise: Sunrise, dhuhr: Sun, asr: CloudSun, maghrib: Sunset, isha: Moon }
-
-/** لون اللوحة بحسب الصلاة القادمة */
-function toneFor(p?: PrayerName): PaintTone {
-  if (p === 'fajr' || p === 'sunrise') return 'dawn'
-  if (p === 'isha') return 'night'
-  return 'sunset'
-}
 
 function humanLeft(ms: number): string {
   const m = Math.max(0, Math.round(ms / 60000))
@@ -59,6 +47,34 @@ function humanLeft(ms: number): string {
 
 function localHour(tz?: string, now = new Date()): number {
   return Number(new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hour12: false }).format(now)) % 24
+}
+
+/** رمز المسجد في دائرة بطاقة الصلاة */
+function MosqueGlyph() {
+  return (
+    <svg viewBox="0 0 48 48" width="30" height="30" fill="currentColor">
+      <path d="M24 9 c0 3 -2 4 -2 6 h4 c0 -2 -2 -3 -2 -6Z" />
+      <path d="M13 32 c0 -8 6 -12 11 -15 c5 3 11 7 11 15Z" />
+      <rect x="11" y="31" width="26" height="8" rx="1.5" />
+      <rect x="7" y="20" width="3.5" height="19" rx="1" /><path d="M6.5 20 L8.75 15 L11 20Z" />
+      <rect x="37.5" y="20" width="3.5" height="19" rx="1" /><path d="M37 20 L39.25 15 L41.5 20Z" />
+      <rect x="22" y="33" width="4" height="6" rx="2" fill="var(--dh-badge-bg, #fff)" />
+    </svg>
+  )
+}
+
+/** رسم المسجد الخفيف في رأس الرئيسية (بلون الثيم) */
+function MosqueArt({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 200 120" aria-hidden="true" fill="currentColor">
+      <path d="M70 120 V86 C70 66 86 56 100 48 C114 56 130 66 130 86 V120 Z" />
+      <path d="M99 48 L100 34 L101 48 Z" /><circle cx="100" cy="32" r="2.5" />
+      <rect x="46" y="58" width="9" height="62" rx="2" /><path d="M44 58 L50.5 40 L57 58 Z" />
+      <rect x="145" y="50" width="9" height="70" rx="2" /><path d="M143 50 L149.5 30 L156 50 Z" />
+      <path d="M30 120 V100 C30 92 38 88 44 86 V120 Z M156 86 C162 88 170 92 170 100 V120 H156 Z" opacity="0.8" />
+      <rect x="20" y="112" width="160" height="8" opacity="0.7" />
+    </svg>
+  )
 }
 
 export function HomePage() {
@@ -210,7 +226,7 @@ export function HomePage() {
   }
 
   // «رفيقي اليومي» من مزايا بلس: لا خانة فارغة ولا قفل في الرئيسية دون اشتراك
-  const visible = settings.homeCards.filter((c) => c.visible && (c.id !== 'companion' || plusEntitled))
+  const visible = settings.homeCards.filter((c) => c.visible && c.id !== 'continue' && (c.id !== 'companion' || plusEntitled))
   const move = (i: number, d: -1 | 1) => {
     const list = [...settings.homeCards]
     const j = i + d
@@ -227,58 +243,56 @@ export function HomePage() {
 
   return (
     <div className="home">
-      <header className="home-hero">
-        <PaintedScene tone={toneFor(np?.name)} variant="hero" className="home-hero-art" />
-        <div className="home-hero-row">
-          <Link to="/reminders" className="hero-icon" aria-label="إعدادات التذكير"><Bell size={20} /></Link>
-          <Link to="/plus/themes" className={'hero-icon' + (settings.skin ? '' : ' theme-pulse')} aria-label="الثيمات"><Palette size={20} /></Link>
-          <span className="hero-avatar" aria-hidden="true">{settings.displayName.trim() ? settings.displayName.trim()[0] : <LogoMark size={24} />}</span>
-          <div className="home-hero-text">
-            <div className="hero-greet">{settings.displayName.trim() ? `السلام عليكم، ${settings.displayName.trim()}` : greeting(hour, today)}</div>
-            {settings.displayName.trim() && <div className="hero-sub">{greeting(hour, today)}</div>}
-            <div className="hero-sub">{formatGregorian(now, loc?.tz)}</div>
-            <div className="hero-hijri">{formatHijri(now, loc?.tz, settings.hijriOffset)}</div>
-            <WeatherChip />
-          </div>
-          <Link to="/about" className="hero-icon" aria-label="رسالة الوفاء"><Heart size={20} /></Link>
+      <header className="dh-head">
+        <div className="dh-head-text">
+          <h1 className="dh-greet">السلام عليكم{settings.displayName.trim() && <span className="dh-name">{settings.displayName.trim()}</span>}</h1>
+          <div className="dh-date">{formatHijri(now, loc?.tz, settings.hijriOffset)}</div>
+          <div className="dh-date">{formatGregorian(now, loc?.tz)}</div>
+          <WeatherChip />
         </div>
+        <Link to="/about" className="dh-logo" aria-label="عن رفيق المسلم"><LogoMark size={22} /></Link>
+        <MosqueArt className="dh-art" />
       </header>
 
-      <section className="next-card" aria-label="الصلاة القادمة">
+      <section className="dh-prayer" aria-label="الصلاة القادمة">
         {np && loc && times ? (
           <>
-            <Link to="/prayer" className="next-main">
-              <div className="next-art"><PaintedScene tone={toneFor(np.name)} variant="card" /></div>
-              <div className="next-info" aria-live="polite">
-                <div className="next-label">الصلاة القادمة</div>
-                <div className="next-name">{PRAYER_LABELS[np.name]}</div>
-                <div className="next-time">{formatTime(np.time, loc.tz)}</div>
-                <div className="next-left">باقي على الأذان <b>{humanLeft(np.time.getTime() - now.getTime())}</b></div>
-                <div className="next-count" aria-label="الوقت المتبقي">{formatCountdown(np.time.getTime() - now.getTime())}</div>
-              </div>
+            <Link to="/prayer" className="dh-next">
+              <span className="dh-next-text" aria-live="polite">
+                <span className="dh-next-name">{PRAYER_LABELS[np.name]}</span>
+                <span className="dh-count" aria-label="الوقت المتبقي">{formatCountdown(np.time.getTime() - now.getTime())}</span>
+              </span>
+              <span className="dh-badge" aria-hidden="true"><MosqueGlyph /></span>
             </Link>
-            <Link to="/prayer" className="next-city"><MapPin size={14} /> {cityLabel(loc)}</Link>
-            <div className="prayer-pills">
+            <ul className="dh-times">
               {five.map((p) => (
-                <div key={p} className={'pill' + (np.name === p ? ' active' : '')}>
-                  {(() => { const Icon = PRAYER_ICONS[p]; return <Icon size={17} aria-hidden="true" /> })()}
+                <li key={p} className={np.name === p ? 'active' : undefined}>
                   <span>{PRAYER_LABELS[p]}</span>
                   <b>{formatTime(times[p], loc.tz)}</b>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
+            <Link to="/prayer" className="dh-city"><MapPin size={13} /> {cityLabel(loc)} · باقي {humanLeft(np.time.getTime() - now.getTime())}</Link>
           </>
         ) : (
-          <div className="next-empty">
-            <div className="next-art"><PaintedScene tone="sunset" variant="card" /></div>
-            <div>
-              <strong>مواقيت الصلاة</strong>
-              <p className="small muted" style={{ margin: '0.2rem 0 0.6rem' }}>اختر مدينتك أو استخدم موقعك لعرض المواقيت والعدّ التنازلي.</p>
-              <Link className="btn btn-primary btn-sm" to="/prayer">اختر مدينتك لعرض مواقيت الصلاة</Link>
-            </div>
+          <div className="dh-empty">
+            <span className="dh-badge" aria-hidden="true"><MosqueGlyph /></span>
+            <strong>مواقيت الصلاة</strong>
+            <p className="small">اختر مدينتك أو استخدم موقعك لعرض المواقيت والعدّ التنازلي.</p>
+            <Link className="btn btn-primary btn-sm" to="/prayer">اختر مدينتك لعرض مواقيت الصلاة</Link>
           </div>
         )}
       </section>
+
+      {settings.homeCards.find((c) => c.id === 'continue')?.visible !== false && (
+        <Link to={resumeTo} className="dh-continue" aria-label={last && data ? `متابعة القراءة: سورة ${data.meta.surahs[last.surah - 1].name} الآية ${last.ayah}` : 'ابدأ القراءة من الفاتحة'}>
+          <span className="dh-c-info">
+            <b>{last && data ? `سورة ${data.meta.surahs[last.surah - 1].name}` : 'سورة الفاتحة'}</b>
+            <small>{last ? `آية ${last.ayah}${last.page ? ` · صفحة ${last.page}` : ''}` : 'ابدأ القراءة، ويُحفظ موضعك'}</small>
+          </span>
+          <span className="dh-c-btn">{last ? 'متابعة القراءة' : 'ابدأ القراءة'}</span>
+        </Link>
+      )}
 
       <div className="home-grid">
         {visible.map((c) => <div key={c.id} className={`home-cell home-${c.id}`}>{cards[c.id]}</div>)}

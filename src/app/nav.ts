@@ -1,10 +1,18 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby, LayoutDashboard,
+  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby, LayoutDashboard, Library, Star,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
 export type NavItem = { to: string; key: StringKey; icon: typeof House }
+
+/** ترتيب «المزيد» الأساسي: القبلة، مكتبة المسلم، التسبيح، التقويم، الختمة، المفضلة، التنزيلات، إنجازاتي، الإشعارات، الإعدادات، حول التطبيق */
+export const ESSENTIAL_LABELS: Record<string, string> = {
+  '/qibla': 'القبلة', '/library': 'مكتبة المسلم', '/tasbih': 'التسبيح الإلكتروني', '/calendar': 'التقويم الهجري', '/wird': 'خطط ختم القرآن',
+  '/favorites': 'المفضلة والإشارات المرجعية', '/plus/downloads': 'التنزيلات والمحتوى دون إنترنت', '/progress': 'إنجازاتي وإحصائياتي',
+  '/reminders': 'الإشعارات', '/settings': 'إعدادات التطبيق', '/about': 'حول التطبيق ومصادر المحتوى',
+}
+export const MORE_ESSENTIALS = ['/qibla', '/library', '/tasbih', '/calendar', '/wird', '/favorites', '/plus/downloads', '/progress', '/reminders', '/settings', '/about']
 
 export const NAV: { group: StringKey; items: NavItem[] }[] = [
   { group: 'groupPlus', items: [
@@ -51,6 +59,8 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
     { to: '/kids-adhkar', key: 'kidsAdhkar', icon: Baby },
   ] },
   { group: 'groupMore', items: [
+    { to: '/library', key: 'library', icon: Library },
+    { to: '/favorites', key: 'favorites', icon: Star },
     { to: '/progress', key: 'progress', icon: ChartColumn },
     { to: '/journey', key: 'journey', icon: Route },
     { to: '/assistant', key: 'assistant', icon: MessageCircleQuestion },
@@ -65,7 +75,7 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
 export const TABS: (NavItem & { short: string; match: RegExp })[] = [
   { to: '/', key: 'home', icon: House, short: 'الرئيسية', match: /^\/$/ },
   { to: '/quran', key: 'quran', icon: BookOpen, short: 'القرآن', match: /^\/(quran|mushaf|memorize|listen|learn|stories|studio)/ },
-  { to: '/prayer', key: 'prayer', icon: Clock, short: 'المواقيت', match: /^\/(prayer|qibla|calendar|mosques|date-tools)/ },
+  { to: '/prayer', key: 'prayer', icon: Clock, short: 'الصلاة', match: /^\/(prayer|qibla|calendar|mosques|date-tools)/ },
   { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|hadith|tasbih|my-adhkar|for-the-deceased|kids-adhkar|beloved|booklet)/ },
   { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|assistant|search|reminders|settings|plus|weather|ramadan|about|terms|widgets)/ },
 ]

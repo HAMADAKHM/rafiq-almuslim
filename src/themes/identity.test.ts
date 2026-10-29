@@ -11,8 +11,9 @@ const css = readFileSync('src/styles/skins.css', 'utf8')
 const manifest = readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8')
 
 describe('ثيمات الهوية', () => {
-  it('ثيم مجاني وثمانية لبلس، ولكل منها ألوان كاملة في الأنماط وخلفية مرسومة', () => {
-    expect(ident.length).toBe(9)
+  it('التصاميم التسعة بالترتيب المعتمد (الكلاسيكي مجاني)، ولكل ثيم ألوان كاملة في الأنماط وخلفية مرسومة', () => {
+    expect(ident.length).toBe(12)
+    expect(ident.slice(0, 9).map((s) => s.name)).toEqual(['الكلاسيكي الراقي', 'الليلي الفاخر', 'الهادئ الطبيعي', 'العصري المشرق', 'الإسلامي الفخم', 'الغروب الهادئ', 'المينيمالي الحديث', 'الألوان المتدرجة', 'الذهبي الفاخر'])
     expect(ident.filter((s) => s.free).map((s) => s.id)).toEqual(['t-classic'])
     for (const s of ident) {
       const rule = new RegExp(`:root\\[data-skin='${s.id}'\\] \\{([^}]*)\\}`).exec(css)?.[1] ?? ''
@@ -49,7 +50,11 @@ describe('أيقونات التطبيق', () => {
     expect((manifest.match(/android:enabled="true"/g) ?? []).length).toBe(1)
     const main = /<activity[\s\S]*?android:name="\.MainActivity"[\s\S]*?<\/activity>/.exec(manifest)![0]
     expect(main).not.toContain('category.LAUNCHER')
-    expect(readFileSync('android/app/src/main/java/org/rafiqalmuslim/app/AppIconPlugin.java', 'utf8')).toContain(APP_ICON_IDS.map((i) => `"${i}"`).join(', '))
+    const plugin = readFileSync('android/app/src/main/java/org/rafiqalmuslim/app/AppIconPlugin.java', 'utf8')
+    expect(plugin).toContain(APP_ICON_IDS.map((i) => `"${i}"`).join(', '))
+    // اسم المكوّن من حزمة الكود (org.rafiqalmuslim.app) لا من معرّف التطبيق (org.rafiqalmuslim.plus): وإلا فشل التبديل
+    expect(plugin).toContain('AppIconPlugin.class.getPackage().getName()')
+    expect(plugin).not.toMatch(/getPackageName\(\) \+ "\."/)
   })
   it('كل أيقونة لها تصميمها المعتمد وصورتها في صفحة الاختيار', () => {
     for (const id of APP_ICON_IDS) {

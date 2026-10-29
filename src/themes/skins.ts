@@ -3,7 +3,7 @@
 
 import type { SceneId } from '../tv/scenes'
 
-export type IdentityId = 't-classic' | 't-royal' | 't-night' | 't-turquoise' | 't-dawn' | 't-nature' | 't-violet' | 't-rose' | 't-evening'
+export type IdentityId = 't-classic' | 't-night' | 't-nature' | 't-turquoise' | 't-heritage' | 't-violet' | 't-minimal' | 't-gradient' | 't-royal' | 't-dawn' | 't-rose' | 't-evening'
 export type SkinId = IdentityId | 'qadr' | 'andalus' | 'desert' | 'ocean' | 'garden' | 'ramadan' | 'aurora' | 'royal'
   | 'live-night' | 'live-galaxy' | 'live-aurora' | 'live-ocean' | 'live-rain' | 'live-forest' | 'live-geometry' | 'live-desert'
 
@@ -29,13 +29,18 @@ export interface Skin {
 
 export const SKINS: Skin[] = [
   // ---------- ثيمات الهوية: هوية بصرية كاملة لكل الصفحات، ولكل منها أيقونة تطبيق مطابقة ----------
-  { id: 't-classic', name: 'الإسلامي الكلاسيكي', tagline: 'أخضر زمردي وعاجي ولمسات ذهبية خفيفة', mode: 'light', free: true, bar: '#0b4a3e', identity: true, swatch: ['#f7f3ea', '#fffdf7', '#0b5e4a', '#1f2a26'] },
-  { id: 't-royal', name: 'الملكي', tagline: 'كحلي داكن وذهب معدني — فخامة بأناقة', mode: 'dark', free: false, bar: '#0a1430', identity: true, swatch: ['#0b1530', '#16285a', '#d9b45a', '#f4ecd8'] },
-  { id: 't-night', name: 'الليلي', tagline: 'هلال مضيء وتدرجات زرقاء هادئة — هدوء وطمأنينة', mode: 'dark', free: false, bar: '#071026', identity: true, swatch: ['#071026', '#13285a', '#8cc4ff', '#eaf1ff'] },
-  { id: 't-turquoise', name: 'الفيروزي', tagline: 'فيروز وسماوي ونقوش إسلامية — نقاء وروحانية', mode: 'light', free: false, bar: '#0b5f63', identity: true, swatch: ['#eaf7f6', '#ffffff', '#0f8c88', '#10322f'] },
-  { id: 't-dawn', name: 'الفجر', tagline: 'ضوء الشروق الدافئ — بداية مليئة بالأمل', mode: 'light', free: false, bar: '#7a3b2a', identity: true, swatch: ['#fff3e6', '#fffcf6', '#c8641e', '#3a2516'] },
-  { id: 't-nature', name: 'الطبيعي', tagline: 'أخضر نباتي وعاجي وأوراق هادئة — قرب من الطبيعة', mode: 'light', free: false, bar: '#2f5a2c', identity: true, swatch: ['#f1f5e8', '#fffffa', '#3d7a3a', '#1f2d1c'] },
-  { id: 't-violet', name: 'البنفسجي', tagline: 'بنفسجي عميق ولمسات فضية ونجوم دقيقة — سكينة', mode: 'dark', free: false, bar: '#1b0f38', identity: true, swatch: ['#150c2a', '#3a2272', '#c9b6ff', '#f3eeff'] },
+  // التصاميم التسعة المعتمدة (بالترتيب والأسماء كما في لوحة التصاميم)
+  { id: 't-classic', name: 'الكلاسيكي الراقي', tagline: 'ببساطة .. نقترب من الله', mode: 'light', free: true, bar: '#174B3C', identity: true, swatch: ['#f7f4ea', '#ffffff', '#174b3c', '#202b27'] },
+  { id: 't-night', name: 'الليلي الفاخر', tagline: 'صفاء القلب .. وراحة العين', mode: 'dark', free: false, bar: '#0a1730', identity: true, swatch: ['#0a1730', '#12234a', '#e0bd6e', '#f2ecdd'] },
+  { id: 't-nature', name: 'الهادئ الطبيعي', tagline: 'راحة بصرية .. لحياة أجمل', mode: 'light', free: false, bar: '#1f6a4f', identity: true, swatch: ['#f6efe3', '#fffdf8', '#1f6a4f', '#2b2a22'] },
+  { id: 't-turquoise', name: 'العصري المشرق', tagline: 'تكنولوجيا لخدمة إيمانك', mode: 'light', free: false, bar: '#0f6e70', identity: true, swatch: ['#e6f5f6', '#ffffff', '#138a8c', '#12302f'] },
+  { id: 't-heritage', name: 'الإسلامي الفخم', tagline: 'تراث عريق .. بتقنية حديثة', mode: 'dark', free: false, bar: '#06231c', identity: true, swatch: ['#082a22', '#0f3a2e', '#d9b46a', '#f3ead2'] },
+  { id: 't-violet', name: 'الغروب الهادئ', tagline: 'مع كل فجر .. بداية جديدة', mode: 'dark', free: false, bar: '#2b1f4f', identity: true, swatch: ['#241a45', '#3a2b66', '#c7a8f0', '#f6effa'] },
+  { id: 't-minimal', name: 'المينيمالي الحديث', tagline: 'كل ما تحتاجه .. في مكان واحد', mode: 'light', free: false, bar: '#141414', identity: true, swatch: ['#f7f7f5', '#ffffff', '#1f6a55', '#161a18'] },
+  { id: 't-gradient', name: 'الألوان المتدرجة', tagline: 'حياة مليئة بالإيمان', mode: 'light', free: false, bar: '#1b9aa8', identity: true, swatch: ['#eef7fb', '#ffffff', '#4f5bb5', '#1c2a3a'] },
+  { id: 't-royal', name: 'الذهبي الفاخر', tagline: 'إيمانك .. أسلوب حياة', mode: 'dark', free: false, bar: '#0c0a07', identity: true, swatch: ['#0c0a07', '#1a160f', '#d4a84f', '#f3e7cc'] },
+  // ثيمات أيقونات الشروق والوردي والمساء
+  { id: 't-dawn', name: 'الشروق', tagline: 'ضوء الشروق الدافئ — بداية مليئة بالأمل', mode: 'light', free: false, bar: '#7a3b2a', identity: true, swatch: ['#fff3e6', '#fffcf6', '#c8641e', '#3a2516'] },
   { id: 't-rose', name: 'الوردي', tagline: 'وردي هادئ وذهبي وردي — دفء وجمال', mode: 'light', free: false, bar: '#7a3549', identity: true, swatch: ['#fbeff1', '#fffcfd', '#b4536e', '#3a1f27'] },
   { id: 't-evening', name: 'المساء', tagline: 'أزرق داكن وإضاءة الفوانيس — هدوء الليل', mode: 'dark', free: false, bar: '#0a1424', identity: true, swatch: ['#0a1424', '#1b2f4c', '#f0b45a', '#f4eedd'] },
   { id: 'qadr', name: 'ليلة القدر', tagline: 'سماء مرصّعة بالنجوم وهلال وقباب تتلألأ نوافذها', mode: 'dark', free: true, bar: '#070d22' },

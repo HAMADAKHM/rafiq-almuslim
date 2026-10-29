@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { Download, Upload, Trash2, Bell, MapPin, Clock, Palette, Database, ShieldCheck, BookOpen, Info, ChevronLeft, Moon, Sun, LayoutDashboard } from 'lucide-react'
+import { Download, Upload, Trash2, Bell, MapPin, Clock, Palette, Database, ShieldCheck, BookOpen, Info, ChevronLeft, Moon, Sun, LayoutDashboard, Smartphone } from 'lucide-react'
 import { PaintedScene } from '../../components/Scene'
 import { PageHead } from '../../components/Common'
 import { CityPicker } from '../../components/CityPicker'
@@ -19,6 +19,16 @@ import { AdSlot } from '../../ads/AdSlot'
 import { showAdPrivacyOptions } from '../../ads/admob'
 import { Capacitor } from '@capacitor/core'
 const isNativePlatform = () => Capacitor.isNativePlatform()
+
+/** فهرس الإعدادات بمجموعات: المظهر، الصلاة، القرآن، الأذكار، الخصوصية، عام */
+const SETTINGS_GROUPS: { title: string; rows: (readonly [string, string, typeof Bell, string])[] }[] = [
+  { title: 'المظهر', rows: [['#appearance', 'الوضع الفاتح والداكن وحجم الخط', Palette, '#6366f1'], ['/plus/themes', 'الثيمات والمظهر', Palette, '#8b5cf6'], ['/plus/themes#icon-h', 'أيقونة التطبيق', Smartphone, '#ec4899'], ['/widgets', 'الودجتات وتصميمها', LayoutDashboard, '#14a3b8'], ['#tabs', 'الشريط السفلي', LayoutDashboard, '#22a861']] },
+  { title: 'الصلاة', rows: [['#location', 'المدينة أو الموقع', MapPin, '#ef5350'], ['#prayer', 'طريقة الحساب وتعديل التوقيت', Clock, '#3b82f6'], ['#notifications', 'تنبيهات الصلاة والأذان', Bell, '#f59e0b']] },
+  { title: 'القرآن', rows: [['#appearance', 'القراءة والتلاوة والتفسير', BookOpen, '#22a861'], ['/plus/downloads', 'التنزيلات دون إنترنت', Download, '#0ea5a4'], ['/wird', 'خطة الختمة', BookOpen, '#f97316']] },
+  { title: 'الأذكار', rows: [['/reminders', 'تذكيرات الأذكار والأصوات', Bell, '#f59e0b'], ['/adhkar', 'عرض الأذكار والاهتزاز (من شاشة الذكر)', BookOpen, '#8b5cf6']] },
+  { title: 'الخصوصية', rows: [['#privacy', 'الأذونات وسياسة الخصوصية', ShieldCheck, '#64748b'], ['#data', 'البيانات المحفوظة وحذفها', Database, '#ef5350']] },
+  { title: 'عام', rows: [['#appearance', 'اللغة', Info, '#3b82f6'], ['#sources', 'مصادر المحتوى', BookOpen, '#22a861'], ['/about', 'حول التطبيق ورسالة الوفاء', Info, '#174B3C']] },
+]
 
 export function SettingsPage() {
   const { settings, update } = useSettings()
@@ -60,17 +70,20 @@ export function SettingsPage() {
   return (
     <>
       <PageHead title="الإعدادات" subtitle="خصّص التطبيق كما تحب" />
-      <ul className="settings-index" aria-label="أقسام الإعدادات">
-        {([['#location', 'المدينة والموقع', MapPin], ['#prayer', 'حساب مواقيت الصلاة', Clock], ['#notifications', 'التنبيهات والأذان', Bell], ['#appearance', 'القراءة والمظهر', Palette], ['#privacy', 'الخصوصية ومتابعة الرحلة', ShieldCheck], ['#data', 'النسخ الاحتياطي والبيانات', Database], ['#sources', 'مصادر المحتوى', BookOpen]] as const).map(([href, label, Icon]) => (
-          <li key={href}><a href={href} onClick={(e) => { e.preventDefault(); document.querySelector(href)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}><span className="si-icon"><Icon size={18} /></span>{label}<span className="si-end"><ChevronLeft size={18} /></span></a></li>
+      <div className="settings-groups">
+        {SETTINGS_GROUPS.map((g) => (
+          <section key={g.title}>
+            <h2 className="more-group-title">{g.title}</h2>
+            <ul className="settings-index">
+              {g.rows.map(([to, label, Icon, color]) => (
+                <li key={to + label}>{to.startsWith('#')
+                  ? <a href={to} onClick={(e) => { e.preventDefault(); document.querySelector(to)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}><span className="si-icon" style={{ background: color, color: '#fff' }}><Icon size={18} /></span>{label}<span className="si-end"><ChevronLeft size={18} /></span></a>
+                  : <Link to={to}><span className="si-icon" style={{ background: color, color: '#fff' }}><Icon size={18} /></span>{label}<span className="si-end"><ChevronLeft size={18} /></span></Link>}</li>
+              ))}
+            </ul>
+          </section>
         ))}
-        {([['/plus/themes', 'الثيمات والمظهر والأيقونة', Palette, '#8b5cf6'], ['/widgets', 'الودجتات وتصميمها', LayoutDashboard, '#14a3b8'], ['/reminders', 'التذكيرات والأصوات', Bell, '#f59e0b'], ['#tabs', 'الشريط السفلي', LayoutDashboard, '#22a861']] as const).map(([to, label, Icon, color]) => (
-          <li key={to}>{to.startsWith('#')
-            ? <a href={to} onClick={(e) => { e.preventDefault(); document.querySelector(to)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}><span className="si-icon" style={{ background: color, color: '#fff' }}><Icon size={18} /></span>{label}<span className="si-end"><ChevronLeft size={18} /></span></a>
-            : <Link to={to}><span className="si-icon" style={{ background: color, color: '#fff' }}><Icon size={18} /></span>{label}<span className="si-end"><ChevronLeft size={18} /></span></Link>}</li>
-        ))}
-        <li><Link to="/about"><span className="si-icon"><Info size={18} /></span>حول التطبيق ورسالة الوفاء<span className="si-end"><ChevronLeft size={18} /></span></Link></li>
-      </ul>
+      </div>
       <div className="night-card" style={{ marginBottom: '1rem' }}>
         <PaintedScene tone="night" variant="hero" />
         <div className="row" style={{ justifyContent: 'space-between', width: '100%' }}>

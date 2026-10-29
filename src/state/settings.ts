@@ -200,7 +200,7 @@ export interface CustomReminder {
 
 export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques', '/hadith', '/assistant']
 // القبلة والمسبحة والختمة أولًا (للمستخدمين الجدد؛ اختيارات المستخدمين الحاليين تبقى كما هي)
-export const DEFAULT_QUICK_LINKS = ['/qibla', '/tasbih', '/wird', '/calendar']
+export const DEFAULT_QUICK_LINKS = ['/qibla', '/tasbih', '/duas', '/wird']
 export const MAX_QUICK_LINKS = 8
 export const DEFAULT_DAILY_ADHKAR = ['morning', 'evening', 'after-prayer', 'sleep']
 export const MAX_DAILY_ADHKAR = 6
@@ -222,7 +222,7 @@ export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
 export const LOCKED_HOME_CARDS: HomeCardId[] = ['dedication']
 
 // الترتيب الافتراضي على هيئة التصميم المعتمد: آية اليوم، ثم الورد والأذكار جنبًا إلى جنب (كل البطاقات ظاهرة)
-export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['companion', 'ayah', 'khatma', 'adhkar', 'continue', 'suggest', 'summary', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
+export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['continue', 'khatma', 'adhkar', 'quick', 'ayah', 'suggest', 'companion', 'summary', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
 
 export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   enabled: false,

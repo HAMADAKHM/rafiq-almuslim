@@ -3,16 +3,21 @@
 // الحركة خفيفة واختيارية (تتوقف مع «مشهد ثابت» أو «تقليل الحركة»)، ولا تمس وضوح النص.
 import type { IdentityId } from './skins'
 
-interface Look { sky: [string, string, string]; line: string; lineOpacity: number; silhouette: string; silOpacity: number; accent: string; motif: 'arch' | 'stars' | 'geometry' | 'sun' | 'leaves' | 'violet' | 'flowers' | 'lanterns'; glow?: string }
+type Motif = 'arch' | 'stars' | 'geometry' | 'sun' | 'leaves' | 'violet' | 'flowers' | 'lanterns' | 'branch' | 'skyline' | 'sunleaf' | 'clouds' | 'heritage' | 'sunset' | 'none' | 'landscape' | 'bokeh'
+interface Look { sky: [string, string, string]; line: string; lineOpacity: number; silhouette: string; silOpacity: number; accent: string; motif: Motif; glow?: string }
 
+// خلفيات التصاميم التسعة المعتمدة (ثم ثيمات الشروق والوردي والمساء)
 export const IDENTITY_LOOK: Record<IdentityId, Look> = {
-  't-classic': { sky: ['#fbf8f0', '#f4eddc', '#ece1c8'], line: '#b8902f', lineOpacity: 0.16, silhouette: '#0b5e4a', silOpacity: 0.1, accent: '#b8902f', motif: 'arch' },
-  't-royal': { sky: ['#16285a', '#0d1a3c', '#060c20'], line: '#d9b45a', lineOpacity: 0.2, silhouette: '#d9b45a', silOpacity: 0.16, accent: '#e8c877', motif: 'geometry', glow: '#d9b45a' },
-  't-night': { sky: ['#13285a', '#0a1838', '#040a1c'], line: '#8cc4ff', lineOpacity: 0.07, silhouette: '#020611', silOpacity: 0.85, accent: '#f3dc9a', motif: 'stars', glow: '#aed6ff' },
-  't-turquoise': { sky: ['#f2fbfa', '#ddf3f0', '#c6e9e5'], line: '#0f8c88', lineOpacity: 0.16, silhouette: '#0a5f5c', silOpacity: 0.12, accent: '#b98b2e', motif: 'geometry' },
+  't-classic': { sky: ['#fbf9f2', '#f7f4ea', '#efe9d8'], line: '#c6a66b', lineOpacity: 0.07, silhouette: '#3f7d63', silOpacity: 0.16, accent: '#5f8f4a', motif: 'branch' },
+  't-night': { sky: ['#0d1d3d', '#0a1730', '#081226'], line: '#e0bd6e', lineOpacity: 0.04, silhouette: '#050c1c', silOpacity: 0.95, accent: '#f3d58c', motif: 'skyline', glow: '#ffb45a' },
+  't-nature': { sky: ['#fbf4e8', '#f6efe3', '#efe4d2'], line: '#b08b67', lineOpacity: 0.05, silhouette: '#7d8f62', silOpacity: 0.14, accent: '#4f7a3a', motif: 'sunleaf', glow: '#fff4d8' },
+  't-turquoise': { sky: ['#cfeef3', '#e6f5f6', '#f4fbfb'], line: '#138a8c', lineOpacity: 0.05, silhouette: '#5fb3b5', silOpacity: 0.22, accent: '#ffffff', motif: 'clouds' },
+  't-heritage': { sky: ['#0b3328', '#082a22', '#061f19'], line: '#d9b46a', lineOpacity: 0.16, silhouette: '#d9b46a', silOpacity: 0.08, accent: '#f3c46a', motif: 'heritage', glow: '#ffc35a' },
+  't-violet': { sky: ['#2b1f4f', '#5a4080', '#c58a8f'], line: '#f6dcbf', lineOpacity: 0.03, silhouette: '#1c1338', silOpacity: 0.9, accent: '#ffd9a8', motif: 'sunset', glow: '#ffd2a0' },
+  't-minimal': { sky: ['#f9f9f7', '#f7f7f5', '#f2f2ef'], line: '#1f6a55', lineOpacity: 0, silhouette: '#1f6a55', silOpacity: 0, accent: '#1f6a55', motif: 'none' },
+  't-gradient': { sky: ['#8fd6ea', '#fde9ef', '#fff4d6'], line: '#4f5bb5', lineOpacity: 0, silhouette: '#2f9aa8', silOpacity: 0.55, accent: '#5aa34a', motif: 'landscape', glow: '#fff6d0' },
+  't-royal': { sky: ['#1c140b', '#110d08', '#0a0806'], line: '#d4a84f', lineOpacity: 0.05, silhouette: '#000000', silOpacity: 0.7, accent: '#e2bd6c', motif: 'bokeh', glow: '#ffb84d' },
   't-dawn': { sky: ['#ffd9a8', '#ffb27a', '#f7e3c7'], line: '#c8641e', lineOpacity: 0.08, silhouette: '#5a2e1e', silOpacity: 0.32, accent: '#fff2c4', motif: 'sun', glow: '#fff0b8' },
-  't-nature': { sky: ['#f6f9ee', '#e8f0da', '#d7e5c2'], line: '#3d7a3a', lineOpacity: 0.1, silhouette: '#2f5a2c', silOpacity: 0.12, accent: '#4b9147', motif: 'leaves' },
-  't-violet': { sky: ['#3a2272', '#21134a', '#0f0824'], line: '#c9b6ff', lineOpacity: 0.09, silhouette: '#0b0620', silOpacity: 0.8, accent: '#e7e9f2', motif: 'violet', glow: '#dccfff' },
   't-rose': { sky: ['#fff6f7', '#f9e3e8', '#f1d1d9'], line: '#b98a5e', lineOpacity: 0.18, silhouette: '#a8546d', silOpacity: 0.1, accent: '#c96582', motif: 'flowers' },
   't-evening': { sky: ['#1b2f4c', '#0f1d34', '#060c18'], line: '#f0b45a', lineOpacity: 0.07, silhouette: '#03070f', silOpacity: 0.88, accent: '#f6c77e', motif: 'lanterns', glow: '#ffcf7a' },
 }
@@ -48,6 +53,8 @@ export function IdentityScene({ id }: { id: IdentityId }) {
             <path d={STAR8} fill="none" stroke={L.line} strokeWidth="0.9" />
             <path d="M0 0 L56 64 M56 0 L0 64" stroke={L.line} strokeWidth="0.4" opacity="0.6" />
           </pattern>
+          <linearGradient id={`${g}-horizon`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={L.glow ?? '#000'} stopOpacity="0" /><stop offset="0.6" stopColor={L.glow ?? '#000'} stopOpacity="0.35" /><stop offset="1" stopColor={L.glow ?? '#000'} stopOpacity="0" /></linearGradient>
+          <filter id={`${g}-blur`}><feGaussianBlur stdDeviation="6" /></filter>
           {L.glow && <radialGradient id={`${g}-glow`}><stop offset="0" stopColor={L.glow} stopOpacity="0.55" /><stop offset="1" stopColor={L.glow} stopOpacity="0" /></radialGradient>}
         </defs>
         <rect width="400" height="860" fill={`url(#${g}-sky)`} />
@@ -104,6 +111,74 @@ export function IdentityScene({ id }: { id: IdentityId }) {
         )}
         {L.motif === 'arch' && (
           <path d="M60 860 L60 330 Q60 170 200 120 Q340 170 340 330 L340 860" fill="none" stroke={L.accent} strokeWidth="2" opacity="0.22" />
+        )}
+        {L.motif === 'branch' && (
+          <g>
+            <path d="M400 0 C360 40 330 70 300 130" stroke="#6d8f52" strokeWidth="2.2" fill="none" opacity="0.55" />
+            {[[392, 14, 200], [372, 40, 150], [356, 60, 215], [340, 86, 160], [326, 104, 230], [312, 124, 170], [384, 30, 250], [350, 74, 120]].map(([x, y, r], i) => (
+              <path key={i} className="sk-leaf-sway" transform={`translate(${x} ${y}) rotate(${r})`} d="M0 0 C10 -14 32 -14 42 0 C32 14 10 14 0 0 Z" fill={i % 2 ? '#7da35a' : '#5f8f4a'} opacity="0.4" style={{ animationDelay: `${i * 0.6}s` }} />
+            ))}
+          </g>
+        )}
+        {L.motif === 'skyline' && (
+          <g>
+            <g className="sk-stars" fill="#fff">{Array.from({ length: 50 }, (_, i) => <circle key={i} cx={(i * 89) % 400} cy={(i * 47) % 420} r={i % 6 === 0 ? 1.5 : 0.8} style={{ animationDelay: `${(i % 9) * 0.6}s` }} />)}</g>
+            <g className="sk-moon"><circle cx="120" cy="128" r="56" fill={`url(#${g}-glow)`} opacity="0.5" /><path d="M120 100 a30 30 0 1 0 24 49 a24 24 0 1 1 -24 -49 Z" fill={L.accent} /></g>
+            <rect x="0" y="640" width="400" height="220" fill={`url(#${g}-horizon)`} />
+            <g fill="#ffcf7a" opacity="0.8">{[[112, 760], [150, 748], [208, 742], [246, 756], [338, 770], [60, 790]].map(([x, y], i) => <rect key={i} x={x} y={y} width="4" height="7" rx="1" />)}</g>
+          </g>
+        )}
+        {L.motif === 'sunleaf' && (
+          <g>
+            <circle cx="60" cy="120" r="200" fill={`url(#${g}-glow)`} opacity="0.9" />
+            <g fill="#4f6a3a" opacity="0.16" filter={`url(#${g}-blur)`}>
+              {[[330, 40, 30], [360, 90, 70], [300, 110, -20], [380, 160, 110], [340, 190, 40], [280, 60, 150]].map(([x, y, r], i) => <path key={i} transform={`translate(${x} ${y}) rotate(${r}) scale(1.5)`} d="M0 0 C14 -20 44 -20 58 0 C44 20 14 20 0 0 Z" />)}
+            </g>
+          </g>
+        )}
+        {L.motif === 'clouds' && (
+          <g fill="#ffffff" opacity="0.85">
+            {[[60, 90, 1], [300, 60, 1.3], [210, 180, 0.8], [40, 300, 0.9], [330, 330, 1.1]].map(([x, y, k], i) => (
+              <g key={i} className="sk-cloud" transform={`translate(${x} ${y}) scale(${k})`} style={{ animationDelay: `${i * 2}s` }}><ellipse cx="0" cy="0" rx="44" ry="14" /><ellipse cx="-16" cy="-8" rx="20" ry="14" /><ellipse cx="14" cy="-12" rx="24" ry="17" /></g>
+            ))}
+          </g>
+        )}
+        {L.motif === 'heritage' && (
+          <g>
+            <g opacity="0.5"><circle cx="150" cy="150" r="100" fill={`url(#${g}-glow)`} className="sk-pulse" /></g>
+            <g className="sk-lantern" style={{ transformOrigin: '150px 0px' }}>
+              <line x1="150" y1="0" x2="150" y2="96" stroke="#d9b46a" strokeWidth="1.4" />
+              <path d="M138 96 H162 L166 108 H134 Z" fill="#b4904a" />
+              <path d="M132 108 H168 L172 150 L160 178 H140 L128 150 Z" fill="#ffd27a" opacity="0.9" stroke="#b4904a" strokeWidth="2" />
+              <path d="M150 112 V174 M136 140 H164" stroke="#b4904a" strokeWidth="1.5" />
+              <path d="M140 178 H160 L154 188 H146 Z" fill="#b4904a" />
+            </g>
+          </g>
+        )}
+        {L.motif === 'sunset' && (
+          <g>
+            <circle cx="320" cy="430" r="120" fill={`url(#${g}-glow)`} opacity="0.75" />
+            <circle cx="320" cy="430" r="26" fill="#ffe2b8" opacity="0.95" />
+            <path d="M110 104 a26 26 0 1 0 19 42 a21 21 0 1 1 -19 -42 Z" fill="#f6dcbf" opacity="0.8" />
+            <path d="M0 520 L70 440 L130 490 L210 410 L290 480 L350 440 L400 470 L400 860 L0 860 Z" fill="#5a3f78" opacity="0.75" />
+            <path d="M0 590 L90 530 L170 570 L250 520 L330 565 L400 540 L400 860 L0 860 Z" fill="#3f2b5e" opacity="0.85" />
+            <g fill="#ffcf9a" opacity="0.65">{Array.from({ length: 24 }, (_, i) => <circle key={i} cx={(i * 53) % 400} cy={700 + ((i * 37) % 120)} r="1.6" />)}</g>
+          </g>
+        )}
+        {L.motif === 'landscape' && (
+          <g>
+            <circle cx="320" cy="160" r="120" fill={`url(#${g}-glow)`} opacity="0.8" />
+            <g fill="#ffffff" opacity="0.9">{[[80, 110, 1], [280, 70, 1.2], [200, 220, 0.7]].map(([x, y, k], i) => <g key={i} className="sk-cloud" transform={`translate(${x} ${y}) scale(${k})`}><ellipse rx="40" ry="13" /><ellipse cx="-14" cy="-8" rx="18" ry="12" /><ellipse cx="12" cy="-11" rx="22" ry="15" /></g>)}</g>
+            <path d="M0 700 Q100 640 200 680 T400 660 L400 860 L0 860 Z" fill="#8cc56a" opacity="0.85" />
+            <path d="M0 760 Q120 710 240 750 T400 730 L400 860 L0 860 Z" fill="#5aa34a" />
+            {[[30, 690], [370, 670], [345, 690]].map(([x, y], i) => <g key={i}><rect x={x - 2} y={y - 10} width="4" height="24" fill="#6b4a2a" /><circle cx={x} cy={y - 18} r="18" fill="#4f9a3e" /></g>)}
+          </g>
+        )}
+        {L.motif === 'bokeh' && (
+          <g>
+            {[[40, 260, 26, 0.1], [370, 300, 22, 0.12], [320, 470, 36, 0.07], [70, 480, 22, 0.09], [360, 620, 30, 0.08], [30, 640, 16, 0.12]].map(([x, y, r, o], i) => <g key={i} opacity={o}><circle cx={x} cy={y} r={r} fill="#ffb84d" className="sk-pulse" style={{ animationDelay: `${i * 0.7}s` }} /></g>)}
+            <circle cx="70" cy="700" r="130" fill={`url(#${g}-glow)`} opacity="0.5" />
+          </g>
         )}
         <Silhouette color={L.silhouette} opacity={L.silOpacity} />
       </svg>

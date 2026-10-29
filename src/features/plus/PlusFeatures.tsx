@@ -36,7 +36,7 @@ export function PlusThemesPage() {
     const locked = !s.free && !plus.entitled
     const on = current?.id === s.id
     return (
-      <button key={s.id} type="button" className={'skin-card' + (previewing === s.id ? ' previewing' : '')} aria-pressed={on} aria-label={`معاينة ثيم ${s.name}`}
+      <button key={s.id} type="button" className={'skin-card' + (previewing === s.id ? ' previewing' : '')} aria-pressed={on} data-skin-id={s.id} aria-label={`معاينة ثيم ${s.name}`}
         onClick={() => setThemePreview(s.id)} onMouseEnter={() => setHover(s.id)} onFocus={() => setHover(s.id)}>
         {!s.free ? <span className="skin-badge">{locked ? <Lock size={11} /> : <Crown size={11} />} بلس</span> : <span className="skin-badge free">مجاني</span>}
         {s.live && <span className="skin-badge live">● حيّ</span>}
@@ -61,9 +61,11 @@ export function PlusThemesPage() {
         {current && <button className="btn btn-sm" onClick={reset}><RotateCcw size={14} /> الأصلي</button>}
       </section>
       <section className="card" aria-labelledby="ident-h">
-        <h2 id="ident-h">ثيمات الهوية</h2>
-        <p className="small muted">ثيم مجاني وثمانية لمشتركي بلس، ولكل ثيم أيقونة تطبيق مطابقة.</p>
-        <div className="skin-grid">{SKINS.filter((s) => s.identity).map(card)}</div>
+        <h2 id="ident-h">التصاميم التسعة</h2>
+        <p className="small muted">الكلاسيكي الراقي مجاني، والثمانية الباقية لمشتركي بلس. كل تصميم يغيّر الرئيسية والقرآن والقوائم معًا.</p>
+        <div className="skin-grid">{SKINS.filter((s) => s.identity).slice(0, 9).map(card)}</div>
+        <h3 style={{ marginTop: '1rem' }}>ثيمات أخرى</h3>
+        <div className="skin-grid">{SKINS.filter((s) => s.identity).slice(9).map(card)}</div>
       </section>
       <AppIconPicker />
       <section className="card" aria-labelledby="skins-h">
@@ -88,7 +90,7 @@ export function PlusThemesPage() {
           <p className="small muted">تلوين بسيط دون خلفية. إن اخترت ثيمًا فله ألوانه الخاصة.</p>
           <div className="palette-grid" role="radiogroup" aria-label="لوحة الألوان">
             <button className="palette-opt" role="radio" aria-checked={!settings.plusPalette} onClick={() => update({ plusPalette: '' })}>
-              <span style={{ background: 'linear-gradient(135deg,#0B4A3E,#073B32)' }} />ألوان التطبيق الأصلية
+              <span style={{ background: 'linear-gradient(135deg,#1F5E4B,#174B3C)' }} />ألوان التطبيق الأصلية
             </button>
             {PLUS_PALETTES.map((p) => (
               <button key={p.id} className="palette-opt" role="radio" aria-checked={settings.plusPalette === p.id} onClick={() => update({ plusPalette: p.id })}>

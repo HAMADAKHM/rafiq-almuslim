@@ -179,7 +179,7 @@ function SkinApplier({ entitled }: { entitled: boolean }) {
         delete root.dataset.skinMode
         const dark = settings.theme === 'dark' || settings.theme === 'gold' || (settings.theme === 'system' && window.matchMedia?.('(prefers-color-scheme: dark)').matches)
         root.dataset.theme = dark ? 'dark' : 'light'
-        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', settings.theme === 'gold' ? '#0a0a0a' : dark ? '#0c1512' : '#073B32')
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', settings.theme === 'gold' ? '#0a0a0a' : dark ? '#0B1426' : '#174B3C')
       }
     }
     if (settings.skinStill) root.dataset.skinStill = ''

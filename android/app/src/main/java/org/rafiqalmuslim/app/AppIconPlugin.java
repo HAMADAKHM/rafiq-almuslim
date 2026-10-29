@@ -20,11 +20,13 @@ public class AppIconPlugin extends Plugin {
 
     private ComponentName comp(String id) {
         String n = id.equals("default") ? "LauncherDefault" : "Launcher" + Character.toUpperCase(id.charAt(0)) + id.substring(1);
-        return new ComponentName(getContext(), getContext().getPackageName() + "." + n);
+        // المكوّنات معرّفة باسم حزمة الكود (org.rafiqalmuslim.app) لا بمعرّف التطبيق (org.rafiqalmuslim.plus)
+        return new ComponentName(getContext().getPackageName(), AppIconPlugin.class.getPackage().getName() + "." + n);
     }
 
     private boolean enabled(PackageManager pm, String id) {
-        int st = pm.getComponentEnabledSetting(comp(id));
+        int st;
+        try { st = pm.getComponentEnabledSetting(comp(id)); } catch (IllegalArgumentException e) { return false; }
         // الحالة الافتراضية من الملف: الأصلية مفعّلة والباقي معطّل
         return st == PackageManager.COMPONENT_ENABLED_STATE_ENABLED || (st == PackageManager.COMPONENT_ENABLED_STATE_DEFAULT && id.equals("default"));
     }

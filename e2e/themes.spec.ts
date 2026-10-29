@@ -16,7 +16,7 @@ async function subscribe(page: Page) {
 test('ثيم الهوية المجاني: معاينة في كل الصفحات، ثم تطبيق يبقى بعد إعادة الفتح، ثم العودة إلى الأصلي', async ({ page }) => {
   await page.goto('/plus/themes')
   await expect(page.getByRole('heading', { name: 'الثيمات والمظهر' })).toBeVisible()
-  await page.getByRole('button', { name: 'معاينة ثيم الإسلامي الكلاسيكي' }).click()
+  await page.getByRole('button', { name: 'معاينة ثيم الكلاسيكي الراقي' }).click()
   await expect(bar(page)).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('data-skin', 't-classic')
   // المعاينة تشمل الصفحات الداخلية، والاختيار المحفوظ لم يتغير
@@ -35,7 +35,7 @@ test('ثيم الهوية المجاني: معاينة في كل الصفحات�
 
 test('ثيم بلس دون اشتراك: معاينة فقط، وإنهاؤها يعيد الشكل دون حفظ', async ({ page }) => {
   await page.goto('/plus/themes')
-  await page.getByRole('button', { name: 'معاينة ثيم الملكي' }).click()
+  await page.getByRole('button', { name: 'معاينة ثيم الذهبي الفاخر' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-skin', 't-royal')
   await expect(bar(page).getByRole('link', { name: /اشترك لتفعيله/ })).toBeVisible()
   await expect(bar(page).getByRole('button', { name: 'تطبيق' })).toHaveCount(0)
@@ -45,10 +45,10 @@ test('ثيم بلس دون اشتراك: معاينة فقط، وإنهاؤها 
   await expect(page.locator('html')).not.toHaveAttribute('data-skin', /.+/)
 })
 
-test('مع اشتراك: الثمانية تُطبَّق ويتغير شكل الصفحات الداخلية، والخلفية الثابتة توقف الحركة', async ({ page }) => {
+test('مع اشتراك: التصاميم الثمانية تُطبَّق ويتغير شكل الصفحات الداخلية، والخلفية الثابتة توقف الحركة', async ({ page }) => {
   await subscribe(page)
   await page.goto('/plus/themes')
-  for (const [name, id] of [['الملكي', 't-royal'], ['الليلي', 't-night'], ['الفيروزي', 't-turquoise'], ['الفجر', 't-dawn'], ['الطبيعي', 't-nature'], ['البنفسجي', 't-violet'], ['الوردي', 't-rose'], ['المساء', 't-evening']]) {
+  for (const [name, id] of [['الليلي الفاخر', 't-night'], ['الهادئ الطبيعي', 't-nature'], ['العصري المشرق', 't-turquoise'], ['الإسلامي الفخم', 't-heritage'], ['الغروب الهادئ', 't-violet'], ['المينيمالي الحديث', 't-minimal'], ['الألوان المتدرجة', 't-gradient'], ['الذهبي الفاخر', 't-royal']]) {
     await page.getByRole('button', { name: `معاينة ثيم ${name}`, exact: true }).click()
     await bar(page).getByRole('button', { name: 'تطبيق' }).click()
     await expect(page.locator('html')).toHaveAttribute('data-skin', id)
@@ -56,7 +56,7 @@ test('مع اشتراك: الثمانية تُطبَّق ويتغير شكل ا�
   // لون خلفية البطاقات من الثيم في صفحة داخلية
   await page.goto('/prayer')
   const bg = await page.locator('.card').first().evaluate((el) => getComputedStyle(el).backgroundColor)
-  expect(bg).toMatch(/rgba?\(16, 30, 52/)
+  expect(bg).toMatch(/rgba?\(26, 22, 15/)
   await page.goto('/plus/themes')
   await page.getByLabel(/خلفية ثابتة بلا حركة/).check()
   await expect(page.locator('html')).toHaveAttribute('data-skin-still', '')

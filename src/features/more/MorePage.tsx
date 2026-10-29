@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ChevronLeft, Crown, Search, X, LayoutDashboard } from 'lucide-react'
 import { PageHead } from '../../components/Common'
 import { DedicationCard } from '../../components/DedicationCard'
-import { NAV } from '../../app/nav'
+import { ESSENTIAL_LABELS, MORE_ESSENTIALS, NAV, type NavItem } from '../../app/nav'
 import { t } from '../../i18n/strings'
 import { useSettings } from '../../state/SettingsContext'
 import { usePlus } from '../../billing/PlusContext'
@@ -19,6 +19,7 @@ const HINT: Record<string, string> = {
   '/reminders': 'الأذكار المسموعة والتنبيهات', '/settings': 'المدينة والمظهر والبيانات', '/plus/themes': 'الثيمات والأيقونات', '/widgets': 'أدوات الشاشة الرئيسية وتصميمها',
   '/wird': 'خطة الختمة وورد اليوم', '/memorize': 'الحفظ والمراجعة', '/listen': 'التلاوات والقراء', '/adhkar': 'الصباح والمساء وكل الأذكار', '/duas': 'أدعية من القرآن والسنة',
   '/kids-adhkar': 'أذكار قصيرة للأطفال', '/beloved': 'أدعية لكل عزيز', '/booklet': 'كتيّب PDF تهديه', '/companion': 'ذكر مسموع كل مدة', '/tv-remote': 'شاشة المواقيت على التلفاز',
+  '/library': 'الأحاديث والقصص والأدعية والمناسبات', '/favorites': 'علامات القرآن والمحفوظ من الأقسام', '/plus/downloads': 'القرآن والتلاوات دون إنترنت',
   '/plus/features': 'كل المزايا في صفحة واحدة', '/progress': 'تقدّمك في القراءة والأذكار', '/assistant': 'اسأل عن آية أو ذكر',
 }
 
@@ -30,10 +31,11 @@ export function MorePage() {
   const groups = useMemo(() => {
     const k = searchSkeleton(q.trim())
     const order = ['groupDaily', 'groupWorship', 'groupQuran', 'groupPlus', 'groupMore']
-    return [...NAV].sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group)).map((g) => ({
-      ...g,
-      items: g.items.filter((i) => i.to !== '/' && (!k || searchSkeleton(`${t(i.key, settings.lang)} ${HINT[i.to] ?? ''}`).includes(k))),
-    })).filter((g) => g.items.length)
+    const all = NAV.flatMap((g) => g.items)
+    const essentials: NavItem[] = MORE_ESSENTIALS.map((to) => all.find((i) => i.to === to)).filter((i): i is NavItem => !!i)
+    const match = (i: NavItem) => !k || searchSkeleton(`${t(i.key, settings.lang)} ${ESSENTIAL_LABELS[i.to] ?? ''} ${HINT[i.to] ?? ''}`).includes(k)
+    return [{ group: 'groupEssentials' as const, items: essentials }, ...[...NAV].sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group)).map((g) => ({ ...g, items: g.items.filter((i) => !MORE_ESSENTIALS.includes(i.to)) }))]
+      .map((g) => ({ ...g, items: g.items.filter((i) => i.to !== '/' && match(i)) })).filter((g) => g.items.length)
   }, [q, settings.lang])
   let n = 0
   return (
@@ -73,7 +75,7 @@ export function MorePage() {
                 return (
                   <Link key={to} to={to} className="more-row">
                     <span className="mr-icon" style={{ background: color }}><Icon size={20} aria-hidden="true" /></span>
-                    <span className="mr-body"><span className="mr-title">{t(key, settings.lang)}</span>{HINT[to] && <small>{HINT[to]}</small>}</span>
+                    <span className="mr-body"><span className="mr-title">{g.group === 'groupEssentials' && settings.lang === 'ar' ? ESSENTIAL_LABELS[to] ?? t(key, settings.lang) : t(key, settings.lang)}</span>{HINT[to] && <small>{HINT[to]}</small>}</span>
                     <ChevronLeft size={18} className="mr-chev" aria-hidden="true" />
                   </Link>
                 )

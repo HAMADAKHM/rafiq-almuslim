@@ -1,6 +1,6 @@
 // اختيار أيقونة التطبيق (رفيق بلس): الأصلية للجميع، والبديلة للمشتركين. تتغير أيقونة الشاشة الرئيسية على Android.
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { Check, Lock } from 'lucide-react'
 import { usePlus } from '../billing/PlusContext'
 import { toast } from '../hooks'
@@ -11,7 +11,10 @@ export function AppIconPicker() {
   const plus = usePlus()
   const [cur, setCur] = useState<AppIconId>('default')
   const [busy, setBusy] = useState(false)
+  const { hash } = useLocation()
   useEffect(() => { getAppIcon().then(setCur) }, [])
+  // الوصول المباشر من الإعدادات («أيقونة التطبيق»)
+  useEffect(() => { if (hash === '#icon-h') setTimeout(() => document.getElementById('icon-h')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200) }, [hash])
   const pick = async (id: AppIconId) => {
     if (id !== 'default' && !plus.entitled) { toast('الأيقونات البديلة من مزايا رفيق بلس'); return }
     if (!appIconSupported()) { toast('تغيير أيقونة الشاشة الرئيسية متاح في تطبيق Android'); return }
