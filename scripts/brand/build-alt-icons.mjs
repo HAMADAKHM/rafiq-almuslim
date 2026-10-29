@@ -19,13 +19,13 @@ async function png(svg, size, out) {
   await page.screenshot({ path: out, omitBackground: true, clip: { x: 0, y: 0, width: size, height: size } })
 }
 const dens = { mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4 }
-for (const id of APP_ICON_IDS.filter((x) => x !== 'default')) {
+for (const id of APP_ICON_IDS) {
   const name = `ic_alt_${id}`
   for (const [d, k] of Object.entries(dens)) {
     const dir = path.join(res, `mipmap-${d}`)
     await png(appIconSvg(id), Math.round(48 * k), path.join(dir, `${name}.png`))
     await png(appIconSvg(id, { radius: 256 }), Math.round(48 * k), path.join(dir, `${name}_round.png`))
-    await png(appIconSvg(id, { background: false, scale: 0.62 }), Math.round(108 * k), path.join(dir, `${name}_fg.png`))
+    await png(appIconSvg(id, { background: false, scale: 0.7 }), Math.round(108 * k), path.join(dir, `${name}_fg.png`))
     // خلفية مربعة بلا رمز (النظام يقصها بشكله)
     await png(appIconSvg(id, { radius: 0 }).replace(/<g transform="translate\(256 256\)[\s\S]*?<\/g>\s*<\/svg>/, '</svg>'), Math.round(108 * k), path.join(dir, `${name}_bg.png`))
   }

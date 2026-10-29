@@ -42,7 +42,6 @@ describe('أيقونات التطبيق', () => {
     for (const id of APP_ICON_IDS) {
       expect(manifest, id).toContain(`android:name=".${aliasOf(id)}"`)
       expect(ident.some((s) => s.id === APP_ICONS[id].theme), id).toBe(true)
-      if (id === 'default') continue
       for (const d of ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) for (const f of ['', '_round', '_fg', '_bg']) expect(existsSync(`android/app/src/main/res/mipmap-${d}/ic_alt_${id}${f}.png`), `${d} ${id}${f}`).toBe(true)
       expect(existsSync(`android/app/src/main/res/mipmap-anydpi-v26/ic_alt_${id}.xml`)).toBe(true)
     }

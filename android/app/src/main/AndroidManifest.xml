@@ -3,9 +3,9 @@
 
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_alt_default"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_alt_default_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <!-- AdMob (رفيق بلس): إعلان شريطي محدود لغير المشتركين -->
@@ -24,8 +24,8 @@
         <activity-alias
             android:name=".LauncherDefault"
             android:targetActivity=".MainActivity"
-            android:icon="@mipmap/ic_launcher"
-            android:roundIcon="@mipmap/ic_launcher_round"
+            android:icon="@mipmap/ic_alt_default"
+            android:roundIcon="@mipmap/ic_alt_default_round"
             android:label="@string/title_activity_main"
             android:enabled="true"
             android:exported="true">
