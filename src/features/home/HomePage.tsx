@@ -1,10 +1,12 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { usePlus } from '../../billing/PlusContext'
+import { activeSkin, skinById } from '../../themes/skins'
+import { useThemePreview } from '../../themes/preview'
 import { DailyCompanionCard } from '../companion/DailyCompanionCard'
 import { Link } from 'react-router-dom'
 import {
   BookOpen, Sparkles, MapPin, CircleCheck, Play, Image, SlidersHorizontal, ArrowUp, ArrowDown, Library,
-  ChevronLeft, LayoutGrid, BookMarked,
+  ChevronLeft, Bell, Heart, LayoutGrid, BookMarked, Sun, CloudSun, Sunset, Moon, MoonStar, Sunrise,
 } from 'lucide-react'
 import { DedicationCard } from '../../components/DedicationCard'
 import { Spinner } from '../../components/Common'
@@ -19,6 +21,8 @@ import { catIcon } from '../adhkar/AdhkarPage'
 import { MAX_DAILY_ADHKAR } from '../../state/settings'
 import { LogoMark } from '../../components/Art'
 import { WeatherChip } from '../weather/WeatherPage'
+import { PaintedScene, type PaintTone } from '../../components/Scene'
+import type { PrayerName } from '../../services/prayer'
 import { nextPrayer, PRAYER_LABELS, PRAYERS, todayTimes } from '../../services/prayer'
 import { dayKey, formatCountdown, formatGregorian, formatHijri, formatTime } from '../../lib/dates'
 import { cityLabel } from '../../services/cities'
@@ -26,16 +30,26 @@ import { adhkarLog, kv, memo } from '../../db/repos'
 import { KhatmaCard, useKhatmas } from '../wird/KhatmaCard'
 import { activePlan, dailyTarget } from '../../services/khatma'
 import { dailySuggestion } from '../../services/dailySuggest'
-import { Lightbulb } from 'lucide-react'
+import { Lightbulb, Palette } from 'lucide-react'
 import { useAllLogs } from '../progress/ProgressPage'
 import { computeStats, dailySeries } from '../../services/stats'
-import { adhkarForNow, ayahOfDay } from '../../services/daily'
+import { adhkarForNow, ayahOfDay, greeting } from '../../services/daily'
 import { loadTasbih, todayTotal } from '../../services/tasbih'
 import { toArabicDigits } from '../../lib/arabic'
 import { player } from '../../services/audio'
 import type { LastRead } from '../quran/QuranIndexPage'
 import type { AdhkarLog, MemoSegment } from '../../db/db'
 
+
+/** لون المشهد بحسب الصلاة القادمة */
+const PRAYER_ICONS: Record<PrayerName, typeof Sun> = { fajr: MoonStar, sunrise: Sunrise, dhuhr: Sun, asr: CloudSun, maghrib: Sunset, isha: Moon }
+
+/** لون اللوحة بحسب الصلاة القادمة */
+function toneFor(p?: PrayerName): PaintTone {
+  if (p === 'fajr' || p === 'sunrise') return 'dawn'
+  if (p === 'isha') return 'night'
+  return 'sunset'
+}
 
 function humanLeft(ms: number): string {
   const m = Math.max(0, Math.round(ms / 60000))
@@ -81,6 +95,7 @@ export function HomePage() {
   useDocumentTitle('')
   const { settings, update } = useSettings()
   const { entitled: plusEntitled } = usePlus()
+  const preview = useThemePreview()
   const { data } = useQuran()
   const now = useNow(1000)
   const loc = settings.location
@@ -226,7 +241,9 @@ export function HomePage() {
   }
 
   // «رفيقي اليومي» من مزايا بلس: لا خانة فارغة ولا قفل في الرئيسية دون اشتراك
-  const visible = settings.homeCards.filter((c) => c.visible && c.id !== 'continue' && (c.id !== 'companion' || plusEntitled))
+  // التصاميم التسعة المعتمدة (ثيمات الهوية): رأس التحية وبطاقة الصلاة وشريط «متابعة القراءة» الثابت تحتها
+  const designed = !!(preview ? skinById(preview) : activeSkin(settings.skin, plusEntitled))?.identity
+  const visible = settings.homeCards.filter((c) => c.visible && (!designed || c.id !== 'continue') && (c.id !== 'companion' || plusEntitled))
   const move = (i: number, d: -1 | 1) => {
     const list = [...settings.homeCards]
     const j = i + d
@@ -243,6 +260,8 @@ export function HomePage() {
 
   return (
     <div className="home">
+      {designed ? (
+        <>
       <header className="dh-head">
         <div className="dh-head-text">
           <h1 className="dh-greet">السلام عليكم{settings.displayName.trim() && <span className="dh-name">{settings.displayName.trim()}</span>}</h1>
@@ -292,6 +311,65 @@ export function HomePage() {
           </span>
           <span className="dh-c-btn">{last ? 'متابعة القراءة' : 'ابدأ القراءة'}</span>
         </Link>
+      )}
+
+        </>
+      ) : (
+        <>
+      <header className="home-hero">
+        <PaintedScene tone={toneFor(np?.name)} variant="hero" className="home-hero-art" />
+        <div className="home-hero-row">
+          <Link to="/reminders" className="hero-icon" aria-label="إعدادات التذكير"><Bell size={20} /></Link>
+          <Link to="/plus/themes" className={'hero-icon' + (settings.skin ? '' : ' theme-pulse')} aria-label="الثيمات"><Palette size={20} /></Link>
+          <span className="hero-avatar" aria-hidden="true">{settings.displayName.trim() ? settings.displayName.trim()[0] : <LogoMark size={24} />}</span>
+          <div className="home-hero-text">
+            <div className="hero-greet">{settings.displayName.trim() ? `السلام عليكم، ${settings.displayName.trim()}` : greeting(hour, today)}</div>
+            {settings.displayName.trim() && <div className="hero-sub">{greeting(hour, today)}</div>}
+            <div className="hero-sub">{formatGregorian(now, loc?.tz)}</div>
+            <div className="hero-hijri">{formatHijri(now, loc?.tz, settings.hijriOffset)}</div>
+            <WeatherChip />
+          </div>
+          <Link to="/about" className="hero-icon" aria-label="رسالة الوفاء"><Heart size={20} /></Link>
+        </div>
+      </header>
+
+      <section className="next-card" aria-label="الصلاة القادمة">
+        {np && loc && times ? (
+          <>
+            <Link to="/prayer" className="next-main">
+              <div className="next-art"><PaintedScene tone={toneFor(np.name)} variant="card" /></div>
+              <div className="next-info" aria-live="polite">
+                <div className="next-label">الصلاة القادمة</div>
+                <div className="next-name">{PRAYER_LABELS[np.name]}</div>
+                <div className="next-time">{formatTime(np.time, loc.tz)}</div>
+                <div className="next-left">باقي على الأذان <b>{humanLeft(np.time.getTime() - now.getTime())}</b></div>
+                <div className="next-count" aria-label="الوقت المتبقي">{formatCountdown(np.time.getTime() - now.getTime())}</div>
+              </div>
+            </Link>
+            <Link to="/prayer" className="next-city"><MapPin size={14} /> {cityLabel(loc)}</Link>
+            <div className="prayer-pills">
+              {five.map((p) => (
+                <div key={p} className={'pill' + (np.name === p ? ' active' : '')}>
+                  {(() => { const Icon = PRAYER_ICONS[p]; return <Icon size={17} aria-hidden="true" /> })()}
+                  <span>{PRAYER_LABELS[p]}</span>
+                  <b>{formatTime(times[p], loc.tz)}</b>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="next-empty">
+            <div className="next-art"><PaintedScene tone="sunset" variant="card" /></div>
+            <div>
+              <strong>مواقيت الصلاة</strong>
+              <p className="small muted" style={{ margin: '0.2rem 0 0.6rem' }}>اختر مدينتك أو استخدم موقعك لعرض المواقيت والعدّ التنازلي.</p>
+              <Link className="btn btn-primary btn-sm" to="/prayer">اختر مدينتك لعرض مواقيت الصلاة</Link>
+            </div>
+          </div>
+        )}
+      </section>
+
+        </>
       )}
 
       <div className="home-grid">

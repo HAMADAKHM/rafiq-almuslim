@@ -90,7 +90,7 @@ export function PlusThemesPage() {
           <p className="small muted">تلوين بسيط دون خلفية. إن اخترت ثيمًا فله ألوانه الخاصة.</p>
           <div className="palette-grid" role="radiogroup" aria-label="لوحة الألوان">
             <button className="palette-opt" role="radio" aria-checked={!settings.plusPalette} onClick={() => update({ plusPalette: '' })}>
-              <span style={{ background: 'linear-gradient(135deg,#1F5E4B,#174B3C)' }} />ألوان التطبيق الأصلية
+              <span style={{ background: 'linear-gradient(135deg,#0B4A3E,#073B32)' }} />ألوان التطبيق الأصلية
             </button>
             {PLUS_PALETTES.map((p) => (
               <button key={p.id} className="palette-opt" role="radio" aria-checked={settings.plusPalette === p.id} onClick={() => update({ plusPalette: p.id })}>

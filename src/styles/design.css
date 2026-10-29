@@ -4,21 +4,21 @@
 
 :root {
   --radius: 20px;
-  --hdr: #174B3C;
-  --hdr-2: #1F5E4B;
-  --hdr-text: #F7F4EA;
-  --hdr-gold: #C6A66B;
+  --hdr: #073B32;
+  --hdr-2: #0B4A3E;
+  --hdr-text: #F5F0E6;
+  --hdr-gold: #E2C27E;
   --card-shadow: 0 1px 2px rgba(7, 59, 50, 0.04), 0 8px 24px rgba(7, 59, 50, 0.08);
   --pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23E2C27E' stroke-width='0.8'%3E%3Crect x='17' y='17' width='22' height='22'/%3E%3Crect x='17' y='17' width='22' height='22' transform='rotate(45 28 28)'/%3E%3C/g%3E%3C/svg%3E");
 }
-:root[data-theme='dark'] { --hdr: #0E1A30; --hdr-2: #16274A; --hdr-gold: #D9B872; --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3); }
+:root[data-theme='dark'] { --hdr: #0A2A24; --hdr-2: #0E3A31; --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3); }
 :root[data-accent='gold'] { --hdr: #12110e; --hdr-2: #1d1b17; --hdr-gold: #E6C45A; }
 
 .card, .list-card, .tile { box-shadow: var(--card-shadow); }
 .card { border-radius: var(--radius); }
 .btn-primary { background: var(--hdr); border-color: var(--hdr); color: #fff; }
 .btn-primary:hover { background: var(--hdr-2); border-color: var(--hdr-2); }
-:root[data-theme='dark'] .btn-primary { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+:root[data-theme='dark'] .btn-primary { background: #237B6D; border-color: #237B6D; color: #fff; }
 :root[data-accent='gold'] .btn-primary { background: #d4af37; border-color: #d4af37; color: #111; }
 
 /* ---------- الرأس الأخضر للصفحات الداخلية ---------- */
@@ -49,7 +49,7 @@
 .tabs, .lib-tabs { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px; box-shadow: var(--card-shadow); }
 .tab, .lib-tabs a { border-radius: 999px; }
 .tab[aria-selected='true'], .lib-tabs a.active { background: var(--hdr); color: #fff; }
-:root[data-theme='dark'] .tab[aria-selected='true'], :root[data-theme='dark'] .lib-tabs a.active { background: var(--primary); color: var(--on-primary); }
+:root[data-theme='dark'] .tab[aria-selected='true'], :root[data-theme='dark'] .lib-tabs a.active { background: #237B6D; color: #fff; }
 :root[data-accent='gold'] .tab[aria-selected='true'], :root[data-accent='gold'] .lib-tabs a.active { background: #d4af37; color: #111; }
 
 /* ---------- الشريط السفلي ---------- */
@@ -58,7 +58,7 @@
   .tab-item.active { color: var(--hdr); }
   :root[data-theme='dark'] .tab-item.active { color: var(--primary); }
   .tab-item.active svg { background: var(--hdr); color: var(--hdr-gold); }
-  :root[data-theme='dark'] .tab-item.active svg { background: var(--primary); color: var(--on-primary); }
+  :root[data-theme='dark'] .tab-item.active svg { background: #237B6D; color: #fff; }
   :root[data-accent='gold'] .tab-item.active svg { background: #d4af37; color: #111; }
 }
 
@@ -127,7 +127,7 @@
 
 /* شبكة الأقسام: دوائر خضراء بأيقونات ذهبية */
 .tile-icon, .quick-item .tile-icon { border-radius: 50%; background: var(--hdr); color: var(--hdr-gold); box-shadow: 0 4px 12px rgba(7, 59, 50, 0.18); }
-:root[data-theme='dark'] .tile-icon { background: #192A48; }
+:root[data-theme='dark'] .tile-icon { background: #0E3A31; }
 .tile, .quick-item { border-radius: 20px; }
 
 /* ======================= المواقيت ======================= */

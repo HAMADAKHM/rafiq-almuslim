@@ -58,7 +58,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       if (settings.theme === 'gold') root.dataset.accent = 'gold'
       else delete root.dataset.accent
       if (forced) return
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', settings.theme === 'gold' ? '#0a0a0a' : dark ? '#0B1426' : '#174B3C')
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', settings.theme === 'gold' ? '#0a0a0a' : dark ? '#0c1512' : '#073B32')
     }
     apply()
     const mq = window.matchMedia?.('(prefers-color-scheme: dark)')
