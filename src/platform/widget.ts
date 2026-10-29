@@ -11,7 +11,18 @@ import type { Settings } from '../state/settings'
 const PrayerWidget = registerPlugin<{
   update(o: { data: string }): Promise<void>; updateDaily(o: { data: string }): Promise<void>; updatePlus(o: { data: string }): Promise<void>
   updateResume(o: { data: string }): Promise<void>; consumeRoute(): Promise<{ route?: string | null }>
+  setStyle(o: { style: string }): Promise<void>; getStyle(): Promise<{ style: string }>
 }>('PrayerWidget')
+
+/** «تصميم الودجت» (رفيق بلس): خلفية كل ودجتات Android */
+export async function getWidgetStyle(): Promise<string> {
+  if (platformName() !== 'android') return 'emerald'
+  try { return (await PrayerWidget.getStyle()).style || 'emerald' } catch { return 'emerald' }
+}
+export async function setWidgetStyle(style: string): Promise<boolean> {
+  if (platformName() !== 'android') return false
+  try { await PrayerWidget.setStyle({ style }); return true } catch { return false }
+}
 
 /** ودجت «أكمل من حيث وصلت» (رفيق بلس): آخر قراءة فعلية وتقدّم الختمة */
 export async function updateResumeWidget(settings: Settings, entitled: boolean): Promise<void> {

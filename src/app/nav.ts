@@ -1,6 +1,6 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby,
+  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby, LayoutDashboard,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
@@ -20,7 +20,8 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
     { to: '/plus/memorize', key: 'plusMemorize', icon: BrainCircuit },
     { to: '/plus/family', key: 'plusFamily', icon: UsersRound },
     { to: '/plus/downloads', key: 'plusDownloads', icon: HardDriveDownload },
-    { to: '/plus/themes', key: 'plusThemes', icon: PaletteIcon },
+    { to: '/plus/themes', key: 'appearance', icon: PaletteIcon },
+    { to: '/widgets', key: 'widgets', icon: LayoutDashboard },
     { to: '/plus/reminders', key: 'plusReminders', icon: BellPlus },
     { to: '/plus/insights', key: 'plusInsights', icon: ChartNoAxesColumn },
   ] },
@@ -66,7 +67,7 @@ export const TABS: (NavItem & { short: string; match: RegExp })[] = [
   { to: '/quran', key: 'quran', icon: BookOpen, short: 'القرآن', match: /^\/(quran|mushaf|memorize|listen|learn|stories|studio)/ },
   { to: '/prayer', key: 'prayer', icon: Clock, short: 'المواقيت', match: /^\/(prayer|qibla|calendar|mosques|date-tools)/ },
   { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|hadith|tasbih|my-adhkar|for-the-deceased|kids-adhkar|beloved|booklet)/ },
-  { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|assistant|search|reminders|settings|plus|weather|ramadan|about|terms)/ },
+  { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|assistant|search|reminders|settings|plus|weather|ramadan|about|terms|widgets)/ },
 ]
 
 /** أقسام يمكن وضعها في وسط الشريط السفلي (الرئيسية أولًا و«المزيد» آخرًا ثابتان) */

@@ -70,6 +70,22 @@ public class WidgetBridgePlugin extends Plugin {
     }
 
     /** المسار الذي طلبه الضغط على ودجت (يُقرأ مرة واحدة ثم يُمسح) */
+    /** «تصميم الودجت»: خلفية كل الودجتات (يُستدعى بعد التحقق من اشتراك بلس، وبـ emerald عند انتهائه) */
+    @PluginMethod
+    public void setStyle(PluginCall call) {
+        String style = call.getString("style", "emerald");
+        if (style == null || !style.matches("[a-z]{1,16}")) { call.reject("invalid"); return; }
+        WidgetStyle.set(getContext(), style);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void getStyle(PluginCall call) {
+        JSObject r = new JSObject();
+        r.put("style", getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).getString(WidgetStyle.KEY, "emerald"));
+        call.resolve(r);
+    }
+
     @PluginMethod
     public void consumeRoute(PluginCall call) {
         String r = MainActivity.takeRoute();

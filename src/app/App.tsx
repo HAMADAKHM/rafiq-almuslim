@@ -60,6 +60,7 @@ const DateToolsPage = page(() => import('../features/datetools/DateToolsPage'), 
 const BelovedPage = page(() => import('../features/beloved/BelovedPage'), 'BelovedPage')
 const KidsAdhkarPage = page(() => import('../features/kids/KidsAdhkarPage'), 'KidsAdhkarPage')
 const BookletPage = page(() => import('../features/booklet/BookletPage'), 'BookletPage')
+const WidgetsPage = page(() => import('../features/widgets/WidgetsPage'), 'WidgetsPage')
 
 export function AppRoutes() {
   return (
@@ -104,6 +105,7 @@ export function AppRoutes() {
         <Route path="beloved" element={<BelovedPage />} />
         <Route path="kids-adhkar" element={<KidsAdhkarPage />} />
         <Route path="booklet" element={<BookletPage />} />
+        <Route path="widgets" element={<WidgetsPage />} />
         <Route path="plus/themes" element={<PlusThemesPage />} />
         <Route path="plus/reminders" element={<PlusRemindersPage />} />
         <Route path="plus/insights" element={<PlusInsightsPage />} />

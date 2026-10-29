@@ -1,6 +1,6 @@
 // مشغّل القصة: مشهد = مقطع تفسير (آية أو عدة آيات فسّرها الكتاب معًا).
-// «استمع»: تلاوة الآيات بصوت القارئ، ثم قراءة التفسير بصوت الجهاز (قراءة آلية للنص كما هو)، ثم المشهد التالي.
-import { playBlob, tafsirAudioSupported, tafsirAyahAudio, TAFSIR_AUDIO_CREDIT, TAFSIR_AUDIO_EDITION } from '../../services/tafsirAudio'
+// «تلاوة الآيات»: الآيات بصوت القارئ، ثم يبقى المعنى مكتوبًا مدة تكفي لقراءته، ثم المشهد التالي.
+// (أُزيل سماع التفسير بالصوت بطلب صاحب التطبيق: التفسير يُقرأ مكتوبًا فقط)
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ChevronRight, ChevronLeft, Play, Pause, ArrowRight, Clapperboard } from 'lucide-react'
@@ -11,7 +11,6 @@ import { Spinner } from '../../components/Common'
 import { storyById, storyScenes } from '../../content/stories'
 import { getTafsirSurah, groupEntries, TAFSIR_EDITIONS } from '../../services/tafsir'
 import { ayahAudioSources, reciterById } from '../../content/reciters'
-import { speakArabic, stopSpeaking, voiceAvailable } from '../../platform/voice'
 import { useSettings } from '../../state/SettingsContext'
 import { useQuran } from '../../hooks'
 import { kv } from '../../db/repos'
@@ -56,12 +55,8 @@ function StoryPlayer() {
   const [error, setError] = useState<string | null>(null)
   const [idx, setIdx] = useState(0)
   const [playing, setPlaying] = useState(false)
-  const [withRecitation, setWithRecitation] = useState(true)
-  const [voiceOk, setVoiceOk] = useState(true)
   const [phase, setPhase] = useState<FilmPhase>({ kind: 'idle' })
   const [film, setFilm] = useState(false)
-  const [recordedFailed, setRecordedFailed] = useState(false)
-  const useRecorded = edition === TAFSIR_AUDIO_EDITION && tafsirAudioSupported() && !recordedFailed
   const audio = useRef<HTMLAudioElement | null>(null)
   const run = useRef(0)
 
@@ -72,7 +67,6 @@ function StoryPlayer() {
     return () => { alive = false }
   }, [edition, surah])
   useEffect(() => { kv.get<number>(posKey, 0).then((p) => setIdx(p)) }, [posKey])
-  useEffect(() => { voiceAvailable().then(setVoiceOk) }, [])
 
   const scenes = useMemo(() => (groups ? storyScenes(groups, from, to) : []), [groups, from, to])
   const i = Math.min(idx, Math.max(0, scenes.length - 1))
@@ -82,7 +76,6 @@ function StoryPlayer() {
   const stop = useCallback(() => {
     run.current++
     audio.current?.pause(); audio.current = null
-    stopSpeaking().catch(() => {})
     setPlaying(false)
     setPhase({ kind: 'idle' })
   }, [])
@@ -97,23 +90,11 @@ function StoryPlayer() {
     for (let k = start; k < scenes.length && alive(); k++) {
       go(k)
       const s = scenes[k]
-      if (withRecitation) for (let a = s.from; a <= s.to && alive(); a++) { setPhase({ kind: 'ayah', ayah: a }); await playAyah(ayahAudioSources(reciter, surah, a), audio, alive) }
+      for (let a = s.from; a <= s.to && alive(); a++) { setPhase({ kind: 'ayah', ayah: a }); await playAyah(ayahAudioSources(reciter, surah, a), audio, alive) }
       if (!alive()) break
+      // المعنى مكتوب: يبقى مدة تكفي لقراءته
       setPhase({ kind: 'meaning' })
-      // التفسير الميسّر بصوت قارئ حقيقي (مجمع الملك فهد)، آيةً آية؛ وإن تعذر فصوت الجهاز
-      let recorded = false
-      if (useRecorded) {
-        try {
-          const blobs: Blob[] = []
-          for (let a = s.from; a <= s.to && alive(); a++) { const b = await tafsirAyahAudio(surah, a); if (!b) throw new Error('missing'); blobs.push(b) }
-          for (const b of blobs) { if (!alive()) break; await playBlob(b, audio, alive) }
-          recorded = true
-        } catch { setRecordedFailed(true) }
-      }
-      if (!recorded && alive()) {
-        if (voiceOk) { try { await speakArabic(s.text, 0.85) } catch { setVoiceOk(false) } }
-        else await wait(Math.max(6000, s.text.length * 70), alive)
-      }
+      await wait(Math.max(6000, s.text.length * 70), alive)
       if (alive()) await wait(900, alive)
     }
     if (alive()) { setPlaying(false); setPhase({ kind: 'idle' }) }
@@ -154,23 +135,21 @@ function StoryPlayer() {
           <div className="story-progress" role="progressbar" aria-valuemin={1} aria-valuemax={scenes.length} aria-valuenow={i + 1} aria-label="تقدم القصة"><span style={{ width: `${((i + 1) / scenes.length) * 100}%` }} /></div>
           <div className="story-buttons">
             <button className="icon-btn" onClick={() => { stop(); go(i - 1) }} disabled={i === 0} aria-label="المشهد السابق"><ChevronRight size={24} /></button>
-            <button className="btn btn-gold story-play" onClick={() => (playing ? stop() : listen(i))}>{playing ? <><Pause size={18} /> إيقاف</> : <><Play size={18} /> استمع كالقصة</>}</button>
+            <button className="btn btn-gold story-play" onClick={() => (playing ? stop() : listen(i))}>{playing ? <><Pause size={18} /> إيقاف</> : <><Play size={18} /> تلاوة الآيات</>}</button>
             <button className="btn story-film-btn" onClick={() => setFilm(true)}><Clapperboard size={18} /> وضع الفيلم</button>
             <button className="icon-btn" onClick={() => { stop(); go(i + 1) }} disabled={i >= scenes.length - 1} aria-label="المشهد التالي"><ChevronLeft size={24} /></button>
           </div>
           <div className="story-options">
-            <label><input type="checkbox" checked={withRecitation} onChange={(e) => { stop(); setWithRecitation(e.target.checked) }} /> مع تلاوة الآيات ({reciterById(settings.reciterId).name})</label>
+            <span className="small muted">التلاوة بصوت {reciterById(settings.reciterId).name}</span>
             <div className="chips" role="radiogroup" aria-label="كتاب التفسير">
               {EDITIONS.map((e) => <button key={e.slug} role="radio" aria-checked={edition === e.slug} className={'chip' + (edition === e.slug ? ' active' : '')} onClick={() => { stop(); setEdition(e.slug) }}>{e.name}</button>)}
             </div>
           </div>
-          {!voiceOk && <p className="muted small">لا يوجد صوت عربي في الجهاز لقراءة التفسير: تُتلى الآيات ويبقى المعنى مكتوبًا مدة تكفي لقراءته. يمكن تثبيت العربية من إعدادات «تحويل النص إلى كلام» في الهاتف.</p>}
           {film && (
             <StoryFilm title={title} surah={surah} surahName={data.meta.surahs[surah - 1].name} verses={data.verses[surah - 1]} scenes={scenes} tone={story?.tone ?? 'sunset'}
-              index={i} phase={phase} playing={playing} reciterId={settings.reciterId} onPlay={() => listen(i)} onStop={stop} onGo={go} onClose={() => setFilm(false)} recordedTafsir={useRecorded} />
+              index={i} phase={phase} playing={playing} reciterId={settings.reciterId} onPlay={() => listen(i)} onStop={stop} onGo={go} onClose={() => setFilm(false)} />
           )}
-          <p className="muted small">التفسير: {EDITIONS.find((e) => e.slug === edition)?.name} — {EDITIONS.find((e) => e.slug === edition)?.author}. {useRecorded ? `يُسمع بتسجيل بشري: ${TAFSIR_AUDIO_CREDIT} (متاح للاستخدام العام مجانًا في التطبيقات). يُحفظ كل مقطع على جهازك بعد أول سماع.` : 'يُقرأ بصوت الجهاز قراءةً آلية للنص كما هو.'} والآيات بصوت القارئ.</p>
-          {recordedFailed && edition === TAFSIR_AUDIO_EDITION && <p className="muted small">تعذر تحميل التسجيل الصوتي للتفسير الآن (تحقق من الإنترنت)، فاستُخدم صوت الجهاز. <button className="btn btn-ghost btn-sm" onClick={() => setRecordedFailed(false)}>أعد المحاولة</button></p>}
+          <p className="muted small">التفسير مكتوب: {EDITIONS.find((e) => e.slug === edition)?.name} — {EDITIONS.find((e) => e.slug === edition)?.author}، والآيات بصوت القارئ.</p>
         </div>
       )}
     </div>

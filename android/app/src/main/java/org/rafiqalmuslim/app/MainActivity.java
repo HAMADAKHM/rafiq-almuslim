@@ -15,6 +15,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(WidgetBridgePlugin.class);
         registerPlugin(AdhanSoundPlugin.class);
         registerPlugin(DhikrSoundPlugin.class);
+        registerPlugin(AppIconPlugin.class);
         // صوت قراءة المعنى في فيديو «التفسير كالقصة»
         registerPlugin(NarrationPlugin.class);
         // التحكم بشاشة التلفاز عبر الشبكة المنزلية

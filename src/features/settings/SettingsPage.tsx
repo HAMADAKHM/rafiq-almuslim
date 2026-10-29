@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, Link } from 'react-router-dom'
-import { Download, Upload, Trash2, Bell, MapPin, Clock, Palette, Database, ShieldCheck, BookOpen, Info, ChevronLeft, Moon, Sun } from 'lucide-react'
+import { Download, Upload, Trash2, Bell, MapPin, Clock, Palette, Database, ShieldCheck, BookOpen, Info, ChevronLeft, Moon, Sun, LayoutDashboard } from 'lucide-react'
 import { PaintedScene } from '../../components/Scene'
 import { PageHead } from '../../components/Common'
 import { CityPicker } from '../../components/CityPicker'
@@ -63,6 +63,11 @@ export function SettingsPage() {
       <ul className="settings-index" aria-label="أقسام الإعدادات">
         {([['#location', 'المدينة والموقع', MapPin], ['#prayer', 'حساب مواقيت الصلاة', Clock], ['#notifications', 'التنبيهات والأذان', Bell], ['#appearance', 'القراءة والمظهر', Palette], ['#privacy', 'الخصوصية ومتابعة الرحلة', ShieldCheck], ['#data', 'النسخ الاحتياطي والبيانات', Database], ['#sources', 'مصادر المحتوى', BookOpen]] as const).map(([href, label, Icon]) => (
           <li key={href}><a href={href} onClick={(e) => { e.preventDefault(); document.querySelector(href)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}><span className="si-icon"><Icon size={18} /></span>{label}<span className="si-end"><ChevronLeft size={18} /></span></a></li>
+        ))}
+        {([['/plus/themes', 'الثيمات والمظهر والأيقونة', Palette, '#8b5cf6'], ['/widgets', 'الودجتات وتصميمها', LayoutDashboard, '#14a3b8'], ['/reminders', 'التذكيرات والأصوات', Bell, '#f59e0b'], ['#tabs', 'الشريط السفلي', LayoutDashboard, '#22a861']] as const).map(([to, label, Icon, color]) => (
+          <li key={to}>{to.startsWith('#')
+            ? <a href={to} onClick={(e) => { e.preventDefault(); document.querySelector(to)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}><span className="si-icon" style={{ background: color, color: '#fff' }}><Icon size={18} /></span>{label}<span className="si-end"><ChevronLeft size={18} /></span></a>
+            : <Link to={to}><span className="si-icon" style={{ background: color, color: '#fff' }}><Icon size={18} /></span>{label}<span className="si-end"><ChevronLeft size={18} /></span></Link>}</li>
         ))}
         <li><Link to="/about"><span className="si-icon"><Info size={18} /></span>حول التطبيق ورسالة الوفاء<span className="si-end"><ChevronLeft size={18} /></span></Link></li>
       </ul>

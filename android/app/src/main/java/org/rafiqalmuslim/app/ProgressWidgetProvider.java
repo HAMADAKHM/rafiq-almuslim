@@ -26,6 +26,7 @@ public class ProgressWidgetProvider extends AppWidgetProvider {
 
     static void render(Context c, AppWidgetManager m, int id) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_progress);
+        WidgetStyle.apply(c, v, R.id.g_root);
         v.setOnClickPendingIntent(R.id.g_root, PlusWidgets.openApp(c, 4));
         JSONObject data = PlusWidgets.load(c);
         if (PlusWidgets.showGate(c, v, data, R.id.g_content, R.id.g_empty)) { m.updateAppWidget(id, v); return; }

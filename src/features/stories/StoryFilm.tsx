@@ -1,4 +1,4 @@
-// «وضع الفيلم» (رفيق بلس): القصة بملء الشاشة على مشاهد متحركة، مع التلاوة وقراءة المعنى، وحفظها فيديو.
+// «وضع الفيلم» (رفيق بلس): القصة بملء الشاشة على مشاهد متحركة، مع التلاوة والمعنى مكتوبًا، وحفظها فيديو.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { X, Play, Pause, ChevronRight, ChevronLeft, Clapperboard, Share2 } from 'lucide-react'
 import { drawFilmFrame, recordStoryVideo, sceneTheme, type FilmScene } from '../../services/storyFilm'
@@ -6,8 +6,6 @@ import { loadStudioFonts } from '../../services/studio'
 import { loadRecitation, MAX_VIDEO_AYAHS, extFor } from '../../services/studioVideo'
 import { reciterById } from '../../content/reciters'
 import { shareImage } from '../../platform'
-import { narrationAvailable, synthesizeNarration } from '../../platform/narration'
-import { tafsirAyahAudio } from '../../services/tafsirAudio'
 import { toArabicDigits } from '../../lib/arabic'
 import type { PaintTone } from '../../components/Scene'
 
@@ -29,30 +27,9 @@ interface Props {
   onGo(i: number): void
   onClose(): void
   /** التفسير الميسّر بتسجيل مجمع الملك فهد (بدل صوت الجهاز) */
-  recordedTafsir?: boolean
 }
 
-type Save = { s: 'idle' } | { s: 'loading'; done: number; total: number } | { s: 'voice'; done: number; total: number } | { s: 'recording'; p: number } | { s: 'done'; blob: Blob; url: string } | { s: 'error'; msg: string }
-
-/** يدمج تسجيلات آيات المشهد (مجمع الملك فهد) في مقطع صوتي واحد */
-async function recordedSceneAudio(actx: AudioContext, surah: number, from: number, to: number): Promise<AudioBuffer | null> {
-  const parts: AudioBuffer[] = []
-  for (let a = from; a <= to; a++) {
-    const blob = await tafsirAyahAudio(surah, a)
-    if (!blob) return null
-    parts.push(await actx.decodeAudioData(await blob.arrayBuffer()))
-  }
-  if (!parts.length) return null
-  const rate = parts[0].sampleRate, ch = Math.max(...parts.map((b) => b.numberOfChannels))
-  const gap = Math.round(rate * 0.25)
-  const out = actx.createBuffer(ch, parts.reduce((n, b) => n + b.length + gap, 0), rate)
-  let pos = 0
-  for (const b of parts) {
-    for (let c = 0; c < ch; c++) out.getChannelData(c).set(b.getChannelData(Math.min(c, b.numberOfChannels - 1)), pos)
-    pos += b.length + gap
-  }
-  return out
-}
+type Save = { s: 'idle' } | { s: 'loading'; done: number; total: number } | { s: 'recording'; p: number } | { s: 'done'; blob: Blob; url: string } | { s: 'error'; msg: string }
 
 export function StoryFilm(p: Props) {
   const canvas = useRef<HTMLCanvasElement>(null)
@@ -63,10 +40,6 @@ export function StoryFilm(p: Props) {
   const themes = useMemo(() => p.scenes.map((s) => sceneTheme(p.verses.slice(s.from - 1, s.to).join(' ') + ' ' + s.text, p.tone)), [p.scenes, p.verses, p.tone])
   const state = useRef({ ...p, phaseAt: performance.now() })
   const [save, setSave] = useState<Save>({ s: 'idle' })
-  const [voiceInVideo, setVoiceInVideo] = useState(true)
-  const [canVoice, setCanVoice] = useState(false)
-  const [voiceUsed, setVoiceUsed] = useState(false)
-  useEffect(() => { narrationAvailable().then(setCanVoice) }, [])
   const abort = useRef<AbortController | null>(null)
 
   // آخر حالة للرسم (دون إعادة تشغيل حلقة الرسم)
@@ -134,28 +107,13 @@ export function StoryFilm(p: Props) {
       setSave({ s: 'loading', done: 0, total: ayahs.length })
       const bufs = await loadRecitation(actx, p.reciterId, ayahs.map((a) => ({ surah: p.surah, ayah: a, text: p.verses[a - 1] })), (done, total) => setSave({ s: 'loading', done, total }))
       if (ctrl.signal.aborted) return
-      // صوت قراءة المعنى لكل مشهد (إن أمكن)؛ إن تعذر لمشهد يبقى المعنى مكتوبًا فيه فقط
-      let narration: (AudioBuffer | null)[] | undefined
-      if (voiceInVideo && (canVoice || p.recordedTafsir)) {
-        narration = []
-        for (let k = 0; k < range.length; k++) {
-          setSave({ s: 'voice', done: k, total: range.length })
-          let buf: AudioBuffer | null = null
-          // التسجيل البشري للتفسير الميسّر: مقاطع آيات المشهد متتالية في مقطع واحد
-          if (p.recordedTafsir) buf = await recordedSceneAudio(actx, p.surah, range[k].from, range[k].to).catch(() => null)
-          if (!buf && canVoice) buf = await synthesizeNarration(actx, range[k].text).catch(() => null)
-          narration.push(buf)
-          if (ctrl.signal.aborted) return
-        }
-      }
-      setVoiceUsed(!!narration?.some(Boolean))
       const c = saveCanvas.current!
       c.width = W; c.height = H
       setSave({ s: 'recording', p: 0 })
       let last = 0
       const blob = await recordStoryVideo({
         canvas: c, format, scenes: range, themes: themes.slice(p.index, p.index + range.length), verses: (a) => p.verses[a - 1],
-        surahName: p.surahName, reciterName: reciterById(p.reciterId).name, buffers: new Map(ayahs.map((a, i) => [a, bufs[i]])), narration, actx, signal: ctrl.signal,
+        surahName: p.surahName, reciterName: reciterById(p.reciterId).name, buffers: new Map(ayahs.map((a, i) => [a, bufs[i]])), actx, signal: ctrl.signal,
         onProgress: (x) => { if (x - last > 0.01 || x === 1) { last = x; setSave({ s: 'recording', p: x }) } },
       })
       setSave({ s: 'done', blob, url: URL.createObjectURL(blob) })
@@ -163,7 +121,7 @@ export function StoryFilm(p: Props) {
       setSave((e as Error).name === 'AbortError' ? { s: 'idle' } : { s: 'error', msg: (e as Error).message || 'تعذر إنشاء الفيديو' })
     } finally { actx.close().catch(() => {}) }
   }
-  const busy = save.s === 'loading' || save.s === 'recording' || save.s === 'voice'
+  const busy = save.s === 'loading' || save.s === 'recording'
   const ayahCount = range.reduce((n, s) => n + s.to - s.from + 1, 0)
 
   return (
@@ -176,15 +134,13 @@ export function StoryFilm(p: Props) {
       </div>
       <div className="film-bar">
         <button className="film-btn" onClick={() => { p.onStop(); p.onGo(p.index - 1) }} disabled={p.index === 0 || busy} aria-label="المشهد السابق"><ChevronRight size={26} /></button>
-        <button className="film-btn play" onClick={() => (p.playing ? p.onStop() : p.onPlay())} disabled={busy}>{p.playing ? <><Pause size={20} /> إيقاف</> : <><Play size={20} /> شاهد واستمع</>}</button>
+        <button className="film-btn play" onClick={() => (p.playing ? p.onStop() : p.onPlay())} disabled={busy}>{p.playing ? <><Pause size={20} /> إيقاف</> : <><Play size={20} /> شاهد مع التلاوة</>}</button>
         <button className="film-btn" onClick={() => { p.onStop(); p.onGo(p.index + 1) }} disabled={p.index >= p.scenes.length - 1 || busy} aria-label="المشهد التالي"><ChevronLeft size={26} /></button>
         <button className="film-btn" onClick={makeVideo} disabled={busy}><Clapperboard size={18} /> حفظ فيديو</button>
-        {(canVoice || p.recordedTafsir) && <label className="film-btn film-check"><input type="checkbox" checked={voiceInVideo} disabled={busy} onChange={(e) => setVoiceInVideo(e.target.checked)} /> صوت المعنى في الفيديو</label>}
       </div>
       {save.s !== 'idle' && (
         <div className="film-save" role="status">
           {save.s === 'loading' && <p>جارٍ تحميل التلاوة… {toArabicDigits(save.done)} / {toArabicDigits(save.total)}</p>}
-          {save.s === 'voice' && <p>جارٍ تجهيز صوت قراءة المعنى… {toArabicDigits(save.done)} / {toArabicDigits(save.total)}</p>}
           {save.s === 'recording' && <p>جارٍ تسجيل الفيديو ({toArabicDigits(ayahCount)} آية) — {toArabicDigits(Math.round(save.p * 100))}٪. أبقِ الشاشة مفتوحة.</p>}
           {save.s === 'error' && <p>{save.msg}</p>}
           {save.s === 'done' && (
@@ -194,7 +150,7 @@ export function StoryFilm(p: Props) {
                 <button className="btn btn-gold" onClick={async () => { await shareImage(save.blob, `qissa-${p.surah}-${range[0].from}.${extFor(save.blob.type)}`, `${p.title} — سورة ${p.surahName}`) }}><Share2 size={16} /> مشاركة أو حفظ</button>
                 <button className="btn" onClick={() => setSave({ s: 'idle' })}>إغلاق</button>
               </div>
-              <p className="small">في الفيديو: الآيات بصوت {reciterById(p.reciterId).name}{voiceUsed ? '، ثم المعنى بصوت قراءة الهاتف (قراءة آلية للنص كما هو)، ومكتوبًا أيضًا.' : '، والمعنى مكتوب من التفسير كما هو.'}</p>
+              <p className="small">في الفيديو: الآيات بصوت {reciterById(p.reciterId).name}، والمعنى مكتوب من التفسير كما هو.</p>
             </>
           )}
           {busy && <button className="btn" onClick={() => abort.current?.abort()}>إلغاء</button>}

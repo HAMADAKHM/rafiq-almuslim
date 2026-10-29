@@ -71,6 +71,7 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
 
     static void render(Context context, AppWidgetManager manager, int widgetId) {
         RemoteViews v = new RemoteViews(context.getPackageName(), R.layout.widget_prayer);
+        WidgetStyle.apply(context, v, R.id.widget_root);
         Intent open = new Intent(context, MainActivity.class);
         open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         v.setOnClickPendingIntent(R.id.widget_root, PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));

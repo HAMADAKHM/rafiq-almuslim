@@ -60,7 +60,7 @@ test.describe('رفيق بلس (متجر الاختبار)', () => {
     await expect(page.getByText(/المشهد ١ من/)).toBeVisible()
     await page.getByRole('button', { name: 'المشهد التالي' }).click()
     await expect(page.getByText('تفسير تجريبي للآية 141')).toBeVisible()
-    await expect(page.getByRole('button', { name: /استمع كالقصة/ })).toBeVisible()
+    await expect(page.getByRole('button', { name: /تلاوة الآيات/ })).toBeVisible()
 
     // الإلغاء من «المتجر»: يبقى فعّالًا حتى نهاية الفترة ثم يُقفل
     await page.goto('/plus')

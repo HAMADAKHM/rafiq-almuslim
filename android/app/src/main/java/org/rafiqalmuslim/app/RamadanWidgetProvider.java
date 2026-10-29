@@ -23,6 +23,7 @@ public class RamadanWidgetProvider extends AppWidgetProvider {
 
     static void render(Context c, AppWidgetManager m, int id) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_ramadan);
+        WidgetStyle.apply(c, v, R.id.r_root);
         v.setOnClickPendingIntent(R.id.r_root, PlusWidgets.openApp(c, 8));
         JSONObject data = PlusWidgets.load(c);
         if (PlusWidgets.showGate(c, v, data, R.id.r_content, R.id.r_empty)) { m.updateAppWidget(id, v); return; }

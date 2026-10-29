@@ -43,6 +43,7 @@ public class ResumeWidgetProvider extends AppWidgetProvider {
 
     static void render(Context c, AppWidgetManager m, int id) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_resume);
+        WidgetStyle.apply(c, v, R.id.r_root);
         JSONObject data = load(c);
         boolean entitled = data != null && data.optBoolean("entitled", false);
         v.setOnClickPendingIntent(R.id.r_root, open(c, entitled && data.has("route") ? data.optString("route") : null));

@@ -1,17 +1,17 @@
 // مزايا رفيق بلس الإضافية: الألوان والخلفيات، والتذكيرات الخاصة، والإحصاءات الشخصية (على الجهاز فقط).
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Crown, Lock, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { PageHead } from '../../components/Common'
 import { PlusGate } from '../../billing/PlusGate'
 import { PLUS_PALETTES } from '../../billing/palettes'
 import { usePlus } from '../../billing/PlusContext'
-import { activeSkin, SKINS, type Skin } from '../../themes/skins'
+import { activeSkin, SKINS, type ArtSkinId, type IdentityId, type Skin } from '../../themes/skins'
 import { SkinScene } from '../../themes/SkinScene'
-import { SceneCanvas, ScenePreview } from '../../tv/SceneCanvas'
-
-type ArtSkin = Exclude<Skin['id'], `live-${string}`>
+import { IdentityScene } from '../../themes/IdentityScene'
+import { setThemePreview, useThemePreview } from '../../themes/preview'
+import { AppIconPicker } from '../../themes/AppIconPicker'
+import { ScenePreview } from '../../tv/SceneCanvas'
 import { Link } from 'react-router-dom'
-import { createPortal } from 'react-dom'
 import { toast } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
 import type { CustomReminder } from '../../state/settings'
@@ -28,70 +28,64 @@ import { companionSummary, loadActualDays, loadDoneDays } from '../../services/c
 export function PlusThemesPage() {
   const { settings, update } = useSettings()
   const plus = usePlus()
-  const [preview, setPreview] = useState<Skin | null>(null)
+  const previewing = useThemePreview()
   const [hover, setHover] = useState<string | null>(null)
   const current = activeSkin(settings.skin, plus.entitled)
-  const apply = (s: Skin | null) => {
-    update({ skin: s ? s.id : '' })
-    setPreview(null)
-    toast(s ? `طُبّق ثيم «${s.name}»` : 'عادت ألوان التطبيق الأصلية')
+  const reset = () => { setThemePreview(null); update({ skin: '' }); toast('عاد التطبيق إلى ثيمه الأصلي') }
+  const card = (s: Skin) => {
+    const locked = !s.free && !plus.entitled
+    const on = current?.id === s.id
+    return (
+      <button key={s.id} type="button" className={'skin-card' + (previewing === s.id ? ' previewing' : '')} aria-pressed={on} aria-label={`معاينة ثيم ${s.name}`}
+        onClick={() => setThemePreview(s.id)} onMouseEnter={() => setHover(s.id)} onFocus={() => setHover(s.id)}>
+        {!s.free ? <span className="skin-badge">{locked ? <Lock size={11} /> : <Crown size={11} />} بلس</span> : <span className="skin-badge free">مجاني</span>}
+        {s.live && <span className="skin-badge live">● حيّ</span>}
+        <span className={'skin-frame ' + s.mode}>
+          {s.identity ? <IdentityScene id={s.id as IdentityId} /> : s.live ? <ScenePreview id={s.live} live={hover === s.id} /> : <SkinScene id={s.id as ArtSkinId} />}
+          {s.swatch ? (
+            <span className="skin-mock" style={{ ['--m-bg' as string]: s.swatch[1], ['--m-pri' as string]: s.swatch[2], ['--m-text' as string]: s.swatch[3] }}>
+              <span className="mk-bar" /><span className="mk-card"><i /><i /><i /></span><span className="mk-card short"><i /><i /></span><span className="mk-btn" />
+            </span>
+          ) : <span className="skin-sample" />}
+        </span>
+        <span className="skin-meta"><strong>{s.name}{on ? ' ✓' : ''}</strong><small>{on ? 'الثيم الحالي' : locked ? 'معاينة متاحة — التفعيل مع بلس' : s.tagline}</small></span>
+      </button>
+    )
   }
   return (
     <div className="page">
-      <PageHead title="الثيمات" subtitle="ثيمات غامرة بمشاهد متحركة وألوان وخطوط خاصة بها، ولوحات ألوان إضافية" />
+      <PageHead title="الثيمات والمظهر" subtitle="هوية بصرية كاملة لكل صفحات التطبيق — اضغط أي ثيم لمعاينته في التطبيق كله قبل تطبيقه" />
+      <section className="card theme-current">
+        <span className="tc-dot" style={{ background: current?.swatch?.[2] ?? 'var(--primary)' }} />
+        <div style={{ flex: 1 }}><strong>الثيم الحالي: {current?.name ?? 'الأصلي'}</strong><p className="small muted" style={{ margin: 0 }}>يتغير مظهر الرئيسية والقرآن والأذكار والمواقيت والإعدادات والقوائم معًا، والنصوص كما هي.</p></div>
+        {current && <button className="btn btn-sm" onClick={reset}><RotateCcw size={14} /> الأصلي</button>}
+      </section>
+      <section className="card" aria-labelledby="ident-h">
+        <h2 id="ident-h">ثيمات الهوية</h2>
+        <p className="small muted">ثيم مجاني وثمانية لمشتركي بلس، ولكل ثيم أيقونة تطبيق مطابقة.</p>
+        <div className="skin-grid">{SKINS.filter((s) => s.identity).map(card)}</div>
+      </section>
+      <AppIconPicker />
       <section className="card" aria-labelledby="skins-h">
         <h2 id="skins-h">ثيمات غامرة</h2>
-        <p className="small muted">كل ثيم مشهد حيّ خلف التطبيق كله، مع ألوانه وخطه وشكل بطاقاته. اضغط لمعاينته بملء الشاشة قبل التطبيق.</p>
+        <p className="small muted">مشاهد حيّة أو فنية خلف التطبيق كله، مع ألوانها وخطها وشكل بطاقاتها.</p>
         {([['live', 'ثيمات حيّة — مشاهد سينمائية تتحرك باستمرار'], ['art', 'ثيمات فنية مرسومة']] as const).map(([kind, heading]) => (
           <div key={kind}>
             <h3 className="skin-section-title">{heading}</h3>
-            <div className="skin-grid">
-              {SKINS.filter((s) => (kind === 'live') === !!s.live).map((s) => {
-                const locked = !s.free && !plus.entitled
-                return (
-                  <button key={s.id} type="button" className="skin-card" aria-pressed={current?.id === s.id} aria-label={`معاينة ثيم ${s.name}`} onClick={() => setPreview(s)}
-                    onMouseEnter={() => setHover(s.id)} onFocus={() => setHover(s.id)}>
-                    {!s.free && <span className="skin-badge">بلس</span>}
-                    {s.live && <span className="skin-badge live">● حيّ</span>}
-                    <span className={'skin-frame ' + s.mode}>{s.live ? <ScenePreview id={s.live} live={hover === s.id} /> : <SkinScene id={s.id as ArtSkin} />}<span className="skin-sample" /></span>
-                    <span className="skin-meta"><strong>{s.name}{current?.id === s.id ? ' ✓' : ''}</strong><small>{locked ? 'من مزايا رفيق بلس' : s.tagline}</small></span>
-                  </button>
-                )
-              })}
-            </div>
+            <div className="skin-grid">{SKINS.filter((s) => !s.identity && (kind === 'live') === !!s.live).map(card)}</div>
           </div>
         ))}
-        <div className="row" style={{ marginTop: 10, flexWrap: 'wrap' }}>
-          {current && <button className="btn btn-sm" onClick={() => apply(null)}>العودة إلى ألوان التطبيق الأصلية</button>}
-          <label className="check small"><input type="checkbox" className="switch-input" checked={settings.skinStill} onChange={(e) => update({ skinStill: e.target.checked })} /> مشهد ثابت بلا حركة (لتوفير البطارية)</label>
-        </div>
+        <label className="check small" style={{ marginTop: 10 }}><input type="checkbox" className="switch-input" checked={settings.skinStill} onChange={(e) => update({ skinStill: e.target.checked })} /> خلفية ثابتة بلا حركة (لتوفير البطارية)</label>
       </section>
-      {preview && createPortal(
-        <div className="skin-preview" role="dialog" aria-modal="true" aria-label={`معاينة ثيم ${preview.name}`}>
-          {preview.live ? <div className="skin-live"><SceneCanvas scene={preview.live} playlist={[]} rotateMin={0} shuffle={false} quality="eco" /></div> : <SkinScene id={preview.id as ArtSkin} />}
-          <div className="skin-preview-body">
-            <div className={'skin-preview-card ' + preview.mode}>
-              <strong style={{ fontFamily: 'Amiri, serif', fontSize: '1.4rem' }}>{preview.name}</strong>
-              <p style={{ margin: '0.3rem 0 0' }}>{preview.tagline}</p>
-            </div>
-            <div className={'skin-preview-card ' + preview.mode}>
-              <p style={{ margin: 0, fontFamily: '"Amiri Quran", Amiri, serif', fontSize: '1.3rem', lineHeight: 2 }}>﴿أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ﴾</p>
-              <small>[الرعد: 28]</small>
-            </div>
-            <div className="row" style={{ justifyContent: 'center' }}>
-              {!preview.free && !plus.entitled
-                ? <Link className="btn btn-gold" to="/plus" onClick={() => setPreview(null)}>من مزايا رفيق بلس — تعرّف عليها</Link>
-                : <button className="btn btn-primary" onClick={() => apply(preview)}>تطبيق الثيم</button>}
-              <button className="btn" onClick={() => setPreview(null)}>إغلاق</button>
-            </div>
-          </div>
-        </div>,
-        document.body,
-      )}
+      <section className="card">
+        <h2>الودجتات</h2>
+        <p className="small muted">اختر تصميم ودجتات الشاشة الرئيسية بألوان ثيمك.</p>
+        <Link className="btn btn-sm" to="/widgets">الودجتات وتصميمها</Link>
+      </section>
       <PlusGate feature="themes" title="لوحات ألوان إضافية">
         <section className="card">
           <h2>لوحات ألوان</h2>
-          <p className="small muted">تلوين بسيط دون مشهد متحرك. إن اخترت ثيمًا غامرًا فله ألوانه الخاصة.</p>
+          <p className="small muted">تلوين بسيط دون خلفية. إن اخترت ثيمًا فله ألوانه الخاصة.</p>
           <div className="palette-grid" role="radiogroup" aria-label="لوحة الألوان">
             <button className="palette-opt" role="radio" aria-checked={!settings.plusPalette} onClick={() => update({ plusPalette: '' })}>
               <span style={{ background: 'linear-gradient(135deg,#0B4A3E,#073B32)' }} />ألوان التطبيق الأصلية

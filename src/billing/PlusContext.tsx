@@ -1,7 +1,10 @@
 // حالة «رفيق بلس» في التطبيق: يُسأل المتجر عند الفتح وعند العودة للتطبيق وكل 15 دقيقة.
 // المحفوظ على الجهاز يُستخدم فقط دون إنترنت ولمدة محدودة بعد آخر تحقق ناجح (انظر entitlement.ts).
-import { activeSkin } from '../themes/skins'
+import { activeSkin, skinById, type ArtSkinId, type IdentityId } from '../themes/skins'
+import { useThemePreview } from '../themes/preview'
+import { appIconSupported, getAppIcon, setAppIcon } from '../platform/appIcon'
 import { SkinScene } from '../themes/SkinScene'
+import { IdentityScene } from '../themes/IdentityScene'
 import { SceneCanvas, StillScene } from '../tv/SceneCanvas'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { kv } from '../db/repos'
@@ -133,6 +136,12 @@ export function PlusProvider({ children, provider = billing() }: { children: Rea
   }), [provider, ready, entitlement, offer, verifiedAt, busy, message, now, purchase, restore, refresh])
 
   useEffect(() => { setPlusActive(value.entitled) }, [value.entitled])
+  // انتهى الاشتراك (بعد التحقق من المتجر): تعود أيقونة التطبيق وتصميم الودجت الأصليان، ويبقى اختيار الثيم محفوظًا ليعود مع التجديد
+  useEffect(() => {
+    if (!ready || value.entitled || !appIconSupported()) return
+    getAppIcon().then((id) => { if (id !== 'default') setAppIcon('default') }).catch(() => {})
+    import('../platform/widget').then(async (w) => { if ((await w.getWidgetStyle()) !== 'emerald') await w.setWidgetStyle('emerald') }).catch(() => {})
+  }, [ready, value.entitled])
 
   return <Ctx.Provider value={value}><PlusPaletteApplier entitled={value.entitled} /><SkinApplier entitled={value.entitled} />{children}</Ctx.Provider>
 }
@@ -152,7 +161,9 @@ function PlusPaletteApplier({ entitled }: { entitled: boolean }) {
 /** الثيم الغامر: مشهد متحرك خلف التطبيق + ألوانه ووضعه (الثيمات المدفوعة مع اشتراك ساري فقط) */
 function SkinApplier({ entitled }: { entitled: boolean }) {
   const { settings } = useSettings()
-  const skin = activeSkin(settings.skin, entitled)
+  // المعاينة تُظهر أي ثيم (ولو كان من بلس) مؤقتًا؛ والتطبيق الدائم بحسب الاشتراك
+  const preview = useThemePreview()
+  const skin = preview ? skinById(preview) : activeSkin(settings.skin, entitled)
   useEffect(() => {
     const root = document.documentElement
     if (skin) {
@@ -189,7 +200,8 @@ function SkinApplier({ entitled }: { entitled: boolean }) {
       </div>
     )
   }
-  return <div className="skin-backdrop"><SkinScene id={skin.id as Exclude<typeof skin.id, `live-${string}`>} /></div>
+  if (skin.identity) return <div className="skin-backdrop"><IdentityScene id={skin.id as IdentityId} /></div>
+  return <div className="skin-backdrop"><SkinScene id={skin.id as ArtSkinId} /></div>
 }
 
 export function usePlus(): PlusState {

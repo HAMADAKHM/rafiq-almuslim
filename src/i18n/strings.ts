@@ -38,6 +38,8 @@ const STRINGS = {
   beloved: { ar: 'أذكار الأحبة', en: 'Loved Ones' },
   kidsAdhkar: { ar: 'أذكار الصغار', en: 'Kids Adhkar' },
   booklet: { ar: 'كتيّب الأذكار', en: 'Adhkar Booklet' },
+  widgets: { ar: 'الودجتات', en: 'Widgets' },
+  appearance: { ar: 'الثيمات والمظهر', en: 'Themes & Look' },
   plusDownloads: { ar: 'تنزيل الأجزاء والمصحف', en: 'Downloads' },
   plusReminders: { ar: 'تذكيراتي الخاصة', en: 'My Reminders' },
   plusInsights: { ar: 'إحصاءاتي', en: 'My Insights' },

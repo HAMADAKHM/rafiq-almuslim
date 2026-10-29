@@ -3,7 +3,8 @@
 
 import type { SceneId } from '../tv/scenes'
 
-export type SkinId = 'qadr' | 'andalus' | 'desert' | 'ocean' | 'garden' | 'ramadan' | 'aurora' | 'royal'
+export type IdentityId = 't-classic' | 't-royal' | 't-night' | 't-turquoise' | 't-dawn' | 't-nature' | 't-violet' | 't-rose' | 't-evening'
+export type SkinId = IdentityId | 'qadr' | 'andalus' | 'desert' | 'ocean' | 'garden' | 'ramadan' | 'aurora' | 'royal'
   | 'live-night' | 'live-galaxy' | 'live-aurora' | 'live-ocean' | 'live-rain' | 'live-forest' | 'live-geometry' | 'live-desert'
 
 export interface Skin {
@@ -18,11 +19,25 @@ export interface Skin {
   bar: string
   /** ثيم حيّ: مشهد مرسوم إطارًا بإطار (من مكتبة مشاهد التلفاز) بدل الرسم الثابت */
   live?: SceneId
+  /** ثيم هوية: خلفية هادئة مرسومة (IdentityScene) وألوانه الخاصة، ويطابقه أيقونة تطبيق بالاسم نفسه */
+  identity?: boolean
+  /** ألوان المعاينة المصغرة: الخلفية، والبطاقة، واللون الأساسي، والنص */
+  swatch?: [string, string, string, string]
   /** لوحة الألوان المستعملة (للثيمات الحية: ألوان أحد الثيمات الأساسية) */
   palette?: 'qadr' | 'andalus' | 'desert' | 'ocean' | 'garden' | 'ramadan' | 'aurora' | 'royal'
 }
 
 export const SKINS: Skin[] = [
+  // ---------- ثيمات الهوية: هوية بصرية كاملة لكل الصفحات، ولكل منها أيقونة تطبيق مطابقة ----------
+  { id: 't-classic', name: 'الإسلامي الكلاسيكي', tagline: 'أخضر زمردي وعاجي ولمسات ذهبية خفيفة', mode: 'light', free: true, bar: '#0b4a3e', identity: true, swatch: ['#f7f3ea', '#fffdf7', '#0b5e4a', '#1f2a26'] },
+  { id: 't-royal', name: 'الملكي', tagline: 'كحلي داكن وذهب معدني — فخامة بأناقة', mode: 'dark', free: false, bar: '#0a1430', identity: true, swatch: ['#0b1530', '#16285a', '#d9b45a', '#f4ecd8'] },
+  { id: 't-night', name: 'الليلي', tagline: 'هلال مضيء وتدرجات زرقاء هادئة — هدوء وطمأنينة', mode: 'dark', free: false, bar: '#071026', identity: true, swatch: ['#071026', '#13285a', '#8cc4ff', '#eaf1ff'] },
+  { id: 't-turquoise', name: 'الفيروزي', tagline: 'فيروز وسماوي ونقوش إسلامية — نقاء وروحانية', mode: 'light', free: false, bar: '#0b5f63', identity: true, swatch: ['#eaf7f6', '#ffffff', '#0f8c88', '#10322f'] },
+  { id: 't-dawn', name: 'الفجر', tagline: 'ضوء الشروق الدافئ — بداية مليئة بالأمل', mode: 'light', free: false, bar: '#7a3b2a', identity: true, swatch: ['#fff3e6', '#fffcf6', '#c8641e', '#3a2516'] },
+  { id: 't-nature', name: 'الطبيعي', tagline: 'أخضر نباتي وعاجي وأوراق هادئة — قرب من الطبيعة', mode: 'light', free: false, bar: '#2f5a2c', identity: true, swatch: ['#f1f5e8', '#fffffa', '#3d7a3a', '#1f2d1c'] },
+  { id: 't-violet', name: 'البنفسجي', tagline: 'بنفسجي عميق ولمسات فضية ونجوم دقيقة — سكينة', mode: 'dark', free: false, bar: '#1b0f38', identity: true, swatch: ['#150c2a', '#3a2272', '#c9b6ff', '#f3eeff'] },
+  { id: 't-rose', name: 'الوردي', tagline: 'وردي هادئ وذهبي وردي — دفء وجمال', mode: 'light', free: false, bar: '#7a3549', identity: true, swatch: ['#fbeff1', '#fffcfd', '#b4536e', '#3a1f27'] },
+  { id: 't-evening', name: 'المساء', tagline: 'أزرق داكن وإضاءة الفوانيس — هدوء الليل', mode: 'dark', free: false, bar: '#0a1424', identity: true, swatch: ['#0a1424', '#1b2f4c', '#f0b45a', '#f4eedd'] },
   { id: 'qadr', name: 'ليلة القدر', tagline: 'سماء مرصّعة بالنجوم وهلال وقباب تتلألأ نوافذها', mode: 'dark', free: true, bar: '#070d22' },
   { id: 'andalus', name: 'قصر الحمراء', tagline: 'زليج أندلسي وأقواس مقرنصة بألوان الفيروز والطين', mode: 'light', free: true, bar: '#0f5a5c' },
   { id: 'desert', name: 'كثبان الذهب', tagline: 'غروب الصحراء وقافلة تمضي بين الكثبان', mode: 'dark', free: false, bar: '#3a1d2e' },
@@ -41,6 +56,9 @@ export const SKINS: Skin[] = [
   { id: 'live-geometry', name: 'الزخارف الدوّارة', tagline: 'نجوم هندسية ذهبية تدور وتتفتح كالنور', mode: 'dark', free: false, bar: '#050403', live: 'geometry', palette: 'royal' },
   { id: 'live-desert', name: 'قافلة الصحراء', tagline: 'كثبان تتحرك وقافلة تمضي ورمال تحملها الريح', mode: 'dark', free: false, bar: '#120d2e', live: 'desert', palette: 'desert' },
 ]
+
+/** الثيمات الفنية المرسومة (SkinScene) */
+export type ArtSkinId = 'qadr' | 'andalus' | 'desert' | 'ocean' | 'garden' | 'ramadan' | 'aurora' | 'royal'
 
 export const skinById = (id: string | undefined | null): Skin | null => SKINS.find((s) => s.id === id) ?? null
 

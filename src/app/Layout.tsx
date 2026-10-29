@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router-do
 import { WifiOff, ChevronRight, Search } from 'lucide-react'
 import { t } from '../i18n/strings'
 import { useSettings } from '../state/SettingsContext'
+import { ThemePreviewBar } from '../themes/ThemePreviewBar'
 import { FOOTER_LINE } from '../content/dedication'
 import { MiniPlayer } from '../components/MiniPlayer'
 import { useOnline, useToastMessage } from '../hooks'
@@ -104,6 +105,7 @@ export function Layout() {
           })}
         </nav>
       )}
+      <ThemePreviewBar />
       {toastMsg && <div className="toast" role="status">{toastMsg}</div>}
     </div>
   )
