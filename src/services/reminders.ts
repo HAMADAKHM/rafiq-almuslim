@@ -8,9 +8,10 @@ import { addDays, dateParts, dayKey } from '../lib/dates'
 import { toHijri, occasionsFor } from './calendar'
 import { plusActive } from '../billing/active'
 import { HISN_AUDIO } from '../content/hisnAudio'
-import { amountText, hisnChannel, TIMED_ADHKAR_SOUND, companionPool, dhikrBody, intervalId, intervalMinutes, pickForSlot, positionRoute, positionText, prayerEnds, PRAYER_END_NOTE, travelActive, type QuranPosition } from './companion'
+import { channelFlags, heardText, hisnClipChannel, SLOT_DEFS, voiceFor, type VoiceSlot } from './voiceSlots'
+import { amountText, hisnChannel, companionPool, dhikrBody, intervalId, intervalMinutes, pickForSlot, positionRoute, positionText, prayerEnds, PRAYER_END_NOTE, travelActive, type QuranPosition } from './companion'
 
-export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end'
+export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end' | 'wake' | 'after-prayer'
 
 export interface Reminder {
   /** معرّف رقمي ثابت لنفس التذكير في نفس اليوم (يمنع التكرار ويسمح بالاستبدال) */
@@ -41,7 +42,7 @@ export interface ScheduleContext {
   /** الأذكار التي أكملها المستخدم اليوم من التذكير الدوري: لا تُعاد عليه في اليوم نفسه */
   doneToday?: { date: string; ids: string[] } | null
   /** قنوات صوت الهاتف أو تسجيل المستخدم لإشعار الصباح والمساء (timedVoice.prepareVoiceChannels) */
-  voiceChannels?: Partial<Record<'morning' | 'evening', string>>
+  voiceChannels?: Partial<Record<VoiceSlot, string>>
 }
 
 /** التذكير الدوري يغطي 48 ساعة فقط ويُعاد عند كل فتح؛ والتذكيرات الأخرى لها الأولوية في حد الإشعارات */
@@ -52,10 +53,11 @@ export const MAX_SCHEDULED = 60
 /** أقصى عدد للتذكيرات الخاصة (رفيق بلس) */
 export const MAX_CUSTOM = 10
 
-const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end'>, { title: string; body: string }[]> = {
-  morning: [{ title: 'حان وقت أذكار الصباح 🌅', body: 'ابدأ يومك بذكر الله' }],
-  evening: [{ title: 'حان وقت أذكار المساء 🌇', body: 'حان وقت ذكر الله في المساء' }],
-  sleep: [{ title: 'حان وقت أذكار النوم 🌙', body: 'قبل أن تنام: أذكار النوم في دقيقتين' }],
+const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end' | 'after-prayer'>, { title: string; body: string }[]> = {
+  morning: [{ title: SLOT_DEFS.morning.title, body: SLOT_DEFS.morning.body }],
+  evening: [{ title: SLOT_DEFS.evening.title, body: SLOT_DEFS.evening.body }],
+  sleep: [{ title: SLOT_DEFS.sleep.title, body: SLOT_DEFS.sleep.body }],
+  wake: [{ title: SLOT_DEFS.wake.title, body: SLOT_DEFS.wake.body }],
   ayah: [
     { title: 'آية اليوم', body: 'آية اليوم بانتظارك في رفيق المسلم' },
     { title: 'آية اليوم', body: 'اقرأ آية اليوم وتدبّرها' },
@@ -114,7 +116,7 @@ export function inQuietHours(d: Date, tz: string, quiet: Settings['notifications
   return s <= e ? t >= s && t < e : t >= s || t < e
 }
 
-const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12, ramadan: 13, fasting: 14, 'dhikr-interval': 15, 'quran-time': 16, 'prayer-end': 17 }
+const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12, ramadan: 13, fasting: 14, 'dhikr-interval': 15, 'quran-time': 16, 'prayer-end': 17, wake: 18, 'after-prayer': 19 }
 const PRAYER_CODE: Record<PrayerKey, number> = { fajr: 1, dhuhr: 2, asr: 3, maghrib: 4, isha: 5 }
 
 function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, slot = 0): number {
@@ -122,17 +124,13 @@ function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, sl
   return ((day.y % 100) * 10000 + day.m * 100 + day.d) * 1000 + KIND_CODE[kind] * 10 + slot
 }
 
-/** أول ما يُسمع في إشعار الوقت (يطابق الصوت الفعلي: صوت الهاتف أو التسجيل الشخصي يقرأ ذكر الوقت نفسه) */
-export function timedHeard(kind: 'morning' | 'evening' | 'sleep', custom: boolean): string {
-  if (kind === 'morning') return '«أصبحنا وأصبح الملك لله…»'
-  if (kind === 'evening') return custom ? '«أمسينا وأمسى الملك لله…»' : '«بسم الله الذي لا يضر مع اسمه شيء…»'
-  return '«باسمك ربي وضعت جنبي…»'
-}
+/** تذكيرات الأذكار المسموعة */
+const ADHKAR_SLOT: Partial<Record<ReminderKind, VoiceSlot>> = { morning: 'morning', evening: 'evening', sleep: 'sleep', wake: 'wake' }
 
 const ROUTES: Record<ReminderKind, string> = {
   prayer: '/prayer', 'prayer-before': '/prayer', morning: '/adhkar-alert/morning', evening: '/adhkar-alert/evening', sleep: '/adhkar-alert/sleep',
   ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress', custom: '/', ramadan: '/ramadan', fasting: '/calendar',
-  'dhikr-interval': '/companion', 'quran-time': '/quran', 'prayer-end': '/prayer',
+  'dhikr-interval': '/companion', 'quran-time': '/quran', 'prayer-end': '/prayer', wake: SLOT_DEFS.wake.route, 'after-prayer': SLOT_DEFS.afterPrayer.route,
 }
 
 /**
@@ -154,6 +152,15 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
   const comp = settings.companion
   const plus = plusActive()
   const pool = plus && comp?.adhkar.enabled && !n.reduce ? companionPool(comp.adhkar.groups, comp.adhkar.voicedOnly !== false) : []
+  // تذكير الأذكار المسموع: صوت الإشعار جملة من الذكر نفسه، والنص يطابق ما يُسمع
+  const flags = channelFlags(n)
+  const voiced = (slot: VoiceSlot, msg: { title: string; body: string }) => {
+    const opt = n.adhkarVoice === false ? 'tone' : voiceFor(n, slot)
+    if (opt === 'tone') return { title: msg.title, body: msg.body }
+    const custom = opt === 'device' || opt === 'mine' ? ctx.voiceChannels?.[slot] : undefined
+    const heard = heardText(slot, opt, !!custom)
+    return { title: msg.title, body: `🔊 ${heard} — ${msg.body}`, channelId: custom ?? hisnClipChannel(SLOT_DEFS[slot].hisn, flags) }
+  }
 
   for (let i = 0; i < days; i++) {
     const day = dateParts(addDays(from, i), loc.tz)
@@ -168,16 +175,25 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
     }
     const timed: [ReminderKind, string | null][] = n.reduce
       ? [['wird', n.wird]]
-      : [['morning', n.morningAdhkar], ['evening', n.eveningAdhkar], ['sleep', n.sleepAdhkar], ['ayah', n.ayahOfDay], ['dhikr', n.dhikrOfDay], ['wird', n.wird], ['memorize', n.memorize], ['summary', n.dailySummary]]
+      : [['wake', n.wakeAdhkar ?? null], ['morning', n.morningAdhkar], ['evening', n.eveningAdhkar], ['sleep', n.sleepAdhkar], ['ayah', n.ayahOfDay], ['dhikr', n.dhikrOfDay], ['wird', n.wird], ['memorize', n.memorize], ['summary', n.dailySummary]]
+    const weekday = new Date(Date.UTC(day.y, day.m - 1, day.d, 12)).getUTCDay()
     for (const [kind, time] of timed) {
       if (!time) continue
+      const slot = ADHKAR_SLOT[kind]
+      // أيام الأسبوع المختارة لتذكير الأذكار (غير المحدد = كل الأيام)
+      const days = slot && slot !== 'afterPrayer' ? n.adhkarDays?.[slot] : undefined
+      if (days && days.length && !days.includes(weekday)) continue
       const msg = pick(MESSAGES[kind as keyof typeof MESSAGES], seed)
-      // أذكار الصباح والمساء والنوم: صوت الإشعار هو الذكر نفسه (تسجيل حصن المسلم، أو صوت الهاتف، أو تسجيل المستخدم)
-      const voiced = n.adhkarVoice !== false && (kind === 'morning' || kind === 'evening' || kind === 'sleep')
-      const custom = voiced && (kind === 'morning' || kind === 'evening') ? ctx.voiceChannels?.[kind] : undefined
-      const channelId = custom ?? (voiced ? hisnChannel(TIMED_ADHKAR_SOUND[kind as 'morning' | 'evening' | 'sleep']) : undefined)
-      const heard = voiced ? timedHeard(kind as 'morning' | 'evening' | 'sleep', !!custom) : ''
-      add({ id: makeId(day, kind), at: atLocalTime(day, time, loc.tz), kind, title: msg.title, body: heard ? `🔊 ${heard} — ${msg.body}` : msg.body, route: ROUTES[kind], ...(channelId ? { channelId } : {}) })
+      add({ id: makeId(day, kind), at: atLocalTime(day, time, loc.tz), kind, route: ROUTES[kind], ...(slot ? voiced(slot, msg) : { title: msg.title, body: msg.body }) })
+    }
+    // أذكار ما بعد الصلاة: بعد الأذان بدقائق للصلوات المختارة
+    const ap = n.afterPrayer
+    if (ap?.enabled && !n.reduce) {
+      const msg = { title: SLOT_DEFS.afterPrayer.title, body: SLOT_DEFS.afterPrayer.body }
+      for (const p of ap.prayers) {
+        if (!(p in PRAYER_CODE)) continue
+        add({ id: makeId(day, 'after-prayer', PRAYER_CODE[p]), at: new Date(times[p].getTime() + Math.max(1, Math.min(60, ap.minutes)) * 60_000), kind: 'after-prayer', prayer: p, route: ROUTES['after-prayer'], ...voiced('afterPrayer', { ...msg, title: `${msg.title} — ${PRAYER_LABELS[p]}` }) })
+      }
     }
     if (n.occasions && !n.reduce) {
       // تذكير مساء اليوم السابق بالمناسبة القادمة

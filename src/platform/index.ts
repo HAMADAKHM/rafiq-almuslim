@@ -123,10 +123,12 @@ async function ensureHisnChannels(ids: string[]) {
   const { LocalNotifications } = await import('@capacitor/local-notifications')
   for (const id of new Set(ids)) {
     if (hisnMade.has(id)) continue
-    const n = HISN_SOUND_NAME_RE.exec(id)?.[1]
-    if (!n) continue
+    const m = HISN_SOUND_NAME_RE.exec(id)
+    if (!m) continue
+    const [, n, flags] = m
     const clip = HISN_CLIPS[n]
-    await LocalNotifications.createChannel({ id, name: clip ? `${clip.label} — حصن المسلم` : `ذكر مسموع (${n}) — حصن المسلم`, description: clip ? `يُقرأ «${clip.text}» بتسجيل حصن المسلم عند وصول التذكير` : 'يُقرأ الذكر بتسجيل حصن المسلم عند وصول التذكير', sound: `hisn_${n}.mp3`, importance: 4, visibility: 1, vibration: true }).catch(() => {})
+    // اللاحقة: v/n للاهتزاز، و1/p لإظهار النص على شاشة القفل أو إخفائه
+    await LocalNotifications.createChannel({ id, name: clip ? `${clip.label} — حصن المسلم` : `ذكر مسموع (${n}) — حصن المسلم`, description: clip ? `يُقرأ «${clip.text}» بتسجيل حصن المسلم عند وصول التذكير` : 'يُقرأ الذكر بتسجيل حصن المسلم عند وصول التذكير', sound: `hisn_${n}.mp3`, importance: 4, visibility: flags[1] === 'p' ? 0 : 1, vibration: flags[0] === 'v' }).catch(() => {})
     hisnMade.add(id)
   }
 }

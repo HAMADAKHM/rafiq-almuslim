@@ -281,27 +281,35 @@ describe('قراءة الذكر في الإشعار (حصن المسلم)', () =
     const off = of(buildSchedule(withCompanion({ adhkar: { enabled: true, interval: 60, start: '09:00', end: '12:00', voice: false } }), from, 1), 'dhikr-interval')
     expect(off.every((r) => !r.channelId)).toBe(true)
   })
-  it('أذكار الصباح والمساء والنوم: صوت الإشعار ذكر مسموع', () => {
+  it('أذكار الصباح والمساء والنوم والاستيقاظ وما بعد الصلاة: صوت الإشعار ذكر مسموع قصير', () => {
     const d = mergeSettings(null).notifications
-    const s = withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', eveningAdhkar: '17:00', sleepAdhkar: '22:00' } })
+    const s = withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', eveningAdhkar: '17:00', sleepAdhkar: '22:00', wakeAdhkar: '05:30', afterPrayer: { enabled: true, minutes: 10, prayers: ['fajr', 'maghrib'] } } })
     const list = buildSchedule(s, new Date('2026-10-28T22:00:00Z'), 1)
-    // الصباح: مقطع «أصبحنا وأصبح الملك لله» من حصن المسلم، والنوم: «باسمك ربي وضعت جنبي»
     const m = of(list, 'morning')[0], e = of(list, 'evening')[0]
-    expect(m.channelId).toBe('rafiq-hisn-m77-v1')
+    expect(m.channelId).toBe('rafiq-hisn-m77s-v1')
     expect(m.title).toBe('حان وقت أذكار الصباح 🌅')
-    expect(m.body).toBe('🔊 «أصبحنا وأصبح الملك لله…» — ابدأ يومك بذكر الله')
+    expect(m.body).toBe('🔊 «أصبحنا وأصبح الملك لله، والحمد لله» — ابدأ يومك بذكر الله')
     expect(m.route).toBe('/adhkar-alert/morning')
-    expect(of(list, 'sleep')[0].channelId).toBe('rafiq-hisn-102-v1')
+    expect(of(list, 'sleep')[0].channelId).toBe('rafiq-hisn-s102-v1')
+    expect(of(list, 'wake')[0].channelId).toBe('rafiq-hisn-w1-v1')
+    expect(of(list, 'wake')[0].route).toBe('/adhkar-alert/waking')
     // المساء دون قناة صوت الهاتف: ذكر الصباح والمساء البشري، لا «أصبحنا»
-    expect(e.channelId).toBe('rafiq-hisn-86-v1')
+    expect(e.channelId).toBe('rafiq-hisn-e86-v1')
     expect(e.title).toBe('حان وقت أذكار المساء 🌇')
     expect(e.body).not.toMatch(/أصبحنا/)
-    expect(e.route).toBe('/adhkar-alert/evening')
+    // ما بعد الصلاة: بعد الأذان بـ10 دقائق للصلوات المختارة فقط
+    const ap = of(list, 'after-prayer')
+    expect(ap.map((r) => r.prayer).sort()).toEqual(['fajr', 'maghrib'])
+    expect(ap.every((r) => r.channelId === 'rafiq-hisn-p66-v1' && r.route === '/adhkar-alert/after-prayer')).toBe(true)
     // المساء بصوت الهاتف: قناته الخاصة، والنص يطابق ما يُسمع
     const withVoice = buildSchedule(s, new Date('2026-10-28T22:00:00Z'), 1, { voiceChannels: { evening: 'rafiq-dsound-evening-abc' } })
     expect(of(withVoice, 'evening')[0].channelId).toBe('rafiq-dsound-evening-abc')
-    expect(of(withVoice, 'evening')[0].body).toBe('🔊 «أمسينا وأمسى الملك لله…» — حان وقت ذكر الله في المساء')
-    expect(of(withVoice, 'morning')[0].channelId).toBe('rafiq-hisn-m77-v1')
+    expect(of(withVoice, 'evening')[0].body).toBe('🔊 «أمسينا وأمسى الملك لله، والحمد لله» — حان وقت ذكر الله في المساء')
+    // نغمة فقط، والاهتزاز وشاشة القفل في معرّف القناة
+    const tone = buildSchedule(withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', voices: { morning: 'tone' } } }), new Date('2026-10-28T22:00:00Z'), 1)
+    expect(of(tone, 'morning')[0].channelId).toBeUndefined()
+    const quiet = buildSchedule(withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', vibrate: false, lockText: false } }), new Date('2026-10-28T22:00:00Z'), 1)
+    expect(of(quiet, 'morning')[0].channelId).toBe('rafiq-hisn-m77s-np')
     const plain = buildSchedule(withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', adhkarVoice: false } }), new Date('2026-10-28T22:00:00Z'), 1)
     expect(of(plain, 'morning')[0].channelId).toBeUndefined()
     expect(of(plain, 'morning')[0].body).toBe('ابدأ يومك بذكر الله')
@@ -309,6 +317,14 @@ describe('قراءة الذكر في الإشعار (حصن المسلم)', () =
     const changed = buildSchedule(withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', eveningAdhkar: '18:15' } }), new Date('2026-10-28T22:00:00Z'), 1)
     expect(of(changed, 'morning')[0].at.getTime()).toBe(m.at.getTime())
     expect(of(changed, 'evening')[0].at.getTime() - e.at.getTime()).toBe(75 * 60_000)
+  })
+  it('أيام الأسبوع: التذكير في الأيام المختارة فقط', () => {
+    const d = mergeSettings(null).notifications
+    const from = new Date('2026-11-01T00:00:00Z') // الأحد
+    const all = of(buildSchedule(withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30' } }), from, 7), 'morning')
+    const fri = of(buildSchedule(withCompanion({}, { notifications: { ...d, enabled: true, morningAdhkar: '06:30', adhkarDays: { morning: [5] } } }), from, 7), 'morning')
+    expect(all.length).toBe(7)
+    expect(fri.length).toBe(1)
   })
   it('الافتراضي: الصباح بتسجيل حصن المسلم والمساء بصوت الهاتف', () => {
     const d = mergeSettings(null).notifications

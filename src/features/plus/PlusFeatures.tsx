@@ -158,6 +158,7 @@ export function PlusInsightsPage() {
   const { settings } = useSettings()
   const { data } = useQuran()
   const [ins, setIns] = useState<Insights | null>(null)
+  const [span, setSpan] = useState<84 | 182 | 364>(84)
   const [cs, setCs] = useState<ReturnType<typeof companionSummary> | null>(null)
   useEffect(() => {
     const today = dayKey(new Date(), settings.location?.tz)
@@ -170,8 +171,8 @@ export function PlusInsightsPage() {
   useEffect(() => {
     if (!data) return
     Promise.all([reading.all(), listening.all(), adhkarLog.all(), memo.logs()]).then(([read, listen, adhkar, m]) =>
-      setIns(computeInsights({ read, listen, adhkar, memo: m }, dayKey(new Date(), settings.location?.tz), data.meta.surahs.map((s) => s.count))))
-  }, [data, settings.location?.tz])
+      setIns(computeInsights({ read, listen, adhkar, memo: m }, dayKey(new Date(), settings.location?.tz), data.meta.surahs.map((s) => s.count), undefined, span)))
+  }, [data, settings.location?.tz, span])
   const catTitle = useMemo(() => Object.fromEntries(ADHKAR.map((c) => [c.id, c.title])), [])
   const maxTime = Math.max(1, ...(ins?.readingTimes.map((t) => t.count) ?? [1]))
   return (
@@ -204,8 +205,14 @@ export function PlusInsightsPage() {
               </section>
             )}
             <section className="card">
-              <h2>آخر ١٢ أسبوعًا</h2>
-              <div className="heat" aria-label="خريطة النشاط">{ins.heat.map((h) => <i key={h.date} className={'l' + h.level} title={h.date} />)}</div>
+              <div className="spread" style={{ flexWrap: 'wrap', gap: 6 }}>
+                <h2 style={{ margin: 0 }}>سجل النشاط</h2>
+                <div className="chips" role="radiogroup" aria-label="مدة السجل">
+                  {([[84, '١٢ أسبوعًا'], [182, '٦ أشهر'], [364, 'سنة كاملة']] as const).map(([d, l]) => <button key={d} role="radio" aria-checked={span === d} className={'chip' + (span === d ? ' active' : '')} onClick={() => setSpan(d)}>{l}</button>)}
+                </div>
+              </div>
+              <p className="small muted" style={{ margin: '4px 0' }}>{toArabicDigits(ins.heat.filter((h) => h.level > 0).length)} يومًا فيه نشاط من {toArabicDigits(ins.heat.length)}</p>
+              <div className={'heat' + (span > 84 ? ' heat-long' : '')} aria-label="خريطة النشاط">{ins.heat.map((h) => <i key={h.date} className={'l' + h.level} title={h.date} />)}</div>
             </section>
             <section className="card">
               <h2>الأذكار في آخر ٣٠ يومًا</h2>

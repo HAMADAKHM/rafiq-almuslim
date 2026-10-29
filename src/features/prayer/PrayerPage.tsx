@@ -38,6 +38,7 @@ function QiblaCard({ lat, lng, place }: { lat: number; lng: number; place: strin
 import { CityPicker } from '../../components/CityPicker'
 import { useNow } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
+import { MonthTimes } from './MonthTimes'
 import { METHODS, nextPrayer, PRAYER_LABELS, PRAYERS, upcomingDays, todayTimes } from '../../services/prayer'
 import { formatCountdown, formatGregorian, formatHijri, formatTime } from '../../lib/dates'
 import { cityLabel } from '../../services/cities'
@@ -170,6 +171,8 @@ export function PrayerPage() {
               </table>
             </div>
           </section>
+
+          <MonthTimes />
 
           <section className="card" style={{ gridColumn: '1 / -1' }}>
             <h2>طريقة الحساب</h2>

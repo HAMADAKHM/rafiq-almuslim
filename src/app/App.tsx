@@ -54,6 +54,12 @@ const CompanionDhikrPage = page(() => import('../features/companion/CompanionPag
 const DeceasedPage = page(() => import('../features/deceased/DeceasedPage'), 'DeceasedPage')
 const StoriesPage = page(() => import('../features/stories/StoriesPage'), 'StoriesPage')
 const StoryPlayerPage = page(() => import('../features/stories/StoryPlayer'), 'StoryPlayerPage')
+const FeaturesPage = page(() => import('../features/plus/FeaturesPage'), 'FeaturesPage')
+const TermsPage = page(() => import('../features/about/TermsPage'), 'TermsPage')
+const DateToolsPage = page(() => import('../features/datetools/DateToolsPage'), 'DateToolsPage')
+const BelovedPage = page(() => import('../features/beloved/BelovedPage'), 'BelovedPage')
+const KidsAdhkarPage = page(() => import('../features/kids/KidsAdhkarPage'), 'KidsAdhkarPage')
+const BookletPage = page(() => import('../features/booklet/BookletPage'), 'BookletPage')
 
 export function AppRoutes() {
   return (
@@ -92,6 +98,12 @@ export function AppRoutes() {
         <Route path="assistant" element={<AssistantPage />} />
         <Route path="adhkar-alert/:category" element={<AdhkarAlertPage />} />
         <Route path="plus" element={<PlusPage />} />
+        <Route path="plus/features" element={<FeaturesPage />} />
+        <Route path="terms" element={<TermsPage />} />
+        <Route path="date-tools" element={<DateToolsPage />} />
+        <Route path="beloved" element={<BelovedPage />} />
+        <Route path="kids-adhkar" element={<KidsAdhkarPage />} />
+        <Route path="booklet" element={<BookletPage />} />
         <Route path="plus/themes" element={<PlusThemesPage />} />
         <Route path="plus/reminders" element={<PlusRemindersPage />} />
         <Route path="plus/insights" element={<PlusInsightsPage />} />

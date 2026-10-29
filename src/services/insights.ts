@@ -9,7 +9,7 @@ export interface Insights {
   activeDays: number
   currentStreak: number
   longestStreak: number
-  /** آخر 12 أسبوعًا (84 يومًا) من الأقدم للأحدث: مستوى 0–3 */
+  /** آخر heatDays يومًا (افتراضيًا 84) من الأقدم للأحدث: مستوى 0–3 */
   heat: { date: string; level: 0 | 1 | 2 | 3 }[]
   /** آيات مختلفة قُرئت مرة على الأقل */
   uniqueAyat: number
@@ -36,6 +36,8 @@ export function computeInsights(
   today: string,
   surahCounts: number[],
   hourOf: (at: number) => number = (at) => new Date(at).getHours(),
+  /** أيام خريطة النشاط: 84 (12 أسبوعًا) أو حتى 364 (سنة كاملة) */
+  heatDays = 84,
 ): Insights {
   const perDay = new Map<string, number>()
   const bump = (d: string) => perDay.set(d, (perDay.get(d) ?? 0) + 1)
@@ -52,8 +54,9 @@ export function computeInsights(
   let longestStreak = 0, run = 0, prev = ''
   for (const k of days) { run = prev && shiftDayKey(prev, 1) === k ? run + 1 : 1; longestStreak = Math.max(longestStreak, run); prev = k }
 
-  const heat = Array.from({ length: 84 }, (_, i) => {
-    const date = shiftDayKey(today, i - 83)
+  const span = Math.max(7, Math.min(371, Math.round(heatDays)))
+  const heat = Array.from({ length: span }, (_, i) => {
+    const date = shiftDayKey(today, i - (span - 1))
     const n = perDay.get(date) ?? 0
     return { date, level: (n === 0 ? 0 : n < 3 ? 1 : n < 6 ? 2 : 3) as 0 | 1 | 2 | 3 }
   })

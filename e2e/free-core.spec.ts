@@ -13,7 +13,7 @@ const FREE_ROUTES = [
   '/', '/quran', '/quran/1?flow=1', '/quran/2/info', '/mushaf/1', '/adhkar', '/adhkar/morning', '/adhkar/evening', '/duas', '/duas/parents',
   '/hadith', '/listen', '/prayer', '/qibla', '/tasbih', '/wird', '/memorize', '/my-adhkar', '/adhkar-alert/morning', '/learn', '/reminders',
   '/calendar', '/progress', '/journey', '/search', '/settings', '/about', '/more', '/studio', '/mosques', '/assistant', '/for-the-deceased',
-  '/adhkar-audio',
+  '/adhkar-audio', '/date-tools', '/kids-adhkar', '/plus/features', '/terms',
 ]
 
 /** الصفحات الوحيدة التي يُسمح فيها بإعلان (شريطي) لغير المشتركين — بموافقة صاحب التطبيق */

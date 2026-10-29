@@ -45,13 +45,26 @@ export interface NotificationSettings {
   adhkarScreen: boolean
   /** صوت إشعار أذكار الصباح والمساء والنوم: ذكر بتسجيل «حصن المسلم» بدل النغمة */
   adhkarVoice: boolean
-  /** من يقرأ الذكر في إشعار الصباح والمساء: تسجيل حصن المسلم، أو صوت الهاتف العربي، أو تسجيلك */
+  /** (قديم، يُقرأ للترحيل) من يقرأ الذكر في إشعار الصباح والمساء */
   morningVoice?: TimedVoice
   eveningVoice?: TimedVoice
+  /** صوت كل تذكير أذكار: hisn أو device أو mine أو tone (نغمة عادية) */
+  voices?: Partial<Record<'morning' | 'evening' | 'sleep' | 'wake' | 'afterPrayer', VoiceOpt>>
+  /** أذكار الاستيقاظ (وقت يومي) */
+  wakeAdhkar?: string | null
+  /** أذكار ما بعد الصلاة: بعد الأذان بدقائق، للصلوات المختارة */
+  afterPrayer?: { enabled: boolean; minutes: number; prayers: PrayerKey[] }
+  /** أيام الأسبوع لتذكيرات الأذكار (0 الأحد … 6 السبت)؛ غير المحدد = كل الأيام */
+  adhkarDays?: Partial<Record<'morning' | 'evening' | 'sleep' | 'wake', number[]>>
+  /** اهتزاز إشعارات الأذكار المسموعة */
+  vibrate?: boolean
+  /** إظهار نص الذكر على شاشة القفل */
+  lockText?: boolean
 }
 
 /** hisn = تسجيل بشري من حصن المسلم، device = نطق الذكر بمحرك الكلام العربي في الهاتف، mine = تسجيل أضافه المستخدم */
 export type TimedVoice = 'hisn' | 'device' | 'mine'
+export type VoiceOpt = TimedVoice | 'tone'
 
 /** طريقة العرض: متتابعة (آية بآية)، صفحات المصحف، أو التركيز (آية واحدة في الشاشة) */
 export type ReaderMode = 'flow' | 'mushaf' | 'focus'
@@ -115,6 +128,8 @@ export interface Settings {
   plusPalette: string
   /** رفيق بلس: تذكيرات خاصة يكتبها المستخدم (تُجدول فقط مع اشتراك ساري) */
   customReminders: CustomReminder[]
+  /** الأقسام الثلاثة في وسط الشريط السفلي */
+  tabs?: string[]
   /** رفيق بلس — وضع رمضان: تذكير السحور قبل الفجر بدقائق، والإفطار قبل المغرب بدقائق (0 = بلا تذكير)، والإمساك الاحتياطي */
   ramadan: { suhoorMinutes: number; iftarMinutes: number; imsakMinutes: number }
   /** رفيق بلس — تذكيرات الصيام (الليلة السابقة): الأيام البيض، والاثنين والخميس، وعرفة، وعاشوراء، وست شوال */
@@ -234,6 +249,12 @@ export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   // فيُنطق بصوت الهاتف العربي (ويعود إلى «بسم الله الذي لا يضر…» البشري إن لم يتوفر صوت عربي)
   morningVoice: 'hisn',
   eveningVoice: 'device',
+  voices: {},
+  wakeAdhkar: null,
+  afterPrayer: { enabled: false, minutes: 10, prayers: ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] },
+  adhkarDays: {},
+  vibrate: true,
+  lockText: true,
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -309,6 +330,7 @@ export function mergeSettings(saved: Partial<Settings> | null | undefined): Sett
       ...s.notifications,
       perPrayer: { ...DEFAULT_NOTIFICATIONS.perPrayer, ...s.notifications?.perPrayer },
       quiet: { ...DEFAULT_NOTIFICATIONS.quiet, ...s.notifications?.quiet },
+      afterPrayer: { ...DEFAULT_NOTIFICATIONS.afterPrayer!, ...s.notifications?.afterPrayer },
     },
     ramadan: { ...DEFAULT_SETTINGS.ramadan, ...s.ramadan },
     fasting: { ...DEFAULT_SETTINGS.fasting, ...s.fasting },

@@ -13,9 +13,9 @@ import type { DhikrItem } from '../content/types'
 import type { QuranData } from '../services/quran'
 
 /** أقسام التنبيه ووقت كل منها في الإعدادات */
-export const ALERT_CATS = ['morning', 'evening', 'sleep'] as const
+export const ALERT_CATS = ['morning', 'evening', 'sleep', 'waking', 'after-prayer'] as const
 export type AlertCat = (typeof ALERT_CATS)[number]
-const TONE: Record<AlertCat, PaintTone> = { morning: 'dawn', evening: 'sunset', sleep: 'night' }
+const TONE: Record<AlertCat, PaintTone> = { morning: 'dawn', evening: 'sunset', sleep: 'night', waking: 'dawn', 'after-prayer': 'day' }
 
 function quranText(data: QuranData, it: DhikrItem): string {
   return (it.quran ?? []).flatMap((r) => Array.from({ length: r.to - r.from + 1 }, (_, i) => data.verses[r.surah - 1][r.from + i - 1])).join(' ۝ ')
@@ -153,7 +153,7 @@ export function AdhkarAlarm() {
     const tz = settings.location?.tz
     const day = dayKey(now, tz)
     const hm = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(now)
-    const times: Record<AlertCat, string | null> = { morning: n.morningAdhkar, evening: n.eveningAdhkar, sleep: n.sleepAdhkar }
+    const times: Record<AlertCat, string | null> = { morning: n.morningAdhkar, evening: n.eveningAdhkar, sleep: n.sleepAdhkar, waking: n.wakeAdhkar ?? null, 'after-prayer': null }
     const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5))
     for (const c of ALERT_CATS) {
       const t = times[c]

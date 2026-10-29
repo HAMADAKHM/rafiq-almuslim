@@ -168,10 +168,4 @@ export function travelActive(t: { enabled: boolean; until: number | null } | und
 /** قناة Android التي صوتها تسجيل الذكر (res/raw/hisn_N.mp3) */
 export const hisnChannel = (n: number | string) => `rafiq-hisn-${n}-v1`
 export const HISN_SOUND_PREFIX = 'rafiq-hisn-'
-/**
- * تسجيلات حصن المسلم لإشعارات الأذكار المحددة الوقت:
- * الصباح: مقطع «أصبحنا وأصبح الملك لله…» (m77)، والمساء: «بسم الله الذي لا يضر…» (يُقال صباحًا ومساءً؛
- * إذ لا يوجد تسجيل لـ«أمسينا» — يُختار له صوت الهاتف أو تسجيل المستخدم)، والنوم: «باسمك ربي وضعت جنبي».
- */
-export const TIMED_ADHKAR_SOUND: Record<'morning' | 'evening' | 'sleep', number | string> = { morning: 'm77', evening: 86, sleep: 102 }
-export const HISN_SOUND_NAME_RE = /^rafiq-hisn-([0-9a-z]+)-v1$/
+export const HISN_SOUND_NAME_RE = /^rafiq-hisn-([0-9a-z]+)-([vn][1p])$/

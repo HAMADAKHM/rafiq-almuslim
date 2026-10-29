@@ -8,7 +8,7 @@ import { MiniPlayer } from '../components/MiniPlayer'
 import { useOnline, useToastMessage } from '../hooks'
 import { startReminderLoop } from '../services/notifications'
 import { LogoMark } from '../components/Art'
-import { NAV, TABS } from './nav'
+import { NAV, tabsFor } from './nav'
 import { Splash } from './Splash'
 import { Spinner } from '../components/Common'
 import { AdhanAlarm } from '../components/AdhanAlarm'
@@ -93,7 +93,7 @@ export function Layout() {
       {!isReader && <MiniPlayer />}
       {!isReader && (
         <nav className="tabbar" aria-label="التنقل السفلي">
-          {TABS.map(({ to, icon: Icon, short, match }) => {
+          {tabsFor(settings.tabs).map(({ to, icon: Icon, short, match }) => {
             const active = match.test(loc.pathname)
             return (
               <Link key={to} to={to} className={'tab-item' + (active ? ' active' : '')} aria-current={active ? 'page' : undefined}>

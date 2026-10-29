@@ -396,3 +396,67 @@ ul.plain { list-style: none; padding: 0; margin: 0; }
 .companion-rows li > svg { flex: none; margin-top: 0.3rem; color: var(--primary); }
 .companion-goal .progress { margin-top: 0.3rem; }
 .spin-dot { display: inline-block; width: 0.7em; height: 0.7em; border-radius: 50%; border: 2px solid currentColor; border-inline-end-color: transparent; animation: spin 0.9s linear infinite; vertical-align: -0.05em; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.data-table th, .data-table td { padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--border); text-align: start; white-space: nowrap; }
+.data-table th { color: var(--muted); font-weight: 600; }
+.convert-result { margin: 0; font-size: 1.05rem; line-height: 1.8; }
+
+/* ---------- «مزايا رفيق المسلم بلس» ---------- */
+.features-page { padding-bottom: 5.5rem; }
+.fx-hero { position: relative; text-align: center; color: #f4ead2; padding: 2.2rem 1rem 1.6rem; border-radius: 0 0 28px 28px; margin: -1rem -1rem 1rem;
+  background: radial-gradient(120% 90% at 50% 0%, #1f7f86 0%, #0d4d4c 45%, #082a27 100%); box-shadow: 0 10px 30px rgba(0,0,0,0.18); overflow: hidden; }
+.fx-hero::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(60deg, rgba(226,194,126,0.05) 0 2px, transparent 2px 22px); pointer-events: none; }
+.fx-hero h1 { margin: 0.4rem 0 0.2rem; font-family: var(--font-classic); font-size: 2rem; color: #fff; }
+.fx-sub { margin: 0; font-weight: 700; color: #E9CF8E; }
+.fx-note { margin: 0.5rem auto 0; max-width: 34rem; font-size: 0.92rem; color: rgba(244,234,210,0.85); line-height: 1.8; }
+.fx-crown { display: inline-flex; width: 64px; height: 64px; align-items: center; justify-content: center; border-radius: 20px; color: #E2C27E; background: rgba(255,255,255,0.1); border: 1px solid rgba(226,194,126,0.45); animation: fx-glow 3.5s ease-in-out infinite; }
+@keyframes fx-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(226,194,126,0.0); } 50% { box-shadow: 0 0 22px 2px rgba(226,194,126,0.35); } }
+.fx-close { position: absolute; top: 0.8rem; inset-inline-end: 0.8rem; color: #fff; z-index: 1; background: rgba(255,255,255,0.12) !important; border: 1px solid rgba(255,255,255,0.25) !important; border-radius: 50% !important; width: 38px; height: 38px; }
+.fx-stats { display: flex; justify-content: center; gap: 0.6rem; margin-top: 0.9rem; flex-wrap: wrap; }
+.fx-stats span { background: rgba(255,255,255,0.09); border: 1px solid rgba(255,255,255,0.14); border-radius: 999px; padding: 0.25rem 0.8rem; font-size: 0.85rem; }
+.fx-stats b { color: #E9CF8E; }
+.fx-offer { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.2rem; }
+.fx-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; }
+.fx-plan { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.9rem; border-radius: 18px; background: linear-gradient(135deg, #0d4d4c, #1d8a99); color: #fff; text-decoration: none; font-weight: 700; box-shadow: 0 6px 16px rgba(13,77,76,0.25); }
+.fx-plan b { font-size: 1.35rem; color: #E9CF8E; }
+.fx-active { margin: 0; padding: 0.8rem 1rem; border-radius: 16px; background: rgba(46,158,107,0.12); color: var(--primary); font-weight: 700; display: flex; gap: 0.4rem; align-items: center; justify-content: center; }
+.fx-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; }
+.fx-links .chip { text-decoration: none; }
+.fx-group h2 { font-size: 1.05rem; margin: 1.2rem 0.3rem 0.5rem; color: var(--muted); }
+.fx-list { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+.fx-card { display: flex; gap: 0.8rem; align-items: flex-start; padding: 0.9rem 1rem; color: inherit; text-decoration: none; border-bottom: 1px solid var(--border); transition: background 0.15s ease; }
+.fx-card:last-child { border-bottom: 0; }
+.fx-card:active, .fx-card:hover { background: rgba(29,138,153,0.06); }
+.fx-icon { flex: none; width: 46px; height: 46px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; }
+.fx-body { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.fx-title { font-weight: 700; font-size: 1.05rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.fx-text { color: var(--muted); font-size: 0.92rem; line-height: 1.7; }
+.fx-badge { font-size: 0.7rem; font-weight: 700; border-radius: 999px; padding: 0.05rem 0.55rem; }
+.fx-badge.plus { background: linear-gradient(135deg, #E2C27E, #c99a2e); color: #2a2208; }
+.fx-badge.free { background: rgba(46,158,107,0.14); color: #2e9e6b; }
+.fx-search { position: fixed; bottom: calc(env(safe-area-inset-bottom, 0px) + 72px); left: 16px; right: 16px; max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1rem; border-radius: 999px;
+  background: rgba(140,140,140,0.82); color: #fff; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); z-index: 20; }
+.fx-search input { flex: 1; min-width: 0; border: 0; background: transparent; color: #fff; font: inherit; outline: none; }
+.fx-search input::placeholder { color: rgba(255,255,255,0.85); }
+.fx-search .icon-btn { color: #fff; }
+
+/* ---------- أذكار الصغار ---------- */
+.kids { max-width: 560px; margin: 0 auto; }
+.kids-card { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 1.6rem 1.2rem; border: 0; border-radius: 28px; cursor: pointer; color: #fff; font: inherit;
+  background: linear-gradient(160deg, var(--kid), color-mix(in srgb, var(--kid) 65%, #000)); box-shadow: 0 12px 26px color-mix(in srgb, var(--kid) 40%, transparent); animation: kids-in 0.35s ease; }
+.kids-card:active { transform: scale(0.98); }
+@keyframes kids-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+.kids-emoji { font-size: 4rem; line-height: 1; }
+.kids-when { font-weight: 700; font-size: 1.15rem; background: rgba(255,255,255,0.2); padding: 0.2rem 0.9rem; border-radius: 999px; }
+.kids-text { font-family: var(--font-classic); font-size: 2rem; line-height: 1.9; text-align: center; }
+.kids-stars { display: flex; gap: 0.25rem; flex-wrap: wrap; justify-content: center; font-size: 1.6rem; }
+.kids-stars span { color: rgba(255,255,255,0.35); }
+.kids-stars span.on { color: #ffe27a; text-shadow: 0 0 10px rgba(255,226,122,0.7); }
+.kids-nav { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; margin-top: 0.8rem; }
+.kids-nav .btn { min-height: 52px; font-size: 1.05rem; }
+.kids-dots { display: flex; justify-content: center; gap: 5px; margin-top: 0.8rem; flex-wrap: wrap; }
+.kids-dots span { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+.kids-dots span.on { background: var(--kid); width: 18px; border-radius: 4px; }
+.prayer-table tr.is-today td { background: rgba(226,194,126,0.22); font-weight: 700; }
+.plus-all-features { margin: 0.5rem 0 1rem; background: linear-gradient(135deg, #0d4d4c, #1d8a99); color: #fff; font-weight: 700; }
+.heat.heat-long { grid-template-rows: repeat(7, 8px); grid-auto-columns: 8px; gap: 2px; }

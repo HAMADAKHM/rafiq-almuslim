@@ -35,6 +35,8 @@ public class DhikrSoundPlugin extends Plugin {
         String ext = call.getString("ext", "wav");
         String name = call.getString("name", "ذكر مسموع");
         String text = call.getString("text", "");
+        boolean vibrate = Boolean.TRUE.equals(call.getBoolean("vibrate", true));
+        boolean hidden = Boolean.TRUE.equals(call.getBoolean("hidden", false));
         if (slot == null || sig == null || data == null || !slot.matches("[a-z]{1,16}") || !sig.matches("[a-z0-9]{1,16}") || !ext.matches("[a-z0-9]{1,5}")) {
             call.reject("invalid arguments");
             return;
@@ -64,8 +66,9 @@ public class DhikrSoundPlugin extends Plugin {
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build());
-            ch.enableVibration(true);
-            ch.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
+            ch.enableVibration(vibrate);
+            // إظهار نص الذكر على شاشة القفل أو إخفاؤه (اختيار المستخدم)
+            ch.setLockscreenVisibility(hidden ? android.app.Notification.VISIBILITY_PRIVATE : android.app.Notification.VISIBILITY_PUBLIC);
             nm.createNotificationChannel(ch);
             JSObject r = new JSObject();
             r.put("channelId", channelId);

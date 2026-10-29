@@ -1,0 +1,116 @@
+// النسخة الاحترافية: صفحة المزايا، والأذكار المسموعة، وتحويل التاريخ، وأذكار الصغار، وأذكار الأحبة والكتيّب،
+// ومواقيت الشهر PDF، والشريط السفلي، والسجل حتى سنة
+import { test, expect, type Page } from '@playwright/test'
+
+test.use({ serviceWorkers: 'block' })
+
+async function city(page: Page) {
+  await page.goto('/prayer')
+  await page.getByLabel('اسم المدينة').fill('نابلس')
+  await page.getByRole('button', { name: /نابلس/ }).first().click()
+  await expect(page.getByText(/تم حفظ الموقع/)).toBeVisible()
+}
+async function subscribe(page: Page) {
+  await page.goto('/plus')
+  await page.getByRole('button', { name: /اشترك بـ/ }).click()
+  await expect(page.getByRole('status')).toContainText('تم تفعيل')
+}
+
+test('صفحة المزايا: تصنيفات، وبحث فوري، وكل بطاقة تفتح ميزتها، والمجاني مميز', async ({ page }) => {
+  await page.goto('/plus/features')
+  await expect(page.getByRole('heading', { name: 'رفيق المسلم بلس' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'الأذكار والعبادات' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /القرآن والمصحف.*مجاني/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'الشروط' })).toBeVisible()
+  await page.getByLabel('ابحث عن ميزة').fill('الصغار')
+  await expect(page.locator('.fx-card')).toHaveCount(1)
+  await page.locator('.fx-card').first().click()
+  await expect(page).toHaveURL(/\/kids-adhkar$/)
+  await expect(page.locator('.kids-when')).toHaveText('عندما أستيقظ')
+  await page.getByRole('button', { name: 'التالي' }).click()
+  await expect(page.locator('.kids-when')).toHaveText('عندما ألبس ثوبي')
+  await page.locator('.kids-card').click()
+  await expect(page.locator('.kids-stars .on')).toHaveCount(1)
+  expect(await page.locator('[data-ad-slot]').count()).toBe(0)
+})
+
+test('الأذكار المسموعة: لكل تذكير وقته وأيامه وصوته، ونص المساء يطابق ما يُسمع', async ({ page }) => {
+  await page.goto('/reminders')
+  const sec = page.getByRole('region', { name: 'أذكار مسموعة' })
+  await expect(sec).toBeVisible()
+  const evening = sec.getByLabel('أذكار المساء', { exact: true })
+  await sec.getByLabel('تذكير أذكار المساء').check()
+  await expect(evening.getByText(/أمسينا وأمسى الملك لله/)).toBeVisible()
+  await evening.getByRole('radio', { name: /حصن المسلم: بسم الله الذي لا يضر/ }).click()
+  await expect(evening.getByText(/لا يوجد في حصن المسلم تسجيل لـ«أمسينا/)).toBeVisible()
+  await sec.getByLabel('تذكير أذكار الاستيقاظ').check()
+  await expect(sec.getByLabel('وقت أذكار الاستيقاظ')).toHaveValue('05:45')
+  await sec.getByLabel('تذكير أذكار ما بعد الصلاة').check()
+  await expect(sec.getByRole('button', { name: 'المغرب' })).toBeVisible()
+  await sec.getByRole('button', { name: /إعادة ضبط تذكيرات الأذكار/ }).click()
+  await expect(sec.getByLabel('تذكير أذكار الاستيقاظ')).not.toBeChecked()
+})
+
+test('تحويل التاريخ ومواعيد رمضان والعيدين', async ({ page }) => {
+  await page.goto('/date-tools')
+  await page.getByLabel('التاريخ الميلادي').fill('2025-03-30')
+  await expect(page.getByRole('region', { name: 'من الميلادي إلى الهجري' }).getByRole('status')).toContainText('شوال')
+  await expect(page.locator('.data-table tbody tr')).toHaveCount(10)
+  await expect(page.getByText(/قد تختلف يومًا أو يومين بحسب رؤية الهلال/)).toBeVisible()
+})
+
+test('مواقيت الشهر: جدول كامل وتصدير PDF', async ({ page }) => {
+  await city(page)
+  const sec = page.getByRole('region', { name: 'مواقيت الشهر' })
+  expect(await sec.locator('tbody tr').count()).toBeGreaterThanOrEqual(28)
+  await sec.getByRole('radio', { name: 'هجري' }).click()
+  expect(await sec.locator('tbody tr').count()).toBeGreaterThanOrEqual(29)
+  const download = page.waitForEvent('download')
+  await sec.getByRole('button', { name: /تصدير الشهر PDF/ }).click()
+  const d = await download
+  expect(d.suggestedFilename()).toMatch(/\.pdf$/)
+  const path = await d.path()
+  const fs = await import('node:fs')
+  const head = fs.readFileSync(path!).subarray(0, 8).toString('latin1')
+  expect(head).toBe('%PDF-1.4')
+})
+
+test('أذكار الأحبة والكتيّب: مقفلان دون اشتراك، ويعملان معه', async ({ page }) => {
+  await page.goto('/beloved')
+  await expect(page.locator('[data-plus-lock="beloved"]')).toBeVisible()
+  await page.goto('/booklet')
+  await expect(page.locator('[data-plus-lock="booklet"]')).toBeVisible()
+  await subscribe(page)
+  await page.goto('/beloved')
+  await page.getByLabel('الاسم').fill('أمي')
+  await page.getByRole('radio', { name: 'الوالدان' }).click()
+  await page.getByRole('button', { name: /إنشاء الملف/ }).click()
+  await expect(page.getByRole('heading', { name: /أمي/ })).toBeVisible()
+  await expect(page.getByText('سورة الإسراء 24')).toBeVisible()
+  await page.getByLabel('دعاء جديد').fill('اللهم احفظ أمي وبارك في عمرها')
+  await page.getByRole('button', { name: 'إضافة' }).click()
+  await expect(page.getByText('اللهم احفظ أمي وبارك في عمرها')).toBeVisible()
+  await page.reload()
+  await expect(page.getByText('اللهم احفظ أمي وبارك في عمرها')).toBeVisible()
+  const dl = page.waitForEvent('download')
+  await page.getByRole('button', { name: /ملف PDF للمشاركة/ }).click()
+  expect((await dl).suggestedFilename()).toMatch(/\.pdf$/)
+  await page.goto('/booklet')
+  const dl2 = page.waitForEvent('download')
+  await page.getByRole('button', { name: /إنشاء الكتيّب PDF/ }).click()
+  expect((await dl2).suggestedFilename()).toMatch(/^kutayyib-.*\.pdf$/)
+})
+
+test('الشريط السفلي قابل للتخصيص، والسجل حتى سنة', async ({ page }) => {
+  await page.setViewportSize({ width: 400, height: 860 })
+  await page.goto('/settings#tabs')
+  const sec = page.getByRole('region', { name: 'الشريط السفلي' })
+  await sec.getByRole('button', { name: /المسبحة/ }).click()
+  const bar = page.getByRole('navigation', { name: 'التنقل السفلي' })
+  await expect(bar.getByRole('link', { name: 'المسبحة' })).toBeVisible()
+  await expect(bar.getByRole('link', { name: 'القرآن' })).toHaveCount(0)
+  await subscribe(page)
+  await page.goto('/plus/insights')
+  await page.getByRole('radio', { name: 'سنة كاملة' }).click()
+  await expect(page.locator('.heat i')).toHaveCount(364)
+})

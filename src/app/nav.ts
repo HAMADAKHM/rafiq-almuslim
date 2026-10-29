@@ -1,6 +1,6 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone,
+  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
@@ -8,7 +8,10 @@ export type NavItem = { to: string; key: StringKey; icon: typeof House }
 
 export const NAV: { group: StringKey; items: NavItem[] }[] = [
   { group: 'groupPlus', items: [
+    { to: '/plus/features', key: 'plusFeatures', icon: Crown },
     { to: '/plus', key: 'plus', icon: Gem },
+    { to: '/beloved', key: 'beloved', icon: Users },
+    { to: '/booklet', key: 'booklet', icon: BookMarked },
     { to: '/companion', key: 'companion', icon: BellRing },
     { to: '/tv-remote', key: 'tvRemote', icon: MonitorSmartphone },
     { to: '/stories', key: 'stories', icon: BookOpenText },
@@ -43,6 +46,8 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
     { to: '/tasbih', key: 'tasbih', icon: CircleDot },
     { to: '/my-adhkar', key: 'myAdhkar', icon: PenLine },
     { to: '/calendar', key: 'calendar', icon: CalendarDays },
+    { to: '/date-tools', key: 'dateTools', icon: ArrowLeftRight },
+    { to: '/kids-adhkar', key: 'kidsAdhkar', icon: Baby },
   ] },
   { group: 'groupMore', items: [
     { to: '/progress', key: 'progress', icon: ChartColumn },
@@ -59,10 +64,30 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
 export const TABS: (NavItem & { short: string; match: RegExp })[] = [
   { to: '/', key: 'home', icon: House, short: 'الرئيسية', match: /^\/$/ },
   { to: '/quran', key: 'quran', icon: BookOpen, short: 'القرآن', match: /^\/(quran|mushaf|memorize|listen|learn|stories|studio)/ },
-  { to: '/prayer', key: 'prayer', icon: Clock, short: 'المواقيت', match: /^\/(prayer|qibla|calendar|mosques)/ },
-  { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|hadith|tasbih|my-adhkar|for-the-deceased)/ },
-  { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|assistant|search|reminders|settings|plus|weather|ramadan|about)/ },
+  { to: '/prayer', key: 'prayer', icon: Clock, short: 'المواقيت', match: /^\/(prayer|qibla|calendar|mosques|date-tools)/ },
+  { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|hadith|tasbih|my-adhkar|for-the-deceased|kids-adhkar|beloved|booklet)/ },
+  { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|assistant|search|reminders|settings|plus|weather|ramadan|about|terms)/ },
 ]
+
+/** أقسام يمكن وضعها في وسط الشريط السفلي (الرئيسية أولًا و«المزيد» آخرًا ثابتان) */
+export const TAB_CHOICES: (NavItem & { short: string; match: RegExp })[] = [
+  TABS[1], TABS[2], TABS[3],
+  { to: '/duas', key: 'duas', icon: HandHeart, short: 'الأدعية', match: /^\/duas/ },
+  { to: '/tasbih', key: 'tasbih', icon: CircleDot, short: 'المسبحة', match: /^\/tasbih/ },
+  { to: '/qibla', key: 'qibla', icon: Compass, short: 'القبلة', match: /^\/qibla/ },
+  { to: '/wird', key: 'wird', icon: CalendarCheck, short: 'الختمة', match: /^\/wird/ },
+  { to: '/listen', key: 'listen', icon: Headphones, short: 'الاستماع', match: /^\/listen/ },
+  { to: '/calendar', key: 'calendar', icon: CalendarDays, short: 'التقويم', match: /^\/(calendar|date-tools)/ },
+  { to: '/plus/features', key: 'plusFeatures', icon: Crown, short: 'بلس', match: /^\/plus\/features/ },
+]
+export const DEFAULT_TABS = ['/quran', '/prayer', '/adhkar']
+
+/** الشريط السفلي بحسب اختيار المستخدم: ثلاثة أقسام في الوسط */
+export function tabsFor(chosen: string[] | undefined) {
+  const mid = (chosen && chosen.length === 3 ? chosen : DEFAULT_TABS).map((to) => TAB_CHOICES.find((t) => t.to === to)).filter((t): t is (typeof TAB_CHOICES)[number] => !!t)
+  const list = mid.length === 3 ? mid : DEFAULT_TABS.map((to) => TAB_CHOICES.find((t) => t.to === to)!)
+  return [TABS[0], ...list, TABS[4]]
+}
 
 /** بيانات الاختصارات (العنوان القصير والأيقونة) لكل مسار يمكن وضعه في الوصول السريع */
 export const LINK_META: Record<string, { label: string; icon: typeof House }> = {

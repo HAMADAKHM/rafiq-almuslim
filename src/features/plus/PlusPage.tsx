@@ -58,6 +58,8 @@ export function PlusPage() {
         )}
       </section>
 
+      <Link to="/plus/features" className="btn btn-block plus-all-features">تصفح القائمة الكاملة للمزايا</Link>
+
       <section className="card" aria-label="مزايا رفيق بلس">
         <h2>المزايا</h2>
         <ul className="plus-benefits">

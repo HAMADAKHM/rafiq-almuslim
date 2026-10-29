@@ -66,3 +66,46 @@ export function upcomingOccasions(from: Date, offsetDays = 0, limit = 4): { date
   }
   return out.slice(0, limit)
 }
+
+/** طول السنة القمرية والشهر بالأيام (تقريب يكفي لنقطة البدء في البحث) */
+const HIJRI_YEAR = 354.36667
+const HIJRI_MONTH = 29.530589
+/** 1 محرم 1 هـ ≈ 16 يوليو 622م */
+const HIJRI_EPOCH = Date.UTC(622, 6, 16, 12)
+
+/**
+ * تحويل تاريخ هجري (أم القرى، مع التعديل اليدوي نفسه) إلى ميلادي. يعيد null إن لم يوجد اليوم
+ * (مثل 30 من شهر عدته 29). يبحث حول التقدير بتطابق toHijri حتى تتفق النتيجة مع بقية التطبيق.
+ */
+export function fromHijri(year: number, month: number, day: number, offsetDays = 0): Date | null {
+  if (!(year >= 1 && year <= 1600 && month >= 1 && month <= 12 && day >= 1 && day <= 30)) return null
+  const est = HIJRI_EPOCH + ((year - 1) * HIJRI_YEAR + (month - 1) * HIJRI_MONTH + (day - 1)) * 86_400_000
+  for (let k = 0; k <= 45; k++) {
+    for (const sgn of k === 0 ? [0] : [-1, 1]) {
+      const d = new Date(est + sgn * k * 86_400_000)
+      const h = toHijri(d, 'UTC', offsetDays)
+      if (h.year === year && h.month === month && h.day === day) return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12))
+    }
+  }
+  return null
+}
+
+/** عدد أيام الشهر الهجري (29 أو 30) وفق الحساب */
+export function hijriMonthLength(year: number, month: number, offsetDays = 0): number {
+  return fromHijri(year, month, 30, offsetDays) ? 30 : 29
+}
+
+export interface YearlyDates { hijriYear: number; ramadan: Date | null; fitr: Date | null; arafah: Date | null; adha: Date | null }
+
+/** بداية رمضان والعيدان ويوم عرفة لسنوات هجرية قادمة (محسوبة: قد تختلف يومًا بحسب الرؤية والجهة المعتمدة) */
+export function upcomingYearlyDates(from: Date, years = 10, offsetDays = 0): YearlyDates[] {
+  const start = toHijri(from, 'UTC', offsetDays).year
+  const out: YearlyDates[] = []
+  for (let y = start; y < start + years + 1 && out.length < years; y++) {
+    const row = { hijriYear: y, ramadan: fromHijri(y, 9, 1, offsetDays), fitr: fromHijri(y, 10, 1, offsetDays), arafah: fromHijri(y, 12, 9, offsetDays), adha: fromHijri(y, 12, 10, offsetDays) }
+    // السنة الحالية تُعرض ما لم يمض عيد الأضحى فيها
+    if (row.adha && row.adha.getTime() < from.getTime() - 86_400_000) continue
+    out.push(row)
+  }
+  return out
+}

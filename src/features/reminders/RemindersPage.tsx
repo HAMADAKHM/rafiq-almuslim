@@ -13,11 +13,8 @@ import type { NotificationSettings } from '../../state/settings'
 import { AdhanVoiceSection } from './AdhanVoiceSection'
 import { TimedVoiceSection } from './TimedVoiceSection'
 
-type TimedKey = 'morningAdhkar' | 'eveningAdhkar' | 'sleepAdhkar' | 'ayahOfDay' | 'dhikrOfDay' | 'wird' | 'memorize' | 'occasions' | 'dailySummary'
+type TimedKey = 'ayahOfDay' | 'dhikrOfDay' | 'wird' | 'memorize' | 'occasions' | 'dailySummary'
 const TIMED: { key: TimedKey; label: string; hint: string; def: string }[] = [
-  { key: 'morningAdhkar', label: 'أذكار الصباح', hint: 'يُستحسن بعد الفجر', def: '06:30' },
-  { key: 'eveningAdhkar', label: 'أذكار المساء', hint: 'يُستحسن بعد العصر', def: '17:00' },
-  { key: 'sleepAdhkar', label: 'أذكار النوم', hint: '', def: '22:30' },
   { key: 'ayahOfDay', label: 'آية اليوم', hint: '', def: '08:00' },
   { key: 'dhikrOfDay', label: 'ذكر أو دعاء اليوم', hint: '', def: '13:00' },
   { key: 'wird', label: 'ورد القرآن', hint: '', def: '20:00' },
@@ -46,7 +43,7 @@ export function RemindersPage() {
 
   return (
     <>
-      <PageHead title="إعدادات التذكير" subtitle="تحكّم في كل نوع من التذكيرات بشكل مستقل — بلا إزعاج وبلا تكرار" />
+      <PageHead title="التذكيرات والأصوات" subtitle="الأذكار المسموعة ومواقيت الصلاة وكل تذكير بشكل مستقل — بلا إزعاج وبلا تكرار" />
       <div className="stack">
         <section className="card">
           <div className="spread">
@@ -82,6 +79,8 @@ export function RemindersPage() {
 
         <AdhanVoiceSection />
 
+        <TimedVoiceSection />
+
         <section className="card">
           <h2>تذكيرات يومية</h2>
           <p className="small muted">فعّل ما تحتاجه فقط، واختر الوقت المناسب لك.</p>
@@ -101,9 +100,9 @@ export function RemindersPage() {
           </div>
           <label className="check" style={{ marginTop: '0.75rem' }}>
             <input type="checkbox" className="switch-input" role="switch" checked={n.adhkarScreen} onChange={(e) => set({ adhkarScreen: e.target.checked })} aria-label="شاشة تنبيه الأذكار بالصوت" />
-            <span>شاشة تنبيه الأذكار بالصوت<span className="small muted"> — عند وقت أذكار الصباح والمساء والنوم تظهر شاشة كاملة تقرأ الأذكار: الآيات بصوت القارئ، والباقي بصوت الجهاز</span></span>
+            <span>شاشة تنبيه الأذكار بالصوت<span className="small muted"> — إذا كان التطبيق مفتوحًا عند وقت الأذكار تظهر شاشة كاملة تقرأ الأذكار كلها: الآيات بصوت القارئ، والأذكار بتسجيل حصن المسلم أو صوت الجهاز</span></span>
           </label>
-          <TimedVoiceSection />
+
           <Link className="btn btn-sm" style={{ marginTop: 6, alignSelf: 'start' }} to="/adhkar-alert/morning">تجربة شاشة التنبيه</Link>
         </section>
 

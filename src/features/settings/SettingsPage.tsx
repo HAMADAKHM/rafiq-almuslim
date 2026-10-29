@@ -5,6 +5,7 @@ import { PaintedScene } from '../../components/Scene'
 import { PageHead } from '../../components/Common'
 import { CityPicker } from '../../components/CityPicker'
 import { OfficialCompare } from './OfficialCompare'
+import { TabsSettings } from './TabsSettings'
 import { useSettings } from '../../state/SettingsContext'
 import { METHODS, PRAYER_LABELS, PRAYERS, suggestMethod, type MethodId, type PrayerName } from '../../services/prayer'
 import { cityLabel } from '../../services/cities'
@@ -132,6 +133,8 @@ export function SettingsPage() {
           <p className="small muted">مواقيت الصلاة، الأذكار، آية اليوم، الورد، فترة الهدوء وتقليل الإشعارات — كلها في صفحة مستقلة.</p>
           <Link className="btn" to="/reminders"><Bell size={16} /> إعدادات التذكير {settings.notifications.enabled ? '(مفعّلة)' : '(متوقفة)'}</Link>
         </section>
+
+        <TabsSettings />
 
         <section className="card" id="appearance">
           <h2>القراءة والمظهر</h2>

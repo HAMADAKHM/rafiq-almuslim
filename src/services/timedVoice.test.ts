@@ -1,46 +1,71 @@
-// الذكر المسموع في إشعار الصباح والمساء: النص الصحيح لكل وقت، وتطابق مقاطع حصن المسلم مع سكربت البناء
+// الأذكار المسموعة في الإشعارات: جملة كل تذكير من النص كما هو، والمقاطع تطابق التسجيل والذكر، والقنوات صحيحة
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
-import { firstSentence, sig, slotText, voiceChoice, voiceLabel } from './timedVoice'
+import { sig } from './timedVoice'
+import { channelFlags, heardText, hisnClipChannel, SLOT_DEFS, slotSpeech, VOICE_SLOTS, voiceFor } from './voiceSlots'
 import { HISN_AUDIO, HISN_CLIPS } from '../content/hisnAudio'
+import { ADHKAR } from '../content/adhkar'
+import { HISN_SOUND_NAME_RE } from './companion'
 
 const plain = (s: string) => s.replace(/[ً-ْٰ]/g, '')
 
-describe('نص الذكر الذي يُنطق', () => {
-  it('الصباح «أصبحنا…» والمساء «أمسينا…» من المكتبة كما هي، حتى «قدير»', () => {
-    const m = plain(slotText('morning')), e = plain(slotText('evening'))
-    expect(m.startsWith('أصبحنا وأصبح الملك لله، والحمد لله')).toBe(true)
-    expect(e.startsWith('أمسينا وأمسى الملك لله، والحمد لله')).toBe(true)
-    expect(m.endsWith('قدير')).toBe(true)
-    expect(e.endsWith('قدير')).toBe(true)
-    expect(e).not.toMatch(/أصبح/)
-    expect(m).not.toMatch(/أمسى|أمسينا/)
+describe('ما ينطقه صوت الهاتف', () => {
+  it('جمل من نص الذكر نفسه، لكل وقت ذكره', () => {
+    expect(plain(slotSpeech('morning'))).toBe('أصبحنا وأصبح الملك لله، والحمد لله')
+    expect(plain(slotSpeech('evening'))).toBe('أمسينا وأمسى الملك لله، والحمد لله')
+    expect(plain(slotSpeech('sleep'))).toBe('باسمك ربي وضعت جنبي')
+    expect(plain(slotSpeech('wake'))).toBe('الحمد لله الذي أحيانا بعد ما أماتنا وإليه النشور')
+    // بلا تعليمات مثل «(ثلاثًا)»
+    expect(plain(slotSpeech('afterPrayer'))).toBe('اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام')
   })
-  it('أول جملة فقط، ودون تعديل الألفاظ', () => {
-    expect(firstSentence('أ ب قدير، رب أسألك')).toBe('أ ب قدير')
-    expect(firstSentence('بلا نهاية معروفة')).toBe('بلا نهاية معروفة')
-  })
-  it('الاختيارات والأوصاف', () => {
-    expect(voiceChoice({}, 'morning')).toBe('hisn')
-    expect(voiceChoice({}, 'evening')).toBe('device')
-    expect(voiceChoice({ eveningVoice: 'mine' }, 'evening')).toBe('mine')
-    expect(voiceLabel('evening', 'hisn')).toMatch(/بسم الله الذي لا يضر/)
-    expect(voiceLabel('evening', 'device')).toMatch(/أمسينا/)
-    expect(sig('a')).not.toBe(sig('b'))
-    expect(sig('device|x')).toMatch(/^[a-z0-9]{1,16}$/)
+  it('كل جملة موجودة حرفيًا في نص الذكر بالمكتبة', () => {
+    for (const s of VOICE_SLOTS) {
+      const d = SLOT_DEFS[s]
+      const item = ADHKAR.find((c) => c.id === d.category)!.items.find((x) => x.id === d.itemId)!
+      expect(item.text!.includes(slotSpeech(s))).toBe(true)
+    }
   })
 })
 
-describe('مقاطع حصن المسلم لصوت الإشعار', () => {
-  it('مقطع الصباح من تسجيل «أصبحنا» نفسه، وسكربت البناء يقصه بالحدود نفسها', () => {
-    const c = HISN_CLIPS.m77
-    expect(c.src).toBe(HISN_AUDIO[c.itemId])
-    expect(c.itemId).toBe('m-asbahna')
-    const script = readFileSync('scripts/fetch-hisn-sounds.sh', 'utf8')
-    expect(script).toMatch(/HISN_CLIPS/)
-    const src = readFileSync('src/content/hisnAudio.ts', 'utf8')
-    expect(src).toMatch(/^ {2}m77: \{ src: 77, from: 0, to: 17\.5,/m)
-    // لا يوجد تسجيل «أمسينا» في حصن المسلم: لا يُربط ذكر المساء بتسجيل الصباح
+describe('المقاطع القصيرة من حصن المسلم', () => {
+  it('كل مقطع من تسجيل ذكره نفسه، وقصير (ثوانٍ)، والمساء لا يستعمل تسجيل الصباح', () => {
+    for (const s of VOICE_SLOTS) {
+      const c = HISN_CLIPS[SLOT_DEFS[s].hisn]
+      expect(c, s).toBeTruthy()
+      expect(HISN_AUDIO[c.itemId]).toBe(c.src)
+      expect(c.to - c.from).toBeGreaterThan(2)
+      expect(c.to - c.from).toBeLessThan(10)
+    }
+    expect(HISN_CLIPS[SLOT_DEFS.evening.hisn].src).not.toBe(HISN_AUDIO['m-asbahna'])
     expect(HISN_AUDIO['e-amsayna']).toBeUndefined()
+  })
+  it('سكربت البناء يقرأ المقاطع من الملف نفسه بالصيغة التي يفهمها', () => {
+    const src = readFileSync('src/content/hisnAudio.ts', 'utf8')
+    const lines = src.split('\n').filter((l) => /^ {2}[a-z][a-z0-9]*: \{ src: \d+, from: [\d.]+, to: [\d.]+,/.test(l))
+    expect(lines.length).toBe(Object.keys(HISN_CLIPS).length)
+    expect(readFileSync('scripts/fetch-hisn-sounds.sh', 'utf8')).toMatch(/HISN_CLIPS/)
+  })
+})
+
+describe('الاختيارات والقنوات', () => {
+  it('الافتراضيات وترحيل الإعدادات السابقة', () => {
+    expect(voiceFor({}, 'morning')).toBe('hisn')
+    expect(voiceFor({}, 'evening')).toBe('device')
+    expect(voiceFor({ eveningVoice: 'mine' }, 'evening')).toBe('mine')
+    expect(voiceFor({ eveningVoice: 'mine', voices: { evening: 'tone' } }, 'evening')).toBe('tone')
+  })
+  it('ما يُسمع يطابق الاختيار', () => {
+    expect(heardText('evening', 'hisn', false)).toMatch(/بسم الله الذي لا يضر/)
+    expect(heardText('evening', 'device', true)).toMatch(/أمسينا/)
+    expect(heardText('evening', 'device', false)).toMatch(/بسم الله/) // تعذر صوت الهاتف: تسجيل حصن المسلم
+    expect(heardText('morning', 'tone', false)).toBe('')
+  })
+  it('لاحقة القناة للاهتزاز وشاشة القفل، وتطابق نمط إنشاء القنوات', () => {
+    expect(channelFlags({})).toBe('v1')
+    expect(channelFlags({ vibrate: false, lockText: false })).toBe('np')
+    for (const f of ['v1', 'n1', 'vp', 'np']) expect(HISN_SOUND_NAME_RE.test(hisnClipChannel('m77s', f))).toBe(true)
+    expect(HISN_SOUND_NAME_RE.test('rafiq-hisn-86-v1')).toBe(true)
+    expect(sig('a')).not.toBe(sig('b'))
+    expect(sig('device|x')).toMatch(/^[a-z0-9]{1,16}$/)
   })
 })
