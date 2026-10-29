@@ -69,7 +69,7 @@ test('ثيم حيّ مجاني: مشهد يتحرك خلف التطبيق ويب
   await page.getByRole('button', { name: 'معاينة ثيم ليلة المسجد الحيّة' }).click()
   await bar(page).getByRole('button', { name: 'تطبيق' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-skin-id', 'live-night')
-  await page.goto('/')
+  await nav(page, '/')
   await expect(page.locator('.skin-backdrop.live canvas').first()).toBeVisible()
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-skin-id', 'live-night')
