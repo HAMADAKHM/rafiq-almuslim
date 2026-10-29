@@ -14,19 +14,25 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm ci --ignore-scripts > /dev/null 2>&1 || npm install --ignore-scripts > /dev/null 2>&1
-      - name: hisn-77-transcribe
+      - name: hisn-word-times
         run: |
           sudo apt-get install -y -qq ffmpeg > /dev/null 2>&1 || true
-          curl -s -m 60 -o a77.mp3 "https://www.hisnmuslim.com/audio/ar/77.mp3"
-          echo "::notice::silence $(ffmpeg -hide_banner -i a77.mp3 -af silencedetect=noise=-35dB:d=0.6 -f null - 2>&1 | grep -oE 'silence_(start|end): [0-9.]+' | tr '\n' ' ')"
           pip install -q "av>=11,<13" faster-whisper > /dev/null 2>&1
-          python3 - <<'PY' > tr.txt 2>err.txt || true
+          for n in 77 102 1 66 86; do curl -s -m 60 -o "h$n.mp3" "https://www.hisnmuslim.com/audio/ar/$n.mp3"; done
+          python3 - <<'PY' > words.txt 2>err.txt || true
           from faster_whisper import WhisperModel
           m = WhisperModel("small", device="cpu", compute_type="int8")
-          segs, info = m.transcribe("a77.mp3", language="ar", beam_size=5)
-          for s in segs: print(f"{s.start:.1f}-{s.end:.1f} {s.text.strip()}")
+          for n in [77, 102, 1, 66, 86]:
+              segs, info = m.transcribe(f"h{n}.mp3", language="ar", beam_size=5, word_timestamps=True)
+              out = []
+              for s in segs:
+                  for w in s.words:
+                      out.append(f"{w.word.strip()}@{w.start:.2f}-{w.end:.2f}")
+                  if sum(len(x) for x in out) > 1500: break
+              print(f"W{n} " + " ".join(out))
           PY
-          echo "::notice::T77 $(tr '\n' '¦' < tr.txt | head -c 1800) ERR $(tail -c 200 err.txt | tr -d '\n:')"
+          while read -r line; do echo "::notice::$(echo "$line" | head -c 1900)"; done < words.txt
+          echo "::notice::ERR $(tail -c 300 err.txt | tr -d '\n:')"
       - name: hisn-audio-map
         run: |
           npx --yes tsx scripts/hisn-audio-map.mjs > map.txt 2> err.txt || true
