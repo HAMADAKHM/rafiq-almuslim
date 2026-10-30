@@ -81,7 +81,7 @@ test('أيقونة التطبيق والودجتات: البديلة مقفلة 
   await expect(icons.getByRole('radio')).toHaveCount(9)
   await expect(icons.getByRole('radio', { name: 'أيقونة الأصلية' })).toHaveAttribute('aria-checked', 'true')
   await page.goto('/widgets')
-  await expect(page.locator('.wd-item')).toHaveCount(7)
+  await expect(page.locator('.wd-item')).toHaveCount(8)
   await page.getByRole('radio', { name: /الملكي/ }).click()
   await expect(page.getByRole('radio', { name: /الزمردي/ })).toHaveAttribute('aria-checked', 'true')
   await page.goto('/more')

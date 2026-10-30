@@ -45,11 +45,13 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
         int[] ids = manager.getAppWidgetIds(new ComponentName(context, PrayerWidgetProvider.class));
         for (int id : ids) render(context, manager, id);
-        if (ids.length > 0) scheduleNext(context);
+        int[] cards = manager.getAppWidgetIds(new ComponentName(context, PrayerCardWidgetProvider.class));
+        for (int id : cards) PrayerCardWidgetProvider.render(context, manager, id);
+        if (ids.length > 0 || cards.length > 0) scheduleNext(context);
         PlusWidgets.refreshAll(context);
     }
 
-    private static JSONObject load(Context context) {
+    static JSONObject load(Context context) {
         try {
             String s = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, null);
             return s == null ? null : new JSONObject(s);
@@ -59,7 +61,7 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
     }
 
     /** [يوم، صلاة] لأول صلاة لم يدخل وقتها بعد، أو null */
-    private static int[] findNext(JSONArray days, long now) throws Exception {
+    static int[] findNext(JSONArray days, long now) throws Exception {
         for (int d = 0; d < days.length(); d++) {
             JSONArray prayers = days.getJSONObject(d).getJSONArray("prayers");
             for (int p = 0; p < prayers.length(); p++) {

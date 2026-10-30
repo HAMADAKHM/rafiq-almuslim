@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { RotateCcw, Vibrate, Volume2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Lock, RotateCcw, Vibrate, Volume2 } from 'lucide-react'
+import { usePlus } from '../../billing/PlusContext'
+import { PaintedScene } from '../../components/Scene'
+import { Misbaha } from './Misbaha'
 import { PageHead, Spinner } from '../../components/Common'
 import { ConfirmSheet } from '../../components/Sheet'
 import { toast } from '../../hooks'
 import { dayKey, shiftDayKey } from '../../lib/dates'
-import { DEFAULT_TASBIH, dhikrText, increment, loadTasbih, saveTasbih, TASBIH_DHIKR, todayTotal, type TasbihState } from '../../services/tasbih'
+import { BEADS, TASBIH_BGS, activeBead, activeTasbihBg, DEFAULT_TASBIH, dhikrText, increment, loadTasbih, saveTasbih, TASBIH_DHIKR, todayTotal, type TasbihState } from '../../services/tasbih'
 import { vibrate } from '../../platform'
 
 let audioCtx: AudioContext | null = null
@@ -24,6 +28,7 @@ function beep(goal: boolean) {
 }
 
 export function TasbihPage() {
+  const { entitled } = usePlus()
   const [s, setS] = useState<TasbihState | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
   const [pulse, setPulse] = useState(false)
@@ -44,6 +49,8 @@ export function TasbihPage() {
 
   if (!s) return <Spinner />
   const today = dayKey()
+  const bead = activeBead(s, entitled)
+  const bg = activeTasbihBg(s, entitled)
   const tap = () => {
     const { state, reachedTarget } = increment(s, today)
     persist(state)
@@ -57,18 +64,51 @@ export function TasbihPage() {
     <>
       <PageHead title="المسبحة" subtitle="عدّاد للذكر يعمل دون إنترنت، ويُحفظ على جهازك فقط" />
       <div className="grid grid-2">
-        <section className="card tasbih-card">
-          <p className="classic-text" style={{ textAlign: 'center', margin: 0 }}>{dhikrText(s)}</p>
-          <button className={'tasbih-btn' + (pulse ? ' pulse' : '')} onClick={tap} aria-label={`سبّح — العدد الحالي ${s.count}${s.target ? ` من ${s.target}` : ''}`}>
-            <span className="tasbih-count" aria-live="polite">{s.count}</span>
-            {s.target > 0 && <span className="tasbih-target">الهدف {s.target} • الدورة {Math.floor(s.count / s.target) + (s.count % s.target === 0 && s.count > 0 ? 0 : 1)}</span>}
-          </button>
+        <section className={'card tasbih-card tasbih-bg-' + bg.id} data-bead={bead.id}>
+          {bg.id === 'mosque' && <PaintedScene tone="sunset" variant="card" className="tasbih-scene" />}
+          <p className="classic-text tasbih-dhikr" style={{ textAlign: 'center', margin: 0 }}>{dhikrText(s)}</p>
+          <div className={'tasbih-stage' + (bead.id === 'classic' ? '' : ' beads')}>
+            {bead.id !== 'classic' && <Misbaha bead={bead} count={s.count} />}
+            <button className={'tasbih-btn' + (pulse ? ' pulse' : '')} onClick={tap} aria-label={`سبّح — العدد الحالي ${s.count}${s.target ? ` من ${s.target}` : ''}`}>
+              <span className="tasbih-count" aria-live="polite">{s.count}</span>
+              {s.target > 0 && <span className="tasbih-target">الهدف {s.target} • الدورة {Math.floor(s.count / s.target) + (s.count % s.target === 0 && s.count > 0 ? 0 : 1)}</span>}
+            </button>
+          </div>
           <p className="small muted" style={{ textAlign: 'center' }}>اضغط الدائرة أو مفتاح المسافة للعد</p>
           <div className="row" style={{ justifyContent: 'center' }}>
             <button className="btn btn-sm" onClick={() => setConfirmReset(true)} disabled={s.count === 0}><RotateCcw size={14} /> تصفير العداد</button>
           </div>
         </section>
         <section className="card stack">
+          <div>
+            <div className="small muted" style={{ marginBottom: 4 }}>تصميم المسبحة{!entitled && ' — التصاميم الإضافية لمشتركي بلس'}</div>
+            <div className="chips" role="radiogroup" aria-label="تصميم المسبحة">
+              {BEADS.map((b) => {
+                const locked = b.plus && !entitled
+                return (
+                  <button key={b.id} type="button" role="radio" aria-checked={bead.id === b.id} className={'chip bead-chip' + (bead.id === b.id ? ' active' : '')}
+                    onClick={() => (locked ? toast('تصاميم المسبحة من مزايا رفيق المسلم بلس') : persist({ ...s, bead: b.id }, true))}>
+                    <span className="bead-dot" style={{ background: `radial-gradient(circle at 35% 30%, ${b.c[0]}, ${b.c[1]} 55%, ${b.c[2]})` }} />{b.name}{locked && <Lock size={11} aria-label="مقفل" />}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+          <div>
+            <div className="small muted" style={{ marginBottom: 4 }}>الخلفية</div>
+            <div className="chips" role="radiogroup" aria-label="خلفية المسبحة">
+              {TASBIH_BGS.map((b) => {
+                const locked = b.plus && !entitled
+                return (
+                  <button key={b.id} type="button" role="radio" aria-checked={bg.id === b.id} className={'chip' + (bg.id === b.id ? ' active' : '')}
+                    onClick={() => (locked ? toast('خلفيات المسبحة من مزايا رفيق المسلم بلس') : persist({ ...s, bg: b.id }, true))}>
+                    {b.name}{locked && <Lock size={11} aria-label="مقفل" />}
+                  </button>
+                )
+              })}
+            </div>
+            {!entitled && <Link className="small" to="/plus">اشترك في بلس لفتح تصاميم المسبحة وخلفياتها</Link>}
+          </div>
           <label className="field"><span>الذكر</span>
             <select className="select" value={s.dhikrId} onChange={(e) => persist({ ...s, dhikrId: e.target.value, count: 0 }, true)}>
               {TASBIH_DHIKR.map((d) => <option key={d.id} value={d.id}>{d.text}</option>)}

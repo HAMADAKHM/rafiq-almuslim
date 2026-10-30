@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">رفيق المسلم بلس</string>
-    <string name="title_activity_main">رفيق المسلم بلس</string>
+    <string name="app_name">رفيق المسلم</string>
+    <string name="title_activity_main">رفيق المسلم</string>
     <string name="package_name">org.rafiqalmuslim.plus</string>
     <string name="custom_url_scheme">org.rafiqalmuslim.plus</string>
     <string name="widget_description">مواقيت الصلاة والصلاة القادمة مع العدّ التنازلي</string>
@@ -23,8 +23,10 @@
     <string name="resume_action">أكمل من حيث وصلت</string>
     <string name="resume_empty">اقرأ صفحة من المصحف ليظهر موضعك هنا</string>
     <string name="plus_locked">من مزايا رفيق بلس — اضغط لفتح التطبيق</string>
-    <string name="plus_empty">افتح رفيق المسلم بلس مرة لتحديث هذه البطاقة</string>
+    <string name="plus_empty">افتح رفيق المسلم مرة لتحديث هذه البطاقة</string>
     <string name="tasbih_description">رفيق بلس: المسبحة على الشاشة — اضغط للعدّ</string>
     <string name="tasbih_reset">تصفير</string>
     <string name="ramadan_description">رفيق بلس: رمضان — العدّ التنازلي للسحور والإفطار</string>
+    <string name="widget_card_description">بطاقة الصلاة القادمة: الوقت والعدّ التنازلي والمواقيت الخمس</string>
+    <string name="widget_left">باقي على الأذان</string>
 </resources>

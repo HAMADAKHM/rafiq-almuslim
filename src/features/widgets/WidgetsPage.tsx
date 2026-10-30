@@ -24,6 +24,7 @@ export const WIDGET_STYLES: { id: string; name: string; bg: [string, string]; st
 
 const WIDGETS: { name: string; desc: string; plus: boolean; body: (accent: string) => ReactNode }[] = [
   { name: 'مواقيت الصلاة', desc: 'الصلاة القادمة والعدّ التنازلي ومواقيت اليوم.', plus: false, body: (a) => <><small>الصلاة القادمة</small><b style={{ color: a }}>العصر 2:28</b><span className="wd-row">{['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'].map((x) => <i key={x}>{x}</i>)}</span></> },
+  { name: 'بطاقة الصلاة القادمة', desc: 'كقسم الصلاة في الرئيسية: الوقت والعدّ التنازلي ولوحة المسجد والصلوات الخمس بأيقوناتها.', plus: false, body: () => <><small>الصلاة القادمة</small><b>الفجر <span style={{ color: '#F6C35A' }}>4:31 ص</span></b><small style={{ color: '#F6C35A' }}>05:54:05</small><span className="wd-row">{['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'].map((x, i) => <i key={x} style={i === 0 ? { background: '#F6C35A', color: '#1B1640', borderRadius: 8, padding: '0 4px' } : undefined}>{x}</i>)}</span></> },
   { name: 'آية اليوم والورد', desc: 'آية تتجدد كل يوم، وورد الختمة.', plus: false, body: (a) => <><small>آية اليوم</small><b className="wd-q">﴿أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ﴾</b><small style={{ color: a }}>ورد اليوم: صفحتان</small></> },
   { name: 'أكمل من حيث وصلت', desc: 'آخر موضع قراءة فعلية، يفتح المصحف عنده.', plus: true, body: (a) => <><small>أكمل قراءتك</small><b>سورة الكهف</b><small style={{ color: a }}>صفحة 293 • الختمة 46٪</small></> },
   { name: 'الطقس والصلاة القادمة', desc: 'طقس مدينتك مع موعد الصلاة القادمة.', plus: true, body: (a) => <><small>نابلس</small><b>☀️ 24°</b><small style={{ color: a }}>المغرب بعد 1:12</small></> },
@@ -80,7 +81,7 @@ export function WidgetsPage() {
           <ol className="small" style={{ paddingInlineStart: '1.2rem', lineHeight: 1.9 }}>
             <li>اضغط مطولًا على مكان فارغ في الشاشة الرئيسية لهاتفك.</li>
             <li>اختر «الأدوات» أو «Widgets».</li>
-            <li>ابحث عن «رفيق المسلم بلس» واسحب الودجت الذي تريده.</li>
+            <li>ابحث عن «رفيق المسلم» واسحب الودجت الذي تريده.</li>
           </ol>
           <p className="small muted" style={{ margin: 0 }}>الودجتات متاحة في Android. ودجتات iPhone تحتاج نسخة iOS (لم تُبنَ بعد).</p>
         </section>

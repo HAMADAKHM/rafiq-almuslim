@@ -387,3 +387,45 @@ button.voice-hit { font: inherit; text-align: start; cursor: pointer; width: 100
 .compare-table { width: 100%; border-collapse: collapse; }
 .compare-table th, .compare-table td { padding: 4px 6px; border-bottom: 1px solid var(--border); text-align: start; }
 .compare-table input { width: 100%; min-width: 92px; }
+
+/* ---------- شاشة البداية: ظهور الاسم ---------- */
+.splash2 { position: fixed; inset: 0; z-index: 200; overflow: hidden; cursor: pointer; color: #F5F0E6; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(120% 80% at 50% 38%, #0f4a3c 0%, #072c24 45%, #03140f 100%); transition: opacity 0.5s ease, transform 0.5s ease; }
+.splash2.leaving { opacity: 0; transform: scale(1.06); }
+.sp-sky i { position: absolute; border-radius: 50%; background: #fff; opacity: 0; animation: sp-twinkle 2.6s ease-in-out infinite; }
+@keyframes sp-twinkle { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.9; } }
+.sp-rays { position: absolute; inset: -30%; background: conic-gradient(from 0deg at 50% 45%, transparent 0 8deg, rgba(233, 196, 106, 0.08) 10deg 14deg, transparent 16deg 40deg, rgba(233, 196, 106, 0.06) 42deg 46deg, transparent 48deg 80deg, rgba(233, 196, 106, 0.08) 82deg 86deg, transparent 88deg 130deg, rgba(233, 196, 106, 0.06) 132deg 136deg, transparent 138deg 180deg, rgba(233, 196, 106, 0.08) 182deg 186deg, transparent 188deg 230deg, rgba(233, 196, 106, 0.06) 232deg 236deg, transparent 238deg 280deg, rgba(233, 196, 106, 0.08) 282deg 286deg, transparent 288deg 330deg, rgba(233, 196, 106, 0.06) 332deg 336deg, transparent 338deg);
+  opacity: 0; animation: sp-rays 3.4s 0.6s ease-out both, sp-spin 40s linear infinite; }
+@keyframes sp-rays { from { opacity: 0; } 40% { opacity: 1; } to { opacity: 0.7; } }
+@keyframes sp-spin { to { rotate: 360deg; } }
+.sp-sparks i { position: absolute; bottom: 18%; border-radius: 50%; background: #f7dc8e; box-shadow: 0 0 8px #f0c75e; opacity: 0; animation: sp-rise 2.6s ease-out both; }
+@keyframes sp-rise { 0% { opacity: 0; transform: translateY(0) scale(0.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-46vh) scale(1.1); } }
+.sp-center { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: -6vh; }
+.sp-emblem { width: 120px; height: 140px; filter: drop-shadow(0 0 0 rgba(233, 196, 106, 0)); animation: sp-glow 1.2s 1.1s ease-out both; }
+@keyframes sp-glow { to { filter: drop-shadow(0 0 18px rgba(233, 196, 106, 0.55)); } }
+.sp-draw { fill: none; stroke: url(#sp-gold); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: sp-draw 1.1s 0.15s cubic-bezier(.6,.1,.3,1) forwards; }
+.sp-draw.thin { stroke-width: 1.8; opacity: 0.7; animation-delay: 0.35s; }
+@keyframes sp-draw { to { stroke-dashoffset: 0; } }
+.sp-moon { opacity: 0; transform-origin: 60px 20px; animation: sp-moon 0.7s 0.9s cubic-bezier(.2,1.6,.4,1) forwards; }
+@keyframes sp-moon { from { opacity: 0; transform: scale(0.2) rotate(-60deg); } to { opacity: 1; transform: none; } }
+.sp-name { margin: 1.1rem 0 0; font-family: var(--font-classic, 'Amiri', serif); font-size: clamp(2.8rem, 12vw, 4.2rem); line-height: 1.35; font-weight: 700;
+  filter: drop-shadow(0 4px 18px rgba(233, 196, 106, 0.4)); clip-path: inset(0 0 0 100%); animation: sp-reveal 1s 1.05s cubic-bezier(.7,0,.2,1) forwards; }
+.sp-name span { display: inline-block; padding: 0 0.15em;
+  background: linear-gradient(100deg, #b8862f 0%, #e9c46a 30%, #fff8dc 46%, #fff 50%, #fff8dc 54%, #e9c46a 70%, #b8862f 100%); background-size: 260% 100%; background-position: 100% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
+  animation: sp-settle 1.2s 1.05s ease-out both, sp-shine 1.6s 1.9s ease-in-out forwards; }
+@keyframes sp-reveal { to { clip-path: inset(0 0 0 0); } }
+@keyframes sp-shine { from { background-position: 100% 0; } to { background-position: 0% 0; } }
+@keyframes sp-settle { from { letter-spacing: 0.14em; opacity: 0.4; transform: scale(1.08); } to { letter-spacing: 0; opacity: 1; transform: none; } }
+.sp-line { width: 0; height: 2px; margin: 0.4rem auto 0; background: linear-gradient(90deg, transparent, #e9c46a, transparent); animation: sp-line 0.9s 1.8s ease-out forwards; }
+@keyframes sp-line { to { width: min(260px, 70vw); } }
+.sp-tag { margin: 0.6rem 0 0; font-size: 1.1rem; color: #F5F0E6; opacity: 0; animation: sp-fade 0.7s 2.1s ease-out forwards; }
+.sp-plus { margin: 0.45rem 0 0; font-size: 0.86rem; color: #E9CF8E; opacity: 0; display: inline-flex; align-items: center; gap: 6px; animation: sp-fade 0.7s 2.4s ease-out forwards; }
+@keyframes sp-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 0.95; transform: none; } }
+.sp-bottom { position: absolute; bottom: 0; inset-inline: 0; text-align: center; padding: 0 1.5rem calc(2rem + env(safe-area-inset-bottom, 0px)); opacity: 0; animation: sp-fade 0.8s 2.5s ease-out forwards; }
+.sp-sadaqah { font-family: var(--font-classic, 'Amiri', serif); font-size: 1.1rem; color: #f0d68f; margin: 0; line-height: 1.8; }
+.sp-prayer { font-size: 0.85rem; opacity: 0.85; margin: 0.1rem 0 0; }
+@media (prefers-reduced-motion: reduce) {
+  .splash2 *, .splash2 { animation-duration: 0.01s !important; animation-delay: 0s !important; }
+  .sp-draw { stroke-dashoffset: 0; } .sp-name { clip-path: none; }
+}
