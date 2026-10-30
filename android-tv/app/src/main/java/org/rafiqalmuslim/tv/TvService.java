@@ -281,9 +281,12 @@ public class TvService extends Service {
         // سابقًا كان أي جهاز موصول — ولو مطفأ أو على مدخل آخر — يمنع الفتح دائمًا.
         // تطبيق أو لعبة أو جهاز HDMI أمام المستخدم: يُعدّ استخدامًا، فيبدأ العدّ من جديد عند العودة للرئيسية
         if (in.externalForeground || IdleRules.dreamOverApp(in)) markActive(this, null);
+        // أثناء اللعب أو المشاهدة من HDMI: نمنع شاشة توقف النظام (يد البلايستيشن لا يراها التلفاز فيظنه متروكًا)
+        if (IdleRules.keepAwake(in)) holdAwake(); else releaseAwake();
         in.lastKeyAt = IdleWatcher.lastKeyAt;
         in.lastActiveAt = lastActiveAt;
-        in.quietMode = prefs(this).getBoolean(KEY_IDLE_QUIET, true);
+        // دون خدمة الإتاحة لا نعرف ما الظاهر: لا فتح تلقائي إلا إن اختاره المستخدم صراحة (شاشة التوقف تكفي)
+        in.quietMode = prefs(this).getBoolean(KEY_IDLE_QUIET, false);
         in.canOpen = canOpenFromBackground(this);
         in.screenVisible = MainActivity.visible;
         in.adhanActive = adhanActive;
@@ -302,6 +305,34 @@ public class TvService extends Service {
         markActive(this, null);
         autoOpenAt = now;
         if (!openScreen(this)) log(this, "idle_open_failed");
+    }
+
+    private android.os.PowerManager.WakeLock awake;
+    @SuppressWarnings("deprecation")
+    private void holdAwake() {
+        try {
+            if (awake == null) {
+                android.os.PowerManager pm = (android.os.PowerManager) getSystemService(POWER_SERVICE);
+                awake = pm.newWakeLock(android.os.PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "rafiq:hdmi");
+                awake.setReferenceCounted(false);
+            }
+            // يتجدد مع كل فحص (كل 15 ثانية) وينتهي وحده إن توقف الفحص
+            awake.acquire(TICK_MS * 3);
+        } catch (Exception ignored) { /* بعض الأنظمة تمنعه */ }
+    }
+    private void releaseAwake() {
+        try { if (awake != null && awake.isHeld()) awake.release(); } catch (Exception ignored) { /* لا شيء */ }
+    }
+
+    /** شاشة التوقف الخاصة بنا: لا تُعرض فوق جهاز HDMI أو تطبيق */
+    static boolean dreamShouldYield(Context c) {
+        IdleRules.Input in = new IdleRules.Input();
+        String fg = IdleWatcher.foregroundPkg;
+        in.accessibility = IdleWatcher.connected;
+        in.foregroundKnown = IdleWatcher.connected && fg != null;
+        in.foregroundIsHome = isHomePackage(c, fg);
+        in.hdmiConnected = externalInputActive(c);
+        return IdleRules.dreamOverApp(in);
     }
 
     /** إنهاء شاشة التوقف والعودة إلى التطبيق أو مدخل HDMI كما كان */

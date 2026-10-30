@@ -41,7 +41,7 @@ type Bridge = {
 interface TvAppEntry { label: string; pkg: string; icon: string }
 interface NativeStatus { service?: boolean; overlay?: boolean; accessibility?: boolean; quietIdle?: boolean; canOpen?: boolean; hdmi?: boolean; snoozeUntil?: number; idleMinutes?: number; idleReason?: string; idleSince?: number; events?: Record<string, number> }
 const EVENT_LABELS: Record<string, string> = {
-  service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', idle_quiet: 'عدم استخدام (سكون)', prayer_alarm: 'منبه وقت الصلاة', idle_snoozed: 'إيقاف مؤقت (رجعت فور الفتح)', service_restart: 'إعادة تشغيل الخدمة', wake_detected: 'فتح التلفاز من الاستعداد', dream: 'شاشة توقف التلفاز',
+  service_start: 'بدء خدمة الخلفية', boot: 'تشغيل التلفاز', screen_on: 'استيقاظ الشاشة', idle: 'عدم استخدام', idle_quiet: 'عدم استخدام (سكون)', prayer_alarm: 'منبه وقت الصلاة', idle_snoozed: 'إيقاف مؤقت (رجعت فور الفتح)', service_restart: 'إعادة تشغيل الخدمة', wake_detected: 'فتح التلفاز من الاستعداد', dream: 'شاشة توقف التلفاز', dream_yield_hdmi: 'أُغلقت شاشة التوقف لأن جهاز HDMI أمامك',
   open_screen: 'فتح شاشة المواقيت', open_blocked: 'مُنع الفتح (ينقص إذن)', adhan_background: 'أذان من الخلفية', accessibility_on: 'تفعيل مراقب عدم الاستخدام',
   idle_snoozed_60min: 'إيقاف مؤقت ساعة (رجعت فور الفتح)', snooze_cleared: 'إلغاء الإيقاف المؤقت', idle_open_failed: 'تعذّر الفتح', active_screen_on: 'استيقاظ الشاشة', active_wake: 'فتح التلفاز',
   idle_skip_media_active: 'لم تُفتح: فيديو أو صوت يعمل', idle_skip_hdmi_foreground: 'لم تُفتح: التلفاز على جهاز HDMI', idle_skip_snoozed: 'لم تُفتح: إيقاف مؤقت',
@@ -700,7 +700,7 @@ function TvAutoStart() {
       <h2>اختياري: فتحها بعد عدم الاستخدام ووقت الأذان فوق يوتيوب</h2>
       <div className={'tv-permission' + (st.accessibility || (st.quietIdle !== false && st.canOpen) ? ' ok' : '')}>
         {st.accessibility
-          ? '✓ مفعّل: تُفتح شاشة المواقيت بعد دقائق من ترك التلفاز على الشاشة الرئيسية فقط — لا فوق يوتيوب أو أي تطبيق أو لعبة أو جهاز HDMI (بلايستيشن) — وتُفتح عند تشغيله، وأي زر يوقف الأذان.'
+          ? '✓ مفعّل: تُفتح شاشة المواقيت بعد دقائق من ترك التلفاز على الشاشة الرئيسية فقط — لا فوق يوتيوب أو أي تطبيق أو لعبة، ولا أبدًا ما دام جهاز HDMI (بلايستيشن) يعمل، ويبقى التلفاز مستيقظًا أثناء اللعب — وتُفتح عند تشغيله، وأي زر يوقف الأذان.'
           : st.canOpen
             ? (st.quietIdle !== false
               ? `✓ مفعّل بلا إذن: تُفتح بعد المدة المختارة إن لم يعمل فيديو أو صوت أو جهاز HDMI (بلايستيشن)${st.hdmi ? ' — جهاز HDMI يعمل الآن' : ''}. لأدق نتيجة (الفتح من الشاشة الرئيسية فقط) فعّل «إمكانية الوصول». فُتحت بالخطأ؟ اضغط «رجوع» فتعود ولا تُفتح ساعة${st.snoozeUntil && st.snoozeUntil > Date.now() ? ` (متوقفة حتى ${fmt(st.snoozeUntil)})` : ''}.`

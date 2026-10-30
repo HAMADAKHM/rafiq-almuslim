@@ -109,8 +109,12 @@ public class IdleRulesTest {
         in.foregroundIsHome = true; // على الشاشة الرئيسية: تُفتح
         assertNull(IdleRules.decide(in));
         assertFalse(IdleRules.dreamOverApp(in));
-        in.hdmiConnected = true; // جهاز موصول لكن التلفاز على الرئيسية
-        assertNull(IdleRules.decide(in));
+        in.hdmiConnected = true; // جهاز موصول فيه إشارة، ولو بدا أن التلفاز على الرئيسية: لا تُفتح أبدًا
+        assertEquals("hdmi_connected", IdleRules.decide(in));
+        assertTrue(IdleRules.dreamOverApp(in));
+        assertTrue(IdleRules.keepAwake(in));
+        in.hdmiConnected = false;
+        assertFalse(IdleRules.keepAwake(in));
     }
 
     @Test public void unknownForegroundWithHdmiSignalDoesNotOpen() {

@@ -11,13 +11,18 @@ import type { Settings } from '../state/settings'
 const PrayerWidget = registerPlugin<{
   update(o: { data: string }): Promise<void>; updateDaily(o: { data: string }): Promise<void>; updatePlus(o: { data: string }): Promise<void>
   updateResume(o: { data: string }): Promise<void>; consumeRoute(): Promise<{ route?: string | null }>
-  setStyle(o: { style: string }): Promise<void>; getStyle(): Promise<{ style: string }>
+  setStyle(o: { style: string }): Promise<void>; getStyle(): Promise<{ style: string }>; setPlus(o: { on: boolean }): Promise<void>
 }>('PrayerWidget')
 
 /** «تصميم الودجت» (رفيق بلس): خلفية كل ودجتات Android */
 export async function getWidgetStyle(): Promise<string> {
   if (platformName() !== 'android') return 'emerald'
   try { return (await PrayerWidget.getStyle()).style || 'emerald' } catch { return 'emerald' }
+}
+/** يخبر شاشة «إعداد الودجت» بحالة اشتراك بلس (بعد التحقق منه) */
+export async function setWidgetPlus(on: boolean): Promise<void> {
+  if (platformName() !== 'android') return
+  try { await PrayerWidget.setPlus({ on }) } catch { /* نسخة أقدم */ }
 }
 export async function setWidgetStyle(style: string): Promise<boolean> {
   if (platformName() !== 'android') return false

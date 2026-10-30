@@ -79,6 +79,15 @@ public class WidgetBridgePlugin extends Plugin {
         call.resolve();
     }
 
+    /** حالة اشتراك بلس (تتحقق منها الواجهة): لتفتح شاشة «إعداد الودجت» التصاميم الملوّنة */
+    @PluginMethod
+    public void setPlus(PluginCall call) {
+        boolean on = Boolean.TRUE.equals(call.getBoolean("on", false));
+        getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).edit().putBoolean(WidgetStyle.KEY_PLUS, on).apply();
+        WidgetStyle.refreshEverything(getContext());
+        call.resolve();
+    }
+
     @PluginMethod
     public void getStyle(PluginCall call) {
         JSObject r = new JSObject();

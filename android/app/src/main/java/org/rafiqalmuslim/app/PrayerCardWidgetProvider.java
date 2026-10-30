@@ -31,6 +31,7 @@ public class PrayerCardWidgetProvider extends AppWidgetProvider {
 
     static void render(Context context, AppWidgetManager manager, int widgetId) {
         RemoteViews v = new RemoteViews(context.getPackageName(), R.layout.widget_prayer_card);
+        WidgetStyle.apply(context, v, R.id.k_root, widgetId, R.drawable.widget_card_bg);
         Intent open = new Intent(context, MainActivity.class);
         open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         v.setOnClickPendingIntent(R.id.k_root, PendingIntent.getActivity(context, 7, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));

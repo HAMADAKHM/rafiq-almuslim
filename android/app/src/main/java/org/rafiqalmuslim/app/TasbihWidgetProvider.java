@@ -53,7 +53,7 @@ public class TasbihWidgetProvider extends AppWidgetProvider {
 
     static void render(Context c, AppWidgetManager m, int id) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_tasbih);
-        WidgetStyle.apply(c, v, R.id.t_root);
+        WidgetStyle.apply(c, v, R.id.t_root, id, 0);
         JSONObject data = PlusWidgets.load(c);
         if (PlusWidgets.showGate(c, v, data, R.id.t_content, R.id.t_empty)) {
             v.setOnClickPendingIntent(R.id.t_root, PlusWidgets.openApp(c, 5));

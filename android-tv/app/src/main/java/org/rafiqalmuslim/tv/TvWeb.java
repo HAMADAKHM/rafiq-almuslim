@@ -220,7 +220,7 @@ final class TvWeb {
                 o.put("service", TvService.running);
                 o.put("overlay", android.os.Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(ctx));
                 o.put("accessibility", IdleWatcher.connected);
-                o.put("quietIdle", TvService.prefs(ctx).getBoolean(TvService.KEY_IDLE_QUIET, true));
+                o.put("quietIdle", TvService.prefs(ctx).getBoolean(TvService.KEY_IDLE_QUIET, false));
                 o.put("canOpen", TvService.canOpenFromBackground(ctx));
                 o.put("hdmi", TvService.externalInputActive(ctx));
                 o.put("snoozeUntil", TvService.prefs(ctx).getLong(TvService.KEY_SNOOZE, 0));

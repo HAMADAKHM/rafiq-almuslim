@@ -140,6 +140,16 @@
         </activity-alias>
 
         <!-- ودجت مواقيت الصلاة -->
+        <!-- «إعداد الودجت» بعد وضعه (ضغطة مطوّلة ← إعداد) -->
+        <activity
+            android:name=".WidgetConfigActivity"
+            android:exported="true"
+            android:label="إعداد الودجت"
+            android:theme="@android:style/Theme.Material.Light.NoActionBar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
         <receiver
             android:name=".PrayerWidgetProvider"
             android:exported="false"

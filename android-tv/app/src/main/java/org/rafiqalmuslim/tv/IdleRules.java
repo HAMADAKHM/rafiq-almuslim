@@ -42,11 +42,12 @@ final class IdleRules {
         if (in.adhanActive) return "adhan";
         if (in.mediaActive) return "media_active";
         if (in.externalForeground) return "hdmi_foreground";
+        // جهاز HDMI يعمل وفيه إشارة (بلايستيشن، رسيفر…): لا تُفتح الشاشة أبدًا، ولو بدا أن التلفاز على الرئيسية
+        // (بعض الشاشات الرئيسية تعرض مدخل HDMI داخلها، ويد البلايستيشن لا تُحسب ضغطًا على جهاز التحكم)
+        if (in.hdmiConnected) return "hdmi_connected";
         // لا تُفتح الشاشة فوق أي تطبيق أو لعبة أو مدخل HDMI: من الشاشة الرئيسية فقط.
         // (يد البلايستيشن لا تُحسب ضغطًا على جهاز التحكم، وصوت HDMI لا يمر بنظام Android)
         if (in.accessibility && in.foregroundKnown && !in.foregroundIsHome) return "app_foreground";
-        // لا نعرف ما الظاهر (دون خدمة الإتاحة أو قبل أول تغيّر): وجود جهاز HDMI فيه إشارة يكفي للامتناع
-        if ((!in.accessibility || !in.foregroundKnown) && in.hdmiConnected) return "hdmi_connected";
         if (in.now < in.snoozeUntil) return "snoozed";
         long since;
         if (in.accessibility) since = Math.max(in.lastKeyAt, in.lastActiveAt);
@@ -67,7 +68,12 @@ final class IdleRules {
 
     /** قرار شاشة توقف النظام: إن بدأت فوق تطبيق أو جهاز HDMI نوقظ التلفاز ليعود إليه، ولا نفتح المواقيت */
     static boolean dreamOverApp(Input in) {
-        return (in.accessibility && in.foregroundKnown && !in.foregroundIsHome) || ((!in.accessibility || !in.foregroundKnown) && in.hdmiConnected);
+        return in.hdmiConnected || (in.accessibility && in.foregroundKnown && !in.foregroundIsHome);
+    }
+
+    /** إبقاء التلفاز مستيقظًا (منع شاشة التوقف) ما دام جهاز HDMI أو تطبيق أمام المستخدم */
+    static boolean keepAwake(Input in) {
+        return in.hdmiConnected || in.externalForeground || (in.accessibility && in.foregroundKnown && !in.foregroundIsHome);
     }
 
     /** أسماء حزم تطبيقات القنوات ومداخل HDMI الشائعة في أجهزة Android TV / Google TV */

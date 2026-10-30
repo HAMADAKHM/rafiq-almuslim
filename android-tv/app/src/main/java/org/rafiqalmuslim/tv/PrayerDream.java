@@ -13,6 +13,8 @@ public class PrayerDream extends DreamService {
     @Override
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
+        // بدأت شاشة التوقف فوق لعبة أو جهاز HDMI: ننهيها فورًا فيعود التلفاز إلى ما كان عليه
+        if (TvService.dreamShouldYield(this)) { TvService.log(this, "dream_yield_hdmi"); finish(); return; }
         setInteractive(false);
         setFullscreen(true);
         setScreenBright(true);

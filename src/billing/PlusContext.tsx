@@ -136,6 +136,7 @@ export function PlusProvider({ children, provider = billing() }: { children: Rea
   }), [provider, ready, entitlement, offer, verifiedAt, busy, message, now, purchase, restore, refresh])
 
   useEffect(() => { setPlusActive(value.entitled) }, [value.entitled])
+  useEffect(() => { if (ready) import('../platform/widget').then((w) => w.setWidgetPlus(value.entitled)).catch(() => {}) }, [ready, value.entitled])
   // انتهى الاشتراك (بعد التحقق من المتجر): تعود أيقونة التطبيق وتصميم الودجت الأصليان، ويبقى اختيار الثيم محفوظًا ليعود مع التجديد
   useEffect(() => {
     if (!ready || value.entitled || !appIconSupported()) return

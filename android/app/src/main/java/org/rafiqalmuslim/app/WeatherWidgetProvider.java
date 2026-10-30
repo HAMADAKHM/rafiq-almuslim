@@ -18,7 +18,7 @@ public class WeatherWidgetProvider extends AppWidgetProvider {
 
     static void render(Context c, AppWidgetManager m, int id) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_weather);
-        WidgetStyle.apply(c, v, R.id.w_root);
+        WidgetStyle.apply(c, v, R.id.w_root, id, 0);
         v.setOnClickPendingIntent(R.id.w_root, PlusWidgets.openApp(c, 3));
         JSONObject data = PlusWidgets.load(c);
         if (PlusWidgets.showGate(c, v, data, R.id.w_content, R.id.w_empty)) { m.updateAppWidget(id, v); return; }

@@ -11,6 +11,7 @@ import { getWidgetStyle, setWidgetStyle } from '../../platform/widget'
 
 export const WIDGET_STYLES: { id: string; name: string; bg: [string, string]; stroke: string }[] = [
   { id: 'emerald', name: 'الزمردي (الأصلي)', bg: ['#05302A', '#1F6F61'], stroke: '#E2C27E' },
+  { id: 'indigo', name: 'النيلي الذهبي', bg: ['#16134A', '#231E66'], stroke: '#F6C35A' },
   { id: 'royal', name: 'الملكي', bg: ['#070F26', '#1C3170'], stroke: '#D9B45A' },
   { id: 'night', name: 'الليلي', bg: ['#071330', '#21458F'], stroke: '#AED6FF' },
   { id: 'turquoise', name: 'الفيروزي', bg: ['#073F41', '#12898A'], stroke: '#F3DCA0' },
@@ -83,7 +84,12 @@ export function WidgetsPage() {
             <li>اختر «الأدوات» أو «Widgets».</li>
             <li>ابحث عن «رفيق المسلم» واسحب الودجت الذي تريده.</li>
           </ol>
-          <p className="small muted" style={{ margin: 0 }}>الودجتات متاحة في Android. ودجتات iPhone تحتاج نسخة iOS (لم تُبنَ بعد).</p>
+          <h2 style={{ marginTop: '1rem' }}>تعديل الودجت بعد وضعه</h2>
+          <ol className="small" style={{ paddingInlineStart: '1.2rem', lineHeight: 1.9 }}>
+            <li><strong>الألوان:</strong> اضغط على الودجت مطولًا ← «إعداد» (أو أيقونة القلم)، واختر تصميمًا لهذا الودجت وحده.</li>
+            <li><strong>الحجم:</strong> اضغط عليه مطولًا ثم اسحب المقابض حول حدوده لتكبيره أو تصغيره.</li>
+          </ol>
+          <p className="small muted" style={{ margin: 0 }}>الودجتات متاحة في Android. «إعداد» بعد الوضع في Android 12 فأحدث، وفي الأقدم تظهر شاشة التصميم عند إضافة الودجت. ودجتات iPhone تحتاج نسخة iOS (لم تُبنَ بعد).</p>
         </section>
       </div>
     </>
