@@ -9,7 +9,7 @@ import { PageHead, Spinner, Tabs } from '../../components/Common'
 import { toast, useQuran } from '../../hooks'
 import { shareImage } from '../../platform'
 import { canvasToBlob, drawStudioFrame, loadStudioFonts, versesText, type StudioBg, type StudioStyle, type TextFont } from '../../services/studio'
-import { EID_CARDS, FRIDAY_CARDS, POSTER_CARDS, RAMADAN_CARDS, type PosterCard, type ShareCard } from '../../content/cards'
+import { CARD_PHOTOS, EID_CARDS, FRIDAY_CARDS, POSTER_CARDS, RAMADAN_CARDS, READY_CARDS, type PosterCard, type ShareCard } from '../../content/cards'
 import { POSTER_SCENES, crescentShape, drawPosterScene, drawPosterText, loadPosterFonts, type PosterScene, type PosterText } from '../../services/posterArt'
 import { HADITH } from '../../content/hadith'
 import { DUAS } from '../../content/duas'
@@ -125,31 +125,45 @@ function CardViewer({ card, bgs, ramadan, onClose }: { card: ShareCard; bgs: Stu
   )
 }
 
-const PW = 1080, PH = 1920
+const PW = 1080, PH = 1350
+const photoUrl = (id: string) => `${import.meta.env.BASE_URL}card-photos/${id}.jpg`
+const imgCache = new Map<string, Promise<HTMLImageElement>>()
+function loadImg(src: string): Promise<HTMLImageElement> {
+  if (!imgCache.has(src)) imgCache.set(src, new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src }))
+  return imgCache.get(src)!
+}
+/** خلفية البطاقة: صورة من المجموعة، أو مشهد مرسوم */
+type PosterBg = { photo: string } | { scene: PosterScene }
+const ALL_BGS: PosterBg[] = [...CARD_PHOTOS.map((photo) => ({ photo })), ...POSTER_SCENES.map((x) => ({ scene: x.id }))]
+const bgFor = (i: number): PosterBg => ({ photo: CARD_PHOTOS[(i * 7 + 3) % CARD_PHOTOS.length] })
 
 /** يرسم بطاقة مصوّرة: المشهد (أو صورة المستخدم) ثم النص */
-async function renderPoster(c: HTMLCanvasElement, scene: PosterScene, text: PosterText, photo?: HTMLImageElement | null) {
+async function renderPoster(c: HTMLCanvasElement, bg: PosterBg, text: PosterText, own?: HTMLImageElement | null) {
   c.width = PW; c.height = PH
-  await loadPosterFonts(text.headline + ' ' + (text.sub ?? '') + ' ' + (text.source ?? ''))
+  const [, lib] = await Promise.all([loadPosterFonts(text.headline + ' ' + (text.sub ?? '') + ' ' + (text.source ?? '')), 'photo' in bg && !own ? loadImg(photoUrl(bg.photo)).catch(() => null) : Promise.resolve(null)])
+  const photo = own ?? lib
+  const scene: PosterScene = 'scene' in bg ? bg.scene : 'desert'
   const ctx = c.getContext('2d')!
+  ctx.imageSmoothingQuality = 'high'
   if (photo) {
     const k = Math.max(PW / photo.naturalWidth, PH / photo.naturalHeight)
     const w = photo.naturalWidth * k, h = photo.naturalHeight * k
     ctx.drawImage(photo, (PW - w) / 2, (PH - h) / 2, w, h)
-    const g = ctx.createLinearGradient(0, 0, 0, PH); g.addColorStop(0, 'rgba(0,0,0,0.15)'); g.addColorStop(0.5, 'rgba(0,0,0,0.35)'); g.addColorStop(1, 'rgba(0,0,0,0.6)')
+    // تعتيم خفيف أعلى الصورة (مكان النص) وأسفلها (العلامة) دون إخفاء المشهد
+    const g = ctx.createLinearGradient(0, 0, 0, PH); g.addColorStop(0, 'rgba(0,0,0,0.55)'); g.addColorStop(0.42, 'rgba(0,0,0,0.25)'); g.addColorStop(0.7, 'rgba(0,0,0,0.05)'); g.addColorStop(1, 'rgba(0,0,0,0.55)')
     ctx.fillStyle = g; ctx.fillRect(0, 0, PW, PH)
   } else drawPosterScene(ctx, PW, PH, scene)
-  drawPosterText(ctx, PW, PH, photo ? 'desert' : scene, text)
+  drawPosterText(ctx, PW, PH, scene, text, 'رفيق المسلم', photo ? 0.24 : undefined)
 }
 
-function PosterThumb({ p, onOpen }: { p: PosterCard; onOpen: () => void }) {
+function PosterThumb({ p, bg, onOpen }: { p: PosterCard; bg: PosterBg; onOpen: () => void }) {
   const [url, setUrl] = useState('')
   useEffect(() => {
     let alive = true
     const c = document.createElement('canvas')
-    renderPoster(c, p.scene, p.text).then(() => { if (alive) setUrl(c.toDataURL('image/jpeg', 0.8)) })
+    renderPoster(c, bg, p.text).then(() => { if (alive) setUrl(c.toDataURL('image/jpeg', 0.8)) })
     return () => { alive = false }
-  }, [p])
+  }, [p, bg])
   return (
     <button type="button" className="poster-card" onClick={onOpen} aria-label={`بطاقة مصوّرة: ${p.text.headline}`}>
       {url ? <img src={url} alt="" /> : <span className="share-card-ph"><Spinner label="" /></span>}
@@ -157,20 +171,20 @@ function PosterThumb({ p, onOpen }: { p: PosterCard; onOpen: () => void }) {
   )
 }
 
-function PosterViewer({ p, onClose }: { p: PosterCard; onClose: () => void }) {
-  const [scene, setScene] = useState<PosterScene>(p.scene)
+function PosterViewer({ p, bg0, onClose }: { p: PosterCard; bg0: PosterBg; onClose: () => void }) {
+  const [k, setK] = useState(() => Math.max(0, ALL_BGS.findIndex((b) => JSON.stringify(b) === JSON.stringify(bg0))))
   const [style, setStyle] = useState(p.text.style ?? 'ruqaa')
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null)
   const ref = useRef<HTMLCanvasElement>(null)
   const input = useRef<HTMLInputElement>(null)
   const text = { ...p.text, style }
-  useEffect(() => { if (ref.current) renderPoster(ref.current, scene, text, photo) }, [scene, style, photo]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (ref.current) renderPoster(ref.current, ALL_BGS[k % ALL_BGS.length], text, photo) }, [k, style, photo]) // eslint-disable-line react-hooks/exhaustive-deps
   const share = async () => {
     const blob = await canvasToBlob(ref.current!, 'image/jpeg')
     const r = await shareImage(blob, `rafiq-${p.id}.jpg`, p.text.headline)
     toast(r === 'shared' ? 'تمت المشاركة' : r === 'downloaded' ? 'حُفظت الصورة' : 'تعذرت المشاركة')
   }
-  const nextScene = () => { setPhoto(null); const i = POSTER_SCENES.findIndex((x) => x.id === scene); setScene(POSTER_SCENES[(i + 1) % POSTER_SCENES.length].id) }
+  const nextScene = () => { setPhoto(null); setK(k + 1) }
   return (
     <div className="card-viewer" role="dialog" aria-label={p.text.headline}>
       <button className="icon-btn card-viewer-close" onClick={onClose} aria-label="إغلاق"><X size={22} /></button>
@@ -181,7 +195,7 @@ function PosterViewer({ p, onClose }: { p: PosterCard; onClose: () => void }) {
       }} />
       <div className="row" style={{ justifyContent: 'center' }}>
         <button className="btn btn-primary" onClick={share}><Share2 size={16} /> مشاركة</button>
-        <button className="btn" onClick={nextScene}><Shuffle size={16} /> مشهد آخر</button>
+        <button className="btn" onClick={nextScene}><Shuffle size={16} /> خلفية أخرى</button>
         {style !== 'naskh' && <button className="btn" onClick={() => setStyle(style === 'ruqaa' ? 'kufi' : 'ruqaa')}><Type size={16} /> خط آخر</button>}
         <button className="btn" onClick={() => input.current?.click()}><ImagePlus size={16} /> صورتي</button>
       </div>
@@ -198,11 +212,13 @@ export function CardsPage() {
   const inRamadan = ramadanStatus(now, tz, settings.hijriOffset).inRamadan
   const [tab, setTab] = useState<Tab>(inRamadan ? 'ramadan' : 'today')
   const [open, setOpen] = useState<ShareCard | null>(null)
-  const [openPoster, setOpenPoster] = useState<PosterCard | null>(null)
+  const [openPoster, setOpenPoster] = useState<{ p: PosterCard; bg: PosterBg } | null>(null)
+  const [openReady, setOpenReady] = useState<string | null>(null)
   const weekday = new Date(`${day}T12:00:00Z`).getUTCDay()
   const cards = useMemo(() => (tab === 'today' ? todayCards(day, weekday, inRamadan) : tab === 'ramadan' ? RAMADAN_CARDS : tab === 'eid' ? EID_CARDS : FRIDAY_CARDS), [tab, day, weekday, inRamadan])
   const bgs = [...BGS[tab], ...(entitled ? PLUS_BGS : [])]
   const occasion = tab === 'today' ? (inRamadan ? 'ramadan' : weekday === 5 ? 'friday' : null) : tab
+  const ready = READY_CARDS.filter((r) => r.occasion === (tab === 'eid' ? 'eid' : tab === 'ramadan' || (tab === 'today' && inRamadan) ? 'ramadan' : '-'))
   const posters = occasion ? POSTER_CARDS.filter((x) => x.occasion === occasion) : POSTER_CARDS.filter((_, i) => (i + dayIndex(day)) % 6 === 0)
   const isRam = (c: ShareCard) => c.id.startsWith('r-')
   return (
@@ -212,7 +228,15 @@ export function CardsPage() {
       {posters.length > 0 && (
         <section aria-label="بطاقات مصوّرة">
           <h2 className="cards-sec-title">بطاقات مصوّرة</h2>
-          <div className="poster-row">{posters.map((x) => <PosterThumb key={x.id} p={x} onOpen={() => setOpenPoster(x)} />)}</div>
+          <div className="poster-row">{posters.map((x) => { const i = POSTER_CARDS.indexOf(x); return <PosterThumb key={x.id} p={x} bg={bgFor(i)} onOpen={() => setOpenPoster({ p: x, bg: bgFor(i) })} /> })}</div>
+        </section>
+      )}
+      {ready.length > 0 && (
+        <section aria-label="بطاقات جاهزة">
+          <h2 className="cards-sec-title">بطاقات جاهزة</h2>
+          <div className="poster-row">{ready.map((r) => (
+            <button key={r.id} type="button" className="poster-card ready" onClick={() => setOpenReady(r.id)} aria-label={`بطاقة جاهزة: ${r.label}`}><img src={photoUrl(r.id)} alt="" loading="lazy" /></button>
+          ))}</div>
         </section>
       )}
       <h2 className="cards-sec-title">بطاقات الآيات والأحاديث والأدعية</h2>
@@ -220,7 +244,18 @@ export function CardsPage() {
         {cards.map((c, i) => <CardThumb key={c.id} card={c} bg={bgs[i % bgs.length]} ramadan={isRam(c)} onOpen={() => setOpen(c)} />)}
       </div>
       <p className="small muted" style={{ textAlign: 'center' }}>الآيات من المصحف المعتمد، والأحاديث والأدعية بتخريجها، والتهاني عبارات عامة.</p>
-      {openPoster && <PosterViewer p={openPoster} onClose={() => setOpenPoster(null)} />}
+      {openPoster && <PosterViewer p={openPoster.p} bg0={openPoster.bg} onClose={() => setOpenPoster(null)} />}
+      {openReady && (
+        <div className="card-viewer" role="dialog" aria-label="بطاقة جاهزة">
+          <button className="icon-btn card-viewer-close" onClick={() => setOpenReady(null)} aria-label="إغلاق"><X size={22} /></button>
+          <img className="ready-viewer-img" src={photoUrl(openReady)} alt={READY_CARDS.find((r) => r.id === openReady)?.label ?? ''} />
+          <button className="btn btn-primary" onClick={async () => {
+            const blob = await (await fetch(photoUrl(openReady))).blob()
+            const r = await shareImage(blob, `rafiq-${openReady}.jpg`, READY_CARDS.find((x) => x.id === openReady)?.label ?? 'رفيق المسلم')
+            toast(r === 'shared' ? 'تمت المشاركة' : r === 'downloaded' ? 'حُفظت الصورة' : 'تعذرت المشاركة')
+          }}><Share2 size={16} /> مشاركة</button>
+        </div>
+      )}
       {open && <CardViewer card={open} bgs={bgs} ramadan={isRam(open)} onClose={() => setOpen(null)} />}
     </>
   )

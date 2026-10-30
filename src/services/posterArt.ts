@@ -392,7 +392,7 @@ function wrap(ctx: Ctx, text: string, maxW: number): string[] {
 }
 
 /** النص فوق المشهد: عنوان بخط الرقعة أو الكوفي، ثم سطر صغير، ثم المصدر، والعلامة أسفلها */
-export function drawPosterText(ctx: Ctx, W: number, H: number, scene: PosterScene, t: PosterText, brand = 'رفيق المسلم') {
+export function drawPosterText(ctx: Ctx, W: number, H: number, scene: PosterScene, t: PosterText, brand = 'رفيق المسلم', yFrac?: number) {
   const style = t.style ?? 'ruqaa'
   ctx.save()
   ctx.direction = 'rtl'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
@@ -404,7 +404,7 @@ export function drawPosterText(ctx: Ctx, W: number, H: number, scene: PosterScen
   const lh = size * (style === 'naskh' ? 1.7 : 1.35)
   const subSize = 46
   const block = lines.length * lh + (t.sub ? subSize * 2 : 0) + (t.source ? 40 : 0)
-  let y = H * TEXT_Y[scene] - block / 2 + lh / 2
+  let y = H * (yFrac ?? TEXT_Y[scene]) - block / 2 + lh / 2
   ctx.fillStyle = '#ffffff'
   ctx.shadowColor = 'rgba(0,0,0,0.65)'; ctx.shadowBlur = size * 0.25; ctx.shadowOffsetY = 4
   for (const l of lines) { ctx.fillText(l, W / 2, y); y += lh }

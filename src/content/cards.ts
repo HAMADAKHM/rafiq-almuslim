@@ -85,3 +85,23 @@ export const POSTER_CARDS: PosterCard[] = [
   { id: 'p-f-salat', occasion: 'friday', scene: 'archway', text: { headline: 'جمعة مباركة', sub: 'أكثروا فيها من الصلاة على النبي ﷺ', style: 'kufi' } },
   { id: 'p-f-allahumma', occasion: 'friday', scene: 'dusk', text: { headline: 'اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ', style: 'naskh' } },
 ]
+
+/** صور الخلفيات (أرسلها صاحب التطبيق لاستعمالها في البطاقات) — في public/card-photos */
+export const CARD_PHOTOS = ['p00', 'p01', 'p03', 'p04', 'p05', 'p07', 'p08', 'p09', 'p10', 'p11', 'p12', 'p13', 'p14', 'p15', 'p16', 'p18', 'p19', 'p20', 'p21', 'p22', 'p23', 'p24', 'p25', 'p26', 'p27', 'p28', 'p29', 'p30', 'p31', 'p32', 'p33', 'p34', 'p35', 'p36', 'p37', 'p38', 'p39', 'p40', 'p41', 'p42', 'p43', 'p44', 'p45', 'p46', 'p47', 'p48', 'p49', 'p50', 'p51', 'p52', 'p53', 'p54', 'p55', 'p56']
+
+/** بطاقات جاهزة بنصوصها (صور كاملة) */
+export const READY_CARDS: { id: string; label: string; occasion: 'ramadan' | 'eid' }[] = [
+  { id: 'r00', label: 'رمضان كريم — مبارك عليكم الشهر', occasion: 'ramadan' },
+  { id: 'r01', label: 'تقبّل الله طاعاتكم', occasion: 'ramadan' },
+  { id: 'r02', label: 'كل عام وأنتم بخير', occasion: 'ramadan' },
+  { id: 'r07', label: 'رمضان كريم', occasion: 'ramadan' },
+  { id: 'r08', label: 'اللهم اجعلنا من عتقائك من النار', occasion: 'ramadan' },
+  { id: 'r09', label: 'اللهم ارزقنا الخير في الدنيا والآخرة', occasion: 'ramadan' },
+  { id: 'r10', label: 'مبارك عليكم الشهر', occasion: 'ramadan' },
+  { id: 'r12', label: 'كل عام وأنتم بخير', occasion: 'ramadan' },
+  { id: 'r13', label: 'اللهم اجعل أيامنا في رمضان أقرب إليك', occasion: 'ramadan' },
+  { id: 'r14', label: 'رمضان كريم — تقبّل الله طاعاتكم', occasion: 'ramadan' },
+  { id: 'r06', label: 'عيدكم مبارك', occasion: 'eid' },
+  { id: 'r11', label: 'تقبّل الله منا ومنكم', occasion: 'eid' },
+  { id: 'r15', label: 'عيدكم مبارك', occasion: 'eid' },
+]
