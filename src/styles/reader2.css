@@ -1,0 +1,93 @@
+/* القارئ الجديد (تجريبي): كل وضع يغيّر المتغيرات --r2-* والتنسيق، لا لون الخلفية فقط */
+.r2 { min-height: 100dvh; display: flex; flex-direction: column; background: var(--r2-page); color: var(--r2-ink); margin: -1rem; }
+@media (min-width: 900px) { .r2 { margin: 0; border-radius: 18px; overflow: hidden; min-height: calc(100dvh - 2rem); } }
+.r2-top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 4px; padding: calc(8px + env(safe-area-inset-top, 0px)) 8px 8px; background: var(--r2-chrome); color: var(--r2-chrome-ink); border-bottom: 1px solid color-mix(in srgb, var(--r2-chrome-ink) 14%, transparent); }
+.r2-title { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; line-height: 1.35; }
+.r2-title strong { font-size: 1.05rem; }
+.r2-title small { font-size: 0.74rem; opacity: 0.75; }
+.r2-icon { width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 12px; background: transparent; color: inherit; display: grid; place-items: center; cursor: pointer; }
+.r2-icon:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.r2-notice { margin: 8px 12px 0; padding: 8px 12px; border-radius: 12px; background: color-mix(in srgb, var(--r2-accent) 10%, var(--r2-paper)); color: var(--r2-ink); font-size: 0.82rem; }
+.r2-body { flex: 1; padding: 12px; display: flex; flex-direction: column; }
+
+/* ---------- صفحة المصحف ---------- */
+.r2-page { flex: 1; background: var(--r2-paper); border-radius: 8px; padding: 22px 18px 12px; display: flex; flex-direction: column; gap: 10px; touch-action: pan-y; }
+.r2-page.framed { border: 1px solid color-mix(in srgb, var(--r2-marker) 70%, transparent); outline: 3px double var(--r2-marker); outline-offset: -8px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08); }
+.r2-banner { height: 44px; margin: 6px 0; border: 1.5px solid var(--r2-marker); border-radius: 22px; display: grid; place-items: center; background: color-mix(in srgb, var(--r2-marker) 12%, var(--r2-paper)); }
+.r2-banner span { font-family: var(--r2-font); font-size: 1.25rem; color: var(--r2-accent); }
+.r2-basmala { margin: 2px 0 6px; text-align: center; font-family: var(--r2-font); font-size: calc(var(--r2-size) * 0.92); line-height: 2; color: var(--r2-ink); }
+.r2-flow { margin: 0; font-family: var(--r2-font); font-size: var(--r2-size); line-height: var(--r2-lh); text-align: justify; text-align-last: center; color: var(--r2-ink); word-spacing: 0.04em; }
+.r2-ayah { cursor: pointer; border-radius: 6px; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
+.r2-ayah.sel { background: color-mix(in srgb, var(--r2-marker) 22%, transparent); }
+.r2-ayah.playing { background: color-mix(in srgb, var(--r2-accent) 18%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--r2-accent) 30%, transparent); }
+.r2-marker { display: inline-grid; place-items: center; min-width: 1.15em; height: 1.15em; padding: 0 0.12em; border: 1.5px solid var(--r2-marker); border-radius: 50%; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: calc(var(--r2-size) * 0.46); color: var(--r2-marker); vertical-align: middle; line-height: 1; }
+.r2-page-foot { margin-top: auto; display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--r2-muted); padding-top: 6px; }
+
+/* ---------- كتل الآيات (المريح، كبار السن، الترجمة) ---------- */
+.r2-block { padding: calc(var(--r2-gap) / 2 + 4px) 0; border-bottom: 1px solid color-mix(in srgb, var(--r2-ink) 8%, transparent); display: flex; flex-direction: column; gap: 6px; }
+.r2-block:last-child { border-bottom: 0; }
+.r2-block > .r2-ayah { margin: 0; font-family: var(--r2-font); font-size: var(--r2-size); line-height: var(--r2-lh); color: var(--r2-ink); }
+.r2-num { align-self: flex-start; min-width: 28px; height: 24px; padding: 0 8px; border-radius: 12px; background: color-mix(in srgb, var(--r2-marker) 14%, transparent); color: var(--r2-marker); font-size: 0.78rem; font-weight: 600; display: grid; place-items: center; }
+.r2-tr { margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 0.95rem; line-height: 1.6; color: var(--r2-muted); text-align: left; }
+.r2-verses { background: var(--r2-paper); border-radius: 10px; padding: 8px 16px; }
+.r2-ayah-tools { display: flex; gap: 6px; }
+.r2-ayah-tools button { min-height: 32px; padding: 0 12px; border-radius: 16px; border: 1px solid color-mix(in srgb, var(--r2-ink) 16%, transparent); background: transparent; color: var(--r2-accent); font: inherit; font-size: 0.78rem; cursor: pointer; }
+.r2-tafsir { border-radius: 12px; padding: 10px 12px; background: color-mix(in srgb, var(--r2-marker) 8%, var(--r2-paper)); color: var(--r2-ink); font-size: 0.95rem; }
+
+/* ---------- الشريط السفلي ---------- */
+.r2-bottom { position: sticky; bottom: 0; z-index: 5; background: var(--r2-chrome); color: var(--r2-chrome-ink); border-top: 1px solid color-mix(in srgb, var(--r2-chrome-ink) 14%, transparent); padding: 6px 12px calc(10px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 6px; }
+.r2-progress { height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--r2-chrome-ink) 14%, transparent); overflow: hidden; }
+.r2-progress span { display: block; height: 100%; background: var(--r2-accent); transition: width 0.3s; }
+.r2-controls { display: flex; align-items: center; justify-content: space-between; }
+.r2-play { width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--r2-accent); color: var(--r2-paper); display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18); }
+.r2-sub { display: flex; justify-content: space-between; gap: 8px; }
+.r2-chip { min-height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--r2-chrome-ink) 20%, transparent); background: transparent; color: inherit; font: inherit; font-size: 0.8rem; display: inline-flex; align-items: center; cursor: pointer; }
+.r2-chip select { border: 0; background: transparent; color: inherit; font: inherit; max-width: 180px; }
+
+/* ---------- كبار السن: خط وأزرار كبيرة وتباين قوي ---------- */
+.r2-senior .r2-top { border-bottom: 3px solid var(--r2-accent); }
+.r2-senior .r2-title strong { font-size: 1.4rem; }
+.r2-big-btn { width: 56px; height: 56px; border-radius: 14px; border: 2px solid var(--r2-accent); background: var(--r2-paper); color: var(--r2-accent); font: inherit; font-size: 1.3rem; font-weight: 700; cursor: pointer; }
+.r2-big-btn.solid { background: var(--r2-accent); color: #fff; }
+.r2-bottom.simple { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding-top: 12px; }
+.r2-bottom.simple button { min-height: 80px; border-radius: 18px; border: 2px solid var(--r2-accent); background: var(--r2-paper); color: var(--r2-accent); font: inherit; font-size: 1.1rem; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; }
+.r2-bottom.simple button.solid { background: var(--r2-accent); color: #fff; border-color: var(--r2-accent); }
+.r2-senior .r2-num { font-size: 1rem; height: 32px; min-width: 40px; }
+.r2-senior .r2-ayah.sel { outline: 3px solid #E0A800; background: #FFF4CC; }
+
+/* ---------- الأطفال: آية في بطاقة ---------- */
+.r2-kids .r2-bottom.simple button { border-radius: 26px; background: #E8F4FA; border-color: transparent; }
+.r2-kids .r2-bottom.simple button.solid { background: #5BB98C; color: #fff; }
+.r2-single { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+.r2-dots { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+.r2-dots button { width: 18px; height: 10px; border-radius: 5px; border: 0; background: #F1E3C6; padding: 0; cursor: pointer; }
+.r2-dots button.done { background: #5BB98C; }
+.r2-card { flex: 1; border-radius: 28px; background: #fff; border: 3px solid #FFE2A8; box-shadow: 0 10px 26px rgba(185, 119, 14, 0.14); padding: 24px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+.r2-card-num { width: 54px; height: 54px; border-radius: 50%; background: #E8F4FA; color: #1F6F8B; font-size: 1.5rem; font-weight: 700; display: grid; place-items: center; }
+.r2-card .r2-ayah { margin: 0; text-align: center; font-family: var(--r2-font); font-size: var(--r2-size); line-height: var(--r2-lh); color: var(--r2-ink); }
+.r2-card .r2-ayah.sel { background: transparent; }
+
+/* ---------- الإعدادات ---------- */
+.r2-settings { display: flex; flex-direction: column; gap: 14px; }
+.r2-set-row { display: flex; flex-direction: column; gap: 6px; }
+.r2-set-label { font-size: 0.86rem; color: var(--text-muted); }
+.r2-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+.r2-choice { min-height: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 0.86rem; cursor: pointer; }
+.r2-choice.on { border: 2px solid var(--primary); background: var(--primary-soft); }
+.r2-choice.sw { width: 44px; height: 44px; padding: 0; border-radius: 50%; font-family: 'Amiri Quran', serif; font-size: 1.1rem; }
+.r2-choice.sw.on { border: 3px solid var(--primary); }
+.r2-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.r2-mode { min-height: 70px; border-radius: 14px; border: 1px solid var(--border); padding: 8px 10px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; text-align: start; font: inherit; cursor: pointer; }
+.r2-mode small { opacity: 0.75; font-size: 0.72rem; }
+.r2-mode.on { border: 3px solid var(--primary); }
+.r2-size { display: flex; align-items: center; gap: 10px; }
+.r2-size button { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text); display: grid; place-items: center; cursor: pointer; }
+.r2-size input { flex: 1; }
+.r2-toggle { display: flex; justify-content: space-between; align-items: center; min-height: 46px; border-top: 1px solid var(--border); font-size: 0.92rem; }
+.r2-toggle input { width: 22px; height: 22px; }
+.r2-hint { margin: -8px 0 0; font-size: 0.76rem; color: var(--text-muted); }
+@media (prefers-reduced-motion: reduce) { .r2-progress span, .r2-ayah { transition: none; } }
+
+/* القارئ الجديد يملأ الشاشة: بلا الشريط السفلي للتطبيق */
+.app.reading2 .tabbar { display: none; }
+@media (max-width: 900px) { .app.reading2 .content { padding-bottom: 0; } }

@@ -43,11 +43,11 @@ export function Layout() {
   useEffect(() => startReminderLoop(() => settingsRef.current), [])
 
   // صفحات القراءة لها رأسها وشريطها السفلي الخاصان (يحتويان المشغل)
-  const isReader = /^\/(quran\/\d+\/?$|mushaf)/.test(loc.pathname)
+  const isReader = /^\/(quran\/\d+\/?$|mushaf|read\/?$)/.test(loc.pathname)
   const isHome = loc.pathname === '/'
 
   return (
-    <div className={'app' + (isReader ? ' reading' : '') + (isHome ? ' at-home' : '')}>
+    <div className={'app' + (isReader ? ' reading' : '') + (/^\/read\/?$/.test(loc.pathname) ? ' reading2' : '') + (isHome ? ' at-home' : '')}>
       <Splash />
       <TvUpdateCheck />
       <AdhanAlarm />

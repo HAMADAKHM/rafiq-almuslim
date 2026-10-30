@@ -23,6 +23,10 @@ export function QuranIndexPage() {
     <>
       <PageHead title="القرآن الكريم" subtitle="المصحف برواية حفص عن عاصم — الرسم العثماني"
         actions={<>{last && <Link className="btn btn-primary" to={`/quran/${last.surah}?ayah=${last.ayah}`}><BookOpen size={16} /> متابعة: {data.meta.surahs[last.surah - 1].name} {last.ayah}</Link>}<VoiceAyahSearch /></>} />
+      <Link to={last ? `/read?s=${last.surah}&a=${last.ayah}` : '/read?s=1&a=1'} className="list-card r2-try" style={{ marginBottom: '1rem' }}>
+        <span className="icon-chip"><BookOpen size={20} aria-hidden="true" /></span>
+        <span className="lc-body"><strong>جرّب القارئ الجديد (تجريبي)</strong><small>سبعة أوضاع: الكلاسيكي، المريح، كبار السن، الليلي، الملوّن، الأطفال، والترجمة — القارئ الحالي باقٍ كما هو</small></span>
+      </Link>
       <Tabs value={tab} onChange={setTab} label="فهارس المصحف" items={[
         { id: 'surahs', label: 'السور' }, { id: 'juz', label: 'الأجزاء' }, { id: 'hizb', label: 'الأحزاب' },
         { id: 'page', label: 'الصفحات' }, { id: 'bookmarks', label: 'العلامات' }, { id: 'favorites', label: 'الآيات المفضلة' }, { id: 'notes', label: 'ملاحظاتي' },
