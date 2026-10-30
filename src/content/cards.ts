@@ -56,3 +56,32 @@ export const FRIDAY_CARDS: ShareCard[] = [
   { id: 'f-h-kahf', title: 'سورة الكهف', text: 'مَنْ قَرَأَ سُورَةَ الْكَهْفِ فِي يَوْمِ الْجُمُعَةِ أَضَاءَ لَهُ مِنَ النُّورِ مَا بَيْنَ الْجُمُعَتَيْنِ', source: 'رواه الحاكم والبيهقي، وصححه الألباني (صحيح الجامع 6470)', kind: 'hadith' },
   { id: 'f-h-salat', title: 'صلاة واحدة', text: 'مَنْ صَلَّى عَلَيَّ صَلَاةً وَاحِدَةً صَلَّى اللَّهُ عَلَيْهِ عَشْرًا', source: 'رواه مسلم (408)', kind: 'hadith' },
 ]
+
+/** البطاقات المصوّرة (قياس القصص): تهانٍ بخط الرقعة أو الكوفي، وأدعية وأحاديث قصيرة بتخريجها — فوق مشاهد مرسومة */
+export interface PosterCard {
+  id: string
+  occasion: 'ramadan' | 'eid' | 'friday'
+  scene: import('../services/posterArt').PosterScene
+  text: import('../services/posterArt').PosterText
+}
+export const POSTER_CARDS: PosterCard[] = [
+  { id: 'p-r-kareem', occasion: 'ramadan', scene: 'alley', text: { headline: 'رمضان كريم', sub: 'أعاده الله علينا وعليكم بالخير والبركات', style: 'kufi' } },
+  { id: 'p-r-awwad', occasion: 'ramadan', scene: 'mudhouse', text: { headline: 'عساكم من عوّاده', style: 'ruqaa' } },
+  { id: 'p-r-taqabbal', occasion: 'ramadan', scene: 'desert', text: { headline: 'تقبّل الله منا ومنكم صالح الأعمال والطاعات', style: 'ruqaa' } },
+  { id: 'p-r-mubarak', occasion: 'ramadan', scene: 'dusk', text: { headline: 'رمضان مبارك', sub: 'Ramadan Mubarak', style: 'kufi' } },
+  { id: 'p-r-shahr', occasion: 'ramadan', scene: 'crimson', text: { headline: 'مبارك عليكم الشهر', style: 'ruqaa' } },
+  { id: 'p-r-ahlan', occasion: 'ramadan', scene: 'lanterns', text: { headline: 'أهلًا رمضان', sub: 'شهر الخير والقرآن', style: 'kufi' } },
+  { id: 'p-r-iftar', occasion: 'ramadan', scene: 'sufra', text: { headline: 'إفطارًا شهيًا', sub: 'وتقبّل الله صيامكم', style: 'ruqaa' } },
+  { id: 'p-r-kul', occasion: 'ramadan', scene: 'emerald', text: { headline: 'كل عام وأنتم بخير', sub: 'وإلى الله أقرب', style: 'ruqaa' } },
+  { id: 'p-r-afw', occasion: 'ramadan', scene: 'archway', text: { headline: 'اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي', source: 'رواه الترمذي (3513) وابن ماجه (3850)', style: 'naskh' } },
+  { id: 'p-r-zama', occasion: 'ramadan', scene: 'sufra', text: { headline: 'ذَهَبَ الظَّمَأُ، وَابْتَلَّتِ الْعُرُوقُ، وَثَبَتَ الْأَجْرُ إِنْ شَاءَ اللَّهُ', source: 'دعاء الإفطار — رواه أبو داود (2357)', style: 'naskh' } },
+  { id: 'p-r-iman', occasion: 'ramadan', scene: 'desert', text: { headline: 'مَنْ صَامَ رَمَضَانَ إِيمَانًا وَاحْتِسَابًا غُفِرَ لَهُ مَا تَقَدَّمَ مِنْ ذَنْبِهِ', source: 'متفق عليه: البخاري (38) ومسلم (760)', style: 'naskh' } },
+  { id: 'p-r-suhoor', occasion: 'ramadan', scene: 'lanterns', text: { headline: 'تَسَحَّرُوا فَإِنَّ فِي السَّحُورِ بَرَكَةً', source: 'متفق عليه: البخاري (1923) ومسلم (1095)', style: 'naskh' } },
+  { id: 'p-e-mubarak', occasion: 'eid', scene: 'crimson', text: { headline: 'عيد مبارك', sub: 'تقبّل الله منا ومنكم', style: 'kufi' } },
+  { id: 'p-e-eidkum', occasion: 'eid', scene: 'dusk', text: { headline: 'عيدكم مبارك', sub: 'وأيامكم سعيدة', style: 'ruqaa' } },
+  { id: 'p-e-taqabbal', occasion: 'eid', scene: 'emerald', text: { headline: 'تقبّل الله منا ومنكم', style: 'ruqaa' } },
+  { id: 'p-e-kul', occasion: 'eid', scene: 'lanterns', text: { headline: 'كل عام وأنتم بخير', style: 'kufi' } },
+  { id: 'p-f-jumua', occasion: 'friday', scene: 'emerald', text: { headline: 'جمعة مباركة', style: 'ruqaa' } },
+  { id: 'p-f-salat', occasion: 'friday', scene: 'archway', text: { headline: 'جمعة مباركة', sub: 'أكثروا فيها من الصلاة على النبي ﷺ', style: 'kufi' } },
+  { id: 'p-f-allahumma', occasion: 'friday', scene: 'dusk', text: { headline: 'اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ', style: 'naskh' } },
+]

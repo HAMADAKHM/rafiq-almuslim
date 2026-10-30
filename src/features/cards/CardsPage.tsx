@@ -1,13 +1,16 @@
 // «بطاقات للمشاركة»: بطاقات اليوم (تتجدد كل يوم من المكتبة الموثقة)، وبطاقات رمضان والعيد والجمعة.
 // كل بطاقة صورة جاهزة تُشارك على وسائل التواصل، مع تغيير الخلفية بلمسة. النصوص كما هي بمصادرها.
 import { useEffect, useMemo, useRef, useState } from 'react'
+import '@fontsource/aref-ruqaa/arabic-700.css'
+import '@fontsource/reem-kufi-ink/arabic-400.css'
 import { Link } from 'react-router-dom'
-import { Share2, Shuffle, Palette, X } from 'lucide-react'
+import { Share2, Shuffle, Palette, X, ImagePlus, Type } from 'lucide-react'
 import { PageHead, Spinner, Tabs } from '../../components/Common'
 import { toast, useQuran } from '../../hooks'
 import { shareImage } from '../../platform'
 import { canvasToBlob, drawStudioFrame, loadStudioFonts, versesText, type StudioBg, type StudioStyle, type TextFont } from '../../services/studio'
-import { EID_CARDS, FRIDAY_CARDS, RAMADAN_CARDS, type ShareCard } from '../../content/cards'
+import { EID_CARDS, FRIDAY_CARDS, POSTER_CARDS, RAMADAN_CARDS, type PosterCard, type ShareCard } from '../../content/cards'
+import { POSTER_SCENES, crescentShape, drawPosterScene, drawPosterText, loadPosterFonts, type PosterScene, type PosterText } from '../../services/posterArt'
 import { HADITH } from '../../content/hadith'
 import { DUAS } from '../../content/duas'
 import { ayahOfDay, dayIndex, dhikrOfDay } from '../../services/daily'
@@ -57,11 +60,8 @@ async function renderCard(c: HTMLCanvasElement, card: ShareCard, text: string, r
     ctx.save()
     ctx.fillStyle = '#f3d58c'
     ctx.globalAlpha = 0.9
-    // هلال
-    ctx.beginPath(); ctx.arc(W - 120, 120, 34, 0, Math.PI * 2); ctx.fill()
-    ctx.globalCompositeOperation = 'destination-out'
-    ctx.beginPath(); ctx.arc(W - 106, 110, 30, 0, Math.PI * 2); ctx.fill()
-    ctx.globalCompositeOperation = 'source-over'
+    // هلال (طبقة مستقلة حتى لا يمحو الخلفية)
+    crescentShape(ctx, W - 120, 120, 34, '#f3d58c')
     // فانوسان معلّقان
     for (const [x, len] of [[110, 70], [190, 40]]) {
       ctx.strokeStyle = '#f3d58c'; ctx.lineWidth = 2
@@ -125,6 +125,70 @@ function CardViewer({ card, bgs, ramadan, onClose }: { card: ShareCard; bgs: Stu
   )
 }
 
+const PW = 1080, PH = 1920
+
+/** يرسم بطاقة مصوّرة: المشهد (أو صورة المستخدم) ثم النص */
+async function renderPoster(c: HTMLCanvasElement, scene: PosterScene, text: PosterText, photo?: HTMLImageElement | null) {
+  c.width = PW; c.height = PH
+  await loadPosterFonts(text.headline + ' ' + (text.sub ?? '') + ' ' + (text.source ?? ''))
+  const ctx = c.getContext('2d')!
+  if (photo) {
+    const k = Math.max(PW / photo.naturalWidth, PH / photo.naturalHeight)
+    const w = photo.naturalWidth * k, h = photo.naturalHeight * k
+    ctx.drawImage(photo, (PW - w) / 2, (PH - h) / 2, w, h)
+    const g = ctx.createLinearGradient(0, 0, 0, PH); g.addColorStop(0, 'rgba(0,0,0,0.15)'); g.addColorStop(0.5, 'rgba(0,0,0,0.35)'); g.addColorStop(1, 'rgba(0,0,0,0.6)')
+    ctx.fillStyle = g; ctx.fillRect(0, 0, PW, PH)
+  } else drawPosterScene(ctx, PW, PH, scene)
+  drawPosterText(ctx, PW, PH, photo ? 'desert' : scene, text)
+}
+
+function PosterThumb({ p, onOpen }: { p: PosterCard; onOpen: () => void }) {
+  const [url, setUrl] = useState('')
+  useEffect(() => {
+    let alive = true
+    const c = document.createElement('canvas')
+    renderPoster(c, p.scene, p.text).then(() => { if (alive) setUrl(c.toDataURL('image/jpeg', 0.8)) })
+    return () => { alive = false }
+  }, [p])
+  return (
+    <button type="button" className="poster-card" onClick={onOpen} aria-label={`بطاقة مصوّرة: ${p.text.headline}`}>
+      {url ? <img src={url} alt="" /> : <span className="share-card-ph"><Spinner label="" /></span>}
+    </button>
+  )
+}
+
+function PosterViewer({ p, onClose }: { p: PosterCard; onClose: () => void }) {
+  const [scene, setScene] = useState<PosterScene>(p.scene)
+  const [style, setStyle] = useState(p.text.style ?? 'ruqaa')
+  const [photo, setPhoto] = useState<HTMLImageElement | null>(null)
+  const ref = useRef<HTMLCanvasElement>(null)
+  const input = useRef<HTMLInputElement>(null)
+  const text = { ...p.text, style }
+  useEffect(() => { if (ref.current) renderPoster(ref.current, scene, text, photo) }, [scene, style, photo]) // eslint-disable-line react-hooks/exhaustive-deps
+  const share = async () => {
+    const blob = await canvasToBlob(ref.current!, 'image/jpeg')
+    const r = await shareImage(blob, `rafiq-${p.id}.jpg`, p.text.headline)
+    toast(r === 'shared' ? 'تمت المشاركة' : r === 'downloaded' ? 'حُفظت الصورة' : 'تعذرت المشاركة')
+  }
+  const nextScene = () => { setPhoto(null); const i = POSTER_SCENES.findIndex((x) => x.id === scene); setScene(POSTER_SCENES[(i + 1) % POSTER_SCENES.length].id) }
+  return (
+    <div className="card-viewer" role="dialog" aria-label={p.text.headline}>
+      <button className="icon-btn card-viewer-close" onClick={onClose} aria-label="إغلاق"><X size={22} /></button>
+      <canvas ref={ref} className="poster-viewer-canvas" />
+      <input ref={input} type="file" accept="image/*" hidden aria-label="صورة من الجوال" onChange={(e) => {
+        const f = e.target.files?.[0]; if (!f) return
+        const img = new Image(); img.onload = () => setPhoto(img); img.src = URL.createObjectURL(f); e.target.value = ''
+      }} />
+      <div className="row" style={{ justifyContent: 'center' }}>
+        <button className="btn btn-primary" onClick={share}><Share2 size={16} /> مشاركة</button>
+        <button className="btn" onClick={nextScene}><Shuffle size={16} /> مشهد آخر</button>
+        {style !== 'naskh' && <button className="btn" onClick={() => setStyle(style === 'ruqaa' ? 'kufi' : 'ruqaa')}><Type size={16} /> خط آخر</button>}
+        <button className="btn" onClick={() => input.current?.click()}><ImagePlus size={16} /> صورتي</button>
+      </div>
+    </div>
+  )
+}
+
 export function CardsPage() {
   const { settings } = useSettings()
   const { entitled } = usePlus()
@@ -134,18 +198,29 @@ export function CardsPage() {
   const inRamadan = ramadanStatus(now, tz, settings.hijriOffset).inRamadan
   const [tab, setTab] = useState<Tab>(inRamadan ? 'ramadan' : 'today')
   const [open, setOpen] = useState<ShareCard | null>(null)
+  const [openPoster, setOpenPoster] = useState<PosterCard | null>(null)
   const weekday = new Date(`${day}T12:00:00Z`).getUTCDay()
   const cards = useMemo(() => (tab === 'today' ? todayCards(day, weekday, inRamadan) : tab === 'ramadan' ? RAMADAN_CARDS : tab === 'eid' ? EID_CARDS : FRIDAY_CARDS), [tab, day, weekday, inRamadan])
   const bgs = [...BGS[tab], ...(entitled ? PLUS_BGS : [])]
+  const occasion = tab === 'today' ? (inRamadan ? 'ramadan' : weekday === 5 ? 'friday' : null) : tab
+  const posters = occasion ? POSTER_CARDS.filter((x) => x.occasion === occasion) : POSTER_CARDS.filter((_, i) => (i + dayIndex(day)) % 6 === 0)
   const isRam = (c: ShareCard) => c.id.startsWith('r-')
   return (
     <>
       <PageHead title="بطاقات للمشاركة" subtitle="بطاقات اليوم تتجدد كل يوم، وبطاقات رمضان والعيد والجمعة — شاركها بلمسة" />
       <Tabs label="نوع البطاقات" value={tab} onChange={setTab} items={[{ id: 'today', label: 'اليوم' }, { id: 'ramadan', label: 'رمضان' }, { id: 'eid', label: 'العيد' }, { id: 'friday', label: 'الجمعة' }]} />
+      {posters.length > 0 && (
+        <section aria-label="بطاقات مصوّرة">
+          <h2 className="cards-sec-title">بطاقات مصوّرة</h2>
+          <div className="poster-row">{posters.map((x) => <PosterThumb key={x.id} p={x} onOpen={() => setOpenPoster(x)} />)}</div>
+        </section>
+      )}
+      <h2 className="cards-sec-title">بطاقات الآيات والأحاديث والأدعية</h2>
       <div className="share-grid">
         {cards.map((c, i) => <CardThumb key={c.id} card={c} bg={bgs[i % bgs.length]} ramadan={isRam(c)} onOpen={() => setOpen(c)} />)}
       </div>
       <p className="small muted" style={{ textAlign: 'center' }}>الآيات من المصحف المعتمد، والأحاديث والأدعية بتخريجها، والتهاني عبارات عامة.</p>
+      {openPoster && <PosterViewer p={openPoster} onClose={() => setOpenPoster(null)} />}
       {open && <CardViewer card={open} bgs={bgs} ramadan={isRam(open)} onClose={() => setOpen(null)} />}
     </>
   )
