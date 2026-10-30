@@ -13,7 +13,7 @@ import type { NotificationSettings } from '../../state/settings'
 import { AdhanVoiceSection } from './AdhanVoiceSection'
 import { TimedVoiceSection } from './TimedVoiceSection'
 
-type TimedKey = 'ayahOfDay' | 'dhikrOfDay' | 'wird' | 'memorize' | 'occasions' | 'dailySummary'
+type TimedKey = 'ayahOfDay' | 'dhikrOfDay' | 'wird' | 'memorize' | 'occasions' | 'dailySummary' | 'shareDaily'
 const TIMED: { key: TimedKey; label: string; hint: string; def: string }[] = [
   { key: 'ayahOfDay', label: 'آية اليوم', hint: '', def: '08:00' },
   { key: 'dhikrOfDay', label: 'ذكر أو دعاء اليوم', hint: '', def: '13:00' },
@@ -21,6 +21,7 @@ const TIMED: { key: TimedKey; label: string; hint: string; def: string }[] = [
   { key: 'memorize', label: 'الحفظ والمراجعة', hint: '', def: '19:00' },
   { key: 'occasions', label: 'المناسبات الإسلامية', hint: 'مساء اليوم السابق للمناسبة', def: '20:30' },
   { key: 'dailySummary', label: 'ملخص يومي', hint: 'اختياري', def: '21:30' },
+  { key: 'shareDaily', label: 'شارك منشورًا', hint: 'آية أو دعاء أو دعاء لمتوفى بتصميمك — يفتح الاستوديو', def: '18:00' },
 ]
 
 export function RemindersPage() {

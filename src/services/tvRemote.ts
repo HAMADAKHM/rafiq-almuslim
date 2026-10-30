@@ -62,6 +62,9 @@ const MESSAGES: Record<string, string> = {
   too_many: 'وصلت إلى الحد الأقصى (12 صورة) على التلفاز. احذف صورة ثم أضف غيرها.',
   write_failed: 'تعذر حفظ الصورة على التلفاز (ربما امتلأت مساحته).',
   not_found: 'تطبيق الشاشة على التلفاز قديم: حدّثه إلى آخر نسخة لتعمل هذه الميزة.',
+  needs_permission: 'على التلفاز ظهرت شاشة «السماح بالتثبيت من هذا التطبيق»: فعّلها بجهاز التحكم، ثم اضغط «تحديث» مرة أخرى.',
+  busy: 'التحديث جارٍ بالفعل على التلفاز.',
+  bad_url: 'رابط التحديث غير مقبول.',
   unreachable: 'تعذر الوصول إلى التلفاز. تأكد أن الجوال والتلفاز على شبكة الواي فاي نفسها وأن تطبيق الشاشة مثبت.',
 }
 export const remoteMessage = (code: string) => MESSAGES[code] ?? (code.startsWith('invalid') ? 'قيمة غير مقبولة.' : 'حدث خطأ غير متوقع.')
@@ -166,12 +169,50 @@ export async function unpairTv(send: Transport, tv: PairedTv) {
 }
 
 /** التلفاز يرد (للحالة: متصل/غير متصل) */
-export async function pingTv(send: Transport, host: string, port: number): Promise<{ tvId: string; name: string; pairing: boolean } | null> {
+export interface TvVersion { code: number; name?: string; update?: string }
+export async function pingTv(send: Transport, host: string, port: number): Promise<{ tvId: string; name: string; pairing: boolean; version?: TvVersion } | null> {
   try {
     const r = await send({ host, port, method: 'GET', path: '/info' })
     const j = parse(r.body)
-    return r.status === 200 && j.app === 'rafiq-tv' ? { tvId: String(j.tvId), name: String(j.name), pairing: !!j.pairing } : null
+    const v = j.version as TvVersion | undefined
+    return r.status === 200 && j.app === 'rafiq-tv' ? { tvId: String(j.tvId), name: String(j.name), pairing: !!j.pairing, version: v && typeof v.code === 'number' ? v : undefined } : null
   } catch { return null }
+}
+
+// ---------- تحديث تطبيق الشاشة من الجوال ----------
+export const RELEASES_API = 'https://api.github.com/repos/HAMADAKHM/rafiq-almuslim/releases?per_page=10'
+export interface TvRelease { build: number; url: string; tag: string }
+/** أحدث إصدار منشور فيه تطبيق الشاشة (رقم البناء = رقم إصدار التطبيق على التلفاز) */
+export function pickTvRelease(list: unknown): TvRelease | null {
+  if (!Array.isArray(list)) return null
+  let best: TvRelease | null = null
+  for (const r of list as { tag_name?: string; draft?: boolean; assets?: { name?: string; browser_download_url?: string }[] }[]) {
+    if (r.draft) continue
+    const m = /build\.(\d+)/.exec(r.tag_name ?? '')
+    const a = r.assets?.find((x) => x.name === 'RafiqAlMuslim-TV.apk')
+    if (!m || !a?.browser_download_url) continue
+    const build = Number(m[1])
+    if (!best || build > best.build) best = { build, url: a.browser_download_url, tag: r.tag_name! }
+  }
+  return best
+}
+export async function latestTvRelease(fetcher: typeof fetch = fetch): Promise<TvRelease | null> {
+  try {
+    const r = await fetcher(RELEASES_API, { headers: { accept: 'application/vnd.github+json' } })
+    return r.ok ? pickTvRelease(await r.json()) : null
+  } catch { return null }
+}
+/** يطلب من التلفاز تنزيل التحديث وعرض طلب التثبيت عليه */
+export async function updateTv(send: Transport, tv: PairedTv, url: string): Promise<TvVersion | null> {
+  return ((await signedCall(send, tv, 'POST', '/update', { url })).version as TvVersion) ?? null
+}
+export const UPDATE_STATE_LABEL = (st?: string): string => {
+  if (!st || st === 'idle') return ''
+  if (st.startsWith('downloading')) return `جارٍ التنزيل على التلفاز… ${st.split(':')[1] ?? 0}٪`
+  if (st === 'installing') return 'وافق على التثبيت على شاشة التلفاز بجهاز التحكم'
+  if (st === 'done') return 'تم تحديث تطبيق الشاشة'
+  const code = st.split(':')[1]
+  return ({ signature: 'تعذر التحديث: نسخة التلفاز موقّعة بمفتاح مختلف — ثبّت النسخة الجديدة يدويًا مرة واحدة', not_newer: 'تطبيق الشاشة محدّث بالفعل', cancelled: 'أُلغي التثبيت على التلفاز', too_large: 'الملف أكبر من المسموح' } as Record<string, string>)[code ?? ''] ?? 'تعذر التحديث — تحقق من اتصال التلفاز بالإنترنت وأعد المحاولة'
 }
 
 // ---------- التخزين على الجهاز ----------

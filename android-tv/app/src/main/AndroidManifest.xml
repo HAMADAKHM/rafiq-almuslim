@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- تحديث تطبيق الشاشة من الجوال المربوط (بموافقة المستخدم على التلفاز) -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- منبه دقيق عند دخول وقت الصلاة (يعمل ولو أغلق النظام التطبيق) -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />
@@ -117,5 +119,6 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+            <receiver android:name=".Updater$Done" android:exported="false" />
     </application>
 </manifest>

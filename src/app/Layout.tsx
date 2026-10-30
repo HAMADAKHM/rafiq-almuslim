@@ -11,6 +11,7 @@ import { startReminderLoop } from '../services/notifications'
 import { LogoMark } from '../components/Art'
 import { NAV, tabsFor } from './nav'
 import { Splash } from './Splash'
+import { TvUpdateCheck } from './TvUpdateCheck'
 import { Spinner } from '../components/Common'
 import { AdhanAlarm } from '../components/AdhanAlarm'
 import { AdhkarAlarm } from '../components/AdhkarAlert'
@@ -48,6 +49,7 @@ export function Layout() {
   return (
     <div className={'app' + (isReader ? ' reading' : '') + (isHome ? ' at-home' : '')}>
       <Splash />
+      <TvUpdateCheck />
       <AdhanAlarm />
       <AdhkarAlarm />
       <a href="#main" className="skip-link">تخطَّ إلى المحتوى</a>

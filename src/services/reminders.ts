@@ -11,7 +11,7 @@ import { HISN_AUDIO } from '../content/hisnAudio'
 import { channelFlags, heardText, hisnClipChannel, SLOT_DEFS, voiceFor, type VoiceSlot } from './voiceSlots'
 import { amountText, hisnChannel, companionPool, dhikrBody, intervalId, intervalMinutes, pickForSlot, positionRoute, positionText, prayerEnds, PRAYER_END_NOTE, travelActive, type QuranPosition } from './companion'
 
-export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end' | 'wake' | 'after-prayer'
+export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end' | 'wake' | 'after-prayer' | 'share'
 
 export interface Reminder {
   /** معرّف رقمي ثابت لنفس التذكير في نفس اليوم (يمنع التكرار ويسمح بالاستبدال) */
@@ -53,7 +53,7 @@ export const MAX_SCHEDULED = 60
 /** أقصى عدد للتذكيرات الخاصة (رفيق بلس) */
 export const MAX_CUSTOM = 10
 
-const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end' | 'after-prayer'>, { title: string; body: string }[]> = {
+const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end' | 'after-prayer' | 'share'>, { title: string; body: string }[]> = {
   morning: [{ title: SLOT_DEFS.morning.title, body: SLOT_DEFS.morning.body }],
   evening: [{ title: SLOT_DEFS.evening.title, body: SLOT_DEFS.evening.body }],
   sleep: [{ title: SLOT_DEFS.sleep.title, body: SLOT_DEFS.sleep.body }],
@@ -116,7 +116,7 @@ export function inQuietHours(d: Date, tz: string, quiet: Settings['notifications
   return s <= e ? t >= s && t < e : t >= s || t < e
 }
 
-const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12, ramadan: 13, fasting: 14, 'dhikr-interval': 15, 'quran-time': 16, 'prayer-end': 17, wake: 18, 'after-prayer': 19 }
+const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12, ramadan: 13, fasting: 14, 'dhikr-interval': 15, 'quran-time': 16, 'prayer-end': 17, wake: 18, 'after-prayer': 19, share: 20 }
 const PRAYER_CODE: Record<PrayerKey, number> = { fajr: 1, dhuhr: 2, asr: 3, maghrib: 4, isha: 5 }
 
 function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, slot = 0): number {
@@ -127,9 +127,17 @@ function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, sl
 /** تذكيرات الأذكار المسموعة */
 const ADHKAR_SLOT: Partial<Record<ReminderKind, VoiceSlot>> = { morning: 'morning', evening: 'evening', sleep: 'sleep', wake: 'wake' }
 
+/** منشور اليوم للمشاركة (بالتناوب) — النص يُجلب في الاستوديو من المصحف والمكتبة الموثقة كما هو */
+export function shareOfDay(seed: number): { title: string; body: string; route: string } {
+  const k = ((seed % 3) + 3) % 3
+  if (k === 0) return { title: 'شارك آية اليوم', body: 'صمّم بطاقة أو مقطعًا بخلفيتك وخطك، وانشر الخير — اضغط للبدء', route: '/studio?src=ayah&daily=1' }
+  if (k === 1) return { title: 'شارك دعاءً اليوم', body: 'دعاء من القرآن والسنة بتصميم تختاره، بصورة أو فيديو من جوالك', route: '/studio?src=duas' }
+  return { title: 'شارك دعاءً لمتوفى', body: 'ادعُ لأحبتك الراحلين وشارك الدعاء مع أهلك — صدقة جارية', route: '/studio?src=deceased' }
+}
+
 const ROUTES: Record<ReminderKind, string> = {
   prayer: '/prayer', 'prayer-before': '/prayer', morning: '/adhkar-alert/morning', evening: '/adhkar-alert/evening', sleep: '/adhkar-alert/sleep',
-  ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress', custom: '/', ramadan: '/ramadan', fasting: '/calendar',
+  ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress', custom: '/', share: '/studio', ramadan: '/ramadan', fasting: '/calendar',
   'dhikr-interval': '/companion', 'quran-time': '/quran', 'prayer-end': '/prayer', wake: SLOT_DEFS.wake.route, 'after-prayer': SLOT_DEFS.afterPrayer.route,
 }
 
@@ -185,6 +193,11 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
       if (days && days.length && !days.includes(weekday)) continue
       const msg = pick(MESSAGES[kind as keyof typeof MESSAGES], seed)
       add({ id: makeId(day, kind), at: atLocalTime(day, time, loc.tz), kind, route: ROUTES[kind], ...(slot ? voiced(slot, msg) : { title: msg.title, body: msg.body }) })
+    }
+    // «شارك منشورًا»: كل يوم بالتناوب آية اليوم، ثم دعاء، ثم دعاء لمتوفى — يفتح الاستوديو بالمحتوى جاهزًا للتعديل
+    if (n.shareDaily && !n.reduce) {
+      const share = shareOfDay(seed)
+      add({ id: makeId(day, 'share'), at: atLocalTime(day, n.shareDaily, loc.tz), kind: 'share', title: share.title, body: share.body, route: share.route })
     }
     // أذكار ما بعد الصلاة: بعد الأذان بدقائق للصلوات المختارة
     const ap = n.afterPrayer

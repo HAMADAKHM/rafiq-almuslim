@@ -5,7 +5,7 @@ import type { StudioStyle } from './studio'
 
 export const SAVED_KEY = 'studio:saved'
 export const MAX_SAVED = 40
-export type StudioSource = 'ayah' | 'adhkar' | 'duas' | 'hadith'
+export type StudioSource = 'ayah' | 'adhkar' | 'duas' | 'hadith' | 'deceased'
 
 export interface SavedDesign {
   id: string

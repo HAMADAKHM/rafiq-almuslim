@@ -86,9 +86,21 @@ export interface VideoJob {
   actx: AudioContext
   onProgress?: (fraction: number) => void
   signal?: AbortSignal
+  /** نصوص غير قرآنية (ذكر/دعاء/حديث): تُعرض كما هي مع مصدرها بدل ترقيم الآيات */
+  items?: { text: string; reference: string }[]
+  /** خط النص */
+  font?: import('./studio').TextFont
 }
 
 /** مدة عرض كل آية في فيديو بلا تلاوة: بحسب طول الآية، أو تقسيم مدة فيديو المستخدم */
+/** صوت يختاره المستخدم من جواله (تسجيله أو ملف): يُفك إلى مقطع واحد يُعرض النص طوال مدته (حتى دقيقتين) */
+export async function decodeUserAudio(actx: BaseAudioContext, file: Blob): Promise<AudioBuffer> {
+  if (file.size > 30 * 1024 * 1024) throw new Error('الملف الصوتي كبير جدًا (الحد 30 م.ب)')
+  const buf = await actx.decodeAudioData(await file.arrayBuffer())
+  if (buf.duration > 120) throw new Error('الصوت أطول من دقيقتين — اختر مقطعًا أقصر')
+  return buf
+}
+
 export function silentDurations(verses: Verse[], videoSeconds?: number): number[] {
   if (videoSeconds && Number.isFinite(videoSeconds) && videoSeconds > 1) {
     const each = Math.max(2.5, Math.min(60, videoSeconds) / verses.length - GAP)
@@ -104,7 +116,8 @@ export function recordVideo(job: VideoJob): Promise<Blob> {
   const { canvas, actx, buffers } = job
   const ctx = canvas.getContext('2d')!
   const W = canvas.width, H = canvas.height
-  const tl = timeline(buffers ? buffers.map((b) => b.duration) : (job.durations ?? job.verses.map(() => 5)))
+  const count = job.items?.length ?? job.verses.length
+  const tl = timeline(buffers ? buffers.map((b) => b.duration) : (job.durations ?? Array.from({ length: count }, () => 5)))
   const total = tl[tl.length - 1].end + 0.6
   const dest = actx.createMediaStreamDestination()
   const stream = canvas.captureStream(30)
@@ -131,12 +144,13 @@ export function recordVideo(job: VideoJob): Promise<Blob> {
     const draw = () => {
       const t = Math.max(0, actx.currentTime - t0)
       const { index, alpha } = frameAt(tl, t)
+      const it = job.items?.[index]
       const v = job.verses[index]
       drawStudioFrame(ctx, W, H, {
-        style: job.style, bgImage: vid ?? job.bgImage, zoom: 1 + 0.06 * (t / total), textAlpha: alpha, progress: Math.min(1, t / total), time: t,
-        text: `${v.text} ۝${toArabicDigits(v.ayah)}`,
-        reference: `سورة ${job.surahName} • الآية ${toArabicDigits(v.ayah)}`,
-        subtitle: buffers ? job.reciterName : undefined,
+        style: job.style, bgImage: vid ?? job.bgImage, zoom: 1 + 0.06 * (t / total), textAlpha: alpha, progress: Math.min(1, t / total), time: t, font: job.font,
+        text: it ? it.text : `${v.text} ۝${toArabicDigits(v.ayah)}`,
+        reference: it ? it.reference : `سورة ${job.surahName} • الآية ${toArabicDigits(v.ayah)}`,
+        subtitle: buffers && job.reciterName ? job.reciterName : undefined,
       })
       job.onProgress?.(Math.min(1, t / total))
       if (t >= total) { finish(); return }

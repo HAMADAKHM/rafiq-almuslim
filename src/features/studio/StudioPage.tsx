@@ -10,10 +10,10 @@ import { RECITERS, reciterById } from '../../content/reciters'
 import { shareImage } from '../../platform'
 import { isEmbeddedPreview } from '../../services/audio'
 import {
-  BACKGROUNDS, PLUS_BACKGROUNDS, FORMATS, canvasToBlob, drawStudioFrame, isScene, loadStudioFonts, referenceText, sceneTone, svgToImage, versesText,
+  AYAH_FONTS, TEXT_FONTS, studioFont, BACKGROUNDS, PLUS_BACKGROUNDS, FORMATS, canvasToBlob, drawStudioFrame, isScene, loadStudioFonts, referenceText, sceneTone, svgToImage, versesText,
   type StudioBg, type StudioFormat, type StudioStyle, type Verse,
 } from '../../services/studio'
-import { MAX_VIDEO_AYAHS, extFor, loadRecitation, pickVideoMime, recordVideo, silentDurations } from '../../services/studioVideo'
+import { MAX_VIDEO_AYAHS, decodeUserAudio, extFor, loadRecitation, pickVideoMime, recordVideo, silentDurations } from '../../services/studioVideo'
 import { VoiceAyahSearch } from '../../components/VoiceAyahSearch'
 import { matchSpokenAyah } from '../../services/voiceSearch'
 import { searchSkeleton, toArabicDigits } from '../../lib/arabic'
@@ -23,11 +23,15 @@ import { ADHKAR } from '../../content/adhkar'
 import { DUAS } from '../../content/duas'
 import { HADITH } from '../../content/hadith'
 import type { ContentCategory } from '../../content/types'
+import { DECEASED_CATEGORY, DECEASED_NAMES_KEY } from '../../content/deceased'
+import { kv } from '../../db/repos'
+import { ayahOfDay } from '../../services/daily'
+import { dayKey } from '../../lib/dates'
 import { SAVED_KEY, addSaved, loadSaved, saveDesigns, type SavedDesign, type StudioSource } from '../../services/studioSaved'
 
 // لا تُعرض في الاستوديو إلا العناصر ذات النص (عناصر القرآن في الأذكار تُصمَّم من «آية» بنص المصحف)
-const LIBS: Record<Exclude<StudioSource, 'ayah'>, ContentCategory[]> = { adhkar: ADHKAR, duas: DUAS, hadith: HADITH }
-const SOURCES: { id: StudioSource; label: string }[] = [{ id: 'ayah', label: 'آية' }, { id: 'adhkar', label: 'ذكر' }, { id: 'duas', label: 'دعاء' }, { id: 'hadith', label: 'حديث' }]
+const LIBS: Record<Exclude<StudioSource, 'ayah'>, ContentCategory[]> = { adhkar: ADHKAR, duas: DUAS, hadith: HADITH, deceased: [DECEASED_CATEGORY] }
+const SOURCES: { id: StudioSource; label: string }[] = [{ id: 'ayah', label: 'آية' }, { id: 'adhkar', label: 'ذكر' }, { id: 'duas', label: 'دعاء' }, { id: 'deceased', label: 'دعاء لمتوفى' }, { id: 'hadith', label: 'حديث' }]
 const textCats = (lib: ContentCategory[]) => lib.map((c) => ({ ...c, items: c.items.filter((i) => i.text) })).filter((c) => c.items.length)
 
 const MAX_IMAGE_AYAHS = 15
@@ -45,18 +49,23 @@ export function StudioPage() {
   const { settings } = useSettings()
   const [params] = useSearchParams()
   const [mode, setMode] = useState<Mode>(params.get('mode') === 'video' ? 'video' : 'image')
-  const [surah, setSurah] = useState(() => Math.min(114, Math.max(1, Number(params.get('s')) || 1)))
-  const [from, setFrom] = useState(() => Math.max(1, Number(params.get('a')) || 1))
-  const [to, setTo] = useState(() => Math.max(1, Number(params.get('to') || params.get('a')) || 1))
+  // من إشعار «شارك آية اليوم»: تبدأ بآية اليوم
+  const daily = params.get('daily') ? ayahOfDay(dayKey()) : null
+  const [surah, setSurah] = useState(() => Math.min(114, Math.max(1, Number(params.get('s')) || daily?.surah || 1)))
+  const [from, setFrom] = useState(() => Math.max(1, Number(params.get('a')) || daily?.ayah || 1))
+  const [to, setTo] = useState(() => Math.max(1, Number(params.get('to') || params.get('a')) || daily?.ayah || 1))
   const [style, setStyle] = useState<StudioStyle>({ format: 'square', bg: 'scene-sunset', textScale: 1, showRef: true, showBrand: true })
   const [reciterId, setReciterId] = useState(settings.reciterId)
   const [photo, setPhoto] = useState<HTMLImageElement | null>(null)
   const [bgVideo, setBgVideo] = useState<HTMLVideoElement | null>(null)
   const [withAudio, setWithAudio] = useState(true)
   const [ayahQuery, setAyahQuery] = useState('')
-  const [source, setSource] = useState<StudioSource>('ayah')
-  const [catId, setCatId] = useState('')
-  const [itemId, setItemId] = useState('')
+  const [source, setSource] = useState<StudioSource>(() => (SOURCES.some((x) => x.id === params.get('src')) ? params.get('src') as StudioSource : 'ayah'))
+  const [catId, setCatId] = useState(() => params.get('cat') ?? '')
+  const [itemId, setItemId] = useState(() => params.get('item') ?? '')
+  const [voice, setVoice] = useState<File | null>(null)
+  const voiceInput = useRef<HTMLInputElement>(null)
+  const names = useLive(() => kv.get<string[]>(DECEASED_NAMES_KEY, []), ['kv:' + DECEASED_NAMES_KEY], [] as string[])
   const saved = useLive(() => loadSaved(), ['kv:' + SAVED_KEY], [] as SavedDesign[])
   const videoInput = useRef<HTMLInputElement>(null)
   const [overflow, setOverflow] = useState(false)
@@ -69,6 +78,7 @@ export function StudioPage() {
   const meta = data?.meta.surahs[surah - 1]
   const count = meta?.count ?? 7
   const max = mode === 'video' ? MAX_VIDEO_AYAHS : MAX_IMAGE_AYAHS
+  const textOnly = source !== 'ayah'
   // تصحيح النطاق: البداية ≤ النهاية، وضمن عدد آيات السورة والحد الأقصى
   const a = Math.min(from, count)
   const b = Math.min(Math.max(to, a), count, a + max - 1)
@@ -77,7 +87,8 @@ export function StudioPage() {
   const cats = useMemo(() => (source === 'ayah' ? [] : textCats(LIBS[source])), [source])
   const cat = cats.find((c) => c.id === catId) ?? cats[0]
   const item = cat?.items.find((i) => i.id === itemId) ?? cat?.items[0]
-  const isAyah = source === 'ayah' || mode === 'video'
+  const isAyah = source === 'ayah'
+  const font = studioFont(style, isAyah)
   const pick = (s: number, a: number) => { setSurah(s); setFrom(a); setTo(a); setAyahQuery('') }
   const { w: W, h: H } = FORMATS[style.format]
   const set = (p: Partial<StudioStyle>) => setStyle((s) => ({ ...s, ...p }))
@@ -102,7 +113,7 @@ export function StudioPage() {
       const img = await bgImage().catch(() => null)
       if (!alive) return
       c.width = W; c.height = H
-      const ok = drawStudioFrame(c.getContext('2d')!, W, H, { style, text, reference, bgImage: img, font: isAyah ? 'quran' : 'naskh' })
+      const ok = drawStudioFrame(c.getContext('2d')!, W, H, { style, text, reference, bgImage: img, font })
       setOverflow(!ok)
     }
     draw()
@@ -140,9 +151,12 @@ export function StudioPage() {
     abortRef.current = ctrl
     const actx = new AudioContext()
     try {
-      await loadStudioFonts(versesText(verses), referenceText(meta.name, verses), reciterById(reciterId).name)
-      setVideo({ phase: 'loading', done: 0, total: verses.length })
-      const buffers = withAudio ? await loadRecitation(actx, reciterId, verses, (done, total) => setVideo({ phase: 'loading', done, total })) : null
+      const items = isAyah || !item ? undefined : [{ text: item.text ?? '', reference: item.source }]
+      await loadStudioFonts(items ? items[0].text + ' ' + items[0].reference : versesText(verses) + ' ' + referenceText(meta.name, verses), reciterById(reciterId).name, style.note ?? '')
+      setVideo({ phase: 'loading', done: 0, total: items ? 1 : verses.length })
+      const buffers = !withAudio ? null
+        : items ? (voice ? [await decodeUserAudio(actx, voice)] : null)
+        : await loadRecitation(actx, reciterId, verses, (done, total) => setVideo({ phase: 'loading', done, total }))
       const useVideo = style.bg === 'video' ? bgVideo : null
       if (ctrl.signal.aborted) return
       const c = canvasRef.current!
@@ -151,8 +165,9 @@ export function StudioPage() {
       setVideo({ phase: 'recording', progress: 0 })
       let last = 0
       const blob = await recordVideo({
-        canvas: c, style, verses, surahName: meta.name, reciterName: reciterById(reciterId).name, bgImage: img, bgVideo: useVideo, buffers, actx, signal: ctrl.signal,
-        durations: buffers ? undefined : silentDurations(verses, useVideo?.duration),
+        canvas: c, style, verses, surahName: meta.name, reciterName: items ? '' : reciterById(reciterId).name, bgImage: img, bgVideo: useVideo, buffers, actx, signal: ctrl.signal,
+        items, font,
+        durations: buffers ? undefined : items ? [Math.min(30, Math.max(6, (useVideo?.duration && Number.isFinite(useVideo.duration) ? Math.min(30, useVideo.duration) : 4 + (items[0].text.length * 0.08))))] : silentDurations(verses, useVideo?.duration),
         onProgress: (p) => { if (p - last > 0.01 || p === 1) { last = p; setVideo({ phase: 'recording', progress: p }) } },
       })
       setVideo({ phase: 'done', blob, url: URL.createObjectURL(blob) })
@@ -168,7 +183,7 @@ export function StudioPage() {
   return (
     <>
       <PageHead title="استوديو التصاميم" subtitle="صمّم بطاقات للآيات والأذكار والأدعية والأحاديث وشاركها — النصوص من المصحف والمكتبة الموثقة كما هي" />
-      <Tabs label="نوع التصميم" value={mode} onChange={(m) => { if (!busy) { setMode(m); setVideo({ phase: 'idle' }) } }} items={[{ id: 'image', label: 'صورة' }, { id: 'video', label: 'فيديو بصوت القارئ' }]} />
+      <Tabs label="نوع التصميم" value={mode} onChange={(m) => { if (!busy) { setMode(m); setVideo({ phase: 'idle' }) } }} items={[{ id: 'image', label: 'صورة' }, { id: 'video', label: 'فيديو' }]} />
       {/* مشهد الخلفية يُرسم مخفيًا ثم يُحوَّل إلى صورة */}
       <div ref={sceneRef} aria-hidden="true" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
         {isScene(style.bg) && <MosqueScene tone={sceneTone(style.bg)} variant={style.format === 'story' ? 'tall' : 'wide'} />}
@@ -176,7 +191,7 @@ export function StudioPage() {
 
       <div className="studio">
         <section className="card stack studio-controls">
-          {mode === 'image' && (
+          {(
             <div className="row" role="radiogroup" aria-label="محتوى التصميم">
               {SOURCES.map((x) => (
                 <button key={x.id} role="radio" aria-checked={source === x.id} className={'btn btn-sm' + (source === x.id ? ' btn-primary' : '')} onClick={() => { setSource(x.id); setCatId(''); setItemId('') }}>{x.label}</button>
@@ -301,6 +316,23 @@ export function StudioPage() {
             </div>}
           </div>
 
+          <div>
+            <div className="small muted" style={{ marginBottom: 4 }}>نوع الخط</div>
+            <div className="chips" role="radiogroup" aria-label="نوع الخط">
+              {(isAyah ? AYAH_FONTS : TEXT_FONTS).map((f) => (
+                <button key={f.id} type="button" role="radio" aria-checked={font === f.id} disabled={busy} className={'chip font-chip font-' + f.id + (font === f.id ? ' active' : '')} onClick={() => set({ font: f.id })}>{f.label}</button>
+              ))}
+            </div>
+            {isAyah && <p className="small muted" style={{ margin: '4px 0 0' }}>الآيات تُكتب بخط المصحف فقط حفاظًا على رسمها.</p>}
+          </div>
+          <label className="field"><span>سطر شخصي فوق النص (اختياري)</span>
+            <input className="input" value={style.note ?? ''} maxLength={80} disabled={busy} onChange={(e) => set({ note: e.target.value })} placeholder={source === 'deceased' ? 'مثال: اللهم ارحم والدي' : 'مثال: صدقة جارية عن…'} aria-label="سطر شخصي فوق النص" />
+          </label>
+          {source === 'deceased' && names.length > 0 && (
+            <div className="chips" aria-label="أسماء أحبتي">
+              {names.map((n) => <button key={n} type="button" className="chip" onClick={() => set({ note: `اللهم ارحم ${n} واغفر له` })}>{n}</button>)}
+            </div>
+          )}
           <label className="field"><span>حجم الخط</span>
             <input type="range" min={0.6} max={1.4} step={0.05} value={style.textScale} disabled={busy} onChange={(e) => set({ textScale: Number(e.target.value) })} aria-label="حجم الخط" />
           </label>
@@ -308,9 +340,19 @@ export function StudioPage() {
           <label className="check"><input type="checkbox" className="switch-input" checked={style.showBrand} onChange={(e) => set({ showBrand: e.target.checked })} /> اسم التطبيق أسفل التصميم</label>
 
           {mode === 'video' && (
-            <label className="check"><input type="checkbox" className="switch-input" checked={withAudio} disabled={busy} onChange={(e) => setWithAudio(e.target.checked)} aria-label="إضافة صوت التلاوة" /> إضافة صوت التلاوة بصوت القارئ</label>
+            <label className="check"><input type="checkbox" className="switch-input" checked={withAudio} disabled={busy} onChange={(e) => setWithAudio(e.target.checked)} aria-label={textOnly ? 'إضافة صوت' : 'إضافة صوت التلاوة'} /> {textOnly ? 'بصوت (تسجيلك أو ملف من جوالك)' : 'إضافة صوت التلاوة بصوت القارئ'}</label>
           )}
-          {mode === 'video' && withAudio && (
+          {mode === 'video' && withAudio && textOnly && (
+            <div className="stack" style={{ gap: 6 }}>
+              <input ref={voiceInput} type="file" accept="audio/*" hidden aria-label="اختيار صوت من الجوال" onChange={(e) => { const f = e.target.files?.[0]; if (f) setVoice(f); e.target.value = '' }} />
+              <div className="row">
+                <button className="btn btn-sm" disabled={busy} onClick={() => voiceInput.current?.click()}><Upload size={14} /> {voice ? 'تغيير الصوت' : 'اختر تسجيلًا أو ملفًا صوتيًا'}</button>
+                {voice && <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => setVoice(null)}><X size={14} /> إزالة</button>}
+              </div>
+              <p className="small muted" style={{ margin: 0 }}>{voice ? `الصوت: ${voice.name}` : 'سجّل صوتك بالذكر أو الدعاء من مسجل الجوال ثم اختره هنا (حتى دقيقتين). دون صوت يُنشأ المقطع صامتًا.'}</p>
+            </div>
+          )}
+          {mode === 'video' && withAudio && !textOnly && (
             <label className="field"><span>القارئ</span>
               <select className="select" value={reciterId} disabled={busy} onChange={(e) => setReciterId(e.target.value)}>
                 {RECITERS.map((r) => <option key={r.id} value={r.id}>{r.name} — {r.style}</option>)}
@@ -350,10 +392,12 @@ export function StudioPage() {
               {video.phase === 'idle' && (
                 <div className="studio-empty">
                   <Film size={36} aria-hidden="true" />
-                  {withAudio
+                  {textOnly
+                    ? <p>يُعرض النص مع مصدره{style.bg === 'video' ? ' فوق الفيديو الذي اخترته (صوته الأصلي مكتوم)' : ''}{withAudio && voice ? '، بصوتك الذي اخترته' : '، بلا صوت'}.</p>
+                    : withAudio
                     ? <p>تُعرض كل آية مع تلاوتها بصوت <strong>{reciterById(reciterId).name}</strong>{style.bg === 'video' ? ' فوق الفيديو الذي اخترته (صوته الأصلي مكتوم)' : ''}.</p>
                     : <p>تُعرض الآيات {style.bg === 'video' ? 'فوق الفيديو الذي اخترته، بلا صوت (صوته الأصلي مكتوم)' : 'بلا صوت'}.</p>}
-                  <p className="small muted">يُنشأ الفيديو بزمنه الفعلي ({verses.length} آية)، فأبقِ الشاشة مفتوحة حتى ينتهي.{withAudio ? ' التلاوة تحتاج اتصالًا بالإنترنت ما لم تكن السورة منزّلة.' : ''}</p>
+                  <p className="small muted">يُنشأ الفيديو بزمنه الفعلي{textOnly ? '' : ` (${verses.length} آية)`}، فأبقِ الشاشة مفتوحة حتى ينتهي.{withAudio && !textOnly ? ' التلاوة تحتاج اتصالًا بالإنترنت ما لم تكن السورة منزّلة.' : ''}</p>
                   <button className="btn btn-primary" onClick={makeVideo}><Film size={16} /> إنشاء الفيديو</button>
                 </div>
               )}
@@ -371,7 +415,7 @@ export function StudioPage() {
                   <video src={video.url} controls playsInline className={'studio-canvas fmt-' + style.format} aria-label="الفيديو الناتج" />
                   <div className="row">
                     <button className="btn btn-primary" onClick={async () => {
-                      const r = await shareImage(video.blob, `ayah-${surah}-${a}.${extFor(video.blob.type)}`, referenceText(meta.name, verses))
+                      const r = await shareImage(video.blob, textOnly ? `${source}-${item?.id}.${extFor(video.blob.type)}` : `ayah-${surah}-${a}.${extFor(video.blob.type)}`, textOnly ? item?.source : referenceText(meta.name, verses))
                       toast(r === 'shared' ? 'تمت المشاركة' : r === 'downloaded' ? 'حُفظ الفيديو' : 'تعذرت المشاركة في هذه البيئة')
                     }}><Share2 size={16} /> مشاركة الفيديو</button>
                     <button className="btn" onClick={() => setVideo({ phase: 'idle' })}><ImageIcon size={16} /> فيديو جديد</button>

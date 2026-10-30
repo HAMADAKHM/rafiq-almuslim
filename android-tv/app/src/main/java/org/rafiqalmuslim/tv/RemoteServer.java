@@ -171,6 +171,13 @@ final class RemoteServer {
             return ok;
         }
 
+        public JSONObject version() { return Updater.version(ctx); }
+
+        public String startUpdate(String url) {
+            TvService.log(ctx, "remote_update");
+            return Updater.start(ctx, url);
+        }
+
         private void notifyScreen() { ScreenHook h = screen; if (h != null) h.backgroundsChanged(); }
 
         public boolean action(String name) {

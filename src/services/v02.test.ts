@@ -240,3 +240,37 @@ describe('مصادر التلاوة البديلة', async () => {
     expect(ayahAudioSources(reciterById('husary-muallim'), 1, 1)).toHaveLength(1)
   })
 })
+
+describe('مشاركة المنشورات', async () => {
+  const { shareOfDay } = await import('./reminders')
+  const { studioFont } = await import('./studio')
+  it('إشعار «شارك» يتناوب بين آية اليوم والدعاء ودعاء المتوفى، ويفتح الاستوديو', () => {
+    const routes = [0, 1, 2].map((d) => shareOfDay(d).route)
+    expect(routes).toEqual(['/studio?src=ayah&daily=1', '/studio?src=duas', '/studio?src=deceased'])
+    expect(shareOfDay(3).route).toBe(routes[0])
+  })
+  it('الآيات لا تُكتب إلا بخط المصحف، وغيرها لا يُكتب بخط المصحف', () => {
+    const base = { format: 'square', bg: 'scene-sunset', textScale: 1, showRef: true, showBrand: true } as const
+    expect(studioFont({ ...base, font: 'plex' }, true)).toBe('quran')
+    expect(studioFont({ ...base, font: 'scheherazade' }, true)).toBe('scheherazade')
+    expect(studioFont({ ...base, font: 'quran' }, false)).toBe('naskh')
+    expect(studioFont({ ...base, font: 'plex' }, false)).toBe('plex')
+  })
+})
+
+describe('تحديث تطبيق الشاشة من الجوال', async () => {
+  const { pickTvRelease, UPDATE_STATE_LABEL } = await import('./tvRemote')
+  it('يختار أحدث إصدار فيه ملف تطبيق الشاشة، ويتجاهل المسودات والإصدارات دونه', () => {
+    const tv = (tag: string, extra = {}) => ({ tag_name: tag, assets: [{ name: 'RafiqAlMuslim-TV.apk', browser_download_url: `https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/${tag}/RafiqAlMuslim-TV.apk` }], ...extra })
+    const r = pickTvRelease([tv('beta-v1.0.0-beta.5-build.124'), tv('beta-v1.0.0-beta.5-build.130', { draft: true }), { tag_name: 'v1-build.140', assets: [{ name: 'RafiqAlMuslim.apk', browser_download_url: 'x' }] }, tv('beta-v1.0.0-beta.5-build.126')])
+    expect(r?.build).toBe(126)
+    expect(r?.url).toMatch(/build\.126\/RafiqAlMuslim-TV\.apk$/)
+    expect(pickTvRelease('nope')).toBeNull()
+  })
+  it('رسائل الحالة واضحة للمستخدم', () => {
+    expect(UPDATE_STATE_LABEL('downloading:40')).toContain('40')
+    expect(UPDATE_STATE_LABEL('installing')).toContain('وافق')
+    expect(UPDATE_STATE_LABEL('error:signature')).toContain('يدويًا')
+    expect(UPDATE_STATE_LABEL('idle')).toBe('')
+  })
+})

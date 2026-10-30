@@ -51,6 +51,16 @@ export interface StudioStyle {
   textScale: number
   showRef: boolean
   showBrand: boolean
+  /** الخط المختار (يُتحقق منه بحسب نوع النص) */
+  font?: TextFont
+  /** سطر شخصي فوق النص (إهداء أو «اللهم ارحم فلانًا») — لا يُدمج في النص الديني */
+  note?: string
+}
+
+/** الخط الفعلي: الآيات لا تُكتب إلا بخطَي المصحف، وغيرها لا يُكتب بخط المصحف */
+export function studioFont(style: StudioStyle, isAyah: boolean): TextFont {
+  const ok = (isAyah ? AYAH_FONTS : TEXT_FONTS).some((f) => f.id === style.font)
+  return ok ? style.font! : isAyah ? 'quran' : 'naskh'
 }
 
 export interface Verse { surah: number; ayah: number; text: string }
@@ -58,8 +68,18 @@ export interface Verse { surah: number; ayah: number; text: string }
 const QURAN_FONT = '"Amiri Quran", "Amiri", serif'
 /** خط الأحاديث والأذكار: نسخي غير خط المصحف، حتى لا يلتبس النص النبوي بالقرآني */
 const NASKH_FONT = '"Amiri", "Noto Naskh Arabic", serif'
-export type TextFont = 'quran' | 'naskh'
-const fontOf = (f: TextFont = 'quran') => (f === 'naskh' ? NASKH_FONT : QURAN_FONT)
+/** الخطوط: للآيات خطا المصحف فقط، وللأذكار والأدعية والأحاديث خطوط النسخ والخط الحديث */
+export type TextFont = 'quran' | 'naskh' | 'scheherazade' | 'noto' | 'plex'
+const FONT_FAMILY: Record<TextFont, string> = {
+  quran: QURAN_FONT,
+  naskh: NASKH_FONT,
+  scheherazade: '"Scheherazade New", "Amiri", serif',
+  noto: '"Noto Naskh Arabic", "Amiri", serif',
+  plex: '"IBM Plex Sans Arabic", sans-serif',
+}
+export const AYAH_FONTS: { id: TextFont; label: string }[] = [{ id: 'quran', label: 'خط المصحف (أميري قرآن)' }, { id: 'scheherazade', label: 'شهرزاد' }]
+export const TEXT_FONTS: { id: TextFont; label: string }[] = [{ id: 'naskh', label: 'أميري' }, { id: 'noto', label: 'نسخ' }, { id: 'scheherazade', label: 'شهرزاد' }, { id: 'plex', label: 'حديث' }]
+const fontOf = (f: TextFont = 'quran') => FONT_FAMILY[f] ?? QURAN_FONT
 const UI_FONT = '"IBM Plex Sans Arabic", sans-serif'
 
 /**
@@ -71,7 +91,7 @@ export async function loadStudioFonts(...texts: string[]) {
   const sample = texts.join(' ') || 'بسم الله'
   await Promise.all([
     document.fonts.load(`64px ${QURAN_FONT}`, sample),
-    document.fonts.load(`64px ${NASKH_FONT}`, sample),
+    ...Object.values(FONT_FAMILY).map((f) => document.fonts.load(`64px ${f}`, sample)),
     document.fonts.load(`32px ${UI_FONT}`, sample + ' سورة الآيات رفيق المسلم ٠١٢٣٤٥٦٧٨٩'),
     document.fonts.load(`700 32px ${UI_FONT}`, 'سورة الآيات ٠١٢٣٤٥٦٧٨٩ ' + sample),
   ])
@@ -223,7 +243,9 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
   const bottomReserve = (style.showRef ? H * 0.08 : 0) + (style.showBrand ? H * 0.05 : 0) + (o.progress != null ? H * 0.02 : 0)
   const sceneTop = isLandscape(style.bg) ? (style.format === 'landscape' ? 0.6 : 0.62) : 1
   const boxW = W - 2 * pad
-  const boxTop = pad
+  const note = style.note?.trim().slice(0, 80)
+  const noteH = note ? Math.min(W, H) * 0.07 : 0
+  const boxTop = pad + noteH
   const boxH = Math.max(100, H * sceneTop - pad - bottomReserve * (isLandscape(style.bg) ? 0.2 : 1) - boxTop)
   const maxPx = Math.min(W, H) * 0.085 * style.textScale
   const minPx = Math.min(W, H) * 0.028
@@ -232,6 +254,12 @@ export function drawStudioFrame(ctx: CanvasRenderingContext2D, W: number, H: num
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   if (!fit) { ctx.restore(); return false }
+  if (note) {
+    ctx.globalAlpha = o.textAlpha ?? 1
+    ctx.font = `700 ${Math.round(Math.min(W, H) * 0.036)}px ${UI_FONT}`
+    ctx.fillStyle = gold
+    ctx.fillText(note, W / 2, pad + noteH * 0.35, boxW)
+  }
   ctx.globalAlpha = o.textAlpha ?? 1
   ctx.font = `${fit.size}px ${fontOf(o.font)}`
   ctx.fillStyle = ink

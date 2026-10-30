@@ -41,6 +41,32 @@ public class RemoteCoreTest {
         public org.json.JSONArray backgrounds() { org.json.JSONArray a = new org.json.JSONArray(); for (int i = 0; i < images.size(); i++) a.put("b" + i); return a; }
         public String addBackground(byte[] img) { if (images.size() >= RemoteCore.MAX_BACKGROUNDS) return "!too_many"; images.add(img); return "b" + (images.size() - 1); }
         public boolean removeBackground(String id) { return id.equals("b0") && !images.isEmpty() && images.remove(0) != null; }
+        String updateUrl;
+        public JSONObject version() { try { return new JSONObject().put("code", 120).put("update", "idle"); } catch (Exception e) { return new JSONObject(); } }
+        public String startUpdate(String url) { updateUrl = url; return "started"; }
+    }
+
+    @Test public void updateOnlyFromProjectReleasesAndOnlyWhenPaired() throws Exception {
+        RemoteCore core = new RemoteCore(new MemStore(), new SecureRandom(), "TV");
+        FakeApplier ap = new FakeApplier();
+        assertEquals(120, core.handle("GET", "/info", new HashMap<>(), new byte[0], ap, NOW).getJSONObject("body").getJSONObject("version").getInt("code"));
+        String good = "https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/beta-v1.0.0-beta.5-build.130/RafiqAlMuslim-TV.apk";
+        assertTrue(RemoteCore.validUpdateUrl(good));
+        assertFalse(RemoteCore.validUpdateUrl("https://evil.example/RafiqAlMuslim-TV.apk"));
+        assertFalse(RemoteCore.validUpdateUrl("http://github.com/HAMADAKHM/rafiq-almuslim/releases/download/x/RafiqAlMuslim-TV.apk"));
+        assertFalse(RemoteCore.validUpdateUrl("https://github.com/someone/else/releases/download/x/RafiqAlMuslim-TV.apk"));
+        assertFalse(RemoteCore.validUpdateUrl("https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/../RafiqAlMuslim-TV.apk"));
+        byte[] body = b(new JSONObject().put("url", good).toString());
+        // دون ربط: مرفوض
+        assertEquals(401, core.handle("POST", "/update", new HashMap<>(), body, ap, NOW).getInt("status"));
+        String code = core.startPairing(NOW);
+        String[] dev = pair(core, code, NOW + 1000);
+        long t = NOW + 3000;
+        assertEquals(200, core.handle("POST", "/update", h(dev[0], t, sign(dev[1], "POST", "/update", t, body)), body, ap, t).getInt("status"));
+        assertEquals(good, ap.updateUrl);
+        byte[] bad = b(new JSONObject().put("url", "https://evil.example/RafiqAlMuslim-TV.apk").toString());
+        long t2 = t + 1000;
+        assertEquals(400, core.handle("POST", "/update", h(dev[0], t2, sign(dev[1], "POST", "/update", t2, bad)), bad, ap, t2).getInt("status"));
     }
 
     private static Map<String, String> h(String dev, long t, String sig) {

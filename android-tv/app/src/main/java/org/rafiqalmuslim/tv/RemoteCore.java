@@ -46,6 +46,15 @@ final class RemoteCore {
         JSONArray backgrounds();
         String addBackground(byte[] image);
         boolean removeBackground(String id);
+        /** رقم إصدار تطبيق الشاشة وحالة التحديث */
+        JSONObject version();
+        /** يبدأ تنزيل التحديث وتثبيته: "started" أو "!رمز الخطأ" */
+        String startUpdate(String url);
+    }
+
+    /** روابط التحديث المسموحة: ملف تطبيق الشاشة من إصدارات المشروع على GitHub فقط */
+    static boolean validUpdateUrl(String u) {
+        return u != null && u.matches("https://github\\.com/HAMADAKHM/rafiq-almuslim/releases/download/[A-Za-z0-9][A-Za-z0-9._-]{0,79}/RafiqAlMuslim-TV\\.apk");
     }
 
     private final Store store;
@@ -240,7 +249,7 @@ final class RemoteCore {
     JSONObject handle(String method, String path, Map<String, String> headers, byte[] body, Applier applier, long now) {
         try {
             if (method.equals("GET") && path.equals("/info")) {
-                return ok(new JSONObject().put("app", "rafiq-tv").put("tvId", tvId()).put("name", tvName).put("pairing", pairingOpen(now)).put("v", 1));
+                return ok(new JSONObject().put("app", "rafiq-tv").put("tvId", tvId()).put("name", tvName).put("pairing", pairingOpen(now)).put("v", 1).put("version", applier.version()));
             }
             if (method.equals("POST") && path.equals("/pair/start")) return wrap(pairStart(json(body), now));
             if (method.equals("POST") && path.equals("/pair/finish")) return wrap(pairFinish(json(body), now));
@@ -272,6 +281,13 @@ final class RemoteCore {
                 String id = json(body).optString("id", "");
                 if (!validBackgroundId(id)) return status(400, error(400, "bad_id"));
                 return ok(new JSONObject().put("ok", applier.removeBackground(id)).put("items", applier.backgrounds()));
+            }
+            if (method.equals("POST") && path.equals("/update")) {
+                String url = json(body).optString("url", "");
+                if (!validUpdateUrl(url)) return status(400, error(400, "bad_url"));
+                String r = applier.startUpdate(url);
+                if (r.startsWith("!")) return status(409, error(409, r.substring(1)));
+                return ok(new JSONObject().put("ok", true).put("version", applier.version()));
             }
             if (method.equals("POST") && path.equals("/unpair")) { removeDevice(dev); return ok(new JSONObject().put("ok", true)); }
             return status(404, error(404, "not_found"));

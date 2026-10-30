@@ -7,7 +7,7 @@ import { PlusGate } from '../../billing/PlusGate'
 import { useLive, toast } from '../../hooks'
 import { discoverTvs, tvLinkSupported, tvRequest, type FoundTv } from '../../platform/tvlink'
 import {
-  addTvBackground, getTvSettings, listTvBackgrounds, loadTvs, pairTv, parseAddress, pingTv, prepareBackground, removeTv, removeTvBackground, setTvSettings, tvAction, unpairTv, updateTvAddress,
+  addTvBackground, getTvSettings, latestTvRelease, updateTv, UPDATE_STATE_LABEL, type TvRelease, type TvVersion, listTvBackgrounds, loadTvs, pairTv, parseAddress, pingTv, prepareBackground, removeTv, removeTvBackground, setTvSettings, tvAction, unpairTv, updateTvAddress,
   MAX_TV_BACKGROUNDS, TvRemoteError, type PairedTv, type TvBackground, type TvSettingsView,
 } from '../../services/tvRemote'
 import { SCENES } from '../../tv/scenes'
@@ -163,6 +163,45 @@ function TvPhotos({ tv, showing, onShow, disabled }: { tv: PairedTv; showing: bo
   )
 }
 
+/** تحديث تطبيق الشاشة من الجوال: يقارن إصدار التلفاز بأحدث إصدار منشور، ويطلب من التلفاز التنزيل والتثبيت */
+function TvUpdateCard({ tv }: { tv: PairedTv }) {
+  const [ver, setVer] = useState<TvVersion | null | undefined>(undefined)
+  const [rel, setRel] = useState<TvRelease | null | undefined>(undefined)
+  const [busy, setBusy] = useState(false)
+  const check = useCallback(async () => {
+    const [info, latest] = await Promise.all([pingTv(send, tv.host, tv.port), latestTvRelease()])
+    setVer(info?.version ?? null); setRel(latest)
+  }, [tv])
+  useEffect(() => { check() }, [check])
+  // متابعة الحالة أثناء التنزيل والتثبيت
+  const st = ver?.update
+  useEffect(() => {
+    if (!st || !(st.startsWith('downloading') || st === 'installing')) return
+    const t = setInterval(async () => { const info = await pingTv(send, tv.host, tv.port); if (info?.version) setVer(info.version) }, 2000)
+    return () => clearInterval(t)
+  }, [st, tv])
+  const run = async () => {
+    if (!rel) return
+    setBusy(true)
+    try { setVer((await updateTv(send, tv, rel.url)) ?? ver ?? null); toast('بدأ تنزيل التحديث على التلفاز') } catch (e) { toast(errMsg(e)) }
+    setBusy(false)
+  }
+  if (ver === undefined || rel === undefined) return null
+  if (!ver) return <section className="card small muted">تطبيق الشاشة على هذا التلفاز قديم ولا يدعم التحديث من الجوال: ثبّت أحدث نسخة عليه يدويًا مرة واحدة، وبعدها تحدّثه من هنا.</section>
+  const outdated = !!rel && rel.build > ver.code
+  return (
+    <section className="card stack" style={{ gap: 8 }} aria-label="تحديث تطبيق الشاشة">
+      <h2 style={{ margin: 0 }}><RefreshCw size={18} /> تحديث تطبيق الشاشة</h2>
+      <p className="small muted" style={{ margin: 0 }}>على التلفاز: الإصدار {ver.code}{rel ? ` — أحدث إصدار: ${rel.build}` : ' — تعذر معرفة أحدث إصدار الآن (يحتاج إنترنت)'}</p>
+      {UPDATE_STATE_LABEL(st) && <p className="alert alert-gold small" role="status" style={{ margin: 0 }}>{UPDATE_STATE_LABEL(st)}</p>}
+      {outdated
+        ? <button className="btn btn-primary" disabled={busy || st?.startsWith('downloading') || st === 'installing'} onClick={run}>تحديث تطبيق الشاشة الآن</button>
+        : rel && <p className="small" style={{ margin: 0 }}>تطبيق الشاشة محدّث ✓</p>}
+      <p className="small muted" style={{ margin: 0 }}>يُنزَّل التحديث على التلفاز مباشرة من إصدارات التطبيق، ثم يطلب التلفاز موافقتك على التثبيت بجهاز التحكم (لا يسمح Android بالتثبيت دون موافقة).</p>
+    </section>
+  )
+}
+
 function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
   const [st, setSt] = useState<TvSettingsView | null>(null)
   const [online, setOnline] = useState<boolean | null>(null)
@@ -210,6 +249,7 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
           <button className="btn btn-sm" disabled={!online || (st?.scene !== 'rotate' && st?.scene !== 'photos')} onClick={() => act('next_scene', 'انتقل إلى المشهد التالي')}>المشهد التالي</button>
         </div>
       </section>
+      {online && <TvUpdateCard tv={tv} />}
       {st && (
         <>
           <section className="card stack" style={{ gap: 10 }}>

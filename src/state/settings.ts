@@ -32,6 +32,8 @@ export interface NotificationSettings {
   memorize: string | null
   occasions: string | null
   dailySummary: string | null
+  /** إشعار يومي لمشاركة منشور (آية/دعاء/دعاء لمتوفى) يفتح الاستوديو */
+  shareDaily?: string | null
   /** تقليل الإشعارات: الصلاة عند الأذان وتذكير الورد فقط */
   reduce: boolean
   quiet: { enabled: boolean; start: string; end: string }
