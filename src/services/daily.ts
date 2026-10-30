@@ -5,7 +5,7 @@ import { DUAS } from '../content/duas'
 import type { DhikrItem } from '../content/types'
 import { daysBetween } from '../lib/dates'
 
-function dayIndex(day: string): number {
+export function dayIndex(day: string): number {
   return Math.max(0, daysBetween('2026-01-01', day))
 }
 

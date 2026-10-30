@@ -1,6 +1,6 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby, LayoutDashboard, Library, Star,
+  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby, LayoutDashboard, Library, Star, GalleryHorizontal,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
@@ -60,6 +60,7 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
   ] },
   { group: 'groupMore', items: [
     { to: '/library', key: 'library', icon: Library },
+    { to: '/cards', key: 'cards', icon: GalleryHorizontal },
     { to: '/favorites', key: 'favorites', icon: Star },
     { to: '/progress', key: 'progress', icon: ChartColumn },
     { to: '/journey', key: 'journey', icon: Route },
@@ -121,4 +122,5 @@ export const LINK_META: Record<string, { label: string; icon: typeof House }> = 
   '/mosques': { label: 'المساجد', icon: Landmark },
   '/hadith': { label: 'الأحاديث', icon: ScrollText },
   '/assistant': { label: 'المساعد', icon: MessageCircleQuestion },
+  '/cards': { label: 'بطاقات', icon: GalleryHorizontal },
 }

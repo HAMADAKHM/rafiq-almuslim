@@ -1,6 +1,7 @@
 // حالة «رفيق بلس» في التطبيق: يُسأل المتجر عند الفتح وعند العودة للتطبيق وكل 15 دقيقة.
 // المحفوظ على الجهاز يُستخدم فقط دون إنترنت ولمدة محدودة بعد آخر تحقق ناجح (انظر entitlement.ts).
 import { activeSkin, skinById, type ArtSkinId, type IdentityId } from '../themes/skins'
+import { ramadanModeActive } from '../services/ramadan'
 import { useThemePreview } from '../themes/preview'
 import { appIconSupported, getAppIcon, setAppIcon } from '../platform/appIcon'
 import { SkinScene } from '../themes/SkinScene'
@@ -164,7 +165,9 @@ function SkinApplier({ entitled }: { entitled: boolean }) {
   const { settings } = useSettings()
   // المعاينة تُظهر أي ثيم (ولو كان من بلس) مؤقتًا؛ والتطبيق الدائم بحسب الاشتراك
   const preview = useThemePreview()
-  const skin = preview ? skinById(preview) : activeSkin(settings.skin, entitled)
+  // وضع رمضان (بلس): يغيّر ثيم التطبيق كله إلى «فوانيس رمضان» في الشهر (أو دائمًا إن اختاره المستخدم)
+  const ramadan = entitled && ramadanModeActive(settings.ramadan?.theme, new Date(), settings.location?.tz, settings.hijriOffset)
+  const skin = preview ? skinById(preview) : ramadan ? skinById('ramadan') : activeSkin(settings.skin, entitled)
   useEffect(() => {
     const root = document.documentElement
     if (skin) {

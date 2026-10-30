@@ -52,6 +52,7 @@ const STRINGS = {
   groupMore: { ar: 'المزيد', en: 'More' },
   groupEssentials: { ar: 'الأساسية', en: 'Essentials' },
   library: { ar: 'مكتبة المسلم', en: 'Muslim library' },
+  cards: { ar: 'بطاقات للمشاركة', en: 'Share cards' },
   favorites: { ar: 'المفضلة والعلامات', en: 'Favorites & bookmarks' },
   menu: { ar: 'القائمة', en: 'Menu' },
   appName: { ar: 'رفيق المسلم', en: 'Islamic Companion' },

@@ -7,7 +7,11 @@ import { PageHead } from '../../components/Common'
 import { PaintedScene } from '../../components/Scene'
 import { PlusGate } from '../../billing/PlusGate'
 import { useSettings } from '../../state/SettingsContext'
-import { nextRamadanEvent, ramadanStatus, ramadanTable } from '../../services/ramadan'
+import { EMPTY_QADA, QADA_KEY, markQada, nextRamadanEvent, qadaLeft, ramadanStatus, ramadanTable, type QadaState } from '../../services/ramadan'
+import { todayTimes } from '../../services/prayer'
+import { kv } from '../../db/repos'
+import { useLive } from '../../hooks'
+import { Minus, Plus as PlusIcon, Check, Palette } from 'lucide-react'
 import { createPlan, loadKhatmas, saveKhatmas } from '../../services/khatma'
 import { dayKey, formatCountdown, formatTime } from '../../lib/dates'
 import { toArabicDigits } from '../../lib/arabic'
@@ -20,6 +24,37 @@ function useNowTick(ms = 1000) {
 }
 
 const MINUTES = [0, 10, 15, 20, 30, 45, 60]
+
+/** أيام القضاء: عدد الأيام المطلوبة، وتسجيل كل يوم يُقضى (على الجهاز فقط) */
+function QadaCard({ today }: { today: string }) {
+  const q = useLive(() => kv.get<QadaState>(QADA_KEY, EMPTY_QADA), ['kv:' + QADA_KEY], EMPTY_QADA)
+  const save = (n: QadaState) => kv.set(QADA_KEY, n)
+  const left = qadaLeft(q)
+  const pct = q.owed ? Math.round((Math.min(q.done.length, q.owed) / q.owed) * 100) : 0
+  return (
+    <section className="card" aria-label="أيام القضاء">
+      <h2>أيام القضاء</h2>
+      <p className="muted small">سجّل عدد الأيام التي عليك قضاؤها، ثم علّم كل يوم تصومه — يبقى على جهازك فقط.</p>
+      <div className="row" style={{ alignItems: 'center', gap: 10 }}>
+        <button className="btn btn-sm icon-btn" aria-label="إنقاص الأيام المطلوبة" disabled={q.owed <= 0} onClick={() => save({ ...q, owed: q.owed - 1 })}><Minus size={16} /></button>
+        <span className="qada-owed"><b>{toArabicDigits(q.owed)}</b> يومًا عليّ</span>
+        <button className="btn btn-sm icon-btn" aria-label="زيادة الأيام المطلوبة" disabled={q.owed >= 60} onClick={() => save({ ...q, owed: q.owed + 1 })}><PlusIcon size={16} /></button>
+      </div>
+      {q.owed > 0 && (
+        <>
+          <div className="qada-bar" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="تقدم القضاء"><span style={{ width: `${pct}%` }} /></div>
+          <p className="small" style={{ margin: '6px 0' }}>قضيت {toArabicDigits(Math.min(q.done.length, q.owed))} من {toArabicDigits(q.owed)} — {left ? `بقي ${toArabicDigits(left)}` : 'أتممت القضاء، تقبّل الله'}</p>
+          <button className="btn btn-primary btn-sm" disabled={q.done.includes(today) || !left} onClick={() => save(markQada(q, today))}><Check size={14} /> {q.done.includes(today) ? 'سُجّل صيام اليوم قضاءً' : 'صمت اليوم قضاءً'}</button>
+          {q.done.length > 0 && (
+            <div className="chips" style={{ marginTop: 8 }} aria-label="الأيام المقضية">
+              {q.done.map((d) => <button key={d} className="chip" aria-label={`إزالة ${d}`} onClick={() => save({ ...q, done: q.done.filter((x) => x !== d) })}>{d} ✕</button>)}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
 
 export function RamadanPage() {
   const { settings, update } = useSettings()
@@ -75,6 +110,30 @@ export function RamadanPage() {
         </section>
 
         {msg && <p className="notice" role="status">{msg}</p>}
+
+        {loc && (
+          <section className="ramadan-times" aria-label="مواعيد اليوم">
+            <div className="rt-tile suhoor"><Sunrise size={22} aria-hidden="true" /><small>السحور ينتهي (الفجر)</small><b>{formatTime(todayTimes(loc, settings.prayer, now).fajr, tz)}</b>{r.imsakMinutes > 0 && <small>الإمساك الاحتياطي: {formatTime(new Date(todayTimes(loc, settings.prayer, now).fajr.getTime() - r.imsakMinutes * 60_000), tz)}</small>}</div>
+            <div className="rt-tile iftar"><Moon size={22} aria-hidden="true" /><small>الإفطار (المغرب)</small><b>{formatTime(todayTimes(loc, settings.prayer, now).maghrib, tz)}</b><small>{loc.nameAr ?? loc.name}</small></div>
+          </section>
+        )}
+
+        <section className="card">
+          <h2><Palette size={18} /> ثيم رمضان للتطبيق كله</h2>
+          <p className="muted small">عند تفعيله يتحول التطبيق كله إلى «فوانيس رمضان»، وتظهر بطاقة السحور والإفطار في الرئيسية.</p>
+          <div className="chips" role="radiogroup" aria-label="ثيم رمضان">
+            {([['auto', 'تلقائي في شهر رمضان'], ['on', 'مفعّل الآن'], ['off', 'متوقف']] as const).map(([id, label]) => (
+              <button key={id} type="button" role="radio" aria-checked={(r.theme ?? 'auto') === id} className={'chip' + ((r.theme ?? 'auto') === id ? ' active' : '')} onClick={() => setR({ theme: id })}>{label}</button>
+            ))}
+          </div>
+        </section>
+
+        <QadaCard today={today} />
+
+        <Link to="/cards" className="list-card" style={{ marginBottom: '1rem' }}>
+          <span className="icon-chip"><Moon size={20} aria-hidden="true" /></span>
+          <span className="lc-body"><strong>بطاقات رمضان</strong><small>تهاني وآيات وأحاديث وأدعية رمضان — شاركها بلمسة</small></span>
+        </Link>
 
         <section className="card">
           <h2><BookOpen size={18} /> ختمة رمضان</h2>

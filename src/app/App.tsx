@@ -31,6 +31,7 @@ const TasbihPage = page(() => import('../features/tasbih/TasbihPage'), 'TasbihPa
 const CalendarPage = page(() => import('../features/calendar/CalendarPage'), 'CalendarPage')
 const RemindersPage = page(() => import('../features/reminders/RemindersPage'), 'RemindersPage')
 const MorePage = page(() => import('../features/more/MorePage'), 'MorePage')
+const CardsPage = page(() => import('../features/cards/CardsPage'), 'CardsPage')
 const LibraryPage = page(() => import('../features/library/LibraryPage'), 'LibraryPage')
 const FavoritesPage = page(() => import('../features/library/LibraryPage'), 'FavoritesPage')
 const MyAdhkarPage = page(() => import('../features/adhkar/MyAdhkarPage'), 'MyAdhkarPage')
@@ -96,6 +97,7 @@ export function AppRoutes() {
         <Route path="about" element={<AboutPage />} />
         <Route path="more" element={<MorePage />} />
         <Route path="library" element={<LibraryPage />} />
+        <Route path="cards" element={<CardsPage />} />
         <Route path="favorites" element={<FavoritesPage />} />
         <Route path="my-adhkar" element={<MyAdhkarPage />} />
         <Route path="studio" element={<StudioPage />} />

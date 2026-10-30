@@ -133,7 +133,8 @@ export interface Settings {
   /** الأقسام الثلاثة في وسط الشريط السفلي */
   tabs?: string[]
   /** رفيق بلس — وضع رمضان: تذكير السحور قبل الفجر بدقائق، والإفطار قبل المغرب بدقائق (0 = بلا تذكير)، والإمساك الاحتياطي */
-  ramadan: { suhoorMinutes: number; iftarMinutes: number; imsakMinutes: number }
+  /** theme: وضع رمضان يغيّر ثيم التطبيق كله — 'auto' في شهر رمضان فقط، 'on' دائمًا، 'off' لا */
+  ramadan: { suhoorMinutes: number; iftarMinutes: number; imsakMinutes: number; theme?: 'auto' | 'on' | 'off' }
   /** رفيق بلس — تذكيرات الصيام (الليلة السابقة): الأيام البيض، والاثنين والخميس، وعرفة، وعاشوراء، وست شوال */
   fasting: { enabled: boolean; time: string; beed: boolean; monThu: boolean; arafah: boolean; ashura: boolean; shawwal: boolean }
   /** أقسام المكتبة التي أخفاها المستخدم من القائمة (تبقى متاحة في البحث وبالرابط المباشر) */
@@ -200,7 +201,7 @@ export interface CustomReminder {
   enabled: boolean
 }
 
-export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques', '/hadith', '/assistant']
+export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques', '/hadith', '/assistant', '/cards']
 // القبلة والمسبحة والختمة أولًا (للمستخدمين الجدد؛ اختيارات المستخدمين الحاليين تبقى كما هي)
 export const DEFAULT_QUICK_LINKS = ['/qibla', '/tasbih', '/wird', '/calendar']
 export const MAX_QUICK_LINKS = 8
@@ -290,7 +291,7 @@ export const DEFAULT_SETTINGS: Settings = {
   skin: '',
   skinStill: false,
   customReminders: [],
-  ramadan: { suhoorMinutes: 45, iftarMinutes: 10, imsakMinutes: 10 },
+  ramadan: { suhoorMinutes: 45, iftarMinutes: 10, imsakMinutes: 10, theme: 'auto' },
   fasting: { enabled: false, time: '21:00', beed: true, monThu: false, arafah: true, ashura: true, shawwal: true },
   dailyAdhkar: DEFAULT_DAILY_ADHKAR,
   hiddenCats: [],

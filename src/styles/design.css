@@ -588,3 +588,27 @@ ul.plain { list-style: none; padding: 0; margin: 0; }
 .tasbih-bg-mosque { color: #fff; }
 .tasbih-bg-mosque .tasbih-dhikr, .tasbih-bg-night .tasbih-dhikr, .tasbih-bg-geometry .tasbih-dhikr, .tasbih-bg-velvet .tasbih-dhikr { text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); }
 .tasbih-card[class*='tasbih-bg-']:not(.tasbih-bg-none) .small.muted { color: inherit; opacity: 0.85; }
+
+/* ---------- وضع رمضان: مواعيد اليوم وأيام القضاء ---------- */
+.ramadan-times { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+.rt-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0.9rem 0.6rem; border-radius: 20px; text-align: center; color: #fff; box-shadow: var(--shadow); }
+.rt-tile b { font-size: 1.7rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.rt-tile small { opacity: 0.88; font-size: 0.78rem; }
+.rt-tile.suhoor { background: linear-gradient(160deg, #1b2a5c, #0c1433); }
+.rt-tile.iftar { background: linear-gradient(160deg, #c8641e, #7a2f3a); }
+.qada-owed { min-width: 110px; text-align: center; }
+.qada-owed b { font-size: 1.4rem; }
+.qada-bar { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin-top: 10px; }
+.qada-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--gold-2), var(--primary)); }
+.home-ramadan { text-decoration: none; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ---------- بطاقات للمشاركة ---------- */
+.share-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 1rem 0; }
+.share-card { position: relative; padding: 0; border: 0; border-radius: 16px; overflow: hidden; aspect-ratio: 1; background: var(--surface-2); cursor: pointer; box-shadow: var(--shadow); }
+.share-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.share-card-ph { display: grid; place-items: center; height: 100%; }
+.share-card-title { position: absolute; inset-inline: 0; bottom: 0; padding: 18px 8px 6px; font-size: 0.78rem; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, 0.6)); text-align: center; }
+.card-viewer { position: fixed; inset: 0; z-index: 80; background: rgba(5, 10, 9, 0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 16px; }
+.card-viewer-canvas { width: min(92vw, 560px); height: auto; aspect-ratio: 1; border-radius: 18px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
+.card-viewer-close { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); inset-inline-end: 12px; color: #fff; background: rgba(255, 255, 255, 0.12); border-radius: 50%; width: 42px; height: 42px; }
+.card-viewer .btn:not(.btn-primary) { background: rgba(255, 255, 255, 0.12); color: #fff; border-color: rgba(255, 255, 255, 0.3); }

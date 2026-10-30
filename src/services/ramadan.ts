@@ -52,3 +52,21 @@ export function nextRamadanEvent(table: RamadanDay[], now: Date): { kind: 'suhoo
   }
   return null
 }
+
+/** هل وضع رمضان مفعّل الآن (يغيّر ثيم التطبيق ويُظهر بطاقة السحور والإفطار في الرئيسية) */
+export function ramadanModeActive(theme: 'auto' | 'on' | 'off' | undefined, now: Date, tz: string | undefined, hijriOffset = 0): boolean {
+  const t = theme ?? 'auto'
+  if (t === 'off') return false
+  if (t === 'on') return true
+  return ramadanStatus(now, tz, hijriOffset).inRamadan
+}
+
+// ---------- أيام القضاء ----------
+export interface QadaState { owed: number; done: string[] }
+export const QADA_KEY = 'ramadan:qada'
+export const EMPTY_QADA: QadaState = { owed: 0, done: [] }
+/** يوم قضاء صامه المستخدم (مرة لكل تاريخ) */
+export function markQada(s: QadaState, day: string): QadaState {
+  return s.done.includes(day) ? s : { ...s, done: [...s.done, day].sort() }
+}
+export const qadaLeft = (s: QadaState) => Math.max(0, s.owed - s.done.length)

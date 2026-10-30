@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { usePlus } from '../../billing/PlusContext'
 import { activeSkin, skinById } from '../../themes/skins'
+import { ramadanModeActive } from '../../services/ramadan'
 import { useThemePreview } from '../../themes/preview'
 import { DailyCompanionCard } from '../companion/DailyCompanionCard'
 import { Link } from 'react-router-dom'
@@ -242,6 +243,7 @@ export function HomePage() {
 
   // «رفيقي اليومي» من مزايا بلس: لا خانة فارغة ولا قفل في الرئيسية دون اشتراك
   // التصاميم التسعة المعتمدة (ثيمات الهوية): رأس التحية وبطاقة الصلاة وشريط «متابعة القراءة» الثابت تحتها
+  const ramadanOn = plusEntitled && ramadanModeActive(settings.ramadan?.theme, now, loc?.tz, settings.hijriOffset)
   const designed = !!(preview ? skinById(preview) : activeSkin(settings.skin, plusEntitled))?.identity
   const visible = settings.homeCards.filter((c) => c.visible && (!designed || c.id !== 'continue') && (c.id !== 'companion' || plusEntitled))
   const move = (i: number, d: -1 | 1) => {
@@ -370,6 +372,13 @@ export function HomePage() {
       </section>
 
         </>
+      )}
+
+      {ramadanOn && loc && times && (
+        <Link to="/ramadan" className="home-ramadan" aria-label="مواعيد رمضان اليوم">
+          <div className="rt-tile suhoor"><small>السحور ينتهي</small><b>{formatTime(times.fajr, loc.tz)}</b><small>الفجر</small></div>
+          <div className="rt-tile iftar"><small>الإفطار</small><b>{formatTime(times.maghrib, loc.tz)}</b><small>المغرب</small></div>
+        </Link>
       )}
 
       <div className="home-grid">

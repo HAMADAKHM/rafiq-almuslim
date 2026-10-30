@@ -274,3 +274,30 @@ describe('تحديث تطبيق الشاشة من الجوال', async () => {
     expect(UPDATE_STATE_LABEL('idle')).toBe('')
   })
 })
+
+describe('رمضان والبطاقات', async () => {
+  const { markQada, qadaLeft, ramadanModeActive } = await import('./ramadan')
+  const { RAMADAN_CARDS, EID_CARDS, FRIDAY_CARDS } = await import('../content/cards')
+  it('أيام القضاء: كل يوم مرة واحدة، والباقي لا ينزل عن صفر', () => {
+    let q = { owed: 3, done: [] as string[] }
+    q = markQada(markQada(q, '2026-04-01'), '2026-04-01')
+    expect(q.done).toEqual(['2026-04-01'])
+    expect(qadaLeft(q)).toBe(2)
+    expect(qadaLeft({ owed: 1, done: ['a', 'b'] })).toBe(0)
+  })
+  it('ثيم رمضان: تلقائي في الشهر فقط، ومفعّل أو متوقف بالاختيار', () => {
+    const outside = new Date('2026-10-30T12:00:00Z')
+    expect(ramadanModeActive('auto', outside, 'UTC')).toBe(false)
+    expect(ramadanModeActive('on', outside, 'UTC')).toBe(true)
+    expect(ramadanModeActive('off', new Date('2027-02-20T12:00:00Z'), 'UTC')).toBe(false)
+  })
+  it('بطاقات رمضان كثيرة، وكل نص ديني بمصدره، والتهاني موسومة', () => {
+    expect(RAMADAN_CARDS.length).toBeGreaterThanOrEqual(20)
+    for (const c of [...RAMADAN_CARDS, ...EID_CARDS, ...FRIDAY_CARDS]) {
+      expect(c.source, c.id).toBeTruthy()
+      if (c.kind === 'greeting') expect(c.source).toBe('تهنئة')
+      else expect(c.quran || /رواه|متفق|سورة/.test(c.source), c.id).toBeTruthy()
+    }
+    expect(new Set([...RAMADAN_CARDS, ...EID_CARDS, ...FRIDAY_CARDS].map((c) => c.id)).size).toBe(RAMADAN_CARDS.length + EID_CARDS.length + FRIDAY_CARDS.length)
+  })
+})
