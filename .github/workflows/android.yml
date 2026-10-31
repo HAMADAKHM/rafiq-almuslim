@@ -81,8 +81,10 @@ jobs:
         with:
           path: ~/.android/debug.keystore
           key: android-debug-keystore-v2-${{ github.run_id }}
-      - name: Signing key fingerprint
-        run: keytool -list -v -keystore ~/.android/debug.keystore -storepass android | grep -m1 "SHA256:"
+      - name: Use the stable signing key
+        run: |
+          echo "RAFIQ_DEBUG_KEYSTORE=$HOME/.android/debug.keystore" >> "$GITHUB_ENV"
+          keytool -list -v -keystore ~/.android/debug.keystore -storepass android | grep -m1 "SHA256:"
       - run: npm ci
       - run: npm test
         env:
@@ -118,6 +120,16 @@ jobs:
       # https://github.com/<المالك>/<المستودع>/releases/latest/download/RafiqAlMuslim.apk
       # معطّل في فرع النسخة الجديدة: الرابط الثابت releases/latest/download/RafiqAlMuslim.apk يخص
       # النسخة الأصلية، ولا يجوز أن تنشر فوقه النسخة الجديدة حتى لو دُمج هذا الفرع بالخطأ.
+      # تحقق: ملفا الهاتف والتلفاز موقّعان بالمفتاح المحفوظ نفسه (وإلا فشل البناء بدل نشر نسخة لا تُحدَّث)
+      - name: Verify APK signatures match the stable key
+        run: |
+          WANT=$(keytool -list -v -keystore ~/.android/debug.keystore -storepass android | grep -m1 "SHA256:" | sed 's/.*SHA256: //' | tr -d ':' | tr 'A-F' 'a-f')
+          SIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          for apk in android/app/build/outputs/apk/debug/app-debug.apk android-tv/app/build/outputs/apk/debug/app-debug.apk; do
+            GOT=$("$SIGNER" verify --print-certs "$apk" | grep -m1 "SHA-256 digest" | sed 's/.*: //')
+            echo "$apk $GOT"
+            [ "$GOT" = "$WANT" ] || { echo "::error::$apk signed with a different key"; exit 1; }
+          done
       - name: Publish release
         if: false && github.ref == 'refs/heads/main'
         env:
