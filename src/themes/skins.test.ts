@@ -3,11 +3,11 @@ import { activeSkin, SKINS } from './skins'
 import { mergeSettings } from '../state/settings'
 
 describe('الثيمات الغامرة', () => {
-  it('ثمانية وعشرون ثيمًا (التصاميم التسعة وثلاثة أخرى للهوية، وثمانية حيّة)، منها أربعة مجانية، وكل ثيم حيّ له مشهد ولوحة ألوان', () => {
-    expect(SKINS).toHaveLength(28)
-    expect(SKINS.filter((s) => s.identity)).toHaveLength(12)
+  it('أربعة وثلاثون ثيمًا (ستة أساسية، والتصاميم التسعة وثلاثة أخرى، وثمانية حيّة)، منها سبعة مجانية، وكل ثيم حيّ له مشهد ولوحة ألوان', () => {
+    expect(SKINS).toHaveLength(34)
+    expect(SKINS.filter((s) => s.identity)).toHaveLength(18)
     expect(SKINS.filter((s) => s.live)).toHaveLength(8)
-    expect(SKINS.filter((s) => s.free).map((s) => s.id)).toEqual(['t-classic', 'qadr', 'andalus', 'live-night'])
+    expect(SKINS.filter((s) => s.free).map((s) => s.id)).toEqual(['e-ivory', 'e-white', 'e-dark', 't-classic', 'qadr', 'andalus', 'live-night'])
     for (const s of SKINS.filter((x) => x.live)) expect(s.palette).toBeTruthy()
   })
   it('الثيم المجاني يعمل دون اشتراك، والمدفوع مع اشتراك فقط', () => {

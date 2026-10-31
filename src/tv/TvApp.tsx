@@ -399,6 +399,7 @@ function remoteView(s: TvSettings) {
   return {
     scene: s.scene, playlist: s.playlist, rotateMin: s.rotateMin, shuffle: s.shuffle, quality: s.quality, animate: s.animate,
     adhan: s.adhan, hour12: s.hour12, reciteOn: s.reciteOn, reciteVolume: s.reciteVolume, clockShift: s.clockShift,
+    reciteMode: s.reciteMode, reciterId: s.reciterId, adhkarVoice: s.adhkarVoice,
     city: s.city ? (s.city.nameAr ?? s.city.name) : '',
   }
 }
@@ -662,6 +663,9 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
               <>
                 <h2>القارئ</h2>
                 <Choices label="القارئ" cols={3} value={draft.reciterId} onChange={(v) => set({ reciterId: v })} options={TV_RECITERS.map((id) => reciterById(id)).map((r) => ({ id: r.id, label: `${r.name}${r.style.includes('مجود') ? ' (مجود)' : ''}` }))} />
+                <h2>صوت الأذكار</h2>
+                <Choices label="صوت الأذكار" cols={2} value={draft.adhkarVoice} onChange={(v) => set({ adhkarVoice: v })} options={[{ id: 'human' as const, label: 'تسجيل بشري فقط' }, { id: 'mixed' as const, label: 'بشري + صوت التلفاز' }]} />
+                <p className="tv-muted">التسجيل البشري من مشروع حصن المسلم، والآيات بصوت القارئ. الذكر الذي لا تسجيل له يُعرض نصه على الشاشة دون صوت آلي، إلا إن اخترت «بشري + صوت التلفاز».</p>
                 <h2>مستوى الصوت</h2>
                 <Choices label="مستوى الصوت" cols={4} value={draft.reciteVolume} onChange={(v) => set({ reciteVolume: v })} options={[{ id: 0.25, label: 'هادئ جدًا' }, { id: 0.4, label: 'هادئ' }, { id: 0.6, label: 'متوسط' }, { id: 0.85, label: 'مرتفع' }]} />
               </>

@@ -3,9 +3,10 @@ import { nextScene, SCENES, sceneInfo } from './scenes'
 import { DEFAULT_TV, loadTv, saveTv } from './state'
 
 describe('مكتبة مشاهد التلفاز', () => {
-  it('ثمانية مشاهد مصنفة بأسماء عربية', () => {
-    expect(SCENES).toHaveLength(8)
-    expect(new Set(SCENES.map((s) => s.id)).size).toBe(8)
+  it('اثنا عشر مشهدًا مصنفة بأسماء عربية، منها أربعة للمعالم الإسلامية', () => {
+    expect(SCENES).toHaveLength(12)
+    expect(new Set(SCENES.map((s) => s.id)).size).toBe(12)
+    expect(SCENES.filter((s) => s.category === 'المعالم الإسلامية').map((s) => s.name)).toEqual(['الكعبة المشرفة', 'المسجد النبوي', 'المسجد الأقصى', 'مسجد السلطان أحمد'])
     expect(sceneInfo('aurora')?.name).toBe('الشفق القطبي')
   })
   it('التنقل بالترتيب يدور على القائمة', () => {

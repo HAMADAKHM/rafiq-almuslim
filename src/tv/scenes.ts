@@ -1,11 +1,15 @@
 // مكتبة مشاهد شاشة التلفاز: مشاهد حيّة مرسومة بالكود على Canvas (لا صور ولا فيديو خارجي — ملك للتطبيق
 // وتعمل دون إنترنت على Android TV وسامسونج). كل مشهد: طبقات ثابتة تُرسم مرة واحدة + عناصر متحركة في كل إطار.
 
-export type SceneId = 'night-mosque' | 'ocean-sunset' | 'desert' | 'aurora' | 'rain-window' | 'galaxy' | 'geometry' | 'forest'
+export type SceneId = 'night-mosque' | 'ocean-sunset' | 'desert' | 'aurora' | 'rain-window' | 'galaxy' | 'geometry' | 'forest' | 'kaaba' | 'madinah' | 'aqsa' | 'sultan-ahmed'
 
 export interface SceneInfo { id: SceneId; name: string; category: string; note: string }
 
 export const SCENES: SceneInfo[] = [
+  { id: 'kaaba', name: 'الكعبة المشرفة', category: 'المعالم الإسلامية', note: 'رسم فني للمسجد الحرام ليلًا: الطائفون يدورون حول الكعبة، والمآذن مضاءة' },
+  { id: 'madinah', name: 'المسجد النبوي', category: 'المعالم الإسلامية', note: 'رسم فني للقبة الخضراء والمآذن وقت الغروب، والمظلات تنفتح ببطء والحمام يطير' },
+  { id: 'aqsa', name: 'المسجد الأقصى', category: 'المعالم الإسلامية', note: 'رسم فني لقبة الصخرة الذهبية والمصلى القبلي وأشجار السرو عند الشروق' },
+  { id: 'sultan-ahmed', name: 'مسجد السلطان أحمد', category: 'المعالم الإسلامية', note: 'رسم فني للقباب المتتالية والمآذن الست على البحر وقت الغروب' },
   { id: 'night-mosque', name: 'ليلة هادئة', category: 'مشاهد إسلامية', note: 'سماء مرصعة بالنجوم ودرب التبانة، وهلال، وقباب تتلألأ نوافذها، وشهب عابرة' },
   { id: 'geometry', name: 'زخارف ذهبية', category: 'مشاهد إسلامية', note: 'نقوش هندسية إسلامية تدور وتتفتح ببطء بخطوط من نور' },
   { id: 'ocean-sunset', name: 'غروب البحر', category: 'الطبيعة', note: 'شمس تغيب، وأمواج متتابعة، وبريق يتراقص على الماء، وطيور بعيدة' },
@@ -471,7 +475,302 @@ function forest(w: number, h: number): Painter {
   }
 }
 
+
+// ---------- المعالم الإسلامية (رسم فني بالكود، لا صور) ----------
+/** قبة مدببة قليلًا: من قاعدتها إلى قمتها */
+function domePath(c: Ctx, cx: number, base: number, rw: number, rh: number) {
+  c.beginPath()
+  c.moveTo(cx - rw, base)
+  c.bezierCurveTo(cx - rw, base - rh * 0.72, cx - rw * 0.42, base - rh * 0.98, cx, base - rh * 1.06)
+  c.bezierCurveTo(cx + rw * 0.42, base - rh * 0.98, cx + rw, base - rh * 0.72, cx + rw, base)
+  c.closePath()
+}
+
+/** صف أقواس فاتحة على جدار */
+function archRow(c: Ctx, x0: number, x1: number, y: number, aw: number, ah: number, color: string) {
+  c.fillStyle = color
+  for (let x = x0; x + aw <= x1; x += aw * 1.45) {
+    c.beginPath()
+    c.moveTo(x, y); c.lineTo(x, y - ah * 0.62)
+    c.quadraticCurveTo(x, y - ah, x + aw / 2, y - ah)
+    c.quadraticCurveTo(x + aw, y - ah, x + aw, y - ah * 0.62)
+    c.lineTo(x + aw, y); c.closePath(); c.fill()
+  }
+}
+
+/** مئذنة بشرفتين وقمة مخروطية وهلال */
+function minaret(c: Ctx, x: number, base: number, mh: number, mw: number, body: string, tip: string) {
+  c.fillStyle = body
+  c.fillRect(x - mw / 2, base - mh, mw, mh)
+  for (const f of [0.55, 0.8]) c.fillRect(x - mw * 0.85, base - mh * f, mw * 1.7, mh * 0.025)
+  c.fillStyle = tip
+  c.beginPath(); c.moveTo(x - mw * 0.6, base - mh); c.lineTo(x, base - mh - mw * 3.2); c.lineTo(x + mw * 0.6, base - mh); c.fill()
+  c.fillRect(x - 1, base - mh - mw * 3.2 - mw * 1.2, 2, mw * 1.2)
+}
+
+interface Bird { x: number; y: number; s: number; sp: number; p: number }
+function makeBirds(w: number, h: number, n: number, r: () => number, y0: number, y1: number): Bird[] {
+  return Array.from({ length: n }, () => ({ x: r() * w, y: h * (y0 + r() * (y1 - y0)), s: 5 + r() * 7, sp: 18 + r() * 30, p: r() * 6.28 }))
+}
+function drawBirds(c: Ctx, birds: Bird[], t: number, w: number, color: string) {
+  c.strokeStyle = color; c.lineWidth = 1.6; c.lineCap = 'round'
+  for (const b of birds) {
+    const x = ((b.x + t * b.sp) % (w + 80)) - 40
+    const y = b.y + Math.sin(t * 0.7 + b.p) * 6
+    const f = Math.sin(t * 7 + b.p) * b.s * 0.45
+    c.beginPath(); c.moveTo(x - b.s, y - f); c.quadraticCurveTo(x - b.s * 0.4, y - b.s * 0.25, x, y); c.quadraticCurveTo(x + b.s * 0.4, y - b.s * 0.25, x + b.s, y - f); c.stroke()
+  }
+}
+
+/** الكعبة المشرفة والطائفون حولها عكس عقارب الساعة، والمسجد الحرام بأقواسه ومآذنه المضاءة */
+function kaaba(w: number, h: number): Painter {
+  const r = rng(71)
+  const cx = w / 2, base = h * 0.8
+  const kw = h * 0.2, kh = h * 0.23, side = kw * 0.32
+  const lights: { x: number; y: number; p: number }[] = []
+  const back = layer(w, h, (c) => {
+    c.fillStyle = vgrad(c, h, [[0, '#040918'], [0.42, '#0d1d44'], [0.62, '#2b3563'], [0.7, '#7a6a5a'], [1, '#2a2622']]); c.fillRect(0, 0, w, h)
+    starsLayer(c, w, h, 260, r, 0.45)
+    glow(c, cx, h * 0.62, w * 0.55, 'rgba(255,220,160,A)', 0.22)
+    // أروقة الحرم: طابقان من الأقواس المضاءة
+    const top = h * 0.5, wall = h * 0.66
+    c.fillStyle = '#c9bfa9'; c.fillRect(0, top, w, wall - top)
+    archRow(c, -10, w + 10, top + (wall - top) * 0.48, h * 0.03, h * 0.05, 'rgba(255,214,150,0.95)')
+    archRow(c, -30, w + 10, wall - 2, h * 0.034, h * 0.06, 'rgba(255,224,170,0.95)')
+    c.fillStyle = '#9d927c'; c.fillRect(0, top - h * 0.008, w, h * 0.008)
+    // المآذن
+    const xs = [0.06, 0.17, 0.3, 0.7, 0.83, 0.94]
+    for (const f of xs) {
+      const x = w * f, mh = h * (0.3 + r() * 0.06)
+      minaret(c, x, top, mh, h * 0.016, '#ddd3bd', '#b9a26a')
+      lights.push({ x, y: top - mh * 0.8, p: r() * 6.28 }, { x, y: top - mh * 0.55, p: r() * 6.28 })
+    }
+    // صحن المطاف الرخامي
+    c.fillStyle = vgrad(c, h, [[0, '#d9d2c4'], [1, '#f4f0e8']], wall); c.fillRect(0, wall, w, h - wall)
+    c.fillStyle = 'rgba(255,255,255,0.35)'
+    c.beginPath(); c.ellipse(cx, base - kh * 0.05, w * 0.46, h * 0.12, 0, 0, Math.PI * 2); c.fill()
+  })
+  const kab = layer(w, h, (c) => {
+    const x0 = cx - kw / 2, y0 = base - kh
+    // حِجر إسماعيل: جدار نصف دائري منخفض
+    c.strokeStyle = '#f7f3ea'; c.lineWidth = h * 0.012
+    c.beginPath(); c.ellipse(x0 - kw * 0.05, base - kh * 0.02, kw * 0.5, kh * 0.14, 0, Math.PI * 0.5, Math.PI * 1.5); c.stroke()
+    // الوجه الجانبي ثم الأمامي
+    c.fillStyle = '#16161a'
+    c.beginPath(); c.moveTo(x0 + kw, y0); c.lineTo(x0 + kw + side, y0 - side * 0.35); c.lineTo(x0 + kw + side, base - side * 0.35); c.lineTo(x0 + kw, base); c.fill()
+    c.fillStyle = '#0b0b0d'; c.fillRect(x0, y0, kw, kh)
+    c.fillStyle = '#202026'
+    c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + side, y0 - side * 0.35); c.lineTo(x0 + kw + side, y0 - side * 0.35); c.lineTo(x0 + kw, y0); c.fill()
+    // الحزام الذهبي وزخرفته
+    const by = y0 + kh * 0.2, bh = kh * 0.075
+    const gold = c.createLinearGradient(0, by, 0, by + bh); gold.addColorStop(0, '#f0d27a'); gold.addColorStop(1, '#a8812f')
+    c.fillStyle = gold; c.fillRect(x0, by, kw, bh)
+    c.beginPath(); c.moveTo(x0 + kw, by); c.lineTo(x0 + kw + side, by - side * 0.35); c.lineTo(x0 + kw + side, by + bh - side * 0.35); c.lineTo(x0 + kw, by + bh); c.fill()
+    c.fillStyle = 'rgba(70,45,10,0.55)'
+    for (let x = x0 + 4; x < x0 + kw - 4; x += 7) c.fillRect(x, by + bh * 0.3, 4, bh * 0.4)
+    // باب الكعبة الذهبي (مرتفع عن الأرض)
+    const dw = kw * 0.17, dh = kh * 0.36, dx = x0 + kw * 0.68, dy = base - kh * 0.16 - dh
+    c.fillStyle = gold; c.fillRect(dx, dy, dw, dh)
+    c.strokeStyle = 'rgba(70,45,10,0.6)'; c.lineWidth = 1.5; c.strokeRect(dx + 3, dy + 3, dw - 6, dh - 6)
+    // مقام إبراهيم: قبة ذهبية صغيرة أمام الباب
+    const mx = dx + dw / 2 + kw * 0.05, my = base + kh * 0.12
+    c.fillStyle = '#d9b562'; c.fillRect(mx - kw * 0.035, my - kh * 0.1, kw * 0.07, kh * 0.1)
+    domePath(c, mx, my - kh * 0.1, kw * 0.035, kh * 0.05); c.fill()
+  })
+  // الطائفون: نقاط بيضاء (ثياب الإحرام) تدور عكس عقارب الساعة
+  const people = Array.from({ length: 900 }, () => {
+    const ring = r()
+    return { a: r() * 6.28, rx: kw * 0.75 + ring * w * 0.38, sp: 0.05 + (1 - ring) * 0.05 + r() * 0.02, col: r() < 0.82 ? 250 : 170 + r() * 60 }
+  })
+  const ry = (rx: number) => rx * 0.2
+  const tw = makeTwinkles(w, h, 40, r, 0.4)
+  const drawPeople = (c: Ctx, t: number, front: boolean) => {
+    for (const p of people) {
+      const a = p.a - t * p.sp
+      const sn = Math.sin(a)
+      if ((sn > 0) !== front) continue
+      const x = cx + p.rx * Math.cos(a), y = base - kh * 0.02 + ry(p.rx) * sn
+      // من خلف الكعبة لا يُرسم من يحجبه البناء
+      if (!front && Math.abs(x - cx - side / 2) < kw / 2 + side / 2 && y > base - kh) continue
+      const s = 1.4 + (sn + 1) * 1.3
+      c.fillStyle = `rgb(${p.col},${p.col},${Math.min(255, p.col + 5)})`
+      c.fillRect(x - s / 2, y - s * 1.6, s, s * 1.6)
+    }
+  }
+  return {
+    frame(c, t) {
+      c.drawImage(back, 0, 0)
+      drawTwinkles(c, tw, t)
+      for (const l of lights) glow(c, l.x, l.y, h * 0.02, 'rgba(255,230,170,A)', 0.55 + 0.35 * Math.sin(t * 1.5 + l.p))
+      drawPeople(c, t, false)
+      c.drawImage(kab, 0, 0)
+      drawPeople(c, t, true)
+    },
+  }
+}
+
+/** المسجد النبوي: القبة الخضراء والمآذن، والمظلات تنفتح وتنغلق ببطء وقت الغروب، وحمام يطير */
+function madinah(w: number, h: number): Painter {
+  const r = rng(53)
+  const roof = h * 0.6, ground = h * 0.74
+  const back = layer(w, h, (c) => {
+    c.fillStyle = vgrad(c, h, [[0, '#26315f'], [0.35, '#6c5c8f'], [0.6, '#e2a07a'], [0.75, '#f4cf98'], [1, '#e9dcc4']]); c.fillRect(0, 0, w, h)
+    glow(c, w * 0.72, roof - h * 0.02, h * 0.5, 'rgba(255,200,130,A)', 0.4)
+    // البناء
+    c.fillStyle = '#e6dcc6'; c.fillRect(0, roof, w, ground - roof)
+    archRow(c, -10, w + 10, ground - 3, h * 0.03, h * 0.07, 'rgba(120,96,70,0.55)')
+    c.fillStyle = '#cfc3a8'; c.fillRect(0, roof, w, h * 0.012)
+    // قباب صغيرة فضية على السطح
+    c.fillStyle = '#c9ccd1'
+    for (let x = w * 0.05; x < w; x += w * 0.075) { domePath(c, x, roof, h * 0.022, h * 0.022); c.fill() }
+    // المآذن
+    for (const f of [0.1, 0.24, 0.58, 0.86]) minaret(c, w * f, roof, h * (0.36 + r() * 0.05), h * 0.018, '#efe7d6', '#b69a5c')
+    // القبة الخضراء على أسطوانتها
+    const gx = w * 0.4, drumH = h * 0.06, dw = h * 0.085
+    c.fillStyle = '#2c8a57'; c.fillRect(gx - dw * 0.8, roof - drumH, dw * 1.6, drumH)
+    const g = c.createLinearGradient(gx - dw, 0, gx + dw, 0); g.addColorStop(0, '#2f9a60'); g.addColorStop(0.45, '#5cc489'); g.addColorStop(1, '#1f6e45')
+    c.fillStyle = g; domePath(c, gx, roof - drumH, dw, dw * 1.35); c.fill()
+    c.fillStyle = '#d9b562'; c.fillRect(gx - 1.5, roof - drumH - dw * 1.43 - h * 0.035, 3, h * 0.035)
+    crescent(c, gx, roof - drumH - dw * 1.43 - h * 0.042, h * 0.009, '#e7c66e')
+    // ساحة الرخام
+    c.fillStyle = vgrad(c, h, [[0, '#ece5d8'], [1, '#faf7f1']], ground); c.fillRect(0, ground, w, h - ground)
+  })
+  const xs = Array.from({ length: 7 }, (_, i) => w * (0.07 + i * 0.145))
+  const birds = makeBirds(w, h, 14, r, 0.12, 0.4)
+  return {
+    frame(c, t) {
+      c.drawImage(back, 0, 0)
+      drawBirds(c, birds, t, w, 'rgba(255,255,255,0.85)')
+      // المظلات: تنفتح وتنغلق في دورة هادئة
+      const open = 0.25 + 0.75 * (0.5 - 0.5 * Math.cos((t / 40) * Math.PI * 2))
+      for (const x of xs) {
+        const top = h * 0.8, pole = h * 0.2, span = h * 0.11 * (0.3 + 0.7 * open)
+        c.fillStyle = '#b8b2a6'; c.fillRect(x - 2, top, 4, pole)
+        c.fillStyle = 'rgba(255,253,248,0.96)'
+        c.beginPath(); c.moveTo(x, top - h * 0.02 * open); c.lineTo(x - span, top + h * 0.03 * (1.2 - open)); c.lineTo(x + span, top + h * 0.03 * (1.2 - open)); c.closePath(); c.fill()
+        c.strokeStyle = 'rgba(160,150,130,0.6)'; c.lineWidth = 1
+        for (const k of [-0.5, 0, 0.5]) { c.beginPath(); c.moveTo(x, top - h * 0.02 * open); c.lineTo(x + span * k, top + h * 0.03 * (1.2 - open)); c.stroke() }
+      }
+    },
+  }
+}
+
+/** المسجد الأقصى: قبة الصخرة الذهبية على بنائها المثمن، والمصلى القبلي، وأشجار السرو عند الشروق */
+function aqsa(w: number, h: number): Painter {
+  const r = rng(29)
+  const cx = w * 0.46, plat = h * 0.78
+  const ow = h * 0.5, oh = h * 0.17, drumH = h * 0.065, dw = h * 0.135
+  const domeBase = plat - oh - drumH
+  const back = layer(w, h, (c) => {
+    c.fillStyle = vgrad(c, h, [[0, '#2c3d6c'], [0.4, '#8e90b6'], [0.68, '#f0c287'], [1, '#f7e1b6']]); c.fillRect(0, 0, w, h)
+    glow(c, w * 0.12, plat - h * 0.1, h * 0.45, 'rgba(255,214,150,A)', 0.55)
+    // تلال القدس البعيدة
+    c.fillStyle = 'rgba(150,130,120,0.45)'
+    c.beginPath(); c.moveTo(0, plat - h * 0.08)
+    for (let x = 0; x <= w; x += w / 12) c.lineTo(x, plat - h * (0.06 + r() * 0.05))
+    c.lineTo(w, plat); c.lineTo(0, plat); c.fill()
+    // المصلى القبلي بقبته الرصاصية
+    const qx = w * 0.82
+    c.fillStyle = '#d9c7a1'; c.fillRect(qx - h * 0.16, plat - h * 0.09, h * 0.32, h * 0.09)
+    archRow(c, qx - h * 0.15, qx + h * 0.16, plat - 2, h * 0.025, h * 0.05, 'rgba(110,90,60,0.5)')
+    c.fillStyle = '#6b7480'; domePath(c, qx, plat - h * 0.09, h * 0.05, h * 0.06); c.fill()
+    // ساحة الحجر
+    c.fillStyle = '#d8c39a'; c.fillRect(0, plat, w, h - plat)
+    c.fillStyle = 'rgba(120,96,60,0.25)'
+    for (let y = plat + h * 0.03; y < h; y += h * 0.035) c.fillRect(0, y, w, 1)
+    // البناء المثمن: وجه أمامي ووجهان مائلان
+    const fx = cx - ow * 0.3, fw = ow * 0.6, sw = ow * 0.2, top = plat - oh
+    const face = (x: number, wid: number, shade: number) => {
+      const marble = top + oh * 0.6
+      c.fillStyle = `rgb(${Math.round(31 * shade)},${Math.round(95 * shade)},${Math.round(168 * shade)})`; c.fillRect(x, top, wid, marble - top)
+      c.fillStyle = `rgb(${Math.round(232 * shade)},${Math.round(224 * shade)},${Math.round(206 * shade)})`; c.fillRect(x, marble, wid, plat - marble)
+      // نوافذ مقوسة في الجزء المكسو بالقاشاني
+      archRow(c, x + wid * 0.08, x + wid, top + (marble - top) * 0.82, wid * 0.08, (marble - top) * 0.5, `rgba(${Math.round(14 * shade)},${Math.round(40 * shade)},${Math.round(80 * shade)},0.9)`)
+      archRow(c, x + wid * 0.06, x + wid, plat - 2, wid * 0.12, (plat - marble) * 0.75, `rgba(${Math.round(150 * shade)},${Math.round(130 * shade)},${Math.round(100 * shade)},0.55)`)
+      // شريط الكتابة أعلى البناء
+      c.fillStyle = `rgb(${Math.round(18 * shade)},${Math.round(50 * shade)},${Math.round(110 * shade)})`; c.fillRect(x, top, wid, oh * 0.09)
+      c.fillStyle = 'rgba(240,210,130,0.7)'
+      for (let k = x + 4; k < x + wid - 4; k += 9) c.fillRect(k, top + oh * 0.03, 5, oh * 0.03)
+    }
+    face(fx - sw, sw, 0.72); face(fx + fw, sw, 0.8); face(fx, fw, 1)
+    // الأسطوانة تحت القبة
+    c.fillStyle = '#2a6cb6'; c.fillRect(cx - dw * 0.92, domeBase, dw * 1.84, drumH)
+    archRow(c, cx - dw * 0.86, cx + dw * 0.92, domeBase + drumH * 0.85, dw * 0.12, drumH * 0.6, 'rgba(12,36,74,0.9)')
+    // أشجار السرو
+    for (const x of [w * 0.05, w * 0.14, w * 0.23, w * 0.66, w * 0.72, w * 0.95]) {
+      const th = h * (0.16 + r() * 0.08)
+      c.fillStyle = '#23402c'
+      c.beginPath(); c.ellipse(x, plat - th / 2, h * 0.018, th / 2, 0, 0, Math.PI * 2); c.fill()
+    }
+  })
+  const birds = makeBirds(w, h, 10, r, 0.1, 0.35)
+  return {
+    frame(c, t) {
+      c.drawImage(back, 0, 0)
+      drawBirds(c, birds, t, w, 'rgba(50,40,60,0.7)')
+      // القبة الذهبية مع لمعان يتحرك عليها
+      const g = c.createLinearGradient(cx - dw, 0, cx + dw, 0)
+      const s = 0.2 + 0.6 * (0.5 + 0.5 * Math.sin(t * 0.25))
+      g.addColorStop(0, '#a87a22'); g.addColorStop(Math.max(0, s - 0.18), '#e3b84e'); g.addColorStop(s, '#fff1b8'); g.addColorStop(Math.min(1, s + 0.18), '#e3b84e'); g.addColorStop(1, '#9a6c1c')
+      c.fillStyle = g; domePath(c, cx, domeBase, dw, dw * 1.12); c.fill()
+      c.fillStyle = '#d9b562'; c.fillRect(cx - 1.5, domeBase - dw * 1.18 - h * 0.04, 3, h * 0.04)
+      crescent(c, cx, domeBase - dw * 1.18 - h * 0.048, h * 0.01, '#f1d27c')
+      glow(c, cx, domeBase - dw * 0.6, dw * 1.6, 'rgba(255,220,140,A)', 0.12 + 0.06 * Math.sin(t * 0.5))
+    },
+  }
+}
+
+/** مسجد السلطان أحمد: قباب متتالية ومآذن ست على البحر وقت الغروب، وانعكاس يتراقص ونوارس */
+function sultanAhmed(w: number, h: number): Painter {
+  const r = rng(97)
+  const sea = h * 0.7, cx = w * 0.5
+  const windows: { x: number; y: number; p: number }[] = []
+  const back = layer(w, h, (c) => {
+    c.fillStyle = vgrad(c, h, [[0, '#1d1a45'], [0.35, '#5a3a72'], [0.58, '#d9786a'], [0.7, '#f7b26e']]); c.fillRect(0, 0, w, sea)
+    glow(c, w * 0.78, sea - h * 0.03, h * 0.3, 'rgba(255,190,110,A)', 0.6)
+    c.fillStyle = '#ffd08a'; c.beginPath(); c.arc(w * 0.78, sea, h * 0.05, Math.PI, 0); c.fill()
+    // الصورة الظلية: قاعدة ثم قباب متدرجة
+    const sil = '#2a1c3a', ground = sea + 1
+    c.fillStyle = sil
+    c.fillRect(cx - h * 0.42, ground - h * 0.08, h * 0.84, h * 0.08)
+    const domes: [number, number, number][] = [[0, h * 0.13, ground - h * 0.2], [-0.16, h * 0.07, ground - h * 0.14], [0.16, h * 0.07, ground - h * 0.14], [-0.3, h * 0.05, ground - h * 0.1], [0.3, h * 0.05, ground - h * 0.1], [-0.08, h * 0.05, ground - h * 0.16], [0.08, h * 0.05, ground - h * 0.16]]
+    for (const [f, rw, b] of domes) {
+      const x = cx + f * h * 1.4
+      c.fillRect(x - rw, b, rw * 2, ground - b)
+      domePath(c, x, b, rw, rw * 0.95); c.fill()
+    }
+    c.fillRect(cx - 1.5, ground - h * 0.2 - h * 0.17, 3, h * 0.05)
+    // المآذن الست
+    for (const f of [-0.33, -0.25, 0.25, 0.33, -0.43, 0.43]) {
+      const x = cx + f * h * 1.4, mh = Math.abs(f) > 0.4 ? h * 0.3 : h * 0.36
+      minaret(c, x, ground, mh, h * 0.012, sil, sil)
+    }
+    for (let i = 0; i < 26; i++) windows.push({ x: cx + (r() - 0.5) * h * 0.78, y: ground - h * (0.02 + r() * 0.07), p: r() * 6.28 })
+    // البحر
+    c.fillStyle = vgrad(c, h, [[0, '#6a4a78'], [1, '#1a1838']], sea); c.fillRect(0, sea, w, h - sea)
+  })
+  const birds = makeBirds(w, h, 9, r, 0.15, 0.45)
+  return {
+    frame(c, t) {
+      c.drawImage(back, 0, 0)
+      for (const win of windows) {
+        const a = 0.7 + 0.3 * Math.sin(t * 1.1 + win.p)
+        c.fillStyle = `rgba(255,205,130,${a.toFixed(2)})`; c.fillRect(win.x, win.y, 4, 6)
+      }
+      // انعكاس الشمس والأضواء على الماء
+      for (let i = 0; i < 40; i++) {
+        const y = sea + 6 + i * (h - sea) / 42
+        const wid = (h * 0.12) * (1 - i / 50) * (0.6 + 0.4 * Math.sin(t * 1.6 + i * 1.7))
+        c.fillStyle = `rgba(255,190,120,${(0.35 * (1 - i / 42)).toFixed(3)})`
+        c.fillRect(w * 0.78 - wid / 2 + Math.sin(t + i) * 6, y, wid, 2)
+      }
+      drawBirds(c, birds, t, w, 'rgba(255,240,230,0.85)')
+    },
+  }
+}
+
 const FACTORIES: Record<SceneId, (w: number, h: number) => Painter> = {
+  kaaba, madinah, aqsa, 'sultan-ahmed': sultanAhmed,
   'night-mosque': nightMosque, 'ocean-sunset': oceanSunset, desert, aurora, 'rain-window': rainWindow, galaxy, geometry, forest,
 }
 

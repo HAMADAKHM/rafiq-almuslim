@@ -10,12 +10,16 @@ export interface AyahRef { surah: number; ayah: number }
 export const BASMALA_AYAH = 0
 
 /** قرّاء بأصوات هادئة مناسبة للاستماع المتواصل (من قائمة التطبيق) */
-export const TV_RECITERS = ['husary', 'minshawi', 'alafasy', 'abdulbasit', 'ajamy', 'basfar', 'husary-mujawwad', 'minshawi-mujawwad', 'muaiqly', 'shatri']
+export const TV_RECITERS = [
+  'husary', 'minshawi', 'alafasy', 'abdulbasit', 'husary-mujawwad', 'minshawi-mujawwad', 'muaiqly', 'sudais', 'shuraym', 'ghamdi',
+  'shatri', 'ajamy', 'basfar', 'hudhaify', 'ayyoub', 'rifai', 'jibreel', 'akhdar', 'sowaid', 'dossary',
+  'qatami', 'fares', 'budair', 'juhany', 'tablawi', 'qahtani', 'alijaber',
+]
 
 export const RECITE_MODES: { id: ReciteMode; label: string; hint: string }[] = [
   { id: 'surah', label: 'تلاوة متواصلة', hint: 'سورة تختارها ثم ما بعدها، ويُحفظ الموضع' },
   { id: 'ayah', label: 'آية اليوم', hint: 'تُتلى آية اليوم ثم تتكرر كل بضع دقائق' },
-  { id: 'adhkar', label: 'الأذكار بالصوت', hint: 'أذكار الصباح أو المساء أو النوم بحسب الوقت كاملة: الآيات بصوت القارئ، وبقية الأذكار بصوت عربي من التلفاز' },
+  { id: 'adhkar', label: 'الأذكار بالصوت', hint: 'أذكار الصباح أو المساء أو النوم بحسب الوقت: الآيات بصوت القارئ، والأذكار بتسجيل بشري من حصن المسلم' },
 ]
 
 /** فاصل الصمت قبل إعادة آية اليوم أو آيات الأذكار */

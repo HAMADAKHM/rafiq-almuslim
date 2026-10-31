@@ -173,7 +173,10 @@ final class RemoteCore {
     }
 
     // ---------- الإعدادات: قائمة بيضاء بالقيم المسموحة فقط ----------
-    static final String[] SCENES = { "rotate", "classic", "photos", "night-mosque", "ocean-sunset", "desert", "aurora", "rain-window", "galaxy", "geometry", "forest" };
+    /** أوامر الجوال: إيقاف الأذان وفتح الشاشة والمشهد التالي، وأزرار جهاز التحكم (داخل شاشة رفيق المسلم فقط) ومستوى الصوت */
+    static final String[] ACTIONS = { "stop_adhan", "open_screen", "next_scene", "key_up", "key_down", "key_left", "key_right", "key_ok", "key_back", "vol_up", "vol_down", "vol_mute" };
+
+    static final String[] SCENES = { "rotate", "classic", "photos", "night-mosque", "ocean-sunset", "desert", "aurora", "rain-window", "galaxy", "geometry", "forest", "kaaba", "madinah", "aqsa", "sultan-ahmed" };
 
     /** يقسم الطلب إلى إعدادات الشاشة وإعدادات الخدمة بعد التحقق؛ أي قيمة غير صالحة ترفض الطلب كله */
     static JSONObject[] validate(JSONObject in) throws Exception {
@@ -209,6 +212,15 @@ final class RemoteCore {
                     if (d < 0 || d > 1) throw new IllegalArgumentException(k);
                     screen.put(k, d); break;
                 }
+                case "reciteMode":
+                    if (!(v instanceof String) || !oneOf((String) v, new String[] { "ayah", "surah", "adhkar" })) throw new IllegalArgumentException(k);
+                    screen.put(k, v); break;
+                case "adhkarVoice":
+                    if (!(v instanceof String) || !oneOf((String) v, new String[] { "human", "mixed" })) throw new IllegalArgumentException(k);
+                    screen.put(k, v); break;
+                case "reciterId":
+                    if (!(v instanceof String) || !((String) v).matches("[a-z][a-z-]{1,23}")) throw new IllegalArgumentException(k);
+                    screen.put(k, v); break;
                 case "clockShift": screen.put(k, intIn(v, k, -60, 60, new int[] { -60, 0, 60 })); break;
                 case "idleMinutes": nat.put(k, intIn(v, k, 0, 30, new int[] { 0, 5, 10, 15, 30 })); break;
                 case "idleTakeover": case "autostart":
@@ -270,7 +282,7 @@ final class RemoteCore {
             }
             if (method.equals("POST") && path.equals("/action")) {
                 String a = json(body).optString("action", "");
-                if (!oneOf(a, new String[] { "stop_adhan", "open_screen", "next_scene" })) return status(400, error(400, "invalid_action"));
+                if (!oneOf(a, ACTIONS)) return status(400, error(400, "invalid_action"));
                 return ok(new JSONObject().put("ok", applier.action(a)));
             }
             if (method.equals("GET") && path.equals("/backgrounds")) return ok(new JSONObject().put("items", applier.backgrounds()).put("max", MAX_BACKGROUNDS));

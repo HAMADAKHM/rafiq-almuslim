@@ -3,7 +3,7 @@
 
 import type { SceneId } from '../tv/scenes'
 
-export type IdentityId = 't-classic' | 't-night' | 't-nature' | 't-turquoise' | 't-heritage' | 't-violet' | 't-minimal' | 't-gradient' | 't-royal' | 't-dawn' | 't-rose' | 't-evening'
+export type IdentityId = 'e-emerald' | 'e-midnight' | 'e-ivory' | 'e-nature' | 'e-white' | 'e-dark' | 't-classic' | 't-night' | 't-nature' | 't-turquoise' | 't-heritage' | 't-violet' | 't-minimal' | 't-gradient' | 't-royal' | 't-dawn' | 't-rose' | 't-evening'
 export type SkinId = IdentityId | 'qadr' | 'andalus' | 'desert' | 'ocean' | 'garden' | 'ramadan' | 'aurora' | 'royal'
   | 'live-night' | 'live-galaxy' | 'live-aurora' | 'live-ocean' | 'live-rain' | 'live-forest' | 'live-geometry' | 'live-desert'
 
@@ -29,6 +29,13 @@ export interface Skin {
 
 export const SKINS: Skin[] = [
   // ---------- ثيمات الهوية: هوية بصرية كاملة لكل الصفحات، ولكل منها أيقونة تطبيق مطابقة ----------
+  // الثيمات الأساسية للنسخة الجديدة (المرحلة 2): نظام ألوان موحّد يطبَّق على كل الصفحات
+  { id: 'e-emerald', name: 'الزمرد الملكي', tagline: 'أخضر زمردي عميق وذهب هادئ', mode: 'light', free: false, bar: '#064c38', identity: true, swatch: ['#f2f6f1', '#ffffff', '#0b6b4f', '#16241e'] },
+  { id: 'e-midnight', name: 'منتصف الليل', tagline: 'كحلي عميق وفضة لطيفة لقراءة الليل', mode: 'dark', free: false, bar: '#070b18', identity: true, swatch: ['#0b1020', '#151d36', '#9cc2ff', '#e9ecf5'] },
+  { id: 'e-ivory', name: 'العاجي', tagline: 'ورق عاجي دافئ كصفحات المصحف', mode: 'light', free: true, bar: '#5c4a2a', identity: true, swatch: ['#fbf7ee', '#fffdf8', '#7d5f22', '#2a2418'] },
+  { id: 'e-nature', name: 'الطبيعة', tagline: 'أخضر أوراق هادئ وضوء الصباح', mode: 'light', free: false, bar: '#2f5f33', identity: true, swatch: ['#eef4ea', '#fbfdf8', '#3c7a3f', '#1f2b1f'] },
+  { id: 'e-white', name: 'الأبيض النقي', tagline: 'أبيض صافٍ ووضوح تام', mode: 'light', free: true, bar: '#0f7a5a', identity: true, swatch: ['#ffffff', '#ffffff', '#0f7a5a', '#111413'] },
+  { id: 'e-dark', name: 'الداكن', tagline: 'رمادي فحمي مريح للعين', mode: 'dark', free: true, bar: '#0f1110', identity: true, swatch: ['#0f1110', '#181b1a', '#4cc59a', '#eceeed'] },
   // التصاميم التسعة المعتمدة (بالترتيب والأسماء كما في لوحة التصاميم)
   { id: 't-classic', name: 'الكلاسيكي الراقي', tagline: 'ببساطة .. نقترب من الله', mode: 'light', free: true, bar: '#174B3C', identity: true, swatch: ['#f7f4ea', '#ffffff', '#174b3c', '#202b27'] },
   { id: 't-night', name: 'الليلي الفاخر', tagline: 'صفاء القلب .. وراحة العين', mode: 'dark', free: false, bar: '#0a1730', identity: true, swatch: ['#0a1730', '#12234a', '#e0bd6e', '#f2ecdd'] },

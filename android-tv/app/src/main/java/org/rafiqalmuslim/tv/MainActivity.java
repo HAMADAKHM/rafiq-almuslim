@@ -38,6 +38,13 @@ public class MainActivity extends Activity {
             public void applyNow() { runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.__rafiqRemoteApply&&window.__rafiqRemoteApply()", null); }); }
             public boolean nextScene() { runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.__rafiqNextScene&&window.__rafiqNextScene()", null); }); return true; }
             public void backgroundsChanged() { runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.dispatchEvent(new Event('rafiq-backgrounds'))", null); }); }
+            public boolean key(int code) {
+                runOnUiThread(() -> {
+                    dispatchKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, code));
+                    dispatchKeyEvent(new android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, code));
+                });
+                return true;
+            }
         };
         if (web != null) web.evaluateJavascript("window.__rafiqRemoteApply&&window.__rafiqRemoteApply()", null);
     }

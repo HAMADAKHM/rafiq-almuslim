@@ -71,6 +71,7 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
     if (!active || !data) { setCurrent(null); setDhikr(null); return () => { audio.current?.pause(); audio.current = null; stopVoice() } }
     const reciter = reciterById(s.reciterId)
     const vol = s.reciteVolume
+    const humanOnly = s.adhkarVoice !== 'mixed'
     let pending: Prepared | null = null
     // الأذكار بالصوت: أذكار الوقت كاملة بالترتيب، الآيات بصوت القارئ وبقية الأذكار بصوت عربي
     const adhkarLoop = async () => {
@@ -99,7 +100,7 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
             for (let k = 0; k < reps && alive() && voice; k++) {
               setDhikr({ title: which.title, text: it.text, source: it.source, count: it.count, voice })
               const played = human ? await playPrepared(prepare([human], vol), audio, alive) : false
-              if (!played) voice = await speak(it.text, vol, alive)
+              if (!played) voice = humanOnly ? false : await speak(it.text, vol, alive)
               if (voice && alive()) await sleep(1200, alive)
             }
             // لا يوجد صوت عربي في الجهاز: يبقى النص ظاهرًا مدة تكفي لقراءته ثم يُنتقل للتالي
@@ -148,7 +149,7 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
       stopVoice()
       if (pending) { pending.el.removeAttribute('src'); pending.el.load(); pending = null }
     }
-  }, [active, s.reciteMode, s.reciterId, s.reciteSurah, ctx.day, data]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active, s.reciteMode, s.reciterId, s.reciteSurah, s.adhkarVoice, ctx.day, data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // تغيير مستوى الصوت أثناء التلاوة
   useEffect(() => { if (audio.current) audio.current.volume = s.reciteVolume }, [s.reciteVolume])

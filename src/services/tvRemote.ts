@@ -14,6 +14,7 @@ export interface TvSettingsView {
   scene?: string; playlist?: string[]; rotateMin?: number; shuffle?: boolean; quality?: 'auto' | 'eco' | 'high'; animate?: boolean
   adhan?: boolean; hour12?: boolean; reciteOn?: boolean; reciteVolume?: number; clockShift?: number; city?: string
   idleMinutes?: number; idleTakeover?: boolean; autostart?: boolean
+  reciteMode?: 'ayah' | 'surah' | 'adhkar'; reciterId?: string; adhkarVoice?: 'human' | 'mixed'
 }
 
 /** وسيلة الإرسال (TvLink في التطبيق، ومحاكاة في الاختبارات) */
@@ -164,7 +165,9 @@ export async function prepareBackground(file: Blob): Promise<string> {
   } finally { URL.revokeObjectURL(url) }
 }
 
-export async function tvAction(send: Transport, tv: PairedTv, action: 'stop_adhan' | 'open_screen' | 'next_scene'): Promise<boolean> {
+/** أوامر التلفاز: إيقاف الأذان وفتح الشاشة والمشهد التالي، وأزرار جهاز التحكم ومستوى الصوت */
+export type TvActionName = 'stop_adhan' | 'open_screen' | 'next_scene' | 'key_up' | 'key_down' | 'key_left' | 'key_right' | 'key_ok' | 'key_back' | 'vol_up' | 'vol_down' | 'vol_mute'
+export async function tvAction(send: Transport, tv: PairedTv, action: TvActionName): Promise<boolean> {
   return !!(await signedCall(send, tv, 'POST', '/action', { action })).ok
 }
 export async function unpairTv(send: Transport, tv: PairedTv) {

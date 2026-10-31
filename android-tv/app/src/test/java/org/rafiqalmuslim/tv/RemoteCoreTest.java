@@ -240,6 +240,15 @@ public class RemoteCoreTest {
         for (String s : bad) {
             try { RemoteCore.validate(new JSONObject(s)); throw new AssertionError("قُبل: " + s); } catch (IllegalArgumentException expected) { /* مرفوض */ }
         }
+        JSONObject[] rec = RemoteCore.validate(new JSONObject("{\"reciteMode\":\"adhkar\",\"reciterId\":\"minshawi-mujawwad\",\"adhkarVoice\":\"human\"}"));
+        assertEquals("minshawi-mujawwad", rec[0].getString("reciterId"));
+        for (String s : new String[] { "{\"reciteMode\":\"song\"}", "{\"reciterId\":\"../x\"}", "{\"adhkarVoice\":\"robot\"}" }) {
+            try { RemoteCore.validate(new JSONObject(s)); throw new AssertionError("قُبل: " + s); } catch (IllegalArgumentException expected) { /* مرفوض */ }
+        }
+        // أزرار جهاز التحكم من الجوال ضمن الأوامر المسموحة فقط
+        java.util.List<String> acts = java.util.Arrays.asList(RemoteCore.ACTIONS);
+        assertTrue(acts.contains("key_ok") && acts.contains("key_back") && acts.contains("vol_up"));
+        assertFalse(acts.contains("key_home"));
         assertEquals("جوال", RemoteCore.cleanName("  <\u0001>  "));
         assertEquals(40, RemoteCore.cleanName(new String(new char[60]).replace('\0', 'a')).length());
         assertNotNull(new JSONArray());

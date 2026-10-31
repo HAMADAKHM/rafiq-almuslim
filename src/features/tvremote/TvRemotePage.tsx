@@ -1,16 +1,18 @@
 // «التحكم بالتلفاز» (رفيق بلس): إيجاد شاشة رفيق المسلم على الشبكة المنزلية، والربط برمز، ثم تغيير مشاهدها
 // وإعداداتها وإيقاف الأذان من الجوال. الإعدادات تُقرأ من التلفاز نفسه وتُحفظ هناك.
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { ImagePlus, MonitorSmartphone, RefreshCw, Search, Trash2, Tv, Wifi, WifiOff } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CornerUpLeft, ImagePlus, MonitorSmartphone, RefreshCw, Search, Trash2, Tv, Volume1, Volume2, VolumeX, Wifi, WifiOff } from 'lucide-react'
 import { PageHead, Spinner } from '../../components/Common'
 import { PlusGate } from '../../billing/PlusGate'
 import { useLive, toast } from '../../hooks'
 import { discoverTvs, tvLinkSupported, tvRequest, type FoundTv } from '../../platform/tvlink'
 import {
   addTvBackground, getTvSettings, latestTvRelease, updateTv, UPDATE_STATE_LABEL, type TvRelease, type TvVersion, listTvBackgrounds, loadTvs, pairTv, parseAddress, pingTv, prepareBackground, removeTv, removeTvBackground, setTvSettings, tvAction, unpairTv, updateTvAddress,
-  MAX_TV_BACKGROUNDS, TvRemoteError, type PairedTv, type TvBackground, type TvSettingsView,
+  MAX_TV_BACKGROUNDS, TvRemoteError, type PairedTv, type TvActionName, type TvBackground, type TvSettingsView,
 } from '../../services/tvRemote'
 import { SCENES } from '../../tv/scenes'
+import { RECITE_MODES, TV_RECITERS } from '../../tv/recite'
+import { reciterById } from '../../content/reciters'
 
 const send = tvRequest
 const errMsg = (e: unknown) => (e instanceof TvRemoteError ? e.message : 'تعذر تنفيذ الطلب')
@@ -77,7 +79,7 @@ function AddTv({ onDone }: { onDone: (tv: PairedTv) => void }) {
         <h2 style={{ margin: 0 }}>إضافة تلفاز</h2>
         <button className="btn btn-sm" onClick={scan} disabled={scanning}><Search size={14} /> {scanning ? 'يبحث…' : 'بحث مجددًا'}</button>
       </div>
-      <p className="small muted">يجب أن يكون الجوال والتلفاز على شبكة الواي فاي نفسها، وتطبيق «شاشة رفيق المسلم» مثبتًا على التلفاز (Android TV).</p>
+      <p className="small muted">يجب أن يكون الجوال والتلفاز على شبكة الواي فاي نفسها، وتطبيق «رفيق المسلم» للتلفاز مثبتًا عليه (Android TV).</p>
       {scanning && <Spinner label="البحث عن التلفاز في الشبكة" />}
       {found && !scanning && (found.length ? (
         <ul className="plain stack" style={{ gap: 6 }}>
@@ -202,6 +204,39 @@ function TvUpdateCard({ tv }: { tv: PairedTv }) {
   )
 }
 
+/** جهاز تحكم على الجوال: أسهم وموافق ورجوع داخل شاشة رفيق المسلم، ومستوى صوت التلفاز */
+function RemotePad({ tv, disabled }: { tv: PairedTv; disabled: boolean }) {
+  const [busy, setBusy] = useState(false)
+  const press = async (a: TvActionName) => {
+    if (busy) return
+    setBusy(true)
+    try {
+      try { navigator.vibrate?.(15) } catch { /* لا شيء */ }
+      if (!(await tvAction(send, tv, a)) && a.startsWith('key_')) toast('افتح شاشة رفيق المسلم على التلفاز أولًا (زر «اعرض الشاشة»)')
+    } catch (e) { toast(errMsg(e)) }
+    setBusy(false)
+  }
+  const k = (a: TvActionName, label: string, children: ReactNode, cls = '') => (
+    <button type="button" className={'tv-pad-btn ' + cls} aria-label={label} disabled={disabled} onClick={() => press(a)}>{children}</button>
+  )
+  return (
+    <section className="card stack" style={{ gap: 10 }} aria-label="جهاز التحكم">
+      <h2 style={{ margin: 0 }}>جهاز التحكم</h2>
+      <div className="tv-pad" dir="ltr">
+        <span />{k('key_up', 'أعلى', <><ArrowUp size={22} /></>)}<span />
+        {k('key_left', 'يسار', <><ArrowLeft size={22} /></>)}{k('key_ok', 'موافق', 'موافق', 'ok')}{k('key_right', 'يمين', <><ArrowRight size={22} /></>)}
+        {k('key_back', 'رجوع', <><CornerUpLeft size={20} /></>)}{k('key_down', 'أسفل', <><ArrowDown size={22} /></>)}<span />
+      </div>
+      <div className="tv-pad-vol" dir="ltr">
+        {k('vol_down', 'خفض الصوت', <><Volume1 size={20} /></>)}
+        {k('vol_mute', 'كتم الصوت', <><VolumeX size={20} /></>)}
+        {k('vol_up', 'رفع الصوت', <><Volume2 size={20} /></>)}
+      </div>
+      <p className="small muted" style={{ margin: 0 }}>الأسهم وموافق ورجوع تتحكم في شاشة رفيق المسلم وقوائمها وهي ظاهرة على التلفاز. أزرار الصوت تغيّر صوت التلفاز كله. لا يسمح نظام Android لتطبيق بالتحكم في التطبيقات الأخرى أو تشغيل التلفاز وإطفائه.</p>
+    </section>
+  )
+}
+
 function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
   const [st, setSt] = useState<TvSettingsView | null>(null)
   const [online, setOnline] = useState<boolean | null>(null)
@@ -249,6 +284,7 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
           <button className="btn btn-sm" disabled={!online || (st?.scene !== 'rotate' && st?.scene !== 'photos')} onClick={() => act('next_scene', 'انتقل إلى المشهد التالي')}>المشهد التالي</button>
         </div>
       </section>
+      <RemotePad tv={tv} disabled={!online} />
       {online && <TvUpdateCard tv={tv} />}
       {st && (
         <>
@@ -295,7 +331,16 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
             <label className="field"><span>مستوى الصوت ({Math.round((st.reciteVolume ?? 0.5) * 100)}%)</span>
               <input type="range" min={0} max={1} step={0.1} value={st.reciteVolume ?? 0.5} disabled={busy} onChange={(e) => setSt({ ...st, reciteVolume: Number(e.target.value) })} onPointerUp={(e) => set({ reciteVolume: Number((e.target as HTMLInputElement).value) })} onKeyUp={(e) => set({ reciteVolume: Number((e.target as HTMLInputElement).value) })} />
             </label>
-            <p className="small muted" style={{ margin: 0 }}>المدينة وطريقة الحساب والقارئ تُضبط من التلفاز نفسه.</p>
+            <Chips label="ما يُتلى" value={st.reciteMode} disabled={busy} onPick={(v) => set({ reciteMode: v })} options={RECITE_MODES.map((m) => ({ id: m.id, label: m.label }))} />
+            <label className="field"><span>القارئ</span>
+              <select className="input" value={st.reciterId ?? 'husary'} disabled={busy} onChange={(e) => set({ reciterId: e.target.value })}>
+                {TV_RECITERS.map((id) => reciterById(id)).map((r) => <option key={r.id} value={r.id}>{r.name}{r.style.includes('مجود') ? ' (مجود)' : ''}</option>)}
+              </select>
+            </label>
+            {st.reciteMode === 'adhkar' && (
+              <Chips label="صوت الأذكار" value={st.adhkarVoice ?? 'human'} disabled={busy} onPick={(v) => set({ adhkarVoice: v })} options={[{ id: 'human', label: 'تسجيل بشري فقط' }, { id: 'mixed', label: 'بشري + صوت التلفاز' }]} />
+            )}
+            <p className="small muted" style={{ margin: 0 }}>المدينة وطريقة الحساب تُضبط من التلفاز نفسه. إن كان التلفاز بإصدار أقدم فحدّثه أولًا ليقبل اختيار القارئ من الجوال.</p>
           </section>
         </>
       )}

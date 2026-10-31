@@ -7,14 +7,16 @@ import { IDENTITY_LOOK } from './IdentityScene'
 import { WIDGET_STYLES } from '../features/widgets/WidgetsPage'
 
 const ident = SKINS.filter((s) => s.identity)
+const designs = ident.filter((s) => s.id.startsWith('t-'))
 const css = readFileSync('src/styles/skins.css', 'utf8')
 const manifest = readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8')
 
 describe('ثيمات الهوية', () => {
   it('التصاميم التسعة بالترتيب المعتمد (الكلاسيكي مجاني)، ولكل ثيم ألوان كاملة في الأنماط وخلفية مرسومة', () => {
-    expect(ident.length).toBe(12)
-    expect(ident.slice(0, 9).map((s) => s.name)).toEqual(['الكلاسيكي الراقي', 'الليلي الفاخر', 'الهادئ الطبيعي', 'العصري المشرق', 'الإسلامي الفخم', 'الغروب الهادئ', 'المينيمالي الحديث', 'الألوان المتدرجة', 'الذهبي الفاخر'])
-    expect(ident.filter((s) => s.free).map((s) => s.id)).toEqual(['t-classic'])
+    expect(designs.length).toBe(12)
+    expect(ident.filter((s) => s.id.startsWith('e-')).map((s) => s.name)).toEqual(['الزمرد الملكي', 'منتصف الليل', 'العاجي', 'الطبيعة', 'الأبيض النقي', 'الداكن'])
+    expect(designs.slice(0, 9).map((s) => s.name)).toEqual(['الكلاسيكي الراقي', 'الليلي الفاخر', 'الهادئ الطبيعي', 'العصري المشرق', 'الإسلامي الفخم', 'الغروب الهادئ', 'المينيمالي الحديث', 'الألوان المتدرجة', 'الذهبي الفاخر'])
+    expect(ident.filter((s) => s.free).map((s) => s.id)).toEqual(['e-ivory', 'e-white', 'e-dark', 't-classic'])
     for (const s of ident) {
       const rule = new RegExp(`:root\\[data-skin='${s.id}'\\] \\{([^}]*)\\}`).exec(css)?.[1] ?? ''
       for (const v of ['--bg', '--surface', '--text', '--text-muted', '--primary', '--on-primary', '--border', '--hdr', '--gold']) expect(rule, `${s.id} ${v}`).toContain(`${v}:`)

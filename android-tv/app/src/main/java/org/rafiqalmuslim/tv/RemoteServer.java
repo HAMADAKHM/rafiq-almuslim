@@ -37,7 +37,7 @@ final class RemoteServer {
     private int port;
 
     /** شاشة المواقيت تسجّل هنا لتطبيق الإعدادات فورًا إن كانت ظاهرة */
-    interface ScreenHook { void applyNow(); boolean nextScene(); void backgroundsChanged(); }
+    interface ScreenHook { void applyNow(); boolean nextScene(); void backgroundsChanged(); boolean key(int keyCode); }
     static volatile ScreenHook screen;
 
     private RemoteServer(Context c) {
@@ -178,6 +178,16 @@ final class RemoteServer {
             return Updater.start(ctx, url);
         }
 
+        private boolean key(int code) { ScreenHook h = screen; return h != null && h.key(code); }
+
+        private boolean volume(int dir) {
+            try {
+                android.media.AudioManager am = (android.media.AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+                am.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, dir, android.media.AudioManager.FLAG_SHOW_UI);
+                return true;
+            } catch (Exception e) { return false; }
+        }
+
         private void notifyScreen() { ScreenHook h = screen; if (h != null) h.backgroundsChanged(); }
 
         public boolean action(String name) {
@@ -185,6 +195,17 @@ final class RemoteServer {
                 case "stop_adhan": TvService.requestStopAdhan(ctx); return true;
                 case "open_screen": return TvService.openScreen(ctx);
                 case "next_scene": { ScreenHook h = screen; return h != null && h.nextScene(); }
+                // أزرار جهاز التحكم: تعمل داخل شاشة رفيق المسلم وهي ظاهرة فقط (لا يسمح Android بالتحكم في تطبيقات أخرى)
+                case "key_up": return key(android.view.KeyEvent.KEYCODE_DPAD_UP);
+                case "key_down": return key(android.view.KeyEvent.KEYCODE_DPAD_DOWN);
+                case "key_left": return key(android.view.KeyEvent.KEYCODE_DPAD_LEFT);
+                case "key_right": return key(android.view.KeyEvent.KEYCODE_DPAD_RIGHT);
+                case "key_ok": return key(android.view.KeyEvent.KEYCODE_DPAD_CENTER);
+                case "key_back": return key(android.view.KeyEvent.KEYCODE_BACK);
+                // مستوى صوت الوسائط في التلفاز (مسموح للتطبيقات دون صلاحية خاصة)
+                case "vol_up": return volume(android.media.AudioManager.ADJUST_RAISE);
+                case "vol_down": return volume(android.media.AudioManager.ADJUST_LOWER);
+                case "vol_mute": return volume(android.media.AudioManager.ADJUST_TOGGLE_MUTE);
                 default: return false;
             }
         }

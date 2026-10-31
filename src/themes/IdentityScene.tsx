@@ -8,6 +8,12 @@ interface Look { sky: [string, string, string]; line: string; lineOpacity: numbe
 
 // خلفيات التصاميم التسعة المعتمدة (ثم ثيمات الشروق والوردي والمساء)
 export const IDENTITY_LOOK: Record<IdentityId, Look> = {
+  'e-emerald': { sky: ['#f6f9f4', '#f2f6f1', '#e6efe6'], line: '#b8913f', lineOpacity: 0.08, silhouette: '#0b6b4f', silOpacity: 0.14, accent: '#b8913f', motif: 'arch' },
+  'e-midnight': { sky: ['#121a33', '#0b1020', '#070a14'], line: '#9cc2ff', lineOpacity: 0.04, silhouette: '#04060d', silOpacity: 0.92, accent: '#dfe8ff', motif: 'stars', glow: '#9cc2ff' },
+  'e-ivory': { sky: ['#fdfaf3', '#fbf7ee', '#f3ecdc'], line: '#b8995a', lineOpacity: 0.08, silhouette: '#7d5f22', silOpacity: 0.1, accent: '#b8995a', motif: 'arch' },
+  'e-nature': { sky: ['#f6faf2', '#eef4ea', '#e2ecdc'], line: '#3c7a3f', lineOpacity: 0.04, silhouette: '#3c7a3f', silOpacity: 0.12, accent: '#5f9a4a', motif: 'leaves' },
+  'e-white': { sky: ['#ffffff', '#ffffff', '#fafafa'], line: '#0f7a5a', lineOpacity: 0, silhouette: '#0f7a5a', silOpacity: 0, accent: '#0f7a5a', motif: 'none' },
+  'e-dark': { sky: ['#141716', '#0f1110', '#0b0c0c'], line: '#4cc59a', lineOpacity: 0, silhouette: '#000000', silOpacity: 0, accent: '#4cc59a', motif: 'none' },
   't-classic': { sky: ['#fbf9f2', '#f7f4ea', '#efe9d8'], line: '#c6a66b', lineOpacity: 0.07, silhouette: '#3f7d63', silOpacity: 0.16, accent: '#5f8f4a', motif: 'branch' },
   't-night': { sky: ['#0d1d3d', '#0a1730', '#081226'], line: '#e0bd6e', lineOpacity: 0.04, silhouette: '#050c1c', silOpacity: 0.95, accent: '#f3d58c', motif: 'skyline', glow: '#ffb45a' },
   't-nature': { sky: ['#fbf4e8', '#f6efe3', '#efe4d2'], line: '#b08b67', lineOpacity: 0.05, silhouette: '#7d8f62', silOpacity: 0.14, accent: '#4f7a3a', motif: 'sunleaf', glow: '#fff4d8' },

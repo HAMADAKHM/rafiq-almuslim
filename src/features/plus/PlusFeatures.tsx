@@ -25,6 +25,9 @@ import { reciterById } from '../../content/reciters'
 import { toArabicDigits } from '../../lib/arabic'
 import { companionSummary, loadActualDays, loadDoneDays } from '../../services/companionStore'
 
+const BASE = SKINS.filter((s) => s.identity && s.id.startsWith('e-'))
+const DESIGNS = SKINS.filter((s) => s.identity && s.id.startsWith('t-'))
+
 export function PlusThemesPage() {
   const { settings, update } = useSettings()
   const plus = usePlus()
@@ -60,12 +63,17 @@ export function PlusThemesPage() {
         <div style={{ flex: 1 }}><strong>الثيم الحالي: {current?.name ?? 'الأصلي'}</strong><p className="small muted" style={{ margin: 0 }}>يتغير مظهر الرئيسية والقرآن والأذكار والمواقيت والإعدادات والقوائم معًا، والنصوص كما هي.</p></div>
         {current && <button className="btn btn-sm" onClick={reset}><RotateCcw size={14} /> الأصلي</button>}
       </section>
+      <section className="card" aria-labelledby="base-h">
+        <h2 id="base-h">الثيمات الأساسية</h2>
+        <p className="small muted">ستة أنظمة ألوان تطبَّق على التطبيق كله. العاجي والأبيض النقي والداكن مجانية، والزمرد الملكي ومنتصف الليل والطبيعة لمشتركي بلس.</p>
+        <div className="skin-grid" data-group="base">{BASE.map(card)}</div>
+      </section>
       <section className="card" aria-labelledby="ident-h">
         <h2 id="ident-h">التصاميم التسعة</h2>
         <p className="small muted">الكلاسيكي الراقي مجاني، والثمانية الباقية لمشتركي بلس. كل تصميم يغيّر الرئيسية والقرآن والقوائم معًا.</p>
-        <div className="skin-grid">{SKINS.filter((s) => s.identity).slice(0, 9).map(card)}</div>
+        <div className="skin-grid">{DESIGNS.slice(0, 9).map(card)}</div>
         <h3 style={{ marginTop: '1rem' }}>ثيمات أخرى</h3>
-        <div className="skin-grid">{SKINS.filter((s) => s.identity).slice(9).map(card)}</div>
+        <div className="skin-grid">{DESIGNS.slice(9).map(card)}</div>
       </section>
       <AppIconPicker />
       <section className="card" aria-labelledby="skins-h">

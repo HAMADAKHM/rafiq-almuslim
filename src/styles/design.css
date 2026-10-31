@@ -621,3 +621,11 @@ ul.plain { list-style: none; padding: 0; margin: 0; }
 .poster-card.ready { aspect-ratio: auto; height: min(52vw, 250px); width: auto; }
 .poster-card.ready img { height: 100%; width: auto; }
 .ready-viewer-img { width: min(92vw, 560px); height: auto; border-radius: 18px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
+
+/* جهاز التحكم بالتلفاز من الجوال */
+.tv-pad { display: grid; grid-template-columns: repeat(3, 72px); grid-template-rows: repeat(3, 72px); gap: 10px; justify-content: center; }
+.tv-pad-vol { display: flex; justify-content: center; gap: 14px; }
+.tv-pad-btn { border: 1px solid var(--border); border-radius: 50%; background: var(--surface-2); color: var(--text); display: grid; place-items: center; font: inherit; font-weight: 700; cursor: pointer; min-width: 56px; min-height: 56px; touch-action: manipulation; }
+.tv-pad-btn.ok { background: var(--primary); color: var(--on-primary); border-color: var(--primary); font-size: 0.9rem; }
+.tv-pad-btn:active:not(:disabled) { transform: scale(0.94); }
+.tv-pad-btn:disabled { opacity: 0.45; cursor: default; }
