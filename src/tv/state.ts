@@ -1,5 +1,6 @@
 // منطق شاشة التلفاز: الإعدادات المحلية، وحالة الشاشة (عادية / الأذان / انتظار الإقامة).
 import { SCENES, type SceneId } from './scenes'
+import { GALLERY_CATS, type GalleryCat } from './gallery'
 import { DEFAULT_PRAYER_SETTINGS, type DayTimes, type PrayerName, type PrayerSettings } from '../services/prayer'
 import type { City } from '../services/cities'
 
@@ -30,8 +31,10 @@ export interface TvSettings {
   /** خلفية متحركة: طيور تحلّق وغيوم تسير ببطء (يمكن إيقافها في التلفزيونات البطيئة) */
   animate: boolean
   /** مشهد الشاشة: 'rotate' تنقل في القائمة، أو مشهد واحد، أو 'classic' (الرسم الأصلي بالطيور) */
-  /** photos = صور أرسلها المستخدم من الجوال */
-  scene: SceneId | 'rotate' | 'classic' | 'photos'
+  /** photos = صور أرسلها المستخدم من الجوال، gallery = الصور الجاهزة المضمّنة */
+  scene: SceneId | 'rotate' | 'classic' | 'photos' | 'gallery'
+  /** تصنيف الصور الجاهزة */
+  galleryCat: GalleryCat
   /** قائمة المشاهد المفضلة للتنقل (فارغة = كل المشاهد) */
   playlist: SceneId[]
   /** دقائق كل مشهد في التنقل */
@@ -54,6 +57,7 @@ export const DEFAULT_TV: TvSettings = {
   reciteVolume: 0.5,
   adhkarVoice: 'human',
   phrases: true,
+  galleryCat: 'all',
   clockShift: 0,
   animate: true,
   scene: 'rotate',
@@ -76,8 +80,9 @@ export function loadTv(): TvSettings {
 export function normalizeTv(raw: Partial<TvSettings>): TvSettings {
   try {
     const playlist = Array.isArray(raw.playlist) ? raw.playlist.filter((x): x is SceneId => SCENES.some((sc) => sc.id === x)) : []
-    const scene = raw.scene === 'rotate' || raw.scene === 'classic' || raw.scene === 'photos' || SCENES.some((sc) => sc.id === raw.scene) ? raw.scene! : DEFAULT_TV.scene
-    return { ...DEFAULT_TV, ...raw, scene, playlist, prayer: { ...DEFAULT_TV.prayer, ...raw.prayer, adjustments: { ...DEFAULT_TV.prayer.adjustments, ...raw.prayer?.adjustments } }, iqama: { ...DEFAULT_TV.iqama, ...raw.iqama } }
+    const scene = raw.scene === 'rotate' || raw.scene === 'classic' || raw.scene === 'photos' || raw.scene === 'gallery' || SCENES.some((sc) => sc.id === raw.scene) ? raw.scene! : DEFAULT_TV.scene
+    const galleryCat = GALLERY_CATS.some((c) => c.id === raw.galleryCat) ? raw.galleryCat! : 'all'
+    return { ...DEFAULT_TV, ...raw, scene, playlist, galleryCat, prayer: { ...DEFAULT_TV.prayer, ...raw.prayer, adjustments: { ...DEFAULT_TV.prayer.adjustments, ...raw.prayer?.adjustments } }, iqama: { ...DEFAULT_TV.iqama, ...raw.iqama } }
   } catch { return DEFAULT_TV }
 }
 export function saveTv(s: TvSettings) { try { localStorage.setItem(KEY, JSON.stringify(s)) } catch { /* التخزين غير متاح */ } }

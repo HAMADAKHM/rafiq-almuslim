@@ -14,7 +14,7 @@ export interface TvSettingsView {
   scene?: string; playlist?: string[]; rotateMin?: number; shuffle?: boolean; quality?: 'auto' | 'eco' | 'high'; animate?: boolean
   adhan?: boolean; hour12?: boolean; reciteOn?: boolean; reciteVolume?: number; clockShift?: number; city?: string
   idleMinutes?: number; idleTakeover?: boolean; autostart?: boolean
-  reciteMode?: 'ayah' | 'surah' | 'adhkar'; reciterId?: string; adhkarVoice?: 'human' | 'mixed'; phrases?: boolean
+  reciteMode?: 'ayah' | 'surah' | 'adhkar'; reciterId?: string; adhkarVoice?: 'human' | 'mixed'; phrases?: boolean; galleryCat?: 'all' | 'islamic' | 'nature' | 'sport' | 'space' | 'other'
 }
 
 /** وسيلة الإرسال (TvLink في التطبيق، ومحاكاة في الاختبارات) */

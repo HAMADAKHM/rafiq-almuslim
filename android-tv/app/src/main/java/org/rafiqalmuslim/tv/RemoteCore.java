@@ -176,7 +176,7 @@ final class RemoteCore {
     /** أوامر الجوال: إيقاف الأذان وفتح الشاشة والمشهد التالي، وأزرار جهاز التحكم (داخل شاشة رفيق المسلم فقط) ومستوى الصوت */
     static final String[] ACTIONS = { "stop_adhan", "open_screen", "next_scene", "key_up", "key_down", "key_left", "key_right", "key_ok", "key_back", "vol_up", "vol_down", "vol_mute" };
 
-    static final String[] SCENES = { "rotate", "classic", "photos", "night-mosque", "ocean-sunset", "desert", "aurora", "rain-window", "galaxy", "geometry", "forest", "kaaba", "madinah", "aqsa", "sultan-ahmed" };
+    static final String[] SCENES = { "rotate", "classic", "photos", "gallery", "night-mosque", "ocean-sunset", "desert", "aurora", "rain-window", "galaxy", "geometry", "forest", "kaaba", "madinah", "aqsa", "sultan-ahmed" };
 
     /** يقسم الطلب إلى إعدادات الشاشة وإعدادات الخدمة بعد التحقق؛ أي قيمة غير صالحة ترفض الطلب كله */
     static JSONObject[] validate(JSONObject in) throws Exception {
@@ -194,7 +194,7 @@ final class RemoteCore {
                     if (a.length() > SCENES.length) throw new IllegalArgumentException(k);
                     for (int i = 0; i < a.length(); i++) {
                         String s = a.optString(i, "");
-                        if (!oneOf(s, SCENES) || s.equals("rotate") || s.equals("classic") || s.equals("photos")) throw new IllegalArgumentException(k);
+                        if (!oneOf(s, SCENES) || s.equals("rotate") || s.equals("classic") || s.equals("photos") || s.equals("gallery")) throw new IllegalArgumentException(k);
                         ok.put(s);
                     }
                     screen.put(k, ok); break;
@@ -214,6 +214,9 @@ final class RemoteCore {
                 }
                 case "reciteMode":
                     if (!(v instanceof String) || !oneOf((String) v, new String[] { "ayah", "surah", "adhkar" })) throw new IllegalArgumentException(k);
+                    screen.put(k, v); break;
+                case "galleryCat":
+                    if (!(v instanceof String) || !oneOf((String) v, new String[] { "all", "islamic", "nature", "sport", "space", "other" })) throw new IllegalArgumentException(k);
                     screen.put(k, v); break;
                 case "adhkarVoice":
                     if (!(v instanceof String) || !oneOf((String) v, new String[] { "human", "mixed" })) throw new IllegalArgumentException(k);

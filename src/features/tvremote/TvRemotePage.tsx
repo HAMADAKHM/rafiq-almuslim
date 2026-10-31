@@ -12,6 +12,7 @@ import {
 } from '../../services/tvRemote'
 import { SCENES } from '../../tv/scenes'
 import { RECITE_MODES, TV_RECITERS } from '../../tv/recite'
+import { GALLERY_CATS } from '../../tv/gallery'
 import { reciterById } from '../../content/reciters'
 
 const send = tvRequest
@@ -263,7 +264,7 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
   const act = async (a: 'stop_adhan' | 'open_screen' | 'next_scene', ok: string) => {
     try { toast((await tvAction(send, tv, a)) ? ok : 'لم يُنفَّذ (الشاشة غير ظاهرة على التلفاز)') } catch (e) { toast(errMsg(e)) }
   }
-  const mode = st?.scene === 'rotate' || st?.scene === 'classic' || st?.scene === 'photos' ? st.scene : 'one'
+  const mode = st?.scene === 'rotate' || st?.scene === 'classic' || st?.scene === 'photos' || st?.scene === 'gallery' ? st.scene : 'one'
   return (
     <>
       <section className="card">
@@ -281,7 +282,7 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
         <div className="row" style={{ marginTop: 10, flexWrap: 'wrap' }}>
           <button className="btn btn-sm btn-primary" disabled={!online} onClick={() => act('stop_adhan', 'أُوقف صوت الأذان')}>إيقاف الأذان الآن</button>
           <button className="btn btn-sm" disabled={!online} onClick={() => act('open_screen', 'فُتحت شاشة المواقيت على التلفاز')}>اعرض الشاشة</button>
-          <button className="btn btn-sm" disabled={!online || (st?.scene !== 'rotate' && st?.scene !== 'photos')} onClick={() => act('next_scene', 'انتقل إلى المشهد التالي')}>المشهد التالي</button>
+          <button className="btn btn-sm" disabled={!online || (st?.scene !== 'rotate' && st?.scene !== 'photos' && st?.scene !== 'gallery')} onClick={() => act('next_scene', 'انتقل إلى المشهد التالي')}>المشهد التالي</button>
         </div>
       </section>
       <RemotePad tv={tv} disabled={!online} />
@@ -291,9 +292,10 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
           <section className="card stack" style={{ gap: 10 }}>
             <h2 style={{ margin: 0 }}>المشاهد</h2>
             <Chips label="طريقة العرض" value={mode} disabled={busy} onPick={(v) => set({ scene: v === 'one' ? (SCENES.some((x) => x.id === st.scene) ? st.scene : SCENES[0].id) : v })}
-              options={[{ id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي' }, { id: 'photos', label: 'صوري' }]} />
+              options={[{ id: 'gallery', label: 'صور جاهزة' }, { id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي' }, { id: 'photos', label: 'صوري' }]} />
+            {mode === 'gallery' && <Chips label="تصنيف الصور" value={st.galleryCat ?? 'all'} disabled={busy} onPick={(v) => set({ galleryCat: v })} options={GALLERY_CATS.map((c) => ({ id: c.id, label: c.label }))} />}
             {mode === 'one' && <Chips label="المشهد" value={st.scene} disabled={busy} onPick={(v) => set({ scene: v })} options={SCENES.map((x) => ({ id: x.id, label: x.name }))} />}
-            {mode === 'photos' && (
+            {(mode === 'photos' || mode === 'gallery') && (
               <>
                 <Chips label="مدة كل صورة" value={st.rotateMin} disabled={busy} onPick={(v) => set({ rotateMin: v })} options={[5, 10].map((m) => ({ id: m, label: `${m} د` }))} />
                 <Switch on={st.shuffle} disabled={busy} label="ترتيب عشوائي" onChange={(v) => set({ shuffle: v })} />

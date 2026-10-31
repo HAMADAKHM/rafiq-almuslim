@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { PaintedScene, type PaintTone } from '../components/Scene'
 import { SceneCanvas, ScenePreview } from './SceneCanvas'
 import { PhotoScene, photoSource, usePhotoIds } from './PhotoScene'
+import { GALLERY_CATS, galleryIds, gallerySource } from './gallery'
 import { SCENES, sceneInfo, type SceneId } from './scenes'
 import { LogoMark } from '../components/Art'
 import { SADAQAH_LINE, HOME_CARD } from '../content/dedication'
@@ -265,7 +266,9 @@ export function TvApp() {
 
   return (
     <div className="tv">
-      {s.scene === 'photos' && photos && photoCount > 0
+      {s.scene === 'gallery'
+        ? <><PhotoScene key={s.galleryCat} src={gallerySource(s.galleryCat)} minutes={s.rotateMin} shuffle={s.shuffle} animate={s.animate} className="tv-art" /><div className="tv-veil scene" /></>
+        : s.scene === 'photos' && photos && photoCount > 0
         ? <><PhotoScene src={photos} minutes={s.rotateMin} shuffle={s.shuffle} animate={s.animate} className="tv-art" /><div className="tv-veil scene" /></>
         : s.scene === 'classic' || !s.animate
         ? <><PaintedScene tone={tone} variant="hero" className="tv-art" /><div className="tv-veil" />{s.animate && <SkyLife night={tone === 'night'} />}</>
@@ -402,7 +405,7 @@ function remoteView(s: TvSettings) {
   return {
     scene: s.scene, playlist: s.playlist, rotateMin: s.rotateMin, shuffle: s.shuffle, quality: s.quality, animate: s.animate,
     adhan: s.adhan, hour12: s.hour12, reciteOn: s.reciteOn, reciteVolume: s.reciteVolume, clockShift: s.clockShift,
-    reciteMode: s.reciteMode, reciterId: s.reciterId, adhkarVoice: s.adhkarVoice, phrases: s.phrases,
+    reciteMode: s.reciteMode, reciterId: s.reciterId, adhkarVoice: s.adhkarVoice, phrases: s.phrases, galleryCat: s.galleryCat,
     city: s.city ? (s.city.nameAr ?? s.city.name) : '',
   }
 }
@@ -458,9 +461,13 @@ function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSe
     <>
       <h2>مشاهد الشاشة</h2>
       <p className="tv-muted">مشاهد حيّة مرسومة داخل التطبيق (لا تحتاج إنترنت). اختر مشهدًا واحدًا، أو دع الشاشة تتنقل بين مشاهدك المفضلة بتلاشٍ ناعم.</p>
-      <Choices label="طريقة العرض" cols={photos ? 4 : 3} value={draft.scene === 'rotate' || draft.scene === 'classic' || draft.scene === 'photos' ? draft.scene : 'one'}
-        onChange={(v) => set({ scene: v === 'one' ? (focus ?? SCENES[0].id) : v as 'rotate' | 'classic' | 'photos' })}
-        options={[{ id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي (طيور وغيوم)' }, ...(photos ? [{ id: 'photos' as const, label: 'صوري من الجوال' }] : [])]} />
+      <Choices label="طريقة العرض" cols={photos ? 5 : 4} value={draft.scene === 'rotate' || draft.scene === 'classic' || draft.scene === 'photos' || draft.scene === 'gallery' ? draft.scene : 'one'}
+        onChange={(v) => set({ scene: v === 'one' ? (focus ?? SCENES[0].id) : v as 'rotate' | 'classic' | 'photos' | 'gallery' })}
+        options={[{ id: 'gallery', label: 'صور جاهزة' }, { id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي (طيور وغيوم)' }, ...(photos ? [{ id: 'photos' as const, label: 'صوري من الجوال' }] : [])]} />
+      {draft.scene === 'gallery' && (
+        <Choices label="تصنيف الصور" cols={6} value={draft.galleryCat} onChange={(c) => set({ galleryCat: c })}
+          options={GALLERY_CATS.map((c) => ({ id: c.id, label: `${c.label} (${galleryIds(c.id).length})` }))} />
+      )}
       {photos && <TvPhotosPanel src={photos} on={draft.scene === 'photos'} />}
       {cats.map((cat) => (
         <div key={cat}>
@@ -479,7 +486,7 @@ function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSe
         </div>
       ))}
       {focus && <p className="tv-muted">{sceneInfo(focus)?.note}</p>}
-      {(draft.scene === 'rotate' || draft.scene === 'photos') && (
+      {(draft.scene === 'rotate' || draft.scene === 'photos' || draft.scene === 'gallery') && (
         <>
           {draft.scene === 'rotate' && <p className="tv-muted">{draft.playlist.length ? `قائمة التنقل: ${draft.playlist.map((id) => sceneInfo(id)?.name).join('، ')}` : 'لم تختر مفضلة: تتنقل الشاشة بين كل المشاهد.'}</p>}
           <Choices label="مدة كل مشهد" cols={5} value={draft.rotateMin} onChange={(m) => set({ rotateMin: m })}
