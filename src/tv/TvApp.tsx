@@ -9,7 +9,7 @@ import { ONLINE_ADHANS } from '../content/onlineAdhans'
 import { HADITH } from '../content/hadith'
 import { METHODS, PRAYER_LABELS, PRAYERS, nextPrayer, suggestMethod, todayTimes, upcomingDays, type MethodId, type PrayerName } from '../services/prayer'
 import { cityLabel, loadCities, searchCities, type City } from '../services/cities'
-import { ayahOfDay, dhikrOfDay } from '../services/daily'
+import { ayahOfDay, dhikrOfDay, duaOfDay, phraseOfDay } from '../services/daily'
 import { loadQuran, type QuranData } from '../services/quran'
 import { dayKey, daysBetween, formatGregorian, formatHijri, formatCountdown } from '../lib/dates'
 import { toArabicDigits } from '../lib/arabic'
@@ -76,9 +76,9 @@ function useNow(ms = 1000) {
 }
 
 /** محتوى يتبدل: آية اليوم، وحديث اليوم، وذكر اليوم — من المصحف والمكتبة الموثقة */
-function useRotating(data: QuranData | null, day: string) {
+function useRotating(data: QuranData | null, day: string, phrases: boolean) {
   return useMemo(() => {
-    const out: { title: string; text: string; ref: string; quran?: boolean }[] = []
+    const out: { title: string; text: string; ref: string; quran?: boolean; plain?: boolean }[] = []
     if (data) {
       const a = ayahOfDay(day)
       out.push({ title: 'آية اليوم', text: data.verses[a.surah - 1][a.ayah - 1], ref: `سورة ${data.meta.surahs[a.surah - 1].name} • الآية ${toArabicDigits(a.ayah)}`, quran: true })
@@ -88,8 +88,11 @@ function useRotating(data: QuranData | null, day: string) {
     out.push({ title: 'حديث اليوم', text: h.text ?? '', ref: h.source })
     const d = dhikrOfDay(day)
     if (d.item.text) out.push({ title: 'ذكر اليوم', text: d.item.text, ref: d.item.source })
+    const du = duaOfDay(day)
+    if (du.text && du.text !== d.item.text) out.push({ title: 'دعاء اليوم', text: du.text, ref: du.source })
+    if (phrases) out.push({ title: 'عبارة اليوم', text: phraseOfDay(day), ref: '', plain: true })
     return out
-  }, [data, day])
+  }, [data, day, phrases])
 }
 
 export function TvApp() {
@@ -147,7 +150,7 @@ export function TvApp() {
   const tzView = s.city ? shiftedTz(s.city.tz, s.clockShift, now) : ''
   const city = useMemo(() => (s.city ? { ...s.city, tz: tzView } : null), [s.city, tzView])
   const day = dayKey(now, city?.tz)
-  const rotating = useRotating(data, day)
+  const rotating = useRotating(data, day, s.phrases)
   const times = city ? todayTimes(city, s.prayer, now) : null
   const np = city ? nextPrayer(city, s.prayer, now) : null
   const phase = times ? tvPhase(now, times, s.iqama) : { kind: 'normal' as const }
@@ -286,8 +289,8 @@ export function TvApp() {
         {item && (
           <section className={'tv-card' + (playingText || spoken ? ' playing' : '')} key={playingText ? `${rec.current!.surah}:${rec.current!.ayah}` : spoken ? `d:${spoken.text.slice(0, 24)}` : slide}>
             <div className="tv-card-title">{item.title}</div>
-            <p className={'tv-card-text' + (item.quran ? ' quran' : '')}>{item.quran ? `﴿${item.text}﴾` : `«${item.text}»`}</p>
-            <div className="tv-card-ref">{item.ref}</div>
+            <p className={'tv-card-text' + (item.quran ? ' quran' : '')}>{item.quran ? `﴿${item.text}﴾` : 'plain' in item && item.plain ? item.text : `«${item.text}»`}</p>
+            {item.ref && <div className="tv-card-ref">{item.ref}</div>}
             {rec.failed && <div className="tv-card-ref">تعذر تحميل التلاوة — تحقق من اتصال التلفاز بالإنترنت</div>}
           </section>
         )}
@@ -399,7 +402,7 @@ function remoteView(s: TvSettings) {
   return {
     scene: s.scene, playlist: s.playlist, rotateMin: s.rotateMin, shuffle: s.shuffle, quality: s.quality, animate: s.animate,
     adhan: s.adhan, hour12: s.hour12, reciteOn: s.reciteOn, reciteVolume: s.reciteVolume, clockShift: s.clockShift,
-    reciteMode: s.reciteMode, reciterId: s.reciterId, adhkarVoice: s.adhkarVoice,
+    reciteMode: s.reciteMode, reciterId: s.reciterId, adhkarVoice: s.adhkarVoice, phrases: s.phrases,
     city: s.city ? (s.city.nameAr ?? s.city.name) : '',
   }
 }
@@ -488,6 +491,7 @@ function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSe
       <Choices label="الجودة" cols={3} value={draft.quality} onChange={(q) => set({ quality: q })}
         options={[{ id: 'auto', label: 'تلقائي (Full HD)' }, { id: 'eco', label: 'اقتصادي (تلفاز ضعيف)' }, { id: 'high', label: 'عالية (حتى 4K)' }]} />
       <Toggle on={draft.animate} onChange={(v) => set({ animate: v })} label="الحركة (أوقفها في التلفزيونات البطيئة جدًا)" />
+      <Toggle on={draft.phrases} onChange={(v) => set({ phrases: v })} label="«عبارة اليوم» مع الآية والحديث والذكر والدعاء (تتغير كل يوم)" />
       <button className="tv-btn" onClick={() => set({ scene: DEFAULT_TV.scene, playlist: [], rotateMin: DEFAULT_TV.rotateMin, shuffle: true, quality: 'auto', animate: true })}>إعادة الإعداد الافتراضي للمشاهد</button>
     </>
   )

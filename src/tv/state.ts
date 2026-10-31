@@ -23,6 +23,8 @@ export interface TvSettings {
   reciteVolume: number
   /** صوت الأذكار: human = التسجيلات البشرية فقط (وما لا تسجيل له يُعرض نصًا بلا صوت)، mixed = وصوت التلفاز الآلي لما لا تسجيل له */
   adhkarVoice: 'human' | 'mixed'
+  /** «عبارة اليوم» العامة ضمن نصوص الشاشة (الآية والحديث والذكر والدعاء تظهر دائمًا) */
+  phrases: boolean
   /** التوقيت الصيفي/الشتوي يدويًا بالدقائق (0 = تلقائي حسب المدينة، 60 = تقديم ساعة، -60 = تأخير ساعة) */
   clockShift: number
   /** خلفية متحركة: طيور تحلّق وغيوم تسير ببطء (يمكن إيقافها في التلفزيونات البطيئة) */
@@ -51,6 +53,7 @@ export const DEFAULT_TV: TvSettings = {
   reciteSurah: 2,
   reciteVolume: 0.5,
   adhkarVoice: 'human',
+  phrases: true,
   clockShift: 0,
   animate: true,
   scene: 'rotate',

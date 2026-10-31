@@ -314,6 +314,7 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
             )}
             <Chips label="الجودة" value={st.quality} disabled={busy} onPick={(v) => set({ quality: v })} options={[{ id: 'auto', label: 'تلقائي' }, { id: 'eco', label: 'اقتصادي' }, { id: 'high', label: 'عالية (4K)' }]} />
             <Switch on={st.animate} disabled={busy} label="الحركة" onChange={(v) => set({ animate: v })} />
+            <Switch on={st.phrases ?? true} disabled={busy} label="«عبارة اليوم» على الشاشة (تتغير كل يوم)" onChange={(v) => set({ phrases: v })} />
           </section>
           <TvPhotos tv={tv} showing={st.scene === 'photos'} disabled={!online} onShow={() => set({ scene: 'photos' })} />
           <section className="card stack" style={{ gap: 10 }}>

@@ -203,7 +203,7 @@ final class RemoteCore {
                 case "quality":
                     if (!(v instanceof String) || !oneOf((String) v, new String[] { "auto", "eco", "high" })) throw new IllegalArgumentException(k);
                     screen.put(k, v); break;
-                case "shuffle": case "animate": case "adhan": case "hour12": case "reciteOn":
+                case "shuffle": case "animate": case "adhan": case "hour12": case "reciteOn": case "phrases":
                     if (!(v instanceof Boolean)) throw new IllegalArgumentException(k);
                     screen.put(k, v); break;
                 case "reciteVolume": {

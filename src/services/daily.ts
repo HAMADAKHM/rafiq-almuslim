@@ -4,6 +4,7 @@ import { ADHKAR } from '../content/adhkar'
 import { DUAS } from '../content/duas'
 import type { DhikrItem } from '../content/types'
 import { daysBetween } from '../lib/dates'
+import { TV_PHRASES } from '../content/tvPhrases'
 
 export function dayIndex(day: string): number {
   return Math.max(0, daysBetween('2026-01-01', day))
@@ -47,4 +48,17 @@ export function adhkarForNow(hour: number): { id: string; title: string } {
   if (t === 'morning') return { id: 'morning', title: 'أذكار الصباح' }
   if (t === 'evening') return { id: 'evening', title: 'أذكار المساء' }
   return { id: 'sleep', title: 'أذكار النوم' }
+}
+
+/** دعاء اليوم: من الأدعية الموثقة (أحاديث) فقط */
+const DUA_POOL = DUAS.filter((c) => ['sunnah', 'general', 'rizq', 'relief', 'parents', 'istighfar'].includes(c.id))
+  .flatMap((c) => c.items)
+  .filter((it) => it.kind === 'hadith' && it.text && it.text.length < 300)
+export function duaOfDay(day: string): DhikrItem {
+  return DUA_POOL[(dayIndex(day) * 5 + 3) % DUA_POOL.length]
+}
+
+/** عبارة اليوم (شاشة التلفاز) */
+export function phraseOfDay(day: string): string {
+  return TV_PHRASES[dayIndex(day) % TV_PHRASES.length]
 }

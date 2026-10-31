@@ -60,3 +60,17 @@ describe('المحتوى والإهداء', () => {
     for (const it_ of c.items) expect(it_.source.length).toBeGreaterThan(3)
   })
 })
+
+describe('نصوص شاشة التلفاز اليومية', async () => {
+  const { duaOfDay, phraseOfDay } = await import('./daily')
+  const { TV_PHRASES } = await import('../content/tvPhrases')
+  it('دعاء اليوم من الأدعية الموثقة، والعبارة تتغير بين يوم وآخر وتثبت في اليوم نفسه', () => {
+    const d = duaOfDay('2026-11-01')
+    expect(d.kind).toBe('hadith')
+    expect(d.source).toBeTruthy()
+    expect(phraseOfDay('2026-11-01')).toBe(phraseOfDay('2026-11-01'))
+    expect(phraseOfDay('2026-11-01')).not.toBe(phraseOfDay('2026-11-02'))
+    expect(new Set(TV_PHRASES).size).toBe(TV_PHRASES.length)
+    expect(TV_PHRASES.length).toBeGreaterThanOrEqual(30)
+  })
+})
