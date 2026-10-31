@@ -60,11 +60,29 @@ jobs:
           java-version: 21
       # مفتاح توقيع ثابت للنسخ التجريبية: يُولَّد مرة ويُحفظ في ذاكرة البناء المؤقتة ويُعاد استخدامه،
       # فتُثبَّت كل نسخة جديدة فوق السابقة دون حذفها (للهاتف والتلفاز). ليس سرًا: مفتاح تطوير فقط.
+      # الإصدار السابق من هذه الخطوة كان يولّد مفتاحًا جديدًا في كل بناء (لم يُحفظ المفتاح)، فرفض Android
+      # تثبيت التحديث فوق النسخة السابقة. الآن: يُستعاد أحدث مفتاح محفوظ، وإن لم يوجد يُولَّد مرة ويُحفظ فورًا.
       - name: Restore stable debug signing key
-        uses: actions/cache@v4
+        id: keystore
+        uses: actions/cache/restore@v4
         with:
           path: ~/.android/debug.keystore
-          key: android-debug-keystore-v1
+          key: android-debug-keystore-v2-${{ github.run_id }}
+          restore-keys: android-debug-keystore-v2-
+      - name: Create debug signing key (first build only)
+        if: steps.keystore.outputs.cache-matched-key == ''
+        run: |
+          mkdir -p ~/.android
+          keytool -genkeypair -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+      - name: Save debug signing key
+        if: steps.keystore.outputs.cache-matched-key == ''
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: android-debug-keystore-v2-${{ github.run_id }}
+      - name: Signing key fingerprint
+        run: keytool -list -v -keystore ~/.android/debug.keystore -storepass android | grep -m1 "SHA256:"
       - run: npm ci
       - run: npm test
         env:

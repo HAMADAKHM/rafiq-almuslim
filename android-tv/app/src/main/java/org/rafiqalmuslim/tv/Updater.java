@@ -87,14 +87,26 @@ final class Updater {
                     if (total > 0) state = "downloading:" + (int) (got * 100 / total);
                 }
             }
-            PackageInfo pi = ctx.getPackageManager().getPackageArchiveInfo(f.getAbsolutePath(), 0);
+            @SuppressWarnings("deprecation")
+            PackageInfo pi = ctx.getPackageManager().getPackageArchiveInfo(f.getAbsolutePath(), PackageManager.GET_SIGNATURES);
             if (pi == null || !ctx.getPackageName().equals(pi.packageName)) { state = "error:not_our_app"; return; }
+            // مفتاح توقيع مختلف: Android سيرفض التثبيت بعد طلب الموافقة، فنخبر المستخدم قبل أن يظهر الطلب
+            if (!sameSigner(ctx, pi)) { state = "error:signature"; f.delete(); return; }
             long vc = Build.VERSION.SDK_INT >= 28 ? pi.getLongVersionCode() : pi.versionCode;
             if (vc <= versionCode(ctx)) { state = "error:not_newer"; return; }
             install(ctx, f);
         } catch (Exception e) {
             state = "error:download";
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private static boolean sameSigner(Context ctx, PackageInfo archive) {
+        try {
+            if (archive.signatures == null || archive.signatures.length == 0) return true; // لا نستطيع المقارنة: يقرر Android
+            PackageInfo mine = ctx.getPackageManager().getPackageInfo(ctx.getPackageName(), PackageManager.GET_SIGNATURES);
+            return java.util.Arrays.equals(mine.signatures, archive.signatures);
+        } catch (Exception e) { return true; }
     }
 
     private static void install(Context ctx, File f) throws Exception {
