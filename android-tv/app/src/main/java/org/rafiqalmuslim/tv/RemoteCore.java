@@ -216,7 +216,7 @@ final class RemoteCore {
                     if (!(v instanceof String) || !oneOf((String) v, new String[] { "ayah", "surah", "adhkar" })) throw new IllegalArgumentException(k);
                     screen.put(k, v); break;
                 case "galleryCat":
-                    if (!(v instanceof String) || !oneOf((String) v, new String[] { "all", "islamic", "nature", "sport", "space", "other" })) throw new IllegalArgumentException(k);
+                    if (!(v instanceof String) || !oneOf((String) v, new String[] { "all", "islamic", "nature", "sport", "clubs", "space", "other" })) throw new IllegalArgumentException(k);
                     screen.put(k, v); break;
                 case "adhkarVoice":
                     if (!(v instanceof String) || !oneOf((String) v, new String[] { "human", "mixed" })) throw new IllegalArgumentException(k);

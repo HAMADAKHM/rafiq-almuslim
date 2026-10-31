@@ -42,11 +42,12 @@ describe('إعدادات المشاهد', () => {
 describe('الصور الجاهزة لشاشة التلفاز', async () => {
   const { GALLERY, galleryIds, gallerySource } = await import('./gallery')
   const { existsSync } = await import('node:fs')
-  it('خمسة وسبعون صورة مصنفة، ولكل منها ملف، والتصنيف يرشّح القائمة', () => {
-    expect(GALLERY).toHaveLength(75)
+  it('ستة وثمانون صورة مصنفة، ولكل منها ملف، والتصنيف يرشّح القائمة', () => {
+    expect(GALLERY).toHaveLength(86)
     for (const p of GALLERY) expect(existsSync(`tv-photos/${p.id}.jpg`), p.id).toBe(true)
     expect(galleryIds('islamic')).toHaveLength(14)
-    expect(galleryIds('all')).toHaveLength(75)
+    expect(galleryIds('all')).toHaveLength(86)
+    expect(galleryIds('clubs')).toHaveLength(11)
     expect(gallerySource('space').load('space-01')).toBe('./tv-photos/space-01.jpg')
   })
   it('الإعداد يقبل وضع الصور الجاهزة وتصنيفه، ويرفض التصنيف المجهول', () => {

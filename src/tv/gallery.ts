@@ -1,17 +1,18 @@
 // «صور جاهزة» لشاشة التلفاز: صور أرسلها صاحب التطبيق، مضمّنة في تطبيق التلفاز فقط (المجلد tv-photos).
-// استُبعدت منها شعارات الأندية والبطولات والعلامات التجارية لأنها ملك أصحابها.
+// شعارات الأندية ملك أصحابها، أُضيفت بطلب صاحب التطبيق (لا تُرفع إلى متجر Google Play بها).
 import type { PhotoSource } from './PhotoScene'
 
-export type GalleryCat = 'all' | 'islamic' | 'nature' | 'sport' | 'space' | 'other'
+export type GalleryCat = 'all' | 'islamic' | 'nature' | 'sport' | 'clubs' | 'space' | 'other'
 export const GALLERY_CATS: { id: GalleryCat; label: string }[] = [
   { id: 'all', label: 'الكل' },
   { id: 'islamic', label: 'إسلامية' },
   { id: 'nature', label: 'طبيعة' },
   { id: 'sport', label: 'رياضة' },
+  { id: 'clubs', label: 'أندية' },
   { id: 'space', label: 'فضاء' },
   { id: 'other', label: 'متنوعة' },
 ]
-const COUNTS: Record<Exclude<GalleryCat, 'all'>, number> = { islamic: 14, nature: 29, sport: 12, space: 6, other: 14 }
+const COUNTS: Record<Exclude<GalleryCat, 'all'>, number> = { islamic: 14, nature: 29, sport: 12, clubs: 11, space: 6, other: 14 }
 
 export const GALLERY: { id: string; cat: Exclude<GalleryCat, 'all'> }[] = (Object.keys(COUNTS) as Exclude<GalleryCat, 'all'>[])
   .flatMap((cat) => Array.from({ length: COUNTS[cat] }, (_, i) => ({ id: `${cat}-${String(i + 1).padStart(2, '0')}`, cat })))
