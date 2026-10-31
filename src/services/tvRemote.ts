@@ -5,6 +5,10 @@
 // الرمز لا يُرسل في الشبكة، والمفتاح السري يبقى على الجهاز فقط.
 import { kv } from '../db/repos'
 
+/** النسخة الجديدة: هوية تطبيق الشاشة واسم ملف تحديثه (مختلفان عن النسخة الأصلية) */
+export const TV_APP_ID = 'rafiq-tv-new'
+export const TV_UPDATE_ASSET = 'RafiqAlMuslimTVNew.apk'
+
 export interface PairedTv { tvId: string; name: string; host: string; port: number; deviceId: string; token: string; pairedAt: number }
 export interface TvSettingsView {
   scene?: string; playlist?: string[]; rotateMin?: number; shuffle?: boolean; quality?: 'auto' | 'eco' | 'high'; animate?: boolean
@@ -175,7 +179,7 @@ export async function pingTv(send: Transport, host: string, port: number): Promi
     const r = await send({ host, port, method: 'GET', path: '/info' })
     const j = parse(r.body)
     const v = j.version as TvVersion | undefined
-    return r.status === 200 && j.app === 'rafiq-tv' ? { tvId: String(j.tvId), name: String(j.name), pairing: !!j.pairing, version: v && typeof v.code === 'number' ? v : undefined } : null
+    return r.status === 200 && j.app === TV_APP_ID ? { tvId: String(j.tvId), name: String(j.name), pairing: !!j.pairing, version: v && typeof v.code === 'number' ? v : undefined } : null
   } catch { return null }
 }
 
@@ -189,7 +193,7 @@ export function pickTvRelease(list: unknown): TvRelease | null {
   for (const r of list as { tag_name?: string; draft?: boolean; assets?: { name?: string; browser_download_url?: string }[] }[]) {
     if (r.draft) continue
     const m = /build\.(\d+)/.exec(r.tag_name ?? '')
-    const a = r.assets?.find((x) => x.name === 'RafiqAlMuslim-TV.apk')
+    const a = r.assets?.find((x) => x.name === TV_UPDATE_ASSET)
     if (!m || !a?.browser_download_url) continue
     const build = Number(m[1])
     if (!best || build > best.build) best = { build, url: a.browser_download_url, tag: r.tag_name! }

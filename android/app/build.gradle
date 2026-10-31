@@ -4,7 +4,7 @@ android {
     namespace = "org.rafiqalmuslim.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "org.rafiqalmuslim.plus"
+        applicationId "org.rafiqalmuslim.next"
         // معرّف تطبيق AdMob: معرّف Google التجريبي حتى يُضاف معرّف صاحب التطبيق (-PADMOB_APP_ID=...)
         resValue "string", "admob_app_id", (project.findProperty("ADMOB_APP_ID") ?: "ca-app-pub-3940256099942544~3347511713")
         minSdkVersion rootProject.ext.minSdkVersion

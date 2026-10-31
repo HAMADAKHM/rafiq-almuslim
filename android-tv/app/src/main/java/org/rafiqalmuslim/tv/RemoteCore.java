@@ -36,6 +36,11 @@ final class RemoteCore {
     }
 
     /** ما يطبّقه التلفاز فعليًا (في التطبيق: إعدادات الخدمة + طابور لإعدادات الشاشة) */
+    /** هوية تطبيق الشاشة: النسخة الجديدة لا تُربط بجوال النسخة الأصلية والعكس */
+    static final String EDITION_APP = "rafiq-tv-new";
+    /** اسم ملف تحديث الشاشة في إصدارات النسخة الجديدة */
+    static final String UPDATE_ASSET = "RafiqAlMuslimTVNew.apk";
+
     interface Applier {
         /** إعدادات الشاشة الحالية (JSON) */
         JSONObject snapshot();
@@ -54,7 +59,7 @@ final class RemoteCore {
 
     /** روابط التحديث المسموحة: ملف تطبيق الشاشة من إصدارات المشروع على GitHub فقط */
     static boolean validUpdateUrl(String u) {
-        return u != null && u.matches("https://github\\.com/HAMADAKHM/rafiq-almuslim/releases/download/[A-Za-z0-9][A-Za-z0-9._-]{0,79}/RafiqAlMuslim-TV\\.apk");
+        return u != null && u.matches("https://github\\.com/HAMADAKHM/rafiq-almuslim/releases/download/[A-Za-z0-9][A-Za-z0-9._-]{0,79}/RafiqAlMuslimTVNew\\.apk");
     }
 
     private final Store store;
@@ -249,7 +254,7 @@ final class RemoteCore {
     JSONObject handle(String method, String path, Map<String, String> headers, byte[] body, Applier applier, long now) {
         try {
             if (method.equals("GET") && path.equals("/info")) {
-                return ok(new JSONObject().put("app", "rafiq-tv").put("tvId", tvId()).put("name", tvName).put("pairing", pairingOpen(now)).put("v", 1).put("version", applier.version()));
+                return ok(new JSONObject().put("app", EDITION_APP).put("tvId", tvId()).put("name", tvName).put("pairing", pairingOpen(now)).put("v", 1).put("version", applier.version()));
             }
             if (method.equals("POST") && path.equals("/pair/start")) return wrap(pairStart(json(body), now));
             if (method.equals("POST") && path.equals("/pair/finish")) return wrap(pairFinish(json(body), now));

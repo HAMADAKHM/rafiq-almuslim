@@ -32,7 +32,7 @@ import java.util.Map;
  */
 @CapacitorPlugin(name = "TvLink")
 public class TvLinkPlugin extends Plugin {
-    private static final String TYPE = "_rafiqtv._tcp.";
+    private static final String TYPE = "_rafiqtvnew._tcp."; // النسخة الجديدة: تجد تلفاز النسخة الجديدة فقط
 
     @PluginMethod
     public void discover(PluginCall call) {

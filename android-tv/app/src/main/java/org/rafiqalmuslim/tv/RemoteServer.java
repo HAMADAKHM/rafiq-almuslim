@@ -23,8 +23,8 @@ import org.json.JSONObject;
  * رفيق المسلم بلس. كل الأوامر موقّعة بعد الربط برمز يظهر على الشاشة (RemoteCore). يعمل داخل TvService.
  */
 final class RemoteServer {
-    static final String NSD_TYPE = "_rafiqtv._tcp.";
-    static final int BASE_PORT = 8765;
+    static final String NSD_TYPE = "_rafiqtvnew._tcp."; // النسخة الجديدة مستقلة عن الأصلية
+    static final int BASE_PORT = 8775; // منفذ مختلف: النسختان تعملان معًا على التلفاز نفسه
     static final String KEY_SNAPSHOT = "remote_snapshot";
     static final String KEY_PATCH = "remote_patch";
 

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">رفيق المسلم</string>
-    <string name="title_activity_main">رفيق المسلم</string>
+    <string name="app_name">رفيق المسلم الجديد</string>
+    <string name="title_activity_main">رفيق المسلم الجديد</string>
     <string name="package_name">org.rafiqalmuslim.plus</string>
     <string name="custom_url_scheme">org.rafiqalmuslim.plus</string>
     <string name="widget_description">مواقيت الصلاة والصلاة القادمة مع العدّ التنازلي</string>

@@ -98,8 +98,10 @@ jobs:
           path: android-tv/app/build/outputs/apk/debug/app-debug.apk
       # على الفرع الرئيسي فقط: يُنشر الملف كإصدار (Release) برابط ثابت:
       # https://github.com/<المالك>/<المستودع>/releases/latest/download/RafiqAlMuslim.apk
+      # معطّل في فرع النسخة الجديدة: الرابط الثابت releases/latest/download/RafiqAlMuslim.apk يخص
+      # النسخة الأصلية، ولا يجوز أن تنشر فوقه النسخة الجديدة حتى لو دُمج هذا الفرع بالخطأ.
       - name: Publish release
-        if: github.ref == 'refs/heads/main'
+        if: false && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -109,19 +111,17 @@ jobs:
             --target "${{ github.sha }}" --latest \
             --title "رفيق المسلم $VERSION (تجريبي ${{ github.run_number }})" \
             --notes "نسخة تجريبية لنظام Android. نزّل RafiqAlMuslim.apk وثبّته (اسمح بالتثبيت من مصادر غير معروفة). مجاني بالكامل — صدقة جارية."
-      # فروع التطوير: نسخة تجريبية (Pre-release) للمعاينة دون المساس بالإصدار الرئيسي
-      - name: Publish beta pre-release
-        # لا تُنشر ملفات علنية تلقائيًا: نسخة المعاينة تُنشر فقط بتشغيل يدوي يطلبها صراحة
+      # النسخة الجديدة المستقلة (رفيق المسلم الجديد): معرفات تطبيق وأسماء ملفات ووسوم مختلفة كليًا
+      # عن النسخ الأصلية، فلا يلتقطها تحديث النسخ الأصلية ولا تحل محل روابطها. تُنشر يدويًا فقط.
+      - name: Publish New edition pre-release
         if: github.event_name == 'workflow_dispatch' && inputs.publish_beta && startsWith(github.ref, 'refs/heads/feature/')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          cp android/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslimPlus-beta.apk
-          cp android-tv/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslim-TV.apk
-          cp dist-tizen/RafiqAlMuslim-Samsung.wgt RafiqAlMuslim-Samsung.wgt
-          cp scripts/samsung/install-samsung.bat install-samsung.bat
-          gh release create "beta-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslimPlus-beta.apk RafiqAlMuslim-TV.apk RafiqAlMuslim-Samsung.wgt install-samsung.bat \
+          cp android/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslimNew.apk
+          cp android-tv/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslimTVNew.apk
+          gh release create "new-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslimNew.apk RafiqAlMuslimTVNew.apk \
             --target "${{ github.sha }}" --prerelease \
-            --title "رفيق المسلم $VERSION — نسخة معاينة (${{ github.ref_name }})" \
-            --notes "نسخة معاينة من فرع التطوير. للهاتف (رفيق المسلم بلس — يُثبَّت بجانب التطبيق المجاني؛ مزايا بلس مفتوحة للجميع مؤقتًا دون اشتراك ودون أي دفع): RafiqAlMuslimPlus-beta.apk. لشاشة التلفاز بنظام Android TV: RafiqAlMuslim-TV.apk. لتلفاز Samsung (Tizen): RafiqAlMuslim-Samsung.wgt مع install-samsung.bat للتثبيت من حاسوب Windows عليه Tizen Studio. القرآن والأذكار والأدعية والمواقيت مجانية دائمًا — صدقة جارية."
+            --title "رفيق المسلم الجديد $VERSION — نسخة معاينة (${{ github.ref_name }})" \
+            --notes "النسخة الجديدة المستقلة — تُثبَّت بجانب النسخ الأصلية دون أن تمسها (معرّف مختلف وبيانات منفصلة). للهاتف: RafiqAlMuslimNew.apk. لشاشة Android TV: RafiqAlMuslimTVNew.apk. لا دفع حقيقي في هذه النسخة."

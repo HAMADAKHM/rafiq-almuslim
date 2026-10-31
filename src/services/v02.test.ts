@@ -261,11 +261,20 @@ describe('مشاركة المنشورات', async () => {
 describe('تحديث تطبيق الشاشة من الجوال', async () => {
   const { pickTvRelease, UPDATE_STATE_LABEL } = await import('./tvRemote')
   it('يختار أحدث إصدار فيه ملف تطبيق الشاشة، ويتجاهل المسودات والإصدارات دونه', () => {
-    const tv = (tag: string, extra = {}) => ({ tag_name: tag, assets: [{ name: 'RafiqAlMuslim-TV.apk', browser_download_url: `https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/${tag}/RafiqAlMuslim-TV.apk` }], ...extra })
+    const tv = (tag: string, extra = {}) => ({ tag_name: tag, assets: [{ name: 'RafiqAlMuslimTVNew.apk', browser_download_url: `https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/${tag}/RafiqAlMuslimTVNew.apk` }], ...extra })
     const r = pickTvRelease([tv('beta-v1.0.0-beta.5-build.124'), tv('beta-v1.0.0-beta.5-build.130', { draft: true }), { tag_name: 'v1-build.140', assets: [{ name: 'RafiqAlMuslim.apk', browser_download_url: 'x' }] }, tv('beta-v1.0.0-beta.5-build.126')])
     expect(r?.build).toBe(126)
-    expect(r?.url).toMatch(/build\.126\/RafiqAlMuslim-TV\.apk$/)
+    expect(r?.url).toMatch(/build\.126\/RafiqAlMuslimTVNew\.apk$/)
     expect(pickTvRelease('nope')).toBeNull()
+  })
+  it('النسخة الجديدة معزولة: تتجاهل ملفات وأجهزة النسخة الأصلية', async () => {
+    const { pingTv, TV_APP_ID } = await import('./tvRemote')
+    expect(TV_APP_ID).toBe('rafiq-tv-new')
+    const orig = { tag_name: 'beta-v1.0.0-beta.5-build.200', assets: [{ name: 'RafiqAlMuslim-TV.apk', browser_download_url: 'https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/beta-v1.0.0-beta.5-build.200/RafiqAlMuslim-TV.apk' }] }
+    expect(pickTvRelease([orig])).toBeNull()
+    const reply = (app: string) => async () => ({ status: 200, body: JSON.stringify({ app, tvId: 't1', name: 'TV', pairing: true }) })
+    expect(await pingTv(reply('rafiq-tv'), 'h', 1)).toBeNull()
+    expect((await pingTv(reply('rafiq-tv-new'), 'h', 1))?.tvId).toBe('t1')
   })
   it('رسائل الحالة واضحة للمستخدم', () => {
     expect(UPDATE_STATE_LABEL('downloading:40')).toContain('40')

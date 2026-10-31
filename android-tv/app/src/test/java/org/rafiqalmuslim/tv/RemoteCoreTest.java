@@ -50,12 +50,14 @@ public class RemoteCoreTest {
         RemoteCore core = new RemoteCore(new MemStore(), new SecureRandom(), "TV");
         FakeApplier ap = new FakeApplier();
         assertEquals(120, core.handle("GET", "/info", new HashMap<>(), new byte[0], ap, NOW).getJSONObject("body").getJSONObject("version").getInt("code"));
-        String good = "https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/beta-v1.0.0-beta.5-build.130/RafiqAlMuslim-TV.apk";
+        String good = "https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/beta-v1.0.0-beta.5-build.130/RafiqAlMuslimTVNew.apk";
         assertTrue(RemoteCore.validUpdateUrl(good));
-        assertFalse(RemoteCore.validUpdateUrl("https://evil.example/RafiqAlMuslim-TV.apk"));
-        assertFalse(RemoteCore.validUpdateUrl("http://github.com/HAMADAKHM/rafiq-almuslim/releases/download/x/RafiqAlMuslim-TV.apk"));
-        assertFalse(RemoteCore.validUpdateUrl("https://github.com/someone/else/releases/download/x/RafiqAlMuslim-TV.apk"));
-        assertFalse(RemoteCore.validUpdateUrl("https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/../RafiqAlMuslim-TV.apk"));
+        assertFalse(RemoteCore.validUpdateUrl("https://evil.example/RafiqAlMuslimTVNew.apk"));
+        // ملف النسخة الأصلية لا يُثبَّت فوق النسخة الجديدة
+        assertFalse(RemoteCore.validUpdateUrl("https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/beta-v1.0.0-beta.5-build.130/RafiqAlMuslim-TV.apk"));
+        assertFalse(RemoteCore.validUpdateUrl("http://github.com/HAMADAKHM/rafiq-almuslim/releases/download/x/RafiqAlMuslimTVNew.apk"));
+        assertFalse(RemoteCore.validUpdateUrl("https://github.com/someone/else/releases/download/x/RafiqAlMuslimTVNew.apk"));
+        assertFalse(RemoteCore.validUpdateUrl("https://github.com/HAMADAKHM/rafiq-almuslim/releases/download/../RafiqAlMuslimTVNew.apk"));
         byte[] body = b(new JSONObject().put("url", good).toString());
         // دون ربط: مرفوض
         assertEquals(401, core.handle("POST", "/update", new HashMap<>(), body, ap, NOW).getInt("status"));
@@ -64,7 +66,7 @@ public class RemoteCoreTest {
         long t = NOW + 3000;
         assertEquals(200, core.handle("POST", "/update", h(dev[0], t, sign(dev[1], "POST", "/update", t, body)), body, ap, t).getInt("status"));
         assertEquals(good, ap.updateUrl);
-        byte[] bad = b(new JSONObject().put("url", "https://evil.example/RafiqAlMuslim-TV.apk").toString());
+        byte[] bad = b(new JSONObject().put("url", "https://evil.example/RafiqAlMuslimTVNew.apk").toString());
         long t2 = t + 1000;
         assertEquals(400, core.handle("POST", "/update", h(dev[0], t2, sign(dev[1], "POST", "/update", t2, bad)), bad, ap, t2).getInt("status"));
     }
@@ -224,7 +226,7 @@ public class RemoteCoreTest {
     @Test public void protectedRoutesNeedSignatureAndInfoIsOpen() throws Exception {
         RemoteCore core = new RemoteCore(new MemStore(), new SecureRandom(), "TV");
         assertEquals(200, core.handle("GET", "/info", new HashMap<>(), new byte[0], new FakeApplier(), NOW).getInt("status"));
-        assertEquals("rafiq-tv", core.handle("GET", "/info", new HashMap<>(), new byte[0], new FakeApplier(), NOW).getJSONObject("body").getString("app"));
+        assertEquals("rafiq-tv-new", core.handle("GET", "/info", new HashMap<>(), new byte[0], new FakeApplier(), NOW).getJSONObject("body").getString("app"));
         assertEquals(401, core.handle("GET", "/settings", new HashMap<>(), new byte[0], new FakeApplier(), NOW).getInt("status"));
         assertEquals(401, core.handle("POST", "/action", new HashMap<>(), b("{\"action\":\"stop_adhan\"}"), new FakeApplier(), NOW).getInt("status"));
     }
