@@ -16,6 +16,12 @@ import { lazy, type ComponentType } from 'react'
 
 // الصفحات الأقل استخدامًا تُحمَّل عند فتحها فقط (أول فتح أسرع)؛ وكلها مخزنة للعمل دون اتصال
 const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) => lazy(() => load().then((m) => ({ default: m[name] })))
+const HadithHome = page(() => import('../features/hadith/HadithPages'), 'HadithHome')
+const HadithBookPage = page(() => import('../features/hadith/HadithPages'), 'HadithBookPage')
+const HadithSectionPage = page(() => import('../features/hadith/HadithPages'), 'HadithSectionPage')
+const HadithDetailPage = page(() => import('../features/hadith/HadithPages'), 'HadithDetailPage')
+const HadithSearchPage = page(() => import('../features/hadith/HadithPages'), 'HadithSearchPage')
+const HadithFavoritesPage = page(() => import('../features/hadith/HadithPages'), 'HadithFavoritesPage')
 const MemorizePage = page(() => import('../features/memorize/MemorizePage'), 'MemorizePage')
 const QiblaPage = page(() => import('../features/qibla/QiblaPage'), 'QiblaPage')
 const ListenPage = page(() => import('../features/listen/ListenPage'), 'ListenPage')
@@ -85,7 +91,13 @@ export function AppRoutes() {
         <Route path="adhkar/:category" element={<ContentLibrary kind="adhkar" />} />
         <Route path="duas" element={<ContentLibrary kind="duas" />} />
         <Route path="duas/:category" element={<ContentLibrary kind="duas" />} />
-        <Route path="hadith" element={<ContentLibrary kind="hadith" />} />
+        <Route path="hadith" element={<HadithHome />} />
+        <Route path="hadith/selected" element={<ContentLibrary kind="hadith" />} />
+        <Route path="hadith/book/:book" element={<HadithBookPage />} />
+        <Route path="hadith/book/:book/:section" element={<HadithSectionPage />} />
+        <Route path="hadith/h/:book/:num" element={<HadithDetailPage />} />
+        <Route path="hadith/search" element={<HadithSearchPage />} />
+        <Route path="hadith/favorites" element={<HadithFavoritesPage />} />
         <Route path="hadith/:category" element={<ContentLibrary kind="hadith" />} />
         <Route path="listen" element={<ListenPage />} />
         <Route path="learn" element={<LearnPage />} />

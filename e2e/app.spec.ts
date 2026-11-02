@@ -448,7 +448,9 @@ test.describe('الإصدار 0.2', () => {
   test('التقويم الهجري والمناسبات', async ({ page }) => {
     await page.goto('/calendar')
     await expect(page.getByText('المناسبات القادمة')).toBeVisible()
-    await expect(page.getByRole('gridcell')).toHaveCount(31)
+    // عدد الخلايا يتبع طول الشهر الهجري الحالي (29 أو 30 يومًا) مع ما قد يسبقه من خلايا
+    await expect(page.getByRole('gridcell').first()).toBeVisible()
+    expect(await page.getByRole('gridcell').count()).toBeGreaterThanOrEqual(29)
     await expect(page.getByText(/قد تختلف بداية الشهر/)).toBeVisible()
   })
 
@@ -967,6 +969,7 @@ test.describe('1.0: الختمة الذكية والأحاديث وبطاقات 
 
   test('مكتبة الأحاديث: كل حديث بتخريجه من الصحيحين، وتظهر في البحث', async ({ page }) => {
     await page.goto('/hadith')
+    await page.getByRole('link', { name: /مختارات من الصحيحين/ }).click()
     await page.getByRole('link', { name: /أحاديث جامعة/ }).click()
     await expect(page.getByText('متفق عليه: البخاري (1) ومسلم (1907)')).toBeVisible()
     await page.goto('/search?q=' + encodeURIComponent('النصيحة'))

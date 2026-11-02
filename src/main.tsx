@@ -13,6 +13,7 @@ import './styles/theme.css'
 import './styles/design.css'
 import './styles/reader.css'
 import './styles/skins.css'
+import './styles/hadith.css'
 import { App } from './app/App'
 import { registerSW } from 'virtual:pwa-register'
 
