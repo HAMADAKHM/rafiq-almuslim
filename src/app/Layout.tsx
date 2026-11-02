@@ -6,7 +6,8 @@ import { useSettings } from '../state/SettingsContext'
 import { ThemePreviewBar } from '../themes/ThemePreviewBar'
 import { FOOTER_LINE } from '../content/dedication'
 import { MiniPlayer } from '../components/MiniPlayer'
-import { useOnline, useToastMessage } from '../hooks'
+import { useLive, useOnline, useToastMessage } from '../hooks'
+import { activeKidId, kidPathAllowed } from '../services/kids'
 import { startReminderLoop } from '../services/notifications'
 import { LogoMark } from '../components/Art'
 import { NAV, tabsFor } from './nav'
@@ -28,6 +29,12 @@ function Brand() {
   )
 }
 
+function useKidGuard(pathname: string, navigate: (to: string, o?: { replace?: boolean }) => void) {
+  const kidId = useLive(() => activeKidId(), ['kv:kids:active'], null)
+  useEffect(() => { if (kidId && !kidPathAllowed(pathname)) navigate('/kids', { replace: true }) }, [kidId, pathname, navigate])
+  return !!kidId
+}
+
 export function Layout() {
   const { settings } = useSettings()
   const lang = settings.lang
@@ -45,9 +52,10 @@ export function Layout() {
   // صفحات القراءة لها رأسها وشريطها السفلي الخاصان (يحتويان المشغل)
   const isReader = /^\/(quran\/\d+\/?$|mushaf|read\/?$)/.test(loc.pathname)
   const isHome = loc.pathname === '/'
+  const kidMode = useKidGuard(loc.pathname, navigate)
 
   return (
-    <div className={'app' + (isReader ? ' reading' : '') + (/^\/read\/?$/.test(loc.pathname) ? ' reading2' : '') + (isHome ? ' at-home' : '')}>
+    <div className={'app' + (isReader ? ' reading' : '') + (/^\/read\/?$/.test(loc.pathname) ? ' reading2' : '') + (isHome ? ' at-home' : '') + (kidMode ? ' kid-mode' : '')}>
       <Splash />
       <TvUpdateCheck />
       <AdhanAlarm />

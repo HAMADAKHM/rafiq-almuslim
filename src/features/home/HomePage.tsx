@@ -31,7 +31,7 @@ import { adhkarLog, kv, memo } from '../../db/repos'
 import { KhatmaCard, useKhatmas } from '../wird/KhatmaCard'
 import { activePlan, dailyTarget } from '../../services/khatma'
 import { dailySuggestion } from '../../services/dailySuggest'
-import { Lightbulb, Palette } from 'lucide-react'
+import { Lightbulb, Palette, ScrollText, GraduationCap, Trophy } from 'lucide-react'
 import { useAllLogs } from '../progress/ProgressPage'
 import { computeStats, dailySeries } from '../../services/stats'
 import { adhkarForNow, ayahOfDay, greeting } from '../../services/daily'
@@ -92,6 +92,15 @@ function MosqueArt({ className }: { className?: string }) {
   )
 }
 
+const MAIN_SECTIONS = [
+  { to: '/quran', title: 'القرآن الكريم', icon: BookOpen, color: '#174B3C' },
+  { to: '/hadith', title: 'الأحاديث النبوية', icon: ScrollText, color: '#1f4f8a' },
+  { to: '/academy', title: 'الأكاديمية الإسلامية', icon: GraduationCap, color: '#8A6A24' },
+  { to: '/adhkar', title: 'الصلاة والأذكار', icon: Sparkles, color: '#2e8467' },
+  { to: '/academy/course/prophets', title: 'قصص الأنبياء', icon: BookMarked, color: '#3C7A3F' },
+  { to: '/academy/daily', title: 'المسابقات الإسلامية', icon: Trophy, color: '#C8641E' },
+]
+
 export function HomePage() {
   useDocumentTitle('')
   const { settings, update } = useSettings()
@@ -132,6 +141,11 @@ export function HomePage() {
 
   const cards: Record<HomeCardId, ReactNode> = {
     companion: <DailyCompanionCard />,
+    sections: (
+      <section className="home-sections" aria-label="الأقسام الرئيسية">
+        {MAIN_SECTIONS.map((x) => <Link key={x.to} to={x.to} className="home-section" style={{ ['--c' as string]: x.color }}><x.icon size={22} aria-hidden="true" /><span>{x.title}</span></Link>)}
+      </section>
+    ),
     suggest: (
       <Link to={suggestion.to} className="list-card suggest-card" aria-label={`اقتراح اليوم: ${suggestion.title}`}>
         <span className="icon-chip"><Lightbulb size={22} aria-hidden="true" /></span>

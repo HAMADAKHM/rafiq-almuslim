@@ -14,6 +14,8 @@ import {
   type BookId, type Hadith, type ReadPrefs, type SearchHit, type SearchMode,
 } from '../../services/hadithLib'
 import { LEVEL_LABEL } from '../../services/hadithGrades'
+import { hadithNotes, listPacks } from '../../services/contentStore'
+import { STATUS_LABEL } from '../../content/academy/types'
 
 const n2 = (n: number) => toArabicDigits(n)
 const PAGE = 25
@@ -207,6 +209,8 @@ export function HadithDetailPage() {
   const [related, setRelated] = useState<SearchHit[] | null>(null)
   const [p, set] = useReadPrefs()
   const favs = useLive(() => loadFavs(), ['kv:hadith:favs'], [])
+  const packs = useLive(() => listPacks(), ['kv:content:packs'], [])
+  const notes = b ? hadithNotes(packs, b.id, n) : []
   const load = useCallback(() => {
     if (!b) return
     setH(undefined); setRelated(null)
@@ -254,8 +258,12 @@ export function HadithDetailPage() {
               <Field label="درجة الحديث">{b.graded ? <span className="muted">لا يوجد حكم لهذا الحديث في القاعدة.</span> : <span>لا توجد درجة لكل حديث في القاعدة. منهج الكتاب: {b.method}</span>}</Field>
             )}
             {takhrij.length ? <Field label="التخريج">{takhrij.join('؛ ')} <span className="muted small">(كما ورد في أحكام القاعدة)</span></Field> : <Field label="التخريج" missing="غير متوفر في القاعدة لهذا الحديث." />}
-            <Field label="الشرح وتفسير المعاني" missing="غير متوفر بعد: يُضاف فقط من شرح علمي منشور يُذكر اسم مؤلفه وطبعته، ولا يُكتب شرح من عندنا." />
-            <Field label="الفوائد والأحكام" missing="غير متوفرة بعد للسبب نفسه." />
+            {notes.some((x) => x.sharh) ? notes.filter((x) => x.sharh).map((x, i) => (
+              <Field key={'s' + i} label="الشرح وتفسير المعاني"><p style={{ margin: 0 }}>{x.sharh}</p><small className="muted">المصدر: {x.source.title}{x.source.author ? ` — ${x.source.author}` : ''}{x.source.edition ? ` • ${x.source.edition}` : ''}{x.source.page ? ` • ${x.source.page}` : ''} • {STATUS_LABEL[x.review.status]}{x.review.reviewer ? ` (مراجعة: ${x.review.reviewer})` : ''} • من حزمة «{x.pack}»</small></Field>
+            )) : <Field label="الشرح وتفسير المعاني" missing="غير متوفر بعد: يُضاف فقط من شرح علمي منشور يُذكر اسم مؤلفه وطبعته (عبر «استيراد حزمة محتوى» في الأكاديمية)، ولا يُكتب شرح من عندنا." />}
+            {notes.some((x) => x.fawaid?.length) ? notes.filter((x) => x.fawaid?.length).map((x, i) => (
+              <Field key={'f' + i} label="الفوائد والأحكام"><ul style={{ margin: 0 }}>{x.fawaid!.map((f, k) => <li key={k}>{f}</li>)}</ul><small className="muted">المصدر: {x.source.title}{x.source.author ? ` — ${x.source.author}` : ''} • {STATUS_LABEL[x.review.status]}</small></Field>
+            )) : <Field label="الفوائد والأحكام" missing="غير متوفرة بعد للسبب نفسه." />}
             <p className="small muted" style={{ margin: 0 }}>{SOURCE_NOTE}</p>
           </section>
           <section className="card" aria-label="أحاديث متقاربة">

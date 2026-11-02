@@ -81,7 +81,7 @@ export const QURAN_FONTS: { id: QuranFont; label: string; family: string; note: 
   { id: 'scheherazade', label: 'شهرزاد', family: '"Scheherazade New", "Amiri Quran", serif', note: 'نسخي واضح بحروف كبيرة' },
   { id: 'noto-naskh', label: 'نسخ حديث', family: '"Noto Naskh Arabic", "Amiri Quran", serif', note: 'خط حديث بسيط' },
 ]
-export type HomeCardId = 'companion' | 'continue' | 'suggest' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
+export type HomeCardId = 'sections' | 'companion' | 'continue' | 'suggest' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
 
 export interface Settings {
   /** gold: أسود وذهبي (مبني على الوضع الداكن مع لون ذهبي بدل الأخضر) */
@@ -201,7 +201,7 @@ export interface CustomReminder {
   enabled: boolean
 }
 
-export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques', '/hadith', '/assistant', '/cards']
+export const QUICK_LINK_CHOICES = ['/tasbih', '/qibla', '/duas', '/calendar', '/adhkar', '/quran', '/listen', '/prayer', '/wird', '/memorize', '/learn', '/my-adhkar', '/search', '/progress', '/reminders', '/studio', '/mosques', '/hadith', '/academy', '/kids', '/assistant', '/cards']
 // القبلة والمسبحة والختمة أولًا (للمستخدمين الجدد؛ اختيارات المستخدمين الحاليين تبقى كما هي)
 export const DEFAULT_QUICK_LINKS = ['/qibla', '/tasbih', '/wird', '/calendar']
 export const MAX_QUICK_LINKS = 8
@@ -209,6 +209,7 @@ export const DEFAULT_DAILY_ADHKAR = ['morning', 'evening', 'after-prayer', 'slee
 export const MAX_DAILY_ADHKAR = 6
 
 export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
+  sections: 'الأقسام الرئيسية',
   companion: 'رفيقي اليومي (بلس)',
   suggest: 'اقتراح اليوم',
   continue: 'أكمل قراءتك',
@@ -225,7 +226,7 @@ export const HOME_CARD_LABELS: Record<HomeCardId, string> = {
 export const LOCKED_HOME_CARDS: HomeCardId[] = ['dedication']
 
 // الترتيب الافتراضي على هيئة التصميم المعتمد: آية اليوم، ثم الورد والأذكار جنبًا إلى جنب (كل البطاقات ظاهرة)
-export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['companion', 'ayah', 'khatma', 'adhkar', 'continue', 'suggest', 'summary', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
+export const DEFAULT_HOME_CARDS: Settings['homeCards'] = (['companion', 'sections', 'ayah', 'khatma', 'adhkar', 'continue', 'suggest', 'summary', 'quick', 'dedication', 'shortcuts'] as HomeCardId[]).map((id) => ({ id, visible: true }))
 
 export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   enabled: false,
@@ -317,6 +318,8 @@ export function normalizeHomeCards(cards: Settings['homeCards'] | undefined): Se
   }
   // بطاقة «رفيقي اليومي» الجديدة تظهر في الأعلى لمن لم تكن لديه، دون تغيير ترتيب بطاقاته الأخرى
   if (!seen.has('companion') && cards?.length) { out.unshift({ id: 'companion', visible: true }); seen.add('companion') }
+  // «الأقسام الرئيسية» الجديدة تظهر بعد «رفيقي اليومي» لمن لم تكن لديه
+  if (!seen.has('sections') && cards?.length) { const i = out.findIndex((c) => c.id === 'companion'); out.splice(i + 1, 0, { id: 'sections', visible: true }); seen.add('sections') }
   for (const c of DEFAULT_HOME_CARDS) if (!seen.has(c.id)) out.push(c)
   return out
 }

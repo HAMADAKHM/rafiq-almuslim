@@ -1,0 +1,72 @@
+/* الأكاديمية الإسلامية */
+.ac-page { display: flex; flex-direction: column; gap: 12px; }
+.ac-me { display: flex; align-items: center; gap: 10px; color: var(--gold); }
+.ac-me strong { color: var(--text); }
+.ac-daily { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); background: linear-gradient(135deg, var(--primary-soft), var(--gold-soft)); }
+.ac-daily span { flex: 1; display: flex; flex-direction: column; }
+.ac-courses { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 10px; }
+.ac-course { display: flex; flex-direction: column; gap: 4px; text-decoration: none; color: var(--text); border-top: 4px solid var(--c); }
+.ac-course strong { font-size: 1.05rem; color: var(--c); }
+.ac-course small { line-height: 1.55; }
+.ac-course-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--c) 14%, transparent); color: var(--c); }
+.ac-status { font-weight: 600; }
+.ac-status.review, .ac-status.incomplete { color: var(--gold); }
+.ac-status.approved { color: var(--primary); }
+.ac-review summary { cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.86rem; }
+.ac-review.review, .ac-review.incomplete { border-inline-start: 4px solid var(--gold-2); }
+.ac-review.approved { border-inline-start: 4px solid var(--primary); }
+.ac-text h3, .ac-steps h3 { font-size: 1rem; margin: 4px 0; }
+.ac-text p, .ac-text li { line-height: 1.9; }
+.ac-quran { margin: 0; }
+.ac-quran-text { font-family: 'Amiri Quran', var(--font-classic); font-size: 1.35rem; line-height: 2.3; margin: 4px 0; text-align: justify; }
+.ac-ayah { all: unset; cursor: pointer; border-radius: 6px; }
+.ac-ayah.on { background: var(--gold-soft); }
+.ac-ayah-num { color: var(--gold); font-size: 0.95rem; }
+.ac-quran-foot { justify-content: space-between; }
+.ac-hadith { display: flex; flex-direction: column; gap: 6px; }
+.ac-hadith-text { font-family: var(--font-classic); font-size: 1.15rem; line-height: 2; margin: 0; }
+.ac-step { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
+.ac-step p { margin: 2px 0 0; font-size: 0.92rem; line-height: 1.7; }
+.ac-timeline ol { border-inline-start: 2px solid var(--gold-2); padding-inline-start: 14px; margin: 0; }
+.ac-timeline li { position: relative; margin-bottom: 12px; display: flex; gap: 8px; }
+.ac-timeline li > div { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.ac-dot { position: absolute; inset-inline-start: -21px; top: 4px; width: 12px; height: 12px; border-radius: 50%; background: var(--gold); }
+.ac-madhab table { width: 100%; border-collapse: collapse; margin: 6px 0; }
+.ac-madhab th, .ac-madhab td { text-align: start; padding: 6px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.ac-madhab th { width: 90px; color: var(--primary); }
+.ac-quiz { display: flex; flex-direction: column; gap: 12px; }
+.ac-q { font-size: 1.15rem; line-height: 1.7; margin: 0; }
+.ac-opt { text-align: start; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); font: inherit; cursor: pointer; min-height: 48px; }
+.ac-opt.on { border-color: var(--primary); background: var(--primary-soft); }
+.ac-opt.right { border-color: #2e8467; background: #e3f3e8; color: #17603a; }
+.ac-opt.wrong { border-color: #c0392b; background: #fde3e3; color: #962323; }
+.alert-ok { background: #e3f3e8; color: #17603a; border-radius: 12px; padding: 10px 12px; }
+.ac-result { text-align: center; color: var(--gold); }
+.ac-result h2, .ac-result p { color: var(--text); }
+.ac-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.ac-badge { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; opacity: 0.45; filter: grayscale(1); }
+.ac-badge.on { opacity: 1; filter: none; color: var(--gold); }
+.ac-badge strong { color: var(--text); }
+.ac-pin { align-items: center; text-align: center; max-width: 340px; }
+
+/* مساحة الأطفال */
+.app.kid-mode .tabbar, .app.kid-mode .sidebar { display: none !important; }
+.kids-page { display: flex; flex-direction: column; gap: 14px; }
+.kids-head { display: flex; align-items: center; justify-content: space-between; }
+.kids-head h1 { margin: 0; font-size: 1.6rem; }
+.kids-points { display: inline-flex; gap: 4px; align-items: center; background: var(--gold-soft); color: var(--gold); padding: 4px 12px; border-radius: 16px; font-weight: 700; }
+.kids-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.kids-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 120px; border-radius: 24px; background: color-mix(in srgb, var(--c) 14%, var(--surface)); color: var(--c); text-decoration: none; border: 2px solid color-mix(in srgb, var(--c) 30%, transparent); }
+.kids-tile strong { color: var(--text); font-size: 1.05rem; text-align: center; }
+.small-tiles .kids-tile { min-height: 84px; }
+.kids-letters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.kids-letter { aspect-ratio: 1; border-radius: 18px; border: 2px solid var(--border); background: var(--surface); color: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; font: inherit; cursor: pointer; }
+.kids-letter span { font-family: var(--font-classic); font-size: 2.2rem; line-height: 1.2; }
+.kids-letter.on { border-color: var(--gold); background: var(--gold-soft); }
+.kids-timeup { text-align: center; color: var(--gold); }
+.kids-left { text-align: center; color: var(--gold); font-weight: 700; margin: 0; }
+
+/* الأقسام الرئيسية في الصفحة الرئيسية */
+.home-sections { grid-column: 1 / -1; width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.home-section { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); color: var(--c); text-decoration: none; text-align: center; }
+.home-section span { color: var(--text); font-size: 0.82rem; font-weight: 600; line-height: 1.35; }

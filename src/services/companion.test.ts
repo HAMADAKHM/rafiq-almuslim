@@ -257,7 +257,8 @@ describe('الهدف الصغير ووضع السفر وتقدير الختمة'
   })
   it('بطاقة «رفيقي اليومي» تُضاف في الأعلى لمن لديه ترتيب سابق دون تغيير ترتيب بطاقاته', () => {
     const s = mergeSettings({ homeCards: [{ id: 'khatma', visible: true }, { id: 'ayah', visible: false }] } as never)
-    expect(s.homeCards.slice(0, 3).map((c) => c.id)).toEqual(['companion', 'khatma', 'ayah'])
+    // «الأقسام الرئيسية» الجديدة تُضاف بعد «رفيقي اليومي»، ثم بطاقات المستخدم بترتيبه
+    expect(s.homeCards.slice(0, 4).map((c) => c.id)).toEqual(['companion', 'sections', 'khatma', 'ayah'])
     expect(s.homeCards.find((c) => c.id === 'ayah')!.visible).toBe(false)
   })
 })

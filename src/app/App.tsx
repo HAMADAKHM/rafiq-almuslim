@@ -16,6 +16,21 @@ import { lazy, type ComponentType } from 'react'
 
 // الصفحات الأقل استخدامًا تُحمَّل عند فتحها فقط (أول فتح أسرع)؛ وكلها مخزنة للعمل دون اتصال
 const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) => lazy(() => load().then((m) => ({ default: m[name] })))
+const AcademyHome = page(() => import('../features/academy/AcademyPages'), 'AcademyHome')
+const CoursePage = page(() => import('../features/academy/AcademyPages'), 'CoursePage')
+const AcademyLessonPage = page(() => import('../features/academy/AcademyPages'), 'LessonPage')
+const LessonQuizPage = page(() => import('../features/academy/AcademyPages'), 'LessonQuizPage')
+const DailyQuizPage = page(() => import('../features/academy/AcademyPages'), 'DailyQuizPage')
+const AchievementsPage = page(() => import('../features/academy/AcademyPages'), 'AchievementsPage')
+const SourcesPage = page(() => import('../features/academy/AcademyPages'), 'SourcesPage')
+const KidsHome = page(() => import('../features/academy/KidsPages'), 'KidsHome')
+const ParentPanel = page(() => import('../features/academy/KidsPages'), 'ParentPanel')
+const KidLessonPage = page(() => import('../features/academy/KidsPages'), 'KidLessonPage')
+const KidQuizPage = page(() => import('../features/academy/KidsPages'), 'KidQuizPage')
+const KidDailyPage = page(() => import('../features/academy/KidsPages'), 'KidDailyPage')
+const KidProphetsPage = page(() => import('../features/academy/KidsPages'), 'KidProphetsPage')
+const KidLettersPage = page(() => import('../features/academy/KidsPages'), 'KidLettersPage')
+const LettersBoard = page(() => import('../features/academy/KidsPages'), 'LettersBoard')
 const HadithHome = page(() => import('../features/hadith/HadithPages'), 'HadithHome')
 const HadithBookPage = page(() => import('../features/hadith/HadithPages'), 'HadithBookPage')
 const HadithSectionPage = page(() => import('../features/hadith/HadithPages'), 'HadithSectionPage')
@@ -91,6 +106,21 @@ export function AppRoutes() {
         <Route path="adhkar/:category" element={<ContentLibrary kind="adhkar" />} />
         <Route path="duas" element={<ContentLibrary kind="duas" />} />
         <Route path="duas/:category" element={<ContentLibrary kind="duas" />} />
+        <Route path="academy" element={<AcademyHome />} />
+        <Route path="academy/course/:courseId" element={<CoursePage />} />
+        <Route path="academy/lesson/:courseId/:lessonId" element={<AcademyLessonPage />} />
+        <Route path="academy/quiz/:courseId/:lessonId" element={<LessonQuizPage />} />
+        <Route path="academy/daily" element={<DailyQuizPage />} />
+        <Route path="academy/achievements" element={<AchievementsPage />} />
+        <Route path="academy/sources" element={<SourcesPage />} />
+        <Route path="academy/kids/letters" element={<LettersBoard />} />
+        <Route path="kids" element={<KidsHome />} />
+        <Route path="kids/parent" element={<ParentPanel />} />
+        <Route path="kids/lesson/:courseId/:lessonId" element={<KidLessonPage />} />
+        <Route path="kids/quiz/:courseId/:lessonId" element={<KidQuizPage />} />
+        <Route path="kids/daily" element={<KidDailyPage />} />
+        <Route path="kids/prophets" element={<KidProphetsPage />} />
+        <Route path="kids/letters" element={<KidLettersPage />} />
         <Route path="hadith" element={<HadithHome />} />
         <Route path="hadith/selected" element={<ContentLibrary kind="hadith" />} />
         <Route path="hadith/book/:book" element={<HadithBookPage />} />

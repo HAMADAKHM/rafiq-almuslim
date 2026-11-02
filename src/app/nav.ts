@@ -51,12 +51,14 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
     { to: '/adhkar', key: 'adhkar', icon: Sparkles },
     { to: '/duas', key: 'duas', icon: HandHeart },
     { to: '/hadith', key: 'hadith', icon: ScrollText },
+    { to: '/academy', key: 'academy', icon: GraduationCap },
     { to: '/for-the-deceased', key: 'forDeceased', icon: HeartHandshake },
     { to: '/tasbih', key: 'tasbih', icon: CircleDot },
     { to: '/my-adhkar', key: 'myAdhkar', icon: PenLine },
     { to: '/calendar', key: 'calendar', icon: CalendarDays },
     { to: '/date-tools', key: 'dateTools', icon: ArrowLeftRight },
     { to: '/kids-adhkar', key: 'kidsAdhkar', icon: Baby },
+    { to: '/kids', key: 'kidsSpace', icon: Baby },
   ] },
   { group: 'groupMore', items: [
     { to: '/library', key: 'library', icon: Library },
@@ -121,6 +123,8 @@ export const LINK_META: Record<string, { label: string; icon: typeof House }> = 
   '/studio': { label: 'تصاميم الآيات', icon: Palette },
   '/mosques': { label: 'المساجد', icon: Landmark },
   '/hadith': { label: 'الأحاديث', icon: ScrollText },
+  '/academy': { label: 'الأكاديمية', icon: GraduationCap },
+  '/kids': { label: 'مساحة الأطفال', icon: Baby },
   '/assistant': { label: 'المساعد', icon: MessageCircleQuestion },
   '/cards': { label: 'بطاقات', icon: GalleryHorizontal },
 }

@@ -19,6 +19,8 @@ const STRINGS = {
   mosques: { ar: 'المساجد القريبة', en: 'Nearby Mosques' },
   assistant: { ar: 'المساعد الإسلامي', en: 'Islamic Assistant' },
   hadith: { ar: 'الأحاديث النبوية', en: 'Hadith' },
+  academy: { ar: 'الأكاديمية الإسلامية', en: 'Islamic Academy' },
+  kidsSpace: { ar: 'مساحة الأطفال', en: 'Kids Space' },
   calendar: { ar: 'التقويم الإسلامي', en: 'Islamic Calendar' },
   reminders: { ar: 'إعدادات التذكير', en: 'Reminders' },
   journey: { ar: 'ابدأ رحلتك', en: 'Start your journey' },
