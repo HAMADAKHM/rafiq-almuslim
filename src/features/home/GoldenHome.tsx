@@ -11,7 +11,6 @@ import type { SavedLocation } from '../../state/settings'
 import { PRAYER_LABELS, nextPrayer, type PrayerSettings } from '../../services/prayer'
 import { formatGregorian, formatHijri, formatTime } from '../../lib/dates'
 import { goldenPhoto, landmarkFor } from '../../themes/golden'
-import { MosqueMark } from './GoldenPages'
 
 const ARCHES = [
   { to: '/quran', title: 'القرآن الكريم', icon: BookOpen },
@@ -20,6 +19,29 @@ const ARCHES = [
   { to: '/qibla', title: 'القبلة', icon: Compass },
   { to: '/more', title: 'المزيد', icon: Star },
 ]
+
+/** عداد تنازلي للصلاة القادمة شامل الثواني: س:د:ث */
+function countdown(ms: number): string {
+  const t = Math.max(0, Math.floor(ms / 1000))
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${p(Math.floor(t / 3600))}:${p(Math.floor((t % 3600) / 60))}:${p(t % 60)}`
+}
+
+/** مسجد مصمت بالذهبي (قبة ومئذنتان) كما في بطاقة الصلاة بالتصميم */
+function MosqueSolid() {
+  return (
+    <svg className="gd-mosque" viewBox="0 0 100 80" aria-hidden="true" fill="url(#gd-gold-grad)">
+      <path d="M50 6 l2 5 h-4 z M49 11 h2 v4 h-2 z" />
+      <path d="M28 46 C28 30 40 22 50 16 C60 22 72 30 72 46 Z" />
+      <circle cx="50" cy="14" r="2" />
+      <path d="M12 20 l4 -10 l4 10 z M13 20 h6 v54 h-6 z M11 32 h10 v3 h-10 z" />
+      <path d="M80 20 l4 -10 l4 10 z M81 20 h6 v54 h-6 z M79 32 h10 v3 h-10 z" />
+      <path d="M22 50 C22 44 27 41 30 40 C33 41 38 44 38 50 Z M62 50 C62 44 67 41 70 40 C73 41 78 44 78 50 Z" />
+      <path fillRule="evenodd" d="M22 48 h56 v26 h-56 z M45 74 v-12 a5 5 0 0 1 10 0 v12 z M29 70 v-8 a3 3 0 0 1 6 0 v8 z M65 70 v-8 a3 3 0 0 1 6 0 v8 z" />
+      <rect x="6" y="74" width="88" height="4" rx="1" />
+    </svg>
+  )
+}
 
 /** «ألا بذكر الله تطمئن القلوب»: الجزء الأخير من الآية 28 من سورة الرعد كما في نص المصحف (بعد علامة الوقف) */
 function tailOfAyah(text: string): string {
@@ -80,11 +102,11 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
             <span><CalendarDays size={16} /> {formatHijri(now, loc?.tz, hijriOffset)}</span>
           </div>
           <Link to="/prayer" className="gd-prayer" aria-label="مواقيت الصلاة">
-            <svg className="gd-prayer-frame" viewBox="0 0 200 170" preserveAspectRatio="none" aria-hidden="true">
-              <path className="gd-f-fill" d="M12 30 Q12 20 22 20 H70 Q86 20 92 11 Q96 4 100 2 Q104 4 108 11 Q114 20 130 20 H178 Q188 20 188 30 V70 Q180 78 188 86 V140 Q188 150 178 150 H130 Q114 150 108 159 Q104 166 100 168 Q96 166 92 159 Q86 150 70 150 H22 Q12 150 12 140 V86 Q20 78 12 70 Z" />
-              <path className="gd-f-pat" d="M12 30 Q12 20 22 20 H70 Q86 20 92 11 Q96 4 100 2 Q104 4 108 11 Q114 20 130 20 H178 Q188 20 188 30 V70 Q180 78 188 86 V140 Q188 150 178 150 H130 Q114 150 108 159 Q104 166 100 168 Q96 166 92 159 Q86 150 70 150 H22 Q12 150 12 140 V86 Q20 78 12 70 Z" />
-              <path className="gd-f-out" d="M12 30 Q12 20 22 20 H70 Q86 20 92 11 Q96 4 100 2 Q104 4 108 11 Q114 20 130 20 H178 Q188 20 188 30 V70 Q180 78 188 86 V140 Q188 150 178 150 H130 Q114 150 108 159 Q104 166 100 168 Q96 166 92 159 Q86 150 70 150 H22 Q12 150 12 140 V86 Q20 78 12 70 Z" />
-              <path className="gd-f-in" d="M12 30 Q12 20 22 20 H70 Q86 20 92 11 Q96 4 100 2 Q104 4 108 11 Q114 20 130 20 H178 Q188 20 188 30 V70 Q180 78 188 86 V140 Q188 150 178 150 H130 Q114 150 108 159 Q104 166 100 168 Q96 166 92 159 Q86 150 70 150 H22 Q12 150 12 140 V86 Q20 78 12 70 Z" transform="translate(100 85) scale(0.95 0.9) translate(-100 -85)" />
+            <svg className="gd-prayer-frame" viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true">
+              <path className="gd-f-fill" d="M22 28 H62 C68 28 72 22 78 16 C86 9 94 7 100 2 C106 7 114 9 122 16 C128 22 132 28 138 28 H178 Q178 38 188 38 V170 Q178 170 178 180 H118 Q106 180 100 194 Q94 180 82 180 H22 Q22 170 12 170 V38 Q22 38 22 28 Z" />
+              <path className="gd-f-pat" d="M22 28 H62 C68 28 72 22 78 16 C86 9 94 7 100 2 C106 7 114 9 122 16 C128 22 132 28 138 28 H178 Q178 38 188 38 V170 Q178 170 178 180 H118 Q106 180 100 194 Q94 180 82 180 H22 Q22 170 12 170 V38 Q22 38 22 28 Z" />
+              <path className="gd-f-out" d="M22 28 H62 C68 28 72 22 78 16 C86 9 94 7 100 2 C106 7 114 9 122 16 C128 22 132 28 138 28 H178 Q178 38 188 38 V170 Q178 170 178 180 H118 Q106 180 100 194 Q94 180 82 180 H22 Q22 170 12 170 V38 Q22 38 22 28 Z" />
+              <path className="gd-f-in" d="M22 28 H62 C68 28 72 22 78 16 C86 9 94 7 100 2 C106 7 114 9 122 16 C128 22 132 28 138 28 H178 Q178 38 188 38 V170 Q178 170 178 180 H118 Q106 180 100 194 Q94 180 82 180 H22 Q22 170 12 170 V38 Q22 38 22 28 Z" transform="translate(100 100) scale(0.94 0.92) translate(-100 -100)" />
             </svg>
             <span className="gd-prayer-title"><Clock3 size={18} /> مواقيت الصلاة</span>
             {np && loc ? (<>
@@ -93,9 +115,9 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
                   <strong className="gd-prayer-name">{PRAYER_LABELS[np.name]}</strong>
                   <b className="gd-prayer-time">{formatTime(np.time, loc.tz)}</b>
                 </span>
-                <MosqueMark />
+                <MosqueSolid />
               </span>
-              <span className="gd-divider" aria-hidden="true"><i /><b /><i /></span>
+              <span className="gd-count" aria-label="الوقت المتبقي على الأذان">باقٍ على الأذان <b dir="ltr">{countdown(np.time.getTime() - now.getTime())}</b></span>
             </>) : <span className="gd-prayer-empty">اختر مدينتك لعرض المواقيت</span>}
             <span className="gd-btn">عرض التفاصيل <ChevronLeft size={14} /></span>
           </Link>

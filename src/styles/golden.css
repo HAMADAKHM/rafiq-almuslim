@@ -44,11 +44,13 @@
 .gd-icons a { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--gd-gold-2); background: rgba(5, 25, 18, 0.55); border: 1px solid rgba(240, 212, 142, 0.6); backdrop-filter: blur(4px); }
 .gd-side { position: relative; margin-top: 18px; margin-inline-start: auto; margin-inline-end: 6%; width: min(66%, 280px); display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .gd-info { width: 90%; }
-.gd-info span { white-space: nowrap; }
+.gd-info span { white-space: normal; overflow-wrap: anywhere; line-height: 1.35; }
+.gd-info span:not(:first-child) { white-space: nowrap; }
+.gd-glass.gd-info { padding: 10px 12px; }
 .gd-glass { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 18px; background: color-mix(in srgb, var(--gd-green) 90%, transparent); border: 1.5px solid var(--gd-gold); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35); color: #fff3d0; text-decoration: none; }
 .gd-info span { display: flex; align-items: center; gap: 6px; font-size: 0.86rem; }
 .gd-info svg, .gd-prayer-title svg { color: var(--gd-gold-2); flex-shrink: 0; }
-.gd-prayer { position: relative; align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 26px 16px 24px; text-decoration: none; color: #fff3d0; filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)); }
+.gd-prayer { position: relative; align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 46px 18px 32px; text-decoration: none; color: #fff3d0; filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)); }
 .gd-prayer > :not(svg.gd-prayer-frame) { position: relative; }
 .gd-prayer-frame { position: absolute; inset: 0; width: 100%; height: 100%; }
 .gd-prayer-frame path { vector-effect: non-scaling-stroke; fill: none; }
@@ -62,7 +64,11 @@
 .gd-divider b { width: 8px; height: 8px; transform: rotate(45deg); background: linear-gradient(135deg, #fff1c1, #b88a2e); box-shadow: 0 0 6px rgba(231, 196, 110, 0.8); }
 .gd-prayer-body { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .gd-prayer-text { display: flex; flex-direction: column; align-items: center; }
-.gd-prayer .gp-mosque { width: 54px; height: 40px; color: var(--gd-gold-2); }
+.gd-mosque { width: 58px; height: 46px; flex-shrink: 0; filter: drop-shadow(0 0 4px rgba(231, 196, 110, 0.55)); }
+.gd-count { font-size: 0.78rem; color: #fbeecb; white-space: nowrap; }
+.gd-count b { color: var(--gd-gold-2); font-size: 0.95rem; letter-spacing: 0.5px; font-variant-numeric: tabular-nums; }
+.gd-prayer-body { max-width: 100%; }
+.gd-prayer-time { font-size: clamp(1.7rem, 8vw, 2.3rem) !important; }
 .gd-prayer .gd-btn { margin-top: 4px; }
 .gd-prayer-title { display: flex; gap: 6px; align-items: center; justify-content: center; font-weight: 700; color: var(--gd-gold-2); font-size: 1.05rem; }
 .gd-prayer-time { white-space: nowrap; }
@@ -228,3 +234,11 @@
 /* القبلة: بوصلة ذهبية والكعبة في الوسط */
 .gd-compass svg { filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.35)); }
 .gd-home .gd-brand strong, .gd-home .gd-brand small { text-shadow: 0 0 2px #000, 0 2px 8px rgba(0, 0, 0, 0.9); }
+
+/* النصوص داخل أماكنها: الأقواس والعلامة */
+.gd-home .gd-arch span { font-size: clamp(0.6rem, 2.7vw, 0.76rem); padding: 0 6px; max-width: 100%; overflow-wrap: anywhere; }
+.gd-home .gd-brand { min-width: 0; }
+.gd-home .gd-brand > span:last-child { min-width: 0; }
+.gd-home .gd-brand small { white-space: nowrap; font-size: 0.8rem; }
+.gd-home .gd-card small, .gd-home .gd-card strong { overflow-wrap: anywhere; }
+.gd-home .gd-prayer-title { white-space: nowrap; font-size: 0.98rem; }
