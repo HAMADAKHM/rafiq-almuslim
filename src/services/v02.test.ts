@@ -125,6 +125,12 @@ describe('جدولة التذكيرات', () => {
     const n = { ...base.notifications, minutesBefore: 10, morningAdhkar: '06:30', eveningAdhkar: '17:00', ayahOfDay: '08:00', wird: '20:00' }
     expect(buildSchedule({ ...base, notifications: n }, from, 14).length).toBe(MAX_SCHEDULED)
   })
+  it('إشعار آية اليوم فيه زرّا المشاركة بصورة أو فيديو', () => {
+    const n = { ...base.notifications, ayahOfDay: '08:00' }
+    const ayah = buildSchedule({ ...base, notifications: n }, from, 2).filter((r) => r.kind === 'ayah')
+    expect(ayah.length).toBeGreaterThan(0)
+    expect(ayah.every((r) => r.actions === 'ayah')).toBe(true)
+  })
   it('لا تكرار للتذكير المستحق', () => {
     const s = buildSchedule(base, from, 1)
     const fired = new Set<number>()

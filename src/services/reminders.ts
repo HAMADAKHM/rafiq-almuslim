@@ -29,7 +29,7 @@ export interface Reminder {
   channelId?: string
   sound?: string
   /** أزرار الإشعار (Android/iOS): 'dhikr' افتح/تمّ، و'quran' افتح/ذكّرني لاحقًا */
-  actions?: 'dhikr' | 'quran'
+  actions?: 'dhikr' | 'quran' | 'ayah'
   /** false = إشعار مكتوب بلا صوت */
   silent?: boolean
   /** معرّف الذكر في التذكير الدوري */
@@ -62,7 +62,7 @@ const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occas
   sleep: [{ title: SLOT_DEFS.sleep.title, body: SLOT_DEFS.sleep.body }],
   wake: [{ title: SLOT_DEFS.wake.title, body: SLOT_DEFS.wake.body }],
   ayah: [
-    { title: 'آية اليوم', body: 'آية اليوم بانتظارك في رفيق المسلم' },
+    { title: 'آية اليوم', body: 'آية اليوم بانتظارك — اقرأها وشاركها بصورة أو فيديو' },
     { title: 'آية اليوم', body: 'اقرأ آية اليوم وتدبّرها' },
   ],
   dhikr: [
@@ -199,12 +199,12 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
       const days = slot && slot !== 'afterPrayer' ? n.adhkarDays?.[slot] : undefined
       if (days && days.length && !days.includes(weekday)) continue
       const msg = pick(MESSAGES[kind as keyof typeof MESSAGES], seed)
-      add({ id: makeId(day, kind), at: atLocalTime(day, time, loc.tz), kind, route: ROUTES[kind], ...(slot ? voiced(slot, msg) : { title: msg.title, body: msg.body }) })
+      add({ id: makeId(day, kind), at: atLocalTime(day, time, loc.tz), kind, route: ROUTES[kind], ...(kind === 'ayah' ? { actions: 'ayah' as const } : {}), ...(slot ? voiced(slot, msg) : { title: msg.title, body: msg.body }) })
     }
     // «شارك منشورًا»: كل يوم بالتناوب آية اليوم، ثم دعاء، ثم دعاء لمتوفى — يفتح الاستوديو بالمحتوى جاهزًا للتعديل
     if (n.shareDaily && !n.reduce) {
       const share = shareOfDay(seed)
-      add({ id: makeId(day, 'share'), at: atLocalTime(day, n.shareDaily, loc.tz), kind: 'share', title: share.title, body: share.body, route: share.route })
+      add({ id: makeId(day, 'share'), at: atLocalTime(day, n.shareDaily, loc.tz), kind: 'share', title: share.title, body: share.body, route: share.route, ...(share.route.includes('src=ayah') ? { actions: 'ayah' as const } : {}) })
     }
     // أذكار ما بعد الصلاة: بعد الأذان بدقائق للصلوات المختارة
     const ap = n.afterPrayer

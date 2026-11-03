@@ -98,7 +98,7 @@ export async function replaceScheduledNotifications(list: Reminder[]): Promise<n
       id: r.id, title: r.title, body: r.body, schedule: { at: r.at, allowWhileIdle: true },
       extra: { route: r.route, kind: r.kind, ...(r.itemId ? { itemId: r.itemId } : {}) },
       ...(r.actions ? { actionTypeId: ACTION_TYPES[r.actions] } : {}),
-      ...(r.channelId ? { channelId: r.channelId } : android && r.actions ? { channelId: r.silent ? COMPANION_SILENT_CHANNEL : COMPANION_CHANNEL } : {}),
+      ...(r.channelId ? { channelId: r.channelId } : android && r.actions && r.actions !== 'ayah' ? { channelId: r.silent ? COMPANION_SILENT_CHANNEL : COMPANION_CHANNEL } : {}),
       ...(r.sound ? { sound: r.sound } : {}),
       ...(r.bigText ? { largeBody: r.bigText } : r.body.length > 60 ? { largeBody: r.body } : {}),
     })),
@@ -135,7 +135,7 @@ async function ensureHisnChannels(ids: string[]) {
 
 export const COMPANION_CHANNEL = 'rafiq-companion-v1'
 export const COMPANION_SILENT_CHANNEL = 'rafiq-companion-silent-v1'
-const ACTION_TYPES = { dhikr: 'RAFIQ_DHIKR', quran: 'RAFIQ_QURAN' } as const
+const ACTION_TYPES = { dhikr: 'RAFIQ_DHIKR', quran: 'RAFIQ_QURAN', ayah: 'RAFIQ_AYAH' } as const
 let actionsRegistered = false
 
 /** أزرار الإشعارات وقناتا «رفيقي يذكّرني» (بصوت الإشعار الافتراضي في النظام، وبلا صوت) */
@@ -146,6 +146,8 @@ async function registerNotificationActions() {
     types: [
       { id: ACTION_TYPES.dhikr, actions: [{ id: 'open', title: 'افتح الذكر', foreground: true }, { id: 'done', title: 'تمّ' }] },
       { id: ACTION_TYPES.quran, actions: [{ id: 'open', title: 'افتح المصحف', foreground: true }, { id: 'snooze', title: 'ذكّرني لاحقًا' }] },
+      // آية اليوم: مشاركتها مباشرة من الإشعار بصورة أو فيديو (يفتح الاستوديو على آية اليوم)
+      { id: ACTION_TYPES.ayah, actions: [{ id: 'share-image', title: 'مشاركة صورة', foreground: true }, { id: 'share-video', title: 'مشاركة فيديو', foreground: true }] },
     ],
   }).catch(() => {})
   if (platformName() === 'android') {

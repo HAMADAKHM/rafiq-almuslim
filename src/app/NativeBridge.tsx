@@ -74,6 +74,11 @@ export function NativeBridge() {
           .then(() => toast(`سنذكّرك بعد ${mins} دقيقة`)).catch(() => {})
         return
       }
+      // مشاركة آية اليوم من الإشعار: صورة أو فيديو
+      if (tap.actionId === 'share-image' || tap.actionId === 'share-video') {
+        nav(`/studio?src=ayah&daily=1&mode=${tap.actionId === 'share-video' ? 'video' : 'image'}`)
+        return
+      }
       if (route) nav(route)
     }).then((f) => { offTap = f })
     // الضغط على ودجت «أكمل من حيث وصلت»: يفتح المصحف على الموضع المحفوظ (عند الفتح وعند العودة)
