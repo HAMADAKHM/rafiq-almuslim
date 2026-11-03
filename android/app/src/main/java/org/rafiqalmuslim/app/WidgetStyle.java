@@ -14,7 +14,7 @@ final class WidgetStyle {
 
     /** التصاميم بالترتيب (المعرّف، الاسم، والخلفية) — تعرضها شاشة «إعداد الودجت» */
     static final String[] IDS = { "emerald", "indigo", "royal", "night", "turquoise", "dawn", "nature", "violet", "rose", "evening", "glass" };
-    static final String[] NAMES = { "الزمردي (الأصلي)", "النيلي الذهبي", "الملكي", "الليلي", "الفيروزي", "الفجر", "الطبيعي", "البنفسجي", "الوردي", "المساء", "زجاجي شفاف" };
+    static final String[] NAMES = { "الذهبي الإسلامي (الأصلي)", "النيلي الذهبي", "الملكي", "الليلي", "الفيروزي", "الفجر", "الطبيعي", "البنفسجي", "الوردي", "المساء", "زجاجي شفاف" };
     static final String KEY_PLUS = "plus";
     static final String KEY_TEXT = "text_";
 

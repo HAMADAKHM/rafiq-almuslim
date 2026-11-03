@@ -1,23 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- خلفية الودجت (تحديث بلس): تدرّج زمردي عميق، ولمعة علوية خفيفة، وإطار ذهبي رفيع -->
+<!-- خلفية الودجت بالتصميم الذهبي للتطبيق: أخضر زمردي داكن، ومسجد صاحب التطبيق خافتًا في الزاوية، وإطار ذهبي مزدوج -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
-            <gradient android:angle="300" android:startColor="#05302A" android:centerColor="#0B4A3E" android:endColor="#1F6F61" android:type="linear" />
+            <gradient android:angle="270" android:startColor="#0F4A37" android:centerColor="#0A3A2B" android:endColor="#04201A" android:type="linear" />
             <corners android:radius="24dp" />
         </shape>
     </item>
-    <item android:bottom="60dp">
+    <item android:bottom="50dp">
         <shape android:shape="rectangle">
-            <gradient android:angle="270" android:startColor="#1AFFFFFF" android:endColor="#00FFFFFF" />
+            <gradient android:angle="270" android:startColor="#22F0D48E" android:endColor="#00F0D48E" />
             <corners android:topLeftRadius="24dp" android:topRightRadius="24dp" />
         </shape>
+    </item>
+    <item android:left="14dp" android:bottom="6dp">
+        <bitmap android:src="@drawable/widget_mosque" android:gravity="bottom|left" />
     </item>
     <item>
         <shape android:shape="rectangle">
             <solid android:color="#00000000" />
             <corners android:radius="24dp" />
-            <stroke android:width="1.2dp" android:color="#8CE2C27E" />
+            <stroke android:width="2dp" android:color="#E7C46E" />
+        </shape>
+    </item>
+    <item android:left="5dp" android:top="5dp" android:right="5dp" android:bottom="5dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#00000000" />
+            <corners android:radius="19dp" />
+            <stroke android:width="0.8dp" android:color="#99E7C46E" />
         </shape>
     </item>
 </layer-list>

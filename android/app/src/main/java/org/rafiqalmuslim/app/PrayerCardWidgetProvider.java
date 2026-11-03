@@ -21,7 +21,7 @@ public class PrayerCardWidgetProvider extends AppWidgetProvider {
     private static final int[] ICONS = { R.id.k_icon_0, R.id.k_icon_1, R.id.k_icon_2, R.id.k_icon_3, R.id.k_icon_4 };
     private static final int[] NAMES = { R.id.k_name_0, R.id.k_name_1, R.id.k_name_2, R.id.k_name_3, R.id.k_name_4 };
     private static final int[] TIMES = { R.id.k_time_0, R.id.k_time_1, R.id.k_time_2, R.id.k_time_3, R.id.k_time_4 };
-    private static final int GOLD = 0xFFF6C35A, INK = 0xFF1B1640, MUTED = 0xFFCFC8EC, WHITE = 0xFFFFFFFF;
+    private static final int GOLD = 0xFFF0D48E, INK = 0xFF06281D, MUTED = 0xFFE9DDB8, WHITE = 0xFFFFFFFF;
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
