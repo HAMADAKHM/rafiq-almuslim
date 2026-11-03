@@ -100,7 +100,7 @@ export async function replaceScheduledNotifications(list: Reminder[]): Promise<n
       ...(r.actions ? { actionTypeId: ACTION_TYPES[r.actions] } : {}),
       ...(r.channelId ? { channelId: r.channelId } : android && r.actions ? { channelId: r.silent ? COMPANION_SILENT_CHANNEL : COMPANION_CHANNEL } : {}),
       ...(r.sound ? { sound: r.sound } : {}),
-      ...(r.body.length > 60 ? { largeBody: r.body } : {}),
+      ...(r.bigText ? { largeBody: r.bigText } : r.body.length > 60 ? { largeBody: r.body } : {}),
     })),
   })
   return list.length

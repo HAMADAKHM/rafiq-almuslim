@@ -103,6 +103,9 @@ describe('جدولة التذكيرات', () => {
     expect(s.some((r) => r.title.includes('الظهر'))).toBe(false)
     const fajr = s.find((r) => r.kind === 'prayer' && r.title.includes('الفجر'))!
     const fajrBefore = before.find((r) => r.title.includes('الفجر'))!
+    // نص الإشعار حديث صحيح بمصدره (كما في التطبيقات المعروفة)، والمدينة في النص الموسّع
+    expect(fajr.body).toMatch(/^«.+»$/)
+    expect(fajr.bigText).toMatch(/رواه (مسلم|البخاري) \(\d+\)/)
     expect((fajr.at.getTime() - fajrBefore.at.getTime()) / 60_000).toBe(10)
   })
   it('التذكيرات اليومية في الوقت المحلي للمدينة، وفترة الهدوء تمنعها دون الصلاة', () => {

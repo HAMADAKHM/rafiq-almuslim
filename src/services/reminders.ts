@@ -2,6 +2,7 @@
 // - في الويب: يعرضها التطبيق ما دام مفتوحًا.
 // - في Android/iOS: تُسلَّم القائمة كاملة لنظام الإشعارات المحلية المجدولة (لا حساب في الخلفية).
 // الرسائل قصيرة ومتنوعة، دون لوم ودون نسبة فضائل غير موثقة.
+import { prayerMessage } from '../content/prayerMessages'
 import { PRAYER_LABELS, prayerTimesFor } from './prayer'
 import type { PrayerKey, Settings } from '../state/settings'
 import { addDays, dateParts, dayKey } from '../lib/dates'
@@ -33,6 +34,8 @@ export interface Reminder {
   silent?: boolean
   /** معرّف الذكر في التذكير الدوري */
   itemId?: string
+  /** النص الموسّع عند فتح الإشعار (Android) */
+  bigText?: string
 }
 
 /** معلومات من خارج الإعدادات تُعرض في الإشعارات (تُقرأ من الجهاز قبل الجدولة) */
@@ -176,7 +179,11 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
     const times = prayerTimesFor(loc, day, settings.prayer)
     for (const p of Object.keys(PRAYER_CODE) as PrayerKey[]) {
       if (!n.perPrayer[p]) continue
-      if (n.atAdhan) add({ id: makeId(day, 'prayer', PRAYER_CODE[p]), at: times[p], kind: 'prayer', prayer: p, title: `حان الآن وقت صلاة ${PRAYER_LABELS[p]}`, body: place, route: ROUTES.prayer })
+      if (n.atAdhan) {
+        // كإشعارات التطبيقات المعروفة: العنوان «حان الآن وقت …» وتحته حديث صحيح قصير بمصدره يتبدل يوميًا
+        const m = prayerMessage(p, seed + PRAYER_CODE[p])
+        add({ id: makeId(day, 'prayer', PRAYER_CODE[p]), at: times[p], kind: 'prayer', prayer: p, title: `حان الآن وقت صلاة ${PRAYER_LABELS[p]}`, body: `«${m.text}»`, bigText: `«${m.text}» — ${m.source}\n${place}`, route: ROUTES.prayer })
+      }
       if (n.minutesBefore > 0 && !n.reduce) {
         add({ id: makeId(day, 'prayer-before', PRAYER_CODE[p]), at: new Date(times[p].getTime() - n.minutesBefore * 60_000), kind: 'prayer-before', title: `اقترب وقت صلاة ${PRAYER_LABELS[p]}`, body: `بعد ${n.minutesBefore} دقيقة — ${place}`, route: ROUTES.prayer })
       }
