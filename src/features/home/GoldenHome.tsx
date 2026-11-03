@@ -47,6 +47,19 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
   const verse = data ? tailOfAyah(data.verses[12][27]) : null
   return (
     <div className="gd-home">
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+        <defs>
+          <linearGradient id="gd-gold-grad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#fff1c1" /><stop offset="0.35" stopColor="#e7c46e" /><stop offset="0.65" stopColor="#b88a2e" /><stop offset="1" stopColor="#f6dc93" />
+          </linearGradient>
+          <linearGradient id="gd-green-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#0f4a37" /><stop offset="1" stopColor="#062a1f" />
+          </linearGradient>
+          <pattern id="gd-star-pat" width="16" height="16" patternUnits="userSpaceOnUse">
+            <path d="M8 1 L10 6 L15 8 L10 10 L8 15 L6 10 L1 8 L6 6 Z" fill="none" stroke="#e7c46e" strokeWidth="0.6" />
+          </pattern>
+        </defs>
+      </svg>
       <header className="gd-head" style={{ backgroundImage: `url("${hero}")` }}>
         <div className="gd-head-veil" />
         <div className="gd-top">
@@ -67,9 +80,14 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
             <span><CalendarDays size={16} /> {formatHijri(now, loc?.tz, hijriOffset)}</span>
           </div>
           <Link to="/prayer" className="gd-prayer" aria-label="مواقيت الصلاة">
-            <svg className="gd-prayer-frame" viewBox="0 0 200 170" preserveAspectRatio="none" aria-hidden="true"><path d="M12 24 Q12 15 21 15 H78 Q91 15 100 3 Q109 15 122 15 H179 Q188 15 188 24 V68 Q182 76 188 84 V146 Q188 155 179 155 H122 Q109 155 100 167 Q91 155 78 155 H21 Q12 155 12 146 V84 Q18 76 12 68 Z" /></svg>
+            <svg className="gd-prayer-frame" viewBox="0 0 200 170" preserveAspectRatio="none" aria-hidden="true">
+              <path className="gd-f-fill" d="M12 30 Q12 20 22 20 H70 Q86 20 92 11 Q96 4 100 2 Q104 4 108 11 Q114 20 130 20 H178 Q188 20 188 30 V70 Q180 78 188 86 V140 Q188 150 178 150 H130 Q114 150 108 159 Q104 166 100 168 Q96 166 92 159 Q86 150 70 150 H22 Q12 150 12 140 V86 Q20 78 12 70 Z" />
+              <path className="gd-f-pat" d="M12 30 Q12 20 22 20 H70 Q86 20 92 11 Q96 4 100 2 Q104 4 108 11 Q114 20 130 20 H178 Q188 20 188 30 V70 Q180 78 188 86 V140 Q188 150 178 150 H130 Q114 150 108 159 Q104 166 100 168 Q96 166 92 159 Q86 150 70 150 H22 Q12 150 12 140 V86 Q20 78 12 70 Z" />
+              <path className="gd-f-out" d="M12 30 Q12 20 22 20 H70 Q86 20 92 11 Q96 4 100 2 Q104 4 108 11 Q114 20 130 20 H178 Q188 20 188 30 V70 Q180 78 188 86 V140 Q188 150 178 150 H130 Q114 150 108 159 Q104 166 100 168 Q96 166 92 159 Q86 150 70 150 H22 Q12 150 12 140 V86 Q20 78 12 70 Z" />
+              <path className="gd-f-in" d="M12 30 Q12 20 22 20 H70 Q86 20 92 11 Q96 4 100 2 Q104 4 108 11 Q114 20 130 20 H178 Q188 20 188 30 V70 Q180 78 188 86 V140 Q188 150 178 150 H130 Q114 150 108 159 Q104 166 100 168 Q96 166 92 159 Q86 150 70 150 H22 Q12 150 12 140 V86 Q20 78 12 70 Z" transform="translate(100 85) scale(0.95 0.9) translate(-100 -85)" />
+            </svg>
             <span className="gd-prayer-title"><Clock3 size={18} /> مواقيت الصلاة</span>
-            {np && loc ? (
+            {np && loc ? (<>
               <span className="gd-prayer-body">
                 <span className="gd-prayer-text">
                   <strong className="gd-prayer-name">{PRAYER_LABELS[np.name]}</strong>
@@ -77,7 +95,8 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
                 </span>
                 <MosqueMark />
               </span>
-            ) : <span className="gd-prayer-empty">اختر مدينتك لعرض المواقيت</span>}
+              <span className="gd-divider" aria-hidden="true"><i /><b /><i /></span>
+            </>) : <span className="gd-prayer-empty">اختر مدينتك لعرض المواقيت</span>}
             <span className="gd-btn">عرض التفاصيل <ChevronLeft size={14} /></span>
           </Link>
         </div>
@@ -87,7 +106,7 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
       <nav className="gd-arches" aria-label="الأقسام">
         {ARCHES.map((a) => (
           <Link key={a.to} to={a.to} className="gd-arch">
-            <svg className="gd-arch-shape" viewBox="0 0 100 130" preserveAspectRatio="none" aria-hidden="true"><path d="M4 128 V52 Q4 30 28 20 Q44 13 50 2 Q56 13 72 20 Q96 30 96 52 V128 Z" /></svg>
+            <svg className="gd-arch-shape" viewBox="0 0 100 130" preserveAspectRatio="none" aria-hidden="true"><path d="M4 128 V52 Q4 30 28 20 Q44 13 50 2 Q56 13 72 20 Q96 30 96 52 V128 Z" /><path className="gd-arch-in" d="M4 128 V52 Q4 30 28 20 Q44 13 50 2 Q56 13 72 20 Q96 30 96 52 V128 Z" transform="translate(50 70) scale(0.86 0.9) translate(-50 -70)" /></svg>
             <a.icon size={30} strokeWidth={1.6} /><span>{a.title}</span><i className="gd-arch-dot" />
           </Link>
         ))}

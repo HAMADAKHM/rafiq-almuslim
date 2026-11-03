@@ -51,7 +51,15 @@
 .gd-prayer { position: relative; align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 26px 16px 24px; text-decoration: none; color: #fff3d0; filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4)); }
 .gd-prayer > :not(svg.gd-prayer-frame) { position: relative; }
 .gd-prayer-frame { position: absolute; inset: 0; width: 100%; height: 100%; }
-.gd-prayer-frame path { fill: color-mix(in srgb, var(--gd-green) 92%, transparent); stroke: var(--gd-gold); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.gd-prayer-frame path { vector-effect: non-scaling-stroke; fill: none; }
+.gd-prayer-frame .gd-f-fill { fill: url(#gd-green-grad); opacity: 0.94; }
+.gd-prayer-frame .gd-f-pat { fill: url(#gd-star-pat); opacity: 0.22; }
+.gd-prayer-frame .gd-f-out { stroke: url(#gd-gold-grad); stroke-width: 2.4; }
+.gd-prayer-frame .gd-f-in { stroke: url(#gd-gold-grad); stroke-width: 0.9; opacity: 0.85; }
+.gd-prayer { filter: drop-shadow(0 0 10px rgba(231, 196, 110, 0.35)) drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45)) !important; }
+.gd-divider { display: flex; align-items: center; gap: 6px; width: 70%; margin: 2px 0 4px; }
+.gd-divider i { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, #e7c46e, transparent); }
+.gd-divider b { width: 8px; height: 8px; transform: rotate(45deg); background: linear-gradient(135deg, #fff1c1, #b88a2e); box-shadow: 0 0 6px rgba(231, 196, 110, 0.8); }
 .gd-prayer-body { display: flex; align-items: center; justify-content: center; gap: 8px; }
 .gd-prayer-text { display: flex; flex-direction: column; align-items: center; }
 .gd-prayer .gp-mosque { width: 54px; height: 40px; color: var(--gd-gold-2); }
@@ -136,7 +144,15 @@
 .gd-arch > :not(.gd-arch-shape) { position: relative; }
 .gd-arch-shape { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35)); }
 .gd-arch-shape path { fill: var(--gd-green); stroke: var(--gd-gold); stroke-width: 1.8; vector-effect: non-scaling-stroke; }
-.gd-home .gd-arch-shape path { fill: color-mix(in srgb, var(--gd-green) 86%, transparent); }
+.gd-home .gd-arch-shape path { fill: url(#gd-green-grad); fill-opacity: 0.92; stroke: url(#gd-gold-grad); stroke-width: 2.2; }
+.gd-home .gd-arch-shape path.gd-arch-in { fill: none; stroke-width: 0.9; opacity: 0.8; }
+.gd-home .gd-arch-shape { filter: drop-shadow(0 0 6px rgba(231, 196, 110, 0.3)) drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4)); }
+.gd-home .gd-arch svg:not(.gd-arch-shape) { filter: drop-shadow(0 0 4px rgba(231, 196, 110, 0.5)); }
+.gd-home .gd-arch-dot { width: 8px; height: 8px; margin-left: -4px; border-radius: 1px; transform: rotate(45deg); background: linear-gradient(135deg, #fff1c1, #b88a2e); }
+.gd-home .gd-icons a { background: radial-gradient(circle at 50% 40%, #0f4a37, #04201a); border: 2px solid transparent; background-clip: padding-box; box-shadow: 0 0 0 1.5px #e7c46e, 0 0 0 3px rgba(4, 32, 26, 0.7), 0 0 10px rgba(231, 196, 110, 0.4); }
+.gd-home .gd-glass { background: linear-gradient(180deg, rgba(15, 74, 55, 0.9), rgba(6, 42, 31, 0.92)); border: 1.5px solid #e7c46e; box-shadow: inset 0 0 0 3px rgba(6, 42, 31, 0.9), inset 0 0 0 4px rgba(231, 196, 110, 0.55), 0 0 10px rgba(231, 196, 110, 0.3), 0 8px 18px rgba(0, 0, 0, 0.4); }
+.gd-home .gd-card { border-color: #e7c46e; box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.04), inset 0 0 0 4px rgba(231, 196, 110, 0.45), 0 0 10px rgba(231, 196, 110, 0.25), 0 8px 18px rgba(0, 0, 0, 0.3); }
+.gd-home .gd-btn { background: linear-gradient(180deg, #fff3cd, #e7c46e 55%, #c99a3f); border-color: #9c7428; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 3px 8px rgba(0, 0, 0, 0.3); }
 .gd-arch-dot { position: absolute !important; bottom: -4px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--gd-gold-2); box-shadow: 0 0 6px var(--gd-gold-2); }
 
 /* رأس الصفحات: الشعار الذهبي والعنوان والعنوان الفرعي كما في التصميم */
@@ -211,3 +227,4 @@
 
 /* القبلة: بوصلة ذهبية والكعبة في الوسط */
 .gd-compass svg { filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.35)); }
+.gd-home .gd-brand strong, .gd-home .gd-brand small { text-shadow: 0 0 2px #000, 0 2px 8px rgba(0, 0, 0, 0.9); }
