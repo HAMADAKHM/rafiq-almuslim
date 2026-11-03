@@ -41,7 +41,7 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
   const np = loc ? nextPrayer(loc, prayer, now) : null
   const after = loc && np ? nextPrayer(loc, prayer, new Date(np.time.getTime() + 60_000)) : null
   const land = landmarkFor(loc?.country, loc?.name)
-  const hero = goldenPhoto(land?.photo ?? 'bg-night')
+  const hero = goldenPhoto(land?.photo ?? 'bg-home')
   const surah = last && data ? data.meta.surahs[last.surah - 1] : null
   const verse = data ? tailOfAyah(data.verses[12][27]) : null
   return (
