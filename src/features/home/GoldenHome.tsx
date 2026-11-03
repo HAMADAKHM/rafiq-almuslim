@@ -11,6 +11,7 @@ import type { SavedLocation } from '../../state/settings'
 import { PRAYER_LABELS, nextPrayer, type PrayerSettings } from '../../services/prayer'
 import { formatGregorian, formatHijri, formatTime } from '../../lib/dates'
 import { goldenPhoto, landmarkFor } from '../../themes/golden'
+import { MosqueMark } from './GoldenPages'
 
 const ARCHES = [
   { to: '/quran', title: 'القرآن الكريم', icon: BookOpen },
@@ -65,15 +66,19 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
             <span><CalendarDays size={16} /> {formatGregorian(now, loc?.tz)}</span>
             <span><CalendarDays size={16} /> {formatHijri(now, loc?.tz, hijriOffset)}</span>
           </div>
-          <Link to="/prayer" className="gd-glass gd-prayer" aria-label="مواقيت الصلاة">
+          <Link to="/prayer" className="gd-prayer" aria-label="مواقيت الصلاة">
+            <svg className="gd-prayer-frame" viewBox="0 0 200 170" preserveAspectRatio="none" aria-hidden="true"><path d="M12 24 Q12 15 21 15 H78 Q91 15 100 3 Q109 15 122 15 H179 Q188 15 188 24 V68 Q182 76 188 84 V146 Q188 155 179 155 H122 Q109 155 100 167 Q91 155 78 155 H21 Q12 155 12 146 V84 Q18 76 12 68 Z" /></svg>
             <span className="gd-prayer-title"><Clock3 size={18} /> مواقيت الصلاة</span>
             {np && loc ? (
-              <>
-                <strong className="gd-prayer-name">{PRAYER_LABELS[np.name]}</strong>
-                <b className="gd-prayer-time">{formatTime(np.time, loc.tz)}</b>
-              </>
+              <span className="gd-prayer-body">
+                <span className="gd-prayer-text">
+                  <strong className="gd-prayer-name">{PRAYER_LABELS[np.name]}</strong>
+                  <b className="gd-prayer-time">{formatTime(np.time, loc.tz)}</b>
+                </span>
+                <MosqueMark />
+              </span>
             ) : <span className="gd-prayer-empty">اختر مدينتك لعرض المواقيت</span>}
-            <span className="gd-pill">عرض التفاصيل <ChevronLeft size={14} /></span>
+            <span className="gd-btn">عرض التفاصيل <ChevronLeft size={14} /></span>
           </Link>
         </div>
         {land && <span className="gd-landmark">{land.name}</span>}

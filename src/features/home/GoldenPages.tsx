@@ -18,7 +18,7 @@ function leftText(ms: number) {
 }
 
 /** قبة مسجد بخط ذهبي (رمز داخل البطاقة كما في التصميم) */
-function MosqueMark() {
+export function MosqueMark() {
   return (
     <svg className="gp-mosque" viewBox="0 0 120 80" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round">
       <path d="M38 70 V44 Q60 18 82 44 V70" /><path d="M60 22 V12" /><circle cx="60" cy="9" r="3" />
