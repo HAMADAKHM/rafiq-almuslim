@@ -39,6 +39,7 @@ import { CityPicker } from '../../components/CityPicker'
 import { useNow } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
 import { useGolden } from '../../themes/useGolden'
+import { GoldenPrayerTop } from '../home/GoldenPages'
 import { MonthTimes } from './MonthTimes'
 import { METHODS, nextPrayer, PRAYER_LABELS, PRAYERS, upcomingDays, todayTimes } from '../../services/prayer'
 import { formatCountdown, formatGregorian, formatHijri, formatTime } from '../../lib/dates'
@@ -79,7 +80,8 @@ export function PrayerPage() {
   return (
     <>
       <PageHead title="مواقيت الصلاة" subtitle={loc ? undefined : 'اختر مدينتك لعرض المواقيت'} />
-      {loc && next && (
+      {golden && loc && <button type="button" className="gd-city-pill" onClick={() => setPicking((p) => !p)}><MapPin size={14} /> {cityLabel(loc)}</button>}
+      {!golden && loc && next && (
         <section className="prayer-hero">
           <PaintedScene tone={TONE[next.name]} variant="hero" className="prayer-hero-art" />
           <div className="prayer-hero-text">
@@ -99,13 +101,7 @@ export function PrayerPage() {
         </section>
       )}
 
-      {golden && loc && next && today && (
-        <div className="gd-times prayer-page-tiles" aria-label="مواقيت اليوم">
-          {(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const).map((p) => (
-            <span key={p} className={'gd-time-tile' + (next.name === p ? ' on' : '')}><small>{PRAYER_LABELS[p]}</small><b>{formatTime(today[p], loc.tz)}</b></span>
-          ))}
-        </div>
-      )}
+      {golden && loc && <GoldenPrayerTop settings={settings} now={now} update={update} />}
       {loc && next && today && (
         <div className="grid grid-2 prayer-grid">
           <section className="card next-prayer-card" aria-live="polite">

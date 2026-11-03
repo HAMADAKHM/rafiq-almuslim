@@ -115,3 +115,88 @@
 .app.golden .tasbih-btn { background: radial-gradient(circle at 35% 30%, #fff6d6, var(--gd-gold) 62%, color-mix(in srgb, var(--gd-gold) 55%, #000)); color: var(--gd-green); border: 4px solid var(--gd-green); box-shadow: 0 0 0 3px var(--gd-gold), 0 12px 28px rgba(0, 0, 0, 0.35); }
 .app.golden .tasbih-count { color: var(--gd-green); }
 .app.golden .tasbih-target { color: color-mix(in srgb, var(--gd-green) 80%, #000); }
+
+/* ===== مطابقة التصميم المرسل ===== */
+/* الرئيسية على خلفية خضراء داكنة كما في التصميم */
+.app.golden.at-home .main, .app.golden.at-home .content { background: radial-gradient(circle at 50% 20%, color-mix(in srgb, var(--gd-green-2) 85%, #000), var(--gd-green)); }
+.app.golden.at-home .footer a { color: var(--gd-gold-2); }
+
+/* الأقواس المدببة بإطار ذهبي ونقطة ذهبية */
+.gd-arch { position: relative; background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; padding-top: 30px; }
+.gd-arch > :not(.gd-arch-shape) { position: relative; }
+.gd-arch-shape { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35)); }
+.gd-arch-shape path { fill: var(--gd-green); stroke: var(--gd-gold); stroke-width: 1.8; vector-effect: non-scaling-stroke; }
+.gd-arch-dot { position: absolute !important; bottom: -4px; left: 50%; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--gd-gold-2); box-shadow: 0 0 6px var(--gd-gold-2); }
+
+/* رأس الصفحات: الشعار الذهبي والعنوان والعنوان الفرعي كما في التصميم */
+@media (max-width: 900px) {
+  .app.golden .topbar-center { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 8px; text-align: right; }
+  .app.golden .topbar-center .brand { display: none; }
+  .gd-emblem { grid-row: span 2; width: 48px; height: 48px; display: grid; place-items: center; color: var(--gd-gold-2); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)); }
+  .gd-emblem svg { width: 40px; height: 40px; }
+  .app.golden .topbar-title { justify-self: start; }
+  .app.golden .topbar-title h1 { font-size: 1.7rem; color: var(--gd-gold-2); }
+  .gd-sub { justify-self: start; color: #fff3d0; font-size: 0.9rem; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8); }
+  .app.golden.gd-own-sub .page-sub { display: none; }
+  .app.golden.gd-root .topbar > .btn-ghost { visibility: hidden; }
+}
+.gd-city-pill { display: flex; margin: -96px auto 70px; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 18px; border: 1px solid var(--gd-gold); background: rgba(5, 25, 18, 0.65); color: #fff3d0; font: inherit; font-size: 0.85rem; cursor: pointer; }
+
+/* مواقيت الصلاة كما في التصميم */
+.app.golden .next-prayer-card { display: none; }
+.gp-prayer { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.gp-next { display: flex; align-items: center; gap: 10px; padding: 18px 16px; border-radius: 26px; background: linear-gradient(180deg, var(--gd-green-2), var(--gd-green)); border: 1.5px solid var(--gd-gold); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3); color: #fff3d0; }
+.gp-next-text { flex: 1; display: flex; flex-direction: column; align-items: flex-start; }
+.gp-next-text strong { font-family: 'Amiri', serif; font-size: 2.2rem; line-height: 1.1; }
+.gp-next-text b { font-size: 2.6rem; color: var(--gd-gold-2); line-height: 1.15; }
+.gp-next-text span { display: flex; align-items: center; gap: 6px; font-size: 0.92rem; }
+.gp-next-text span svg { color: var(--gd-gold-2); }
+.gp-mosque { width: 110px; height: 76px; color: var(--gd-gold-2); flex-shrink: 0; order: 2; }
+.gp-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.gp-tile { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 12px 4px; border-radius: 18px; background: linear-gradient(180deg, var(--gd-cream), var(--gd-cream-2)); border: 1px solid var(--gd-gold); color: var(--text); box-shadow: 0 4px 10px rgba(70, 50, 15, 0.12); }
+.gp-tile svg { color: var(--primary); }
+.gp-tile small { font-weight: 700; }
+.gp-tile b { font-size: 0.85rem; white-space: nowrap; }
+.gp-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 16px; border-radius: 20px; background: linear-gradient(180deg, var(--gd-cream), var(--gd-cream-2)); border: 1px solid var(--gd-gold); box-shadow: 0 4px 12px rgba(70, 50, 15, 0.12); color: var(--text); }
+.gp-row-title { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+.gp-row-title svg { color: var(--primary); }
+.gp-upcoming-nav { flex-basis: 100%; display: flex; align-items: center; justify-content: space-between; }
+.gp-upcoming-nav b { font-size: 1.3rem; }
+.gp-upcoming-nav button { border: 0; background: none; color: var(--primary); cursor: pointer; padding: 4px; }
+.gp-alert a { color: var(--text-muted); text-decoration: none; display: inline-flex; align-items: center; }
+.gp-switch { position: relative; width: 52px; height: 30px; flex-shrink: 0; }
+.gp-switch input { position: absolute; opacity: 0; inset: 0; cursor: pointer; z-index: 1; margin: 0; }
+.gp-switch span { position: absolute; inset: 0; border-radius: 16px; background: #cbbf9f; transition: background 0.2s; }
+.gp-switch span::after { content: ''; position: absolute; top: 3px; inset-inline-end: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: inset 0.2s; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); }
+.gp-switch input:checked + span { background: #1f7a3f; }
+.gp-switch input:checked + span::after { inset-inline-end: 25px; }
+
+/* القرآن الكريم كما في التصميم */
+.gq-top { display: flex; flex-direction: column; gap: 14px; margin-bottom: 14px; }
+.gq-start { align-self: center; display: flex; align-items: center; gap: 8px; padding: 12px 40px; border-radius: 30px; font-weight: 800; font-size: 1.15rem; color: var(--primary); text-decoration: none; background: linear-gradient(180deg, #fffaf0, #ecdcb6); border: 1.5px solid var(--gd-gold); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); margin-top: -40px; }
+.gq-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.gq-tiles button { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 4px; border-radius: 18px; font: inherit; font-weight: 700; color: var(--text); background: linear-gradient(180deg, var(--gd-cream), var(--gd-cream-2)); border: 1px solid var(--gd-gold); box-shadow: 0 4px 12px rgba(70, 50, 15, 0.14); cursor: pointer; }
+.gq-tiles svg { color: var(--primary); }
+.gq-last { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; min-height: 110px; border-radius: 20px; text-decoration: none; color: var(--text); border: 1px solid var(--gd-gold); background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gd-cream) 85%, transparent) 30%, var(--gd-cream) 55%), var(--img) left center / 45% auto no-repeat, var(--gd-cream); box-shadow: 0 4px 12px rgba(70, 50, 15, 0.14); }
+.gq-last strong { font-family: 'Amiri', serif; font-size: 1.3rem; }
+.gq-last small { color: var(--text-muted); }
+.gq-chev { position: absolute; inset-inline-end: 14px; top: 50%; transform: translateY(-50%); color: var(--primary); }
+.gq-banner { padding: 16px; border-radius: 30px; text-align: center; font-weight: 700; color: var(--gd-gold-2); background: linear-gradient(180deg, var(--gd-green-2), var(--gd-green)); border: 1.5px solid var(--gd-gold); }
+
+/* الأذكار: صف بصورة وعنوان فقط كما في التصميم */
+.app.golden .gd-thumb ~ .lc-body small { display: none; }
+.app.golden .gd-thumb ~ .lc-body strong { font-size: 1.1rem; }
+
+/* المناسبات كما في التصميم */
+.gd-occ-list { display: flex; flex-direction: column; gap: 10px; margin: 10px 0; }
+.gd-occ { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: linear-gradient(180deg, var(--gd-cream), var(--gd-cream-2)); border: 1px solid var(--gd-gold); box-shadow: 0 4px 12px rgba(70, 50, 15, 0.12); }
+.gd-occ-badge { display: flex; flex-direction: column; align-items: center; min-width: 58px; padding: 6px; border-radius: 14px; border: 1px solid var(--gd-gold); background: var(--gd-cream); }
+.gd-occ-badge b { font-size: 1.4rem; line-height: 1.1; color: var(--text); }
+.gd-occ-badge small { font-size: 0.75rem; }
+.gd-occ-body { display: flex; flex-direction: column; }
+.gd-occ-body strong { font-family: 'Amiri', serif; font-size: 1.2rem; }
+.gd-occ-body small { color: var(--text-muted); }
+.gd-hide { display: none; }
+
+/* القبلة: بوصلة ذهبية والكعبة في الوسط */
+.gd-compass svg { filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.35)); }

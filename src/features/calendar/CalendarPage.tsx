@@ -1,3 +1,4 @@
+import { useGolden } from '../../themes/useGolden'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
@@ -11,6 +12,7 @@ import { AdSlot } from '../../ads/AdSlot'
 const WEEKDAYS = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت']
 
 export function CalendarPage() {
+  const golden = useGolden()
   const { settings } = useSettings()
   const tz = settings.location?.tz
   const todayParts = dateParts(new Date(), tz)
@@ -26,7 +28,17 @@ export function CalendarPage() {
 
   return (
     <>
-      <PageHead title="التقويم الإسلامي" subtitle={`اليوم: ${toArabicDigits(todayH.day)} ${HIJRI_MONTHS[todayH.month - 1]} ${toArabicDigits(todayH.year)} هـ`} />
+      <PageHead title={golden ? 'المناسبات' : 'التقويم الإسلامي'} subtitle={`اليوم: ${toArabicDigits(todayH.day)} ${HIJRI_MONTHS[todayH.month - 1]} ${toArabicDigits(todayH.year)} هـ`} />
+      {golden && (
+        <ul className="plain gd-occ-list" aria-label="المناسبات القادمة">
+          {upcoming.map((u) => (
+            <li key={'g' + u.date.toISOString() + u.occasion.title} className="gd-occ">
+              <span className="gd-occ-badge"><b>{toArabicDigits(u.hijri.day)}</b><small>{HIJRI_MONTHS[u.hijri.month - 1]}</small></span>
+              <span className="gd-occ-body"><strong>{u.occasion.title}</strong><small>{u.occasion.note ?? new Intl.DateTimeFormat('ar-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(u.date) + ' تقريبًا'}</small></span>
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="alert alert-gold small" style={{ marginBottom: '1rem' }}>
         التواريخ محسوبة وفق تقويم أم القرى، وقد تختلف بداية الشهر يومًا في بلدك بحسب رؤية الهلال. يمكنك ضبط الفرق من <Link to="/settings#prayer">الإعدادات</Link> (الفرق الحالي: {settings.hijriOffset} يوم).
       </div>
@@ -70,7 +82,7 @@ export function CalendarPage() {
           )}
           <hr className="divider" />
           <h3>المناسبات القادمة</h3>
-          <ul className="small">
+          <ul className={'small' + (golden ? ' gd-hide' : '')}>
             {upcoming.map((u) => (
               <li key={u.date.toISOString() + u.occasion.title}>
                 <strong>{u.occasion.title}</strong> — {toArabicDigits(u.hijri.day)} {HIJRI_MONTHS[u.hijri.month - 1]} ({new Intl.DateTimeFormat('ar-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(u.date)} تقريبًا)

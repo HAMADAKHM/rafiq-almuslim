@@ -151,6 +151,7 @@ export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' | 'hadith' })
     return next
   })
   const scale = settings.adhkarFontScale
+  const golden = useGolden()
   const [q, setQ] = useState('')
   const [onlyFav, setOnlyFav] = useState(false)
   const title = kind === 'adhkar' ? 'الأذكار' : kind === 'hadith' ? 'الأحاديث النبوية' : 'الأدعية'
@@ -174,6 +175,7 @@ export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' | 'hadith' })
   return (
     <>
       <PageHead title={cat ? cat.title : title} subtitle={cat ? <Link to={base}>← كل التصنيفات</Link> : kind === 'hadith' ? HADITH_NOTE : SOURCE_NOTE} />
+      {golden && !showList && <CategoryGrid cats={cats} base={base} doneToday={kind === 'adhkar' ? doneToday : undefined} />}
       {!cat && <LibraryTabs />}
       {cat && kind !== 'hadith' && (
         <Tabs label="طريقة العرض" value={view} onChange={(v) => update({ adhkarView: v })} items={[{ id: 'session', label: 'جلسة: ذكر تلو الآخر' }, { id: 'list', label: 'قائمة' }]} />
@@ -195,7 +197,7 @@ export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' | 'hadith' })
         </Link>
       )}
       {!showList && kind === 'hadith' && <HadithFeature />}
-      {!showList && <CategoryGrid cats={cats} base={base} doneToday={kind === 'adhkar' ? doneToday : undefined} />}
+      {!golden && !showList && <CategoryGrid cats={cats} base={base} doneToday={kind === 'adhkar' ? doneToday : undefined} />}
       {!showList && kind === 'adhkar' && (
         <section style={{ marginTop: '1.25rem' }}>
           <h2 className="section-title">أقسام ذات صلة</h2>

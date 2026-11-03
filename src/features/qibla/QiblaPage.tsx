@@ -1,3 +1,4 @@
+import { useGolden } from '../../themes/useGolden'
 import { useEffect, useRef, useState } from 'react'
 import { Compass } from 'lucide-react'
 import { PageHead } from '../../components/Common'
@@ -7,7 +8,33 @@ import { compassName, distanceToKaabaKm, qiblaBearing } from '../../services/qib
 import { compassAvailable, watchHeading } from '../../platform'
 import { cityLabel } from '../../services/cities'
 
+/** بوصلة التصميم الذهبي: إطار ذهبي، والكعبة (من صورة صاحب التطبيق) في الوسط، والسهم الأخضر نحو القبلة */
+function GoldenDial({ bearing, heading }: { bearing: number; heading: number | null }) {
+  const rotation = heading == null ? 0 : -heading
+  return (
+    <div className="compass gd-compass">
+      <svg viewBox="0 0 200 200" role="img" aria-label={`اتجاه القبلة ${bearing.toFixed(1)} درجة من الشمال`}>
+        <defs><clipPath id="gd-kc"><circle cx="100" cy="100" r="40" /></clipPath><radialGradient id="gd-face"><stop offset="0" stopColor="#fffdf6" /><stop offset="1" stopColor="#efe3c4" /></radialGradient></defs>
+        <circle cx="100" cy="100" r="96" fill="#c9a24a" /><circle cx="100" cy="100" r="90" fill="#8f6b22" /><circle cx="100" cy="100" r="87" fill="url(#gd-face)" />
+        <g transform={`rotate(${rotation} 100 100)`}>
+          {Array.from({ length: 72 }, (_, i) => (
+            <line key={i} x1="100" y1="16" x2="100" y2={i % 18 === 0 ? 26 : i % 2 === 0 ? 22 : 19} stroke="#8f6b22" strokeWidth={i % 18 === 0 ? 2 : 0.8} transform={`rotate(${i * 5} 100 100)`} />
+          ))}
+          <text x="100" y="42" textAnchor="middle" fontSize="12" fill="#0b2f24" fontWeight="700">شمال</text>
+          <text x="166" y="104" textAnchor="middle" fontSize="11" fill="#0b2f24" fontWeight="700">شرق</text>
+          <text x="100" y="168" textAnchor="middle" fontSize="11" fill="#0b2f24" fontWeight="700">جنوب</text>
+          <text x="34" y="104" textAnchor="middle" fontSize="11" fill="#0b2f24" fontWeight="700">غرب</text>
+          <g transform={`rotate(${bearing} 100 100)`}><polygon points="100,28 90,52 100,46 110,52" fill="#1f7a3f" stroke="#0b2f24" strokeWidth="1" /></g>
+        </g>
+        <image href={`${import.meta.env.BASE_URL}golden/kaaba-center.jpg`} x="60" y="60" width="80" height="80" clipPath="url(#gd-kc)" preserveAspectRatio="xMidYMid slice" />
+        <circle cx="100" cy="100" r="40" fill="none" stroke="#c9a24a" strokeWidth="2.5" />
+      </svg>
+    </div>
+  )
+}
+
 function Dial({ bearing, heading }: { bearing: number; heading: number | null }) {
+  if (useGolden()) return <GoldenDial bearing={bearing} heading={heading} />
   // إن توفر اتجاه الجهاز ندير القرص بحيث يشير السهم للقبلة فعليًا؛ وإلا نعرض الاتجاه بالنسبة للشمال.
   const rotation = heading == null ? 0 : -heading
   return (

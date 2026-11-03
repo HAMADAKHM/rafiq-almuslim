@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BookOpen, Trash2 } from 'lucide-react'
 import { PageHead, Spinner, Tabs, Empty } from '../../components/Common'
+import { useGolden } from '../../themes/useGolden'
+import { GoldenQuranTop } from '../home/GoldenPages'
 import { VoiceAyahSearch } from '../../components/VoiceAyahSearch'
 import { useLive, useQuran } from '../../hooks'
 import { firstAyahOf, parseRef, searchSurahs, type QuranData } from '../../services/quran'
@@ -16,6 +18,7 @@ export interface LastRead { surah: number; ayah: number; at: number; page?: numb
 export function QuranIndexPage() {
   const { data, error } = useQuran()
   const [tab, setTab] = useState<Tab>('surahs')
+  const golden = useGolden()
   const last = useLive(() => kv.get<LastRead | null>('quran:last', null), ['kv:quran:last'], null)
   if (error) return <div className="alert alert-error">{error}</div>
   if (!data) return <Spinner />
@@ -23,10 +26,12 @@ export function QuranIndexPage() {
     <>
       <PageHead title="القرآن الكريم" subtitle="المصحف برواية حفص عن عاصم — الرسم العثماني"
         actions={<>{last && <Link className="btn btn-primary" to={`/quran/${last.surah}?ayah=${last.ayah}`}><BookOpen size={16} /> متابعة: {data.meta.surahs[last.surah - 1].name} {last.ayah}</Link>}<VoiceAyahSearch /></>} />
+      {golden && <GoldenQuranTop data={data} last={last} onTab={setTab} />}
       <Link to={last ? `/read?s=${last.surah}&a=${last.ayah}` : '/read?s=1&a=1'} className="list-card r2-try" style={{ marginBottom: '1rem' }}>
         <span className="icon-chip"><BookOpen size={20} aria-hidden="true" /></span>
         <span className="lc-body"><strong>جرّب القارئ الجديد (تجريبي)</strong><small>سبعة أوضاع: الكلاسيكي، المريح، كبار السن، الليلي، الملوّن، الأطفال، والترجمة — القارئ الحالي باقٍ كما هو</small></span>
       </Link>
+      <div id="quran-list" />
       <Tabs value={tab} onChange={setTab} label="فهارس المصحف" items={[
         { id: 'surahs', label: 'السور' }, { id: 'juz', label: 'الأجزاء' }, { id: 'hizb', label: 'الأحزاب' },
         { id: 'page', label: 'الصفحات' }, { id: 'bookmarks', label: 'العلامات' }, { id: 'favorites', label: 'الآيات المفضلة' }, { id: 'notes', label: 'ملاحظاتي' },

@@ -31,6 +31,10 @@ function Brand() {
   )
 }
 
+/** عناوين فرعية كما في تصميم صاحب التطبيق، والصفحات الرئيسية التي لا يظهر فيها زر الرجوع */
+const GOLDEN_SUB: Record<string, string> = { '/quran': 'المصحف برواية حفص عن عاصم', '/adhkar': 'اذكر الله .. تطمئن قلبك', '/calendar': 'مناسبات إسلامية مهمة', '/qibla': 'اتجه نحو القبلة بسهولة' }
+const GOLDEN_ROOTS = ['/quran', '/prayer', '/adhkar', '/more', '/qibla', '/calendar']
+
 function useKidGuard(pathname: string, navigate: (to: string, o?: { replace?: boolean }) => void) {
   const kidId = useLive(() => activeKidId(), ['kv:kids:active'], null)
   useEffect(() => { if (kidId && !kidPathAllowed(pathname)) navigate('/kids', { replace: true }) }, [kidId, pathname, navigate])
@@ -61,7 +65,7 @@ export function Layout() {
   const heroImg = goldenPhoto(loc.pathname.startsWith('/prayer') && land ? land.photo : heroFor(loc.pathname))
 
   return (
-    <div className={'app' + (isReader ? ' reading' : '') + (/^\/read\/?$/.test(loc.pathname) ? ' reading2' : '') + (isHome ? ' at-home' : '') + (kidMode ? ' kid-mode' : '') + (golden ? ' golden' : '')}>
+    <div className={'app' + (isReader ? ' reading' : '') + (/^\/read\/?$/.test(loc.pathname) ? ' reading2' : '') + (isHome ? ' at-home' : '') + (kidMode ? ' kid-mode' : '') + (golden ? ' golden' + (GOLDEN_SUB[loc.pathname] ? ' gd-own-sub' : '') + (GOLDEN_ROOTS.includes(loc.pathname) ? ' gd-root' : '') : '')}>
       <Splash />
       <TvUpdateCheck />
       <AdhanAlarm />
@@ -89,7 +93,7 @@ export function Layout() {
         {golden && !isHome && !isReader && <div className="gd-page-hero" style={{ backgroundImage: `url("${heroImg}")` }} aria-hidden="true" />}
         <header className="topbar">
           <button className="btn btn-ghost icon-btn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))} aria-label="رجوع"><ChevronRight /></button>
-          <div className="topbar-center"><div id="topbar-title" className="topbar-title" /><Brand /></div>
+          <div className="topbar-center">{golden && <span className="gd-emblem" aria-hidden="true"><LogoMark size={26} /></span>}<div id="topbar-title" className="topbar-title" />{golden && GOLDEN_SUB[loc.pathname] && <div className="gd-sub">{GOLDEN_SUB[loc.pathname]}</div>}<Brand /></div>
           <Link className="btn btn-ghost icon-btn" to="/search" aria-label={t('search', lang)}><Search size={20} /></Link>
         </header>
         {!online && (
