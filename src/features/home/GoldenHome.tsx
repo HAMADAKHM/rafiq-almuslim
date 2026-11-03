@@ -12,6 +12,13 @@ import { PRAYER_LABELS, nextPrayer, type PrayerSettings } from '../../services/p
 import { formatGregorian, formatHijri, formatTime } from '../../lib/dates'
 import { goldenPhoto, landmarkFor } from '../../themes/golden'
 
+/** زخارف صاحب التطبيق نفسه (إطار الصلاة، والقوس، والزر، والدائرة، والمسجد) — صور شفافة في public/golden */
+const orn = (n: string) => `${import.meta.env.BASE_URL}golden/orn-${n}.png`
+const ORN_VARS = {
+  ['--orn-frame' as string]: `url("${orn('frame')}")`, ['--orn-arch' as string]: `url("${orn('arch')}")`,
+  ['--orn-pill' as string]: `url("${orn('pill')}")`, ['--orn-circle' as string]: `url("${orn('circle')}")`,
+}
+
 const ARCHES = [
   { to: '/quran', title: 'القرآن الكريم', icon: BookOpen },
   { to: '/adhkar', title: 'الأذكار', icon: Sparkles },
@@ -25,22 +32,6 @@ function countdown(ms: number): string {
   const t = Math.max(0, Math.floor(ms / 1000))
   const p = (n: number) => String(n).padStart(2, '0')
   return `${p(Math.floor(t / 3600))}:${p(Math.floor((t % 3600) / 60))}:${p(t % 60)}`
-}
-
-/** مسجد مصمت بالذهبي (قبة ومئذنتان) كما في بطاقة الصلاة بالتصميم */
-function MosqueSolid() {
-  return (
-    <svg className="gd-mosque" viewBox="0 0 100 80" aria-hidden="true" fill="url(#gd-gold-grad)">
-      <path d="M50 6 l2 5 h-4 z M49 11 h2 v4 h-2 z" />
-      <path d="M28 46 C28 30 40 22 50 16 C60 22 72 30 72 46 Z" />
-      <circle cx="50" cy="14" r="2" />
-      <path d="M12 20 l4 -10 l4 10 z M13 20 h6 v54 h-6 z M11 32 h10 v3 h-10 z" />
-      <path d="M80 20 l4 -10 l4 10 z M81 20 h6 v54 h-6 z M79 32 h10 v3 h-10 z" />
-      <path d="M22 50 C22 44 27 41 30 40 C33 41 38 44 38 50 Z M62 50 C62 44 67 41 70 40 C73 41 78 44 78 50 Z" />
-      <path fillRule="evenodd" d="M22 48 h56 v26 h-56 z M45 74 v-12 a5 5 0 0 1 10 0 v12 z M29 70 v-8 a3 3 0 0 1 6 0 v8 z M65 70 v-8 a3 3 0 0 1 6 0 v8 z" />
-      <rect x="6" y="74" width="88" height="4" rx="1" />
-    </svg>
-  )
 }
 
 /** «ألا بذكر الله تطمئن القلوب»: الجزء الأخير من الآية 28 من سورة الرعد كما في نص المصحف (بعد علامة الوقف) */
@@ -68,20 +59,7 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
   const surah = last && data ? data.meta.surahs[last.surah - 1] : null
   const verse = data ? tailOfAyah(data.verses[12][27]) : null
   return (
-    <div className="gd-home">
-      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-        <defs>
-          <linearGradient id="gd-gold-grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#fff1c1" /><stop offset="0.35" stopColor="#e7c46e" /><stop offset="0.65" stopColor="#b88a2e" /><stop offset="1" stopColor="#f6dc93" />
-          </linearGradient>
-          <linearGradient id="gd-green-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#0f4a37" /><stop offset="1" stopColor="#062a1f" />
-          </linearGradient>
-          <pattern id="gd-star-pat" width="16" height="16" patternUnits="userSpaceOnUse">
-            <path d="M8 1 L10 6 L15 8 L10 10 L8 15 L6 10 L1 8 L6 6 Z" fill="none" stroke="#e7c46e" strokeWidth="0.6" />
-          </pattern>
-        </defs>
-      </svg>
+    <div className="gd-home gd-orn" style={ORN_VARS}>
       <header className="gd-head" style={{ backgroundImage: `url("${hero}")` }}>
         <div className="gd-head-veil" />
         <div className="gd-top">
@@ -102,12 +80,6 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
             <span><CalendarDays size={16} /> {formatHijri(now, loc?.tz, hijriOffset)}</span>
           </div>
           <Link to="/prayer" className="gd-prayer" aria-label="مواقيت الصلاة">
-            <svg className="gd-prayer-frame" viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true">
-              <path className="gd-f-fill" d="M22 28 H62 C68 28 72 22 78 16 C86 9 94 7 100 2 C106 7 114 9 122 16 C128 22 132 28 138 28 H178 Q178 38 188 38 V170 Q178 170 178 180 H118 Q106 180 100 194 Q94 180 82 180 H22 Q22 170 12 170 V38 Q22 38 22 28 Z" />
-              <path className="gd-f-pat" d="M22 28 H62 C68 28 72 22 78 16 C86 9 94 7 100 2 C106 7 114 9 122 16 C128 22 132 28 138 28 H178 Q178 38 188 38 V170 Q178 170 178 180 H118 Q106 180 100 194 Q94 180 82 180 H22 Q22 170 12 170 V38 Q22 38 22 28 Z" />
-              <path className="gd-f-out" d="M22 28 H62 C68 28 72 22 78 16 C86 9 94 7 100 2 C106 7 114 9 122 16 C128 22 132 28 138 28 H178 Q178 38 188 38 V170 Q178 170 178 180 H118 Q106 180 100 194 Q94 180 82 180 H22 Q22 170 12 170 V38 Q22 38 22 28 Z" />
-              <path className="gd-f-in" d="M22 28 H62 C68 28 72 22 78 16 C86 9 94 7 100 2 C106 7 114 9 122 16 C128 22 132 28 138 28 H178 Q178 38 188 38 V170 Q178 170 178 180 H118 Q106 180 100 194 Q94 180 82 180 H22 Q22 170 12 170 V38 Q22 38 22 28 Z" transform="translate(100 100) scale(0.94 0.92) translate(-100 -100)" />
-            </svg>
             <span className="gd-prayer-title"><Clock3 size={18} /> مواقيت الصلاة</span>
             {np && loc ? (<>
               <span className="gd-prayer-body">
@@ -115,7 +87,7 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
                   <strong className="gd-prayer-name">{PRAYER_LABELS[np.name]}</strong>
                   <b className="gd-prayer-time">{formatTime(np.time, loc.tz)}</b>
                 </span>
-                <MosqueSolid />
+                <img className="gd-mosque" src={orn('mosque')} alt="" />
               </span>
               <span className="gd-count" aria-label="الوقت المتبقي على الأذان">باقٍ على الأذان <b dir="ltr">{countdown(np.time.getTime() - now.getTime())}</b></span>
             </>) : <span className="gd-prayer-empty">اختر مدينتك لعرض المواقيت</span>}
@@ -128,8 +100,7 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
       <nav className="gd-arches" aria-label="الأقسام">
         {ARCHES.map((a) => (
           <Link key={a.to} to={a.to} className="gd-arch">
-            <svg className="gd-arch-shape" viewBox="0 0 100 130" preserveAspectRatio="none" aria-hidden="true"><path d="M4 128 V52 Q4 30 28 20 Q44 13 50 2 Q56 13 72 20 Q96 30 96 52 V128 Z" /><path className="gd-arch-in" d="M4 128 V52 Q4 30 28 20 Q44 13 50 2 Q56 13 72 20 Q96 30 96 52 V128 Z" transform="translate(50 70) scale(0.86 0.9) translate(-50 -70)" /></svg>
-            <a.icon size={30} strokeWidth={1.6} /><span>{a.title}</span><i className="gd-arch-dot" />
+            <a.icon size={30} strokeWidth={1.6} /><span>{a.title}</span>
           </Link>
         ))}
       </nav>
