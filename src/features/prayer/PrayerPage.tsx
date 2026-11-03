@@ -38,6 +38,7 @@ function QiblaCard({ lat, lng, place }: { lat: number; lng: number; place: strin
 import { CityPicker } from '../../components/CityPicker'
 import { useNow } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
+import { useGolden } from '../../themes/useGolden'
 import { MonthTimes } from './MonthTimes'
 import { METHODS, nextPrayer, PRAYER_LABELS, PRAYERS, upcomingDays, todayTimes } from '../../services/prayer'
 import { formatCountdown, formatGregorian, formatHijri, formatTime } from '../../lib/dates'
@@ -68,6 +69,7 @@ export function PrayerPage() {
   const days = useMemo(() => (loc ? upcomingDays(loc, settings.prayer, 7) : []), [loc, settings.prayer, now.getDate()]) // eslint-disable-line react-hooks/exhaustive-deps
   const next = loc ? nextPrayer(loc, settings.prayer, now) : null
   const today = loc ? todayTimes(loc, settings.prayer, now) : null
+  const golden = useGolden()
   const method = METHODS.find((m) => m.id === settings.prayer.method)
   const today_ = dayKey(now, loc?.tz)
   const prayed = usePrayed(today_)
@@ -97,6 +99,13 @@ export function PrayerPage() {
         </section>
       )}
 
+      {golden && loc && next && today && (
+        <div className="gd-times prayer-page-tiles" aria-label="مواقيت اليوم">
+          {(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const).map((p) => (
+            <span key={p} className={'gd-time-tile' + (next.name === p ? ' on' : '')}><small>{PRAYER_LABELS[p]}</small><b>{formatTime(today[p], loc.tz)}</b></span>
+          ))}
+        </div>
+      )}
       {loc && next && today && (
         <div className="grid grid-2 prayer-grid">
           <section className="card next-prayer-card" aria-live="polite">

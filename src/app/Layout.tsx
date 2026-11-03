@@ -57,7 +57,7 @@ export function Layout() {
   const kidMode = useKidGuard(loc.pathname, navigate)
   const golden = useGolden()
   // التصميم الذهبي: رأس بصورة حقيقية لكل صفحة؛ صفحة المواقيت تعرض معلم دولة المستخدم إن توفرت صورته
-  const land = landmarkFor(settings.location?.country)
+  const land = landmarkFor(settings.location?.country, settings.location?.name)
   const heroImg = goldenPhoto(loc.pathname.startsWith('/prayer') && land ? land.photo : heroFor(loc.pathname))
 
   return (

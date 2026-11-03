@@ -8,7 +8,7 @@ import { LogoMark } from '../../components/Art'
 import { useQuran } from '../../hooks'
 import { cityLabel } from '../../services/cities'
 import type { SavedLocation } from '../../state/settings'
-import { PRAYER_LABELS, nextPrayer, type PrayerSettings } from '../../services/prayer'
+import { PRAYER_LABELS, nextPrayer, todayTimes, type PrayerSettings } from '../../services/prayer'
 import { formatGregorian, formatHijri, formatTime } from '../../lib/dates'
 import { goldenPhoto, landmarkFor } from '../../themes/golden'
 
@@ -39,9 +39,10 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
 }) {
   const { data } = useQuran()
   const np = loc ? nextPrayer(loc, prayer, now) : null
+  const times = loc ? todayTimes(loc, prayer, now) : null
   const after = loc && np ? nextPrayer(loc, prayer, new Date(np.time.getTime() + 60_000)) : null
-  const land = landmarkFor(loc?.country)
-  const hero = goldenPhoto(land?.photo ?? 'p14')
+  const land = landmarkFor(loc?.country, loc?.name)
+  const hero = goldenPhoto(land?.photo ?? 'bg-night')
   const surah = last && data ? data.meta.surahs[last.surah - 1] : null
   const verse = data ? tailOfAyah(data.verses[12][27]) : null
   return (
@@ -82,6 +83,14 @@ export function GoldenHome({ now, loc, prayer, hijriOffset, last, resumeTo, plus
       <nav className="gd-arches" aria-label="الأقسام">
         {ARCHES.map((a) => <Link key={a.to} to={a.to} className="gd-arch"><a.icon size={30} strokeWidth={1.6} /><span>{a.title}</span></Link>)}
       </nav>
+
+      {loc && times && (
+        <Link to="/prayer" className="gd-times" aria-label="مواقيت اليوم">
+          {(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const).map((p) => (
+            <span key={p} className={'gd-time-tile' + (np?.name === p ? ' on' : '')}><small>{PRAYER_LABELS[p]}</small><b>{formatTime(times[p], loc.tz)}</b></span>
+          ))}
+        </Link>
+      )}
 
       <div className="gd-grid">
         <Link to={resumeTo} className="gd-card gd-cream" style={{ ['--img' as string]: `url("${goldenPhoto('p24')}")` }}>

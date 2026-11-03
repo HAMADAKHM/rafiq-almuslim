@@ -14,9 +14,10 @@ test('الشريط السفلي خمسة عناصر بالترتيب، و«ال�
   await page.getByRole('button', { name: 'معاينة ثيم الكلاسيكي الراقي' }).click()
   await page.getByRole('region', { name: /معاينة ثيم/ }).getByRole('button', { name: 'تطبيق' }).click()
   await page.evaluate(() => { history.pushState({}, '', '/'); dispatchEvent(new PopStateEvent('popstate')) })
-  await expect(page.getByRole('heading', { name: /السلام عليكم/ })).toBeVisible()
-  await expect(page.locator('.dh-prayer')).toBeVisible()
-  await expect(page.getByRole('link', { name: /ابدأ القراءة من الفاتحة/ })).toBeVisible()
+  // ثيمات الهوية تعرض المظهر الجديد (تخطيط التصميم الذهبي) بألوانها
+  await expect(page.locator('.gd-head')).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'الأقسام' })).toBeVisible()
+  await expect(page.getByText('آخر قراءة')).toBeVisible()
   await page.goto('/more')
   const first = page.locator('.more-list').first().locator('.mr-title')
   await expect(first).toHaveText(['القبلة', 'مكتبة المسلم', 'التسبيح الإلكتروني', 'التقويم الهجري', 'خطط ختم القرآن', 'المفضلة والإشارات المرجعية', 'التنزيلات والمحتوى دون إنترنت', 'إنجازاتي وإحصائياتي', 'الإشعارات', 'إعدادات التطبيق', 'حول التطبيق ومصادر المحتوى'])

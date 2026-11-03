@@ -55,7 +55,7 @@ test('مع اشتراك: التصاميم الثمانية تُطبَّق ويت
   }
   // لون خلفية البطاقات من الثيم في صفحة داخلية
   await page.goto('/prayer')
-  const bg = await page.locator('.card').first().evaluate((el) => getComputedStyle(el).backgroundColor)
+  const bg = await page.locator('.card').first().evaluate((el) => { const c = getComputedStyle(el); return c.backgroundImage + ' ' + c.backgroundColor })
   expect(bg).toMatch(/rgba?\(26, 22, 15/)
   await page.goto('/plus/themes')
   await page.getByLabel(/خلفية ثابتة بلا حركة/).check()

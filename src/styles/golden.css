@@ -1,21 +1,22 @@
 /* التصميم الذهبي المعتمد (كما أرسله صاحب التطبيق): صور حقيقية، أخضر داكن، ذهبي، وبطاقات عاجية */
-.app.golden { --gd-green: #0b2f24; --gd-green-2: #134d39; --gd-gold: #c9a24a; --gd-gold-2: #f0d48e; --gd-cream: #fbf5e6; --gd-cream-2: #f1e4c4; }
+.app.golden { --gd-green: var(--hdr); --gd-green-2: var(--hdr-2); --gd-gold: var(--gold-2); --gd-gold-2: var(--hdr-gold); --gd-cream: var(--surface); --gd-cream-2: var(--surface-2); }
+:root[data-skin='e-golden'] .app.golden { --gd-green: #0b2f24; --gd-green-2: #134d39; --gd-gold: #c9a24a; --gd-gold-2: #f0d48e; --gd-cream: #fbf5e6; --gd-cream-2: #f1e4c4; }
 :root[data-skin='e-golden'] body { background: #efe4c8 radial-gradient(circle at 50% 0, #f7efdc, #ead9b3); }
 
 /* البطاقات والأزرار في كل الصفحات */
 .app.golden .card, .app.golden .list-card {
-  background: linear-gradient(180deg, #fdf9ee, #f4e8cc); border: 1px solid #d6b979; border-radius: 18px;
+  background: linear-gradient(180deg, var(--gd-cream), var(--gd-cream-2)); border: 1px solid var(--gd-gold); border-radius: 18px;
   box-shadow: 0 8px 20px rgba(70, 50, 15, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 .app.golden .btn-primary { background: linear-gradient(180deg, var(--gd-green-2), var(--gd-green)); color: var(--gd-gold-2); border: 1px solid var(--gd-gold); }
 .app.golden .chip.active { background: var(--gd-green); color: var(--gd-gold-2); border-color: var(--gd-gold); }
-.app.golden .icon-chip { background: radial-gradient(circle at 30% 30%, #fff6dc, #ecd9a6); color: var(--gd-green); border: 1px solid #d6b979; }
+.app.golden .icon-chip { background: var(--gold-soft); color: var(--primary); border: 1px solid var(--gd-gold); }
 
 /* رأس كل صفحة بصورة حقيقية، ويعلوه العنوان */
 @media (max-width: 900px) {
   .app.golden .main { position: relative; }
-  .gd-page-hero { position: absolute; inset: 0 0 auto 0; height: 250px; background-size: cover; background-position: center; z-index: 0; border-radius: 0 0 26px 26px; overflow: hidden; }
-  .gd-page-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 25, 18, 0.72), rgba(5, 25, 18, 0.15) 45%, rgba(239, 228, 200, 0) 70%, #efe4c8); }
+  .gd-page-hero { position: absolute; inset: 0 0 auto 0; height: 270px; background-size: cover; background-position: center 35%; z-index: 0; border-radius: 0 0 26px 26px; overflow: hidden; }
+  .gd-page-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5, 25, 18, 0.72), rgba(5, 25, 18, 0.15) 45%, transparent 70%, var(--bg)); }
   .app.golden:not(.at-home) .topbar { background: transparent; position: relative; z-index: 2; box-shadow: none; }
   .app.golden .topbar-title h1 { color: #fff3d0; font-family: 'Amiri', serif; font-size: 1.45rem; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); }
   .app.golden:not(.at-home) .content { position: relative; z-index: 1; padding-top: 130px; }
@@ -28,7 +29,7 @@
 .app.golden .tab-item.active { color: var(--gd-gold-2); }
 .app.golden .tab-item.active svg { background: transparent; color: var(--gd-gold-2); }
 .app.golden .tabbar a[href='/'] { position: relative; }
-.app.golden .tabbar a[href='/'] svg { width: 30px; height: 30px; padding: 14px; margin-top: -30px; border-radius: 50%; box-sizing: content-box; background: radial-gradient(circle at 35% 30%, #fff1c4, #c9a24a 60%, #8f6b22); color: var(--gd-green) !important; border: 3px solid var(--gd-green); box-shadow: 0 0 0 2px var(--gd-gold), 0 8px 16px rgba(0, 0, 0, 0.35); }
+.app.golden .tabbar a[href='/'] svg { width: 30px; height: 30px; padding: 14px; margin-top: -30px; border-radius: 50%; box-sizing: content-box; background: radial-gradient(circle at 35% 30%, #fff1c4, var(--gd-gold) 60%, color-mix(in srgb, var(--gd-gold) 60%, #000)); color: var(--gd-green) !important; border: 3px solid var(--gd-green); box-shadow: 0 0 0 2px var(--gd-gold), 0 8px 16px rgba(0, 0, 0, 0.35); }
 
 /* ---------- الرئيسية ---------- */
 .gd-home { display: flex; flex-direction: column; gap: 14px; margin: -1rem -1rem 0; }
@@ -42,7 +43,7 @@
 .gd-icons { display: flex; gap: 8px; }
 .gd-icons a { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--gd-gold-2); background: rgba(5, 25, 18, 0.55); border: 1px solid rgba(240, 212, 142, 0.6); backdrop-filter: blur(4px); }
 .gd-side { position: relative; margin-top: 22px; margin-inline-start: auto; width: min(58%, 260px); display: flex; flex-direction: column; gap: 10px; }
-.gd-glass { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 18px; background: linear-gradient(180deg, rgba(14, 60, 44, 0.88), rgba(8, 40, 29, 0.92)); border: 1.5px solid var(--gd-gold); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35); color: #fff3d0; text-decoration: none; }
+.gd-glass { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 18px; background: color-mix(in srgb, var(--gd-green) 90%, transparent); border: 1.5px solid var(--gd-gold); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35); color: #fff3d0; text-decoration: none; }
 .gd-info span { display: flex; align-items: center; gap: 6px; font-size: 0.86rem; }
 .gd-info svg, .gd-prayer-title svg { color: var(--gd-gold-2); flex-shrink: 0; }
 .gd-prayer { align-items: center; text-align: center; }
@@ -55,7 +56,7 @@
 .gd-landmark { position: absolute; bottom: 74px; inset-inline-start: 14px; font-size: 0.75rem; background: rgba(5, 25, 18, 0.6); padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(240, 212, 142, 0.5); }
 
 .gd-arches { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 0 10px; margin-top: -76px; position: relative; z-index: 1; }
-.gd-arch { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 118px; padding: 18px 2px 10px; text-decoration: none; color: var(--gd-gold-2); background: linear-gradient(180deg, #145039, #0a2c21); border: 1.5px solid var(--gd-gold); border-radius: 50% 50% 16px 16px / 30% 30% 16px 16px; box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3), inset 0 0 0 3px rgba(240, 212, 142, 0.12); }
+.gd-arch { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 118px; padding: 18px 2px 10px; text-decoration: none; color: var(--gd-gold-2); background: linear-gradient(180deg, var(--gd-green-2), var(--gd-green)); border: 1.5px solid var(--gd-gold); border-radius: 50% 50% 16px 16px / 30% 30% 16px 16px; box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3), inset 0 0 0 3px rgba(240, 212, 142, 0.12); }
 .gd-arch span { color: #fbeecb; font-size: 0.8rem; font-weight: 700; text-align: center; line-height: 1.3; }
 
 .gd-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 0 12px; }
@@ -68,12 +69,12 @@
 .gd-photo::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5, 25, 18, 0.1), rgba(5, 25, 18, 0.8) 70%); }
 .gd-photo .gd-card-title svg { color: var(--gd-gold-2); }
 .gd-time { font-size: 1.7rem; color: var(--gd-gold-2); line-height: 1.1; }
-.gd-cream { color: var(--gd-green); background: linear-gradient(90deg, rgba(251, 245, 230, 0) 0%, rgba(251, 245, 230, 0.75) 35%, #fbf5e6 60%), var(--img) left center / cover, #fbf5e6; }
-.gd-cream small { color: #5c4a28; }
+.gd-cream { color: var(--text); background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--gd-cream) 80%, transparent) 35%, var(--gd-cream) 60%), var(--img) left center / cover, var(--gd-cream); }
+.gd-cream small { color: var(--text-muted); }
 .gd-plus::before { background: linear-gradient(90deg, rgba(5, 25, 18, 0.2), rgba(5, 25, 18, 0.85) 65%); }
 
-.gd-verse { margin: 0 12px; padding: 14px 18px; border-radius: 40px; text-align: center; text-decoration: none; background: linear-gradient(180deg, #fdf8ea, #efe0bd); border: 1.5px solid var(--gd-gold); box-shadow: 0 6px 16px rgba(70, 50, 15, 0.16); }
-.gd-verse-text { font-family: 'Amiri Quran', 'Amiri', serif; font-size: 1.35rem; color: var(--gd-green); line-height: 2; }
+.gd-verse { margin: 0 12px; padding: 14px 18px; border-radius: 40px; text-align: center; text-decoration: none; background: linear-gradient(180deg, var(--gd-cream), var(--gd-cream-2)); border: 1.5px solid var(--gd-gold); box-shadow: 0 6px 16px rgba(70, 50, 15, 0.16); }
+.gd-verse-text { font-family: 'Amiri Quran', 'Amiri', serif; font-size: 1.35rem; color: var(--primary); line-height: 2; }
 .home-golden .home-grid { padding: 0 2px; }
 
 /* صور الأذكار المصغرة */
@@ -93,8 +94,24 @@
 .app.golden .prayer-hero { background: transparent; box-shadow: none; min-height: 0; }
 .app.golden .prayer-hero-art { display: none; }
 .app.golden .prayer-hero-text { color: #fff3d0; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75); }
-.app.golden .next-prayer-card { background: linear-gradient(180deg, #145039, #0a2c21); border: 1.5px solid var(--gd-gold); color: #fff3d0; text-align: center; }
+.app.golden .next-prayer-card { background: linear-gradient(180deg, var(--gd-green-2), var(--gd-green)); border: 1.5px solid var(--gd-gold); color: #fff3d0; text-align: center; }
 .app.golden .next-prayer-card .muted { color: #e9d7a6; }
 .app.golden .next-prayer-card .np-name { color: #fff3d0; font-family: 'Amiri', serif; font-size: 2.2rem; }
 .app.golden .next-prayer-card .np-time, .app.golden .next-prayer-card .countdown { color: var(--gd-gold-2); }
 .app.golden .next-prayer-card .np-left { color: #fff3d0; }
+
+/* المواقيت الخمس (الرئيسية وصفحة المواقيت) */
+.gd-times { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 0 12px; text-decoration: none; }
+.gd-time-tile { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 2px; border-radius: 16px; background: linear-gradient(180deg, var(--gd-cream), var(--gd-cream-2)); border: 1px solid var(--gd-gold); color: var(--text); box-shadow: 0 4px 10px rgba(70, 50, 15, 0.12); }
+.gd-time-tile small { font-weight: 700; color: var(--text-muted); }
+.gd-time-tile b { font-size: 0.8rem; white-space: nowrap; direction: rtl; }
+.gd-time-tile.on { background: linear-gradient(180deg, var(--gd-green-2), var(--gd-green)); color: var(--gd-gold-2); }
+.gd-time-tile.on small { color: #fff3d0; }
+.app.golden .prayer-page-tiles { padding: 0; margin-bottom: 12px; }
+
+/* المسبحة بالمظهر الجديد: بطاقة داكنة بإطار ذهبي فوق صورة الرأس، والعداد دائرة ذهبية */
+.app.golden .tasbih-card { background: linear-gradient(180deg, color-mix(in srgb, var(--gd-green) 92%, transparent), var(--gd-green)); border: 1.5px solid var(--gd-gold); color: #fff3d0; }
+.app.golden .tasbih-card .muted, .app.golden .tasbih-card .tasbih-dhikr { color: #fff3d0; }
+.app.golden .tasbih-btn { background: radial-gradient(circle at 35% 30%, #fff6d6, var(--gd-gold) 62%, color-mix(in srgb, var(--gd-gold) 55%, #000)); color: var(--gd-green); border: 4px solid var(--gd-green); box-shadow: 0 0 0 3px var(--gd-gold), 0 12px 28px rgba(0, 0, 0, 0.35); }
+.app.golden .tasbih-count { color: var(--gd-green); }
+.app.golden .tasbih-target { color: color-mix(in srgb, var(--gd-green) 80%, #000); }

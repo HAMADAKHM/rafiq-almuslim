@@ -5,28 +5,32 @@ export const goldenPhoto = (id: string) => `${import.meta.env.BASE_URL}golden/${
 
 /** صورة رأس كل صفحة بحسب مسارها (أطول بادئة مطابقة) */
 const HERO: [string, string][] = [
-  ['/prayer', 'islamic-09'], ['/quran', 'islamic-03'], ['/mushaf', 'islamic-03'], ['/adhkar', 'p04'], ['/duas', 'p13'],
-  ['/calendar', 'p05'], ['/date-tools', 'p05'], ['/qibla', 'islamic-04'], ['/hadith', 'p16'], ['/academy', 'islamic-07'],
-  ['/kids', 'p15'], ['/tasbih', 'p32'], ['/more', 'p15'], ['/settings', 'p13'], ['/plus', 'p15'], ['/listen', 'islamic-03'],
-  ['/learn', 'islamic-07'], ['/library', 'p16'], ['/mosques', 'islamic-08'], ['/ramadan', 'p05'], ['/cards', 'p03'],
+  ['/prayer', 'bg-mosque'], ['/quran', 'bg-quran'], ['/mushaf', 'bg-quran'], ['/read', 'bg-quran'], ['/listen', 'bg-quran'], ['/memorize', 'bg-quran'], ['/wird', 'bg-quran'],
+  ['/adhkar', 'bg-night'], ['/duas', 'bg-night'], ['/tasbih', 'bg-night'], ['/my-adhkar', 'bg-night'], ['/kids-adhkar', 'bg-night'],
+  ['/calendar', 'bg-arch'], ['/date-tools', 'bg-arch'], ['/ramadan', 'bg-night'], ['/qibla', 'bg-kaaba'], ['/mosques', 'bg-mosque'],
+  ['/hadith', 'bg-madinah'], ['/academy', 'bg-arch'], ['/learn', 'bg-arch'], ['/library', 'bg-madinah2'], ['/stories', 'bg-madinah2'],
+  ['/kids', 'bg-quran'], ['/more', 'bg-arch'], ['/settings', 'bg-arch'], ['/plus', 'bg-madinah2'], ['/cards', 'bg-quran'],
 ]
 export function heroFor(path: string): string {
   let best = ''
-  let id = 'p03'
+  let id = 'bg-arch'
   for (const [p, img] of HERO) if ((path === p || path.startsWith(p + '/')) && p.length > best.length) { best = p; id = img }
   return id
 }
 
 /**
  * المعلم الديني البارز في دولة المستخدم — فقط حين تتوفر لدينا صورة حقيقية له؛ وإلا صورة دينية عامة.
- * SA: الكعبة المشرفة، AE: مسجد أبيض كبير بقباب (من صور صاحب التطبيق).
- * دول أخرى (فلسطين: المسجد الأقصى، مصر: الأزهر، تركيا: السلطان أحمد...) تُضاف حين تصل صورها.
+ * السعودية: الكعبة المشرفة (والمدينة المنورة: المسجد النبوي)، وتركيا والإمارات: مسجد من صور صاحب التطبيق.
+ * دول أخرى (فلسطين: المسجد الأقصى، مصر: الأزهر...) تُضاف حين تصل صورها.
  */
 const LANDMARK: Record<string, { photo: string; name: string }> = {
-  SA: { photo: 'islamic-04', name: 'المسجد الحرام' },
-  AE: { photo: 'islamic-09', name: 'مسجد' },
+  SA: { photo: 'bg-kaaba', name: 'المسجد الحرام' },
+  TR: { photo: 'bg-mosque', name: 'مسجد' },
+  AE: { photo: 'bg-arch', name: 'مسجد' },
 }
-export function landmarkFor(country: string | undefined | null): { photo: string; name: string } | null {
+export function landmarkFor(country: string | undefined | null, city?: string | null): { photo: string; name: string } | null {
+  // المدينة المنورة: المسجد النبوي
+  if (country?.toUpperCase() === 'SA' && city && /madina|medina|المدينة/i.test(city)) return { photo: 'bg-madinah', name: 'المسجد النبوي' }
   return (country && LANDMARK[country.toUpperCase()]) || null
 }
 

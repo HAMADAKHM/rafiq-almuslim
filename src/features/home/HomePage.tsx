@@ -33,7 +33,6 @@ import { activePlan, dailyTarget } from '../../services/khatma'
 import { dailySuggestion } from '../../services/dailySuggest'
 import { Lightbulb, Palette, ScrollText, GraduationCap, Trophy } from 'lucide-react'
 import { GoldenHome } from './GoldenHome'
-import { GOLDEN_ID } from '../../themes/golden'
 import { useAllLogs } from '../progress/ProgressPage'
 import { computeStats, dailySeries } from '../../services/stats'
 import { adhkarForNow, ayahOfDay, greeting } from '../../services/daily'
@@ -263,7 +262,8 @@ export function HomePage() {
   const skinNow = preview ? skinById(preview) : activeSkin(settings.skin, plusEntitled)
   const designed = !!skinNow?.identity
   // التصميم الذهبي المعتمد: «آخر قراءة» و«الأقسام» جزء من تصميمه نفسه
-  const golden = skinNow?.id === GOLDEN_ID
+  // كل ثيمات الهوية تعرض المظهر الجديد بألوانها
+  const golden = !!skinNow?.identity
   const visible = settings.homeCards.filter((c) => c.visible && (!designed || c.id !== 'continue') && (!golden || c.id !== 'sections') && (c.id !== 'companion' || plusEntitled))
   const move = (i: number, d: -1 | 1) => {
     const list = [...settings.homeCards]
