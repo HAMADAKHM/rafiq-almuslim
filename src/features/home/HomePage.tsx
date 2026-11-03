@@ -32,6 +32,8 @@ import { KhatmaCard, useKhatmas } from '../wird/KhatmaCard'
 import { activePlan, dailyTarget } from '../../services/khatma'
 import { dailySuggestion } from '../../services/dailySuggest'
 import { Lightbulb, Palette, ScrollText, GraduationCap, Trophy } from 'lucide-react'
+import { GoldenHome } from './GoldenHome'
+import { GOLDEN_ID } from '../../themes/golden'
 import { useAllLogs } from '../progress/ProgressPage'
 import { computeStats, dailySeries } from '../../services/stats'
 import { adhkarForNow, ayahOfDay, greeting } from '../../services/daily'
@@ -258,8 +260,11 @@ export function HomePage() {
   // «رفيقي اليومي» من مزايا بلس: لا خانة فارغة ولا قفل في الرئيسية دون اشتراك
   // التصاميم التسعة المعتمدة (ثيمات الهوية): رأس التحية وبطاقة الصلاة وشريط «متابعة القراءة» الثابت تحتها
   const ramadanOn = plusEntitled && ramadanModeActive(settings.ramadan?.theme, now, loc?.tz, settings.hijriOffset)
-  const designed = !!(preview ? skinById(preview) : activeSkin(settings.skin, plusEntitled))?.identity
-  const visible = settings.homeCards.filter((c) => c.visible && (!designed || c.id !== 'continue') && (c.id !== 'companion' || plusEntitled))
+  const skinNow = preview ? skinById(preview) : activeSkin(settings.skin, plusEntitled)
+  const designed = !!skinNow?.identity
+  // التصميم الذهبي المعتمد: «آخر قراءة» و«الأقسام» جزء من تصميمه نفسه
+  const golden = skinNow?.id === GOLDEN_ID
+  const visible = settings.homeCards.filter((c) => c.visible && (!designed || c.id !== 'continue') && (!golden || c.id !== 'sections') && (c.id !== 'companion' || plusEntitled))
   const move = (i: number, d: -1 | 1) => {
     const list = [...settings.homeCards]
     const j = i + d
@@ -275,8 +280,10 @@ export function HomePage() {
   const five = PRAYERS.filter((p) => p !== 'sunrise')
 
   return (
-    <div className="home">
-      {designed ? (
+    <div className={'home' + (golden ? ' home-golden' : '')}>
+      {golden ? (
+        <GoldenHome now={now} loc={loc} prayer={settings.prayer} hijriOffset={settings.hijriOffset} last={last} resumeTo={resumeTo} plusEntitled={plusEntitled} rest={null} />
+      ) : designed ? (
         <>
       <header className="dh-head">
         <div className="dh-head-text">

@@ -8,6 +8,8 @@ import { FOOTER_LINE } from '../content/dedication'
 import { MiniPlayer } from '../components/MiniPlayer'
 import { useLive, useOnline, useToastMessage } from '../hooks'
 import { activeKidId, kidPathAllowed } from '../services/kids'
+import { useGolden } from '../themes/useGolden'
+import { goldenPhoto, heroFor, landmarkFor } from '../themes/golden'
 import { startReminderLoop } from '../services/notifications'
 import { LogoMark } from '../components/Art'
 import { NAV, tabsFor } from './nav'
@@ -53,9 +55,13 @@ export function Layout() {
   const isReader = /^\/(quran\/\d+\/?$|mushaf|read\/?$)/.test(loc.pathname)
   const isHome = loc.pathname === '/'
   const kidMode = useKidGuard(loc.pathname, navigate)
+  const golden = useGolden()
+  // التصميم الذهبي: رأس بصورة حقيقية لكل صفحة؛ صفحة المواقيت تعرض معلم دولة المستخدم إن توفرت صورته
+  const land = landmarkFor(settings.location?.country)
+  const heroImg = goldenPhoto(loc.pathname.startsWith('/prayer') && land ? land.photo : heroFor(loc.pathname))
 
   return (
-    <div className={'app' + (isReader ? ' reading' : '') + (/^\/read\/?$/.test(loc.pathname) ? ' reading2' : '') + (isHome ? ' at-home' : '') + (kidMode ? ' kid-mode' : '')}>
+    <div className={'app' + (isReader ? ' reading' : '') + (/^\/read\/?$/.test(loc.pathname) ? ' reading2' : '') + (isHome ? ' at-home' : '') + (kidMode ? ' kid-mode' : '') + (golden ? ' golden' : '')}>
       <Splash />
       <TvUpdateCheck />
       <AdhanAlarm />
@@ -80,6 +86,7 @@ export function Layout() {
       </aside>
 
       <div className="main">
+        {golden && !isHome && !isReader && <div className="gd-page-hero" style={{ backgroundImage: `url("${heroImg}")` }} aria-hidden="true" />}
         <header className="topbar">
           <button className="btn btn-ghost icon-btn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))} aria-label="رجوع"><ChevronRight /></button>
           <div className="topbar-center"><div id="topbar-title" className="topbar-title" /><Brand /></div>

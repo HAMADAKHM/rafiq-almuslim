@@ -3,7 +3,7 @@
 
 import type { SceneId } from '../tv/scenes'
 
-export type IdentityId = 'e-emerald' | 'e-midnight' | 'e-ivory' | 'e-nature' | 'e-white' | 'e-dark' | 't-classic' | 't-night' | 't-nature' | 't-turquoise' | 't-heritage' | 't-violet' | 't-minimal' | 't-gradient' | 't-royal' | 't-dawn' | 't-rose' | 't-evening'
+export type IdentityId = 'e-golden' | 'e-emerald' | 'e-midnight' | 'e-ivory' | 'e-nature' | 'e-white' | 'e-dark' | 't-classic' | 't-night' | 't-nature' | 't-turquoise' | 't-heritage' | 't-violet' | 't-minimal' | 't-gradient' | 't-royal' | 't-dawn' | 't-rose' | 't-evening'
 export type SkinId = IdentityId | 'qadr' | 'andalus' | 'desert' | 'ocean' | 'garden' | 'ramadan' | 'aurora' | 'royal'
   | 'live-night' | 'live-galaxy' | 'live-aurora' | 'live-ocean' | 'live-rain' | 'live-forest' | 'live-geometry' | 'live-desert'
 
@@ -30,6 +30,7 @@ export interface Skin {
 export const SKINS: Skin[] = [
   // ---------- ثيمات الهوية: هوية بصرية كاملة لكل الصفحات، ولكل منها أيقونة تطبيق مطابقة ----------
   // الثيمات الأساسية للنسخة الجديدة (المرحلة 2): نظام ألوان موحّد يطبَّق على كل الصفحات
+  { id: 'e-golden', name: 'الذهبي الإسلامي', tagline: 'صور حقيقية وبطاقات عاجية بإطار ذهبي — التصميم المعتمد', mode: 'light', free: true, bar: '#0b2f24', identity: true, swatch: ['#f3ead6', '#fbf5e6', '#0d3b2c', '#1f1a10'] },
   { id: 'e-emerald', name: 'الزمرد الملكي', tagline: 'أخضر زمردي عميق وذهب هادئ', mode: 'light', free: false, bar: '#064c38', identity: true, swatch: ['#f2f6f1', '#ffffff', '#0b6b4f', '#16241e'] },
   { id: 'e-midnight', name: 'منتصف الليل', tagline: 'كحلي عميق وفضة لطيفة لقراءة الليل', mode: 'dark', free: false, bar: '#070b18', identity: true, swatch: ['#0b1020', '#151d36', '#9cc2ff', '#e9ecf5'] },
   { id: 'e-ivory', name: 'العاجي', tagline: 'ورق عاجي دافئ كصفحات المصحف', mode: 'light', free: true, bar: '#5c4a2a', identity: true, swatch: ['#fbf7ee', '#fffdf8', '#7d5f22', '#2a2418'] },

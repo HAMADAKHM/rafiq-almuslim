@@ -14,9 +14,9 @@ const manifest = readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8'
 describe('ثيمات الهوية', () => {
   it('التصاميم التسعة بالترتيب المعتمد (الكلاسيكي مجاني)، ولكل ثيم ألوان كاملة في الأنماط وخلفية مرسومة', () => {
     expect(designs.length).toBe(12)
-    expect(ident.filter((s) => s.id.startsWith('e-')).map((s) => s.name)).toEqual(['الزمرد الملكي', 'منتصف الليل', 'العاجي', 'الطبيعة', 'الأبيض النقي', 'الداكن'])
+    expect(ident.filter((s) => s.id.startsWith('e-')).map((s) => s.name)).toEqual(['الذهبي الإسلامي', 'الزمرد الملكي', 'منتصف الليل', 'العاجي', 'الطبيعة', 'الأبيض النقي', 'الداكن'])
     expect(designs.slice(0, 9).map((s) => s.name)).toEqual(['الكلاسيكي الراقي', 'الليلي الفاخر', 'الهادئ الطبيعي', 'العصري المشرق', 'الإسلامي الفخم', 'الغروب الهادئ', 'المينيمالي الحديث', 'الألوان المتدرجة', 'الذهبي الفاخر'])
-    expect(ident.filter((s) => s.free).map((s) => s.id)).toEqual(['e-ivory', 'e-white', 'e-dark', 't-classic'])
+    expect(ident.filter((s) => s.free).map((s) => s.id)).toEqual(['e-golden', 'e-ivory', 'e-white', 'e-dark', 't-classic'])
     for (const s of ident) {
       const rule = new RegExp(`:root\\[data-skin='${s.id}'\\] \\{([^}]*)\\}`).exec(css)?.[1] ?? ''
       for (const v of ['--bg', '--surface', '--text', '--text-muted', '--primary', '--on-primary', '--border', '--hdr', '--gold']) expect(rule, `${s.id} ${v}`).toContain(`${v}:`)

@@ -1,3 +1,5 @@
+import { useGolden } from '../../themes/useGolden'
+import { ADHKAR_THUMB, goldenPhoto } from '../../themes/golden'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, useParams } from 'react-router-dom'
 import {
@@ -91,6 +93,7 @@ export function LibraryTabs() {
 }
 
 function CategoryGrid({ cats, base, doneToday }: { cats: ContentCategory[]; base: string; doneToday?: Set<string> }) {
+  const golden = useGolden()
   const { settings, update } = useSettings()
   const [manage, setManage] = useState(false)
   const hidden = new Set(settings.hiddenCats ?? [])
@@ -115,7 +118,7 @@ function CategoryGrid({ cats, base, doneToday }: { cats: ContentCategory[]; base
         )
         return (
           <Link key={c.id} to={`${base}/${c.id}`} className="list-card">
-            <span className="icon-chip"><Icon size={22} aria-hidden="true" /></span>
+            {golden && ADHKAR_THUMB[c.id] ? <img className="gd-thumb" src={goldenPhoto(ADHKAR_THUMB[c.id])} alt="" loading="lazy" /> : <span className="icon-chip"><Icon size={22} aria-hidden="true" /></span>}
             <span className="lc-body"><strong>{c.title}</strong><small>{c.items.length} {base === '/hadith' ? (c.items.length > 10 ? 'حديثًا' : 'أحاديث') : c.items.length > 10 ? 'ذكرًا' : 'أذكار'}</small></span>
             <span className="lc-end">
               {doneToday?.has(c.id) && <CircleCheck size={20} color="var(--success)" aria-label="أُتمّت اليوم" />}
