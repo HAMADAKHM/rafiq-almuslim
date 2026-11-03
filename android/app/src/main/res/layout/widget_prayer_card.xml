@@ -7,6 +7,7 @@
     android:background="@drawable/widget_card_bg"
     android:layoutDirection="rtl"
     android:padding="14dp">
+    <ImageView android:id="@+id/wbg" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:importantForAccessibility="no" android:visibility="gone" />
 
     <TextView android:id="@+id/k_empty" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="@string/widget_empty" android:textColor="#FFFFFF" android:textSize="14sp" android:visibility="gone" />
 

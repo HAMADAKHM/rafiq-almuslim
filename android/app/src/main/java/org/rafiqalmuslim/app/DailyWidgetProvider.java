@@ -19,6 +19,12 @@ import org.json.JSONObject;
  * لا نص هنا من عندنا: الآية تأتي من بيانات المصحف كما هي، والطويلة تُعرض بمرجعها فقط بدل قصّها.
  */
 public class DailyWidgetProvider extends AppWidgetProvider {
+    /** تغيير المقاس: تُرسم الخلفية من جديد بالمقاس الجديد */
+    @Override
+    public void onAppWidgetOptionsChanged(android.content.Context c, android.appwidget.AppWidgetManager m, int id, android.os.Bundle o) {
+        WidgetStyle.refreshEverything(c);
+    }
+
     static final String KEY = "daily";
 
     @Override

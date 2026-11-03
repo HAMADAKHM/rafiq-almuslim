@@ -18,6 +18,12 @@ import org.json.JSONObject;
  * البيانات محسوبة في التطبيق لسبعة أيام (لا حساب هنا)، ويُعاد رسم الودجت عند دخول كل وقت.
  */
 public class PrayerWidgetProvider extends AppWidgetProvider {
+    /** تغيير المقاس: تُرسم الخلفية من جديد بالمقاس الجديد */
+    @Override
+    public void onAppWidgetOptionsChanged(android.content.Context c, android.appwidget.AppWidgetManager m, int id, android.os.Bundle o) {
+        WidgetStyle.refreshEverything(c);
+    }
+
     static final String PREFS = "rafiq_widget";
     static final String KEY = "data";
     static final String ACTION_TICK = "org.rafiqalmuslim.app.WIDGET_TICK";

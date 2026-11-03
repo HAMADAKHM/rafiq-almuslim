@@ -7,6 +7,7 @@
     android:background="@drawable/widget_bg"
     android:layoutDirection="rtl"
     android:padding="10dp">
+    <ImageView android:id="@+id/wbg" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:importantForAccessibility="no" android:visibility="gone" />
     <TextView android:id="@+id/t_empty" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:textColor="#FFFFFF" android:textSize="13sp" android:visibility="gone" />
     <LinearLayout android:id="@+id/t_content" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:orientation="vertical">
         <TextView android:id="@+id/t_phrase" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#F0D68F" android:textSize="16sp" android:textStyle="bold" />

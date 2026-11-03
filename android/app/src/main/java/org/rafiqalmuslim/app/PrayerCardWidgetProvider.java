@@ -17,6 +17,12 @@ import org.json.JSONObject;
  * البيانات نفسها التي يحسبها التطبيق لودجت المواقيت (لا حساب هنا)، ويُعاد الرسم عند دخول كل وقت.
  */
 public class PrayerCardWidgetProvider extends AppWidgetProvider {
+    /** تغيير المقاس: تُرسم الخلفية من جديد بالمقاس الجديد */
+    @Override
+    public void onAppWidgetOptionsChanged(android.content.Context c, android.appwidget.AppWidgetManager m, int id, android.os.Bundle o) {
+        WidgetStyle.refreshEverything(c);
+    }
+
     private static final int[] CELLS = { R.id.k_cell_0, R.id.k_cell_1, R.id.k_cell_2, R.id.k_cell_3, R.id.k_cell_4 };
     private static final int[] ICONS = { R.id.k_icon_0, R.id.k_icon_1, R.id.k_icon_2, R.id.k_icon_3, R.id.k_icon_4 };
     private static final int[] NAMES = { R.id.k_name_0, R.id.k_name_1, R.id.k_name_2, R.id.k_name_3, R.id.k_name_4 };

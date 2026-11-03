@@ -13,13 +13,35 @@ final class WidgetStyle {
     private WidgetStyle() {}
 
     /** التصاميم بالترتيب (المعرّف، الاسم، والخلفية) — تعرضها شاشة «إعداد الودجت» */
-    static final String[] IDS = { "emerald", "indigo", "royal", "night", "turquoise", "dawn", "nature", "violet", "rose", "evening", "glass" };
-    static final String[] NAMES = { "الذهبي الإسلامي (الأصلي)", "النيلي الذهبي", "الملكي", "الليلي", "الفيروزي", "الفجر", "الطبيعي", "البنفسجي", "الوردي", "المساء", "زجاجي شفاف" };
+    static final String[] IDS = { "g-night", "g-mosque", "g-quran", "g-kaaba", "g-madinah", "g-pattern", "emerald", "indigo", "royal", "night", "turquoise", "dawn", "nature", "violet", "rose", "evening", "glass" };
+    static final String[] NAMES = { "ليلة الهلال (الأصلي)", "المسجد عند الغروب", "المصحف الشريف", "الكعبة المشرفة", "المسجد النبوي", "النقش الأخضر", "الزمردي الذهبي", "النيلي الذهبي", "الملكي", "الليلي", "الفيروزي", "الفجر", "الطبيعي", "البنفسجي", "الوردي", "المساء", "زجاجي شفاف" };
     static final String KEY_PLUS = "plus";
     static final String KEY_TEXT = "text_";
 
+    static final String DEFAULT = "g-night";
+    static final String KEY_SHAPE = "shape";
+
     static int background(Context c) {
-        return resOf(c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, "emerald"));
+        return resOf(global(c));
+    }
+
+    /** التصميم العام (الافتراضي: صورة «ليلة الهلال» بإطار ذهبي كما في التطبيق) */
+    static String global(Context c) {
+        return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY, DEFAULT);
+    }
+
+    /** التصاميم المجانية: صور التصميم الذهبي والأصلي؛ والملوّنة لمشتركي بلس */
+    static boolean free(String s) { return s != null && (s.equals("emerald") || WidgetArt.isArt(s)); }
+
+    /** شكل الودجت: الخاص به أو العام */
+    static String shapeFor(Context c, int widgetId) {
+        android.content.SharedPreferences p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return p.getString("s_" + widgetId, p.getString(KEY_SHAPE, "round"));
+    }
+
+    static void setShapeForWidget(Context c, int widgetId, String shape) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("s_" + widgetId, shape).apply();
+        refreshEverything(c);
     }
 
     /** تصميم ودجت بعينه (من «إعداد الودجت»)، أو null فيتبع التصميم العام */
@@ -52,9 +74,18 @@ final class WidgetStyle {
     /** خلفية ودجت بعينه: اختياره الخاص إن وُجد (وبلس فعّال لغير الأصلي)، وإلا العام أو الافتراضي المعطى */
     static void apply(Context c, RemoteViews v, int rootId, int widgetId, int fallbackRes) {
         String own = forWidget(c, widgetId);
-        if (own != null && (own.equals("emerald") || plus(c))) v.setInt(rootId, "setBackgroundResource", resOf(own));
-        else if (fallbackRes != 0) v.setInt(rootId, "setBackgroundResource", fallbackRes);
-        else apply(c, v, rootId);
+        String style = own != null && (free(own) || plus(c)) ? own : global(c);
+        if (!free(style) && !plus(c)) style = DEFAULT;
+        if (WidgetArt.isArt(style)) {
+            try {
+                v.setImageViewBitmap(R.id.wbg, WidgetArt.render(c, style, shapeFor(c, widgetId), widgetId));
+                v.setViewVisibility(R.id.wbg, android.view.View.VISIBLE);
+                v.setInt(rootId, "setBackgroundColor", 0);
+                return;
+            } catch (Throwable t) { style = "emerald"; }
+        }
+        v.setViewVisibility(R.id.wbg, android.view.View.GONE);
+        v.setInt(rootId, "setBackgroundResource", resOf(style));
     }
 
     static void setForWidget(Context c, int widgetId, String style) {

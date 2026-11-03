@@ -73,8 +73,8 @@ public class WidgetBridgePlugin extends Plugin {
     /** «تصميم الودجت»: خلفية كل الودجتات (يُستدعى بعد التحقق من اشتراك بلس، وبـ emerald عند انتهائه) */
     @PluginMethod
     public void setStyle(PluginCall call) {
-        String style = call.getString("style", "emerald");
-        if (style == null || !style.matches("[a-z]{1,16}")) { call.reject("invalid"); return; }
+        String style = call.getString("style", WidgetStyle.DEFAULT);
+        if (style == null || !style.matches("[a-z][a-z-]{0,15}")) { call.reject("invalid"); return; }
         WidgetStyle.set(getContext(), style);
         call.resolve();
     }
@@ -91,8 +91,22 @@ public class WidgetBridgePlugin extends Plugin {
     @PluginMethod
     public void getStyle(PluginCall call) {
         JSObject r = new JSObject();
-        r.put("style", getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).getString(WidgetStyle.KEY, "emerald"));
+        r.put("style", getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).getString(WidgetStyle.KEY, WidgetStyle.DEFAULT));
+        r.put("shape", getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).getString(WidgetStyle.KEY_SHAPE, "round"));
         call.resolve(r);
+    }
+
+    /** شكل كل الودجتات: مستطيل، قبة، إطار مزخرف */
+    @PluginMethod
+    public void setShape(PluginCall call) {
+        String shape = call.getString("shape", "round");
+        if (!"round".equals(shape) && !"dome".equals(shape) && !"frame".equals(shape)) { call.reject("invalid"); return; }
+        android.content.SharedPreferences p = getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE);
+        android.content.SharedPreferences.Editor e = p.edit().putString(WidgetStyle.KEY_SHAPE, shape);
+        for (String k : p.getAll().keySet()) if (k.startsWith("s_")) e.remove(k);
+        e.apply();
+        WidgetStyle.refreshEverything(getContext());
+        call.resolve();
     }
 
     @PluginMethod

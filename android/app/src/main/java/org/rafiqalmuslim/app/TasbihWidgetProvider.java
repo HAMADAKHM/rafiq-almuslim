@@ -16,6 +16,12 @@ import org.json.JSONObject;
  * سبحان الله، الحمد لله، الله أكبر (كما في التسبيح بعد الصلاة — رواه مسلم 597).
  */
 public class TasbihWidgetProvider extends AppWidgetProvider {
+    /** تغيير المقاس: تُرسم الخلفية من جديد بالمقاس الجديد */
+    @Override
+    public void onAppWidgetOptionsChanged(android.content.Context c, android.appwidget.AppWidgetManager m, int id, android.os.Bundle o) {
+        WidgetStyle.refreshEverything(c);
+    }
+
     static final String ACTION_INC = "org.rafiqalmuslim.app.TASBIH_INC";
     static final String ACTION_RESET = "org.rafiqalmuslim.app.TASBIH_RESET";
     private static final String KEY_COUNT = "tasbih_count";

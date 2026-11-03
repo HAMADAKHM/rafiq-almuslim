@@ -12,6 +12,12 @@ import org.json.JSONObject;
 
 /** ودجت رفيق بلس: رمضان — العدّ التنازلي لنهاية السحور (الفجر) أو للإفطار (المغرب)، وخارجه الأيام المتبقية */
 public class RamadanWidgetProvider extends AppWidgetProvider {
+    /** تغيير المقاس: تُرسم الخلفية من جديد بالمقاس الجديد */
+    @Override
+    public void onAppWidgetOptionsChanged(android.content.Context c, android.appwidget.AppWidgetManager m, int id, android.os.Bundle o) {
+        WidgetStyle.refreshEverything(c);
+    }
+
     @Override
     public void onUpdate(Context c, AppWidgetManager m, int[] ids) { for (int id : ids) render(c, m, id); }
 

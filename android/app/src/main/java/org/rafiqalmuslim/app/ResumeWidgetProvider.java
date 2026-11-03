@@ -15,6 +15,12 @@ import org.json.JSONObject;
  * والضغط يفتح المصحف على الموضع نفسه عبر MainActivity.EXTRA_ROUTE.
  */
 public class ResumeWidgetProvider extends AppWidgetProvider {
+    /** تغيير المقاس: تُرسم الخلفية من جديد بالمقاس الجديد */
+    @Override
+    public void onAppWidgetOptionsChanged(android.content.Context c, android.appwidget.AppWidgetManager m, int id, android.os.Bundle o) {
+        WidgetStyle.refreshEverything(c);
+    }
+
     static final String KEY = "resume";
 
     @Override

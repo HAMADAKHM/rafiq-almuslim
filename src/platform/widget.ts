@@ -11,13 +11,24 @@ import type { Settings } from '../state/settings'
 const PrayerWidget = registerPlugin<{
   update(o: { data: string }): Promise<void>; updateDaily(o: { data: string }): Promise<void>; updatePlus(o: { data: string }): Promise<void>
   updateResume(o: { data: string }): Promise<void>; consumeRoute(): Promise<{ route?: string | null }>
-  setStyle(o: { style: string }): Promise<void>; getStyle(): Promise<{ style: string }>; setPlus(o: { on: boolean }): Promise<void>
+  setStyle(o: { style: string }): Promise<void>; getStyle(): Promise<{ style: string; shape?: string }>; setShape(o: { shape: string }): Promise<void>; setPlus(o: { on: boolean }): Promise<void>
 }>('PrayerWidget')
 
 /** «تصميم الودجت» (رفيق بلس): خلفية كل ودجتات Android */
+export const DEFAULT_WIDGET_STYLE = 'g-night'
+/** التصاميم المجانية: صور التصميم الذهبي والزمردي؛ والملوّنة لبلس */
+export const freeWidgetStyle = (id: string) => id === 'emerald' || id.startsWith('g-')
 export async function getWidgetStyle(): Promise<string> {
-  if (platformName() !== 'android') return 'emerald'
-  try { return (await PrayerWidget.getStyle()).style || 'emerald' } catch { return 'emerald' }
+  if (platformName() !== 'android') return DEFAULT_WIDGET_STYLE
+  try { return (await PrayerWidget.getStyle()).style || DEFAULT_WIDGET_STYLE } catch { return DEFAULT_WIDGET_STYLE }
+}
+export async function getWidgetShape(): Promise<string> {
+  if (platformName() !== 'android') return 'round'
+  try { return (await PrayerWidget.getStyle()).shape || 'round' } catch { return 'round' }
+}
+export async function setWidgetShape(shape: string): Promise<boolean> {
+  if (platformName() !== 'android') return false
+  try { await PrayerWidget.setShape({ shape }); return true } catch { return false }
 }
 /** يخبر شاشة «إعداد الودجت» بحالة اشتراك بلس (بعد التحقق منه) */
 export async function setWidgetPlus(on: boolean): Promise<void> {

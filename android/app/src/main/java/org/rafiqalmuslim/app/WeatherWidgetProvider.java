@@ -11,6 +11,12 @@ import org.json.JSONObject;
 
 /** ودجت رفيق بلس: الطقس في المدينة (آخر ما جلبه التطبيق) والصلاة القادمة مع عدّ تنازلي */
 public class WeatherWidgetProvider extends AppWidgetProvider {
+    /** تغيير المقاس: تُرسم الخلفية من جديد بالمقاس الجديد */
+    @Override
+    public void onAppWidgetOptionsChanged(android.content.Context c, android.appwidget.AppWidgetManager m, int id, android.os.Bundle o) {
+        WidgetStyle.refreshEverything(c);
+    }
+
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
         for (int id : ids) render(context, manager, id);

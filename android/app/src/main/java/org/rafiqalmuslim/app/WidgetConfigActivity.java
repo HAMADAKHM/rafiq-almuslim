@@ -49,7 +49,7 @@ public class WidgetConfigActivity extends Activity {
         title.setTextColor(Color.parseColor("#073B32"));
         root.addView(title);
         TextView hint = new TextView(this);
-        hint.setText("اختر ألوان هذا الودجت. لتكبيره أو تصغيره: اضغط عليه مطوّلًا في الشاشة الرئيسية ثم اسحب المقابض." + (plus ? "" : "\nالتصاميم الملوّنة لمشتركي رفيق المسلم بلس."));
+        hint.setText("اختر خلفية هذا الودجت وشكله. لتكبيره أو تصغيره: اضغط عليه مطوّلًا في الشاشة الرئيسية ثم اسحب المقابض." + (plus ? "" : "\nالتصاميم الملوّنة لمشتركي رفيق المسلم بلس."));
         hint.setTextSize(14);
         hint.setTextColor(Color.parseColor("#5E6B64"));
         hint.setPadding(0, (int) (6 * dp), 0, (int) (14 * dp));
@@ -59,13 +59,15 @@ public class WidgetConfigActivity extends Activity {
         grid.setColumnCount(2);
         for (int i = 0; i < WidgetStyle.IDS.length; i++) {
             final String id = WidgetStyle.IDS[i];
-            final boolean locked = !plus && !id.equals("emerald");
+            final boolean locked = !plus && !WidgetStyle.free(id);
             Button bt = new Button(this);
             bt.setAllCaps(false);
             bt.setText(WidgetStyle.NAMES[i] + (locked ? "  🔒" : "") + (id.equals(cur) ? "  ✓" : ""));
             bt.setTextColor(Color.WHITE);
             bt.setTextSize(14);
-            bt.setBackground(getDrawable(WidgetStyle.resOf(id)));
+            if (WidgetArt.isArt(id)) bt.setBackground(new android.graphics.drawable.BitmapDrawable(getResources(), WidgetArt.renderSized(this, id, WidgetStyle.shapeFor(this, widgetId), new int[] { (int) (170 * dp), (int) (64 * dp) })));
+            else bt.setBackground(getDrawable(WidgetStyle.resOf(id)));
+            bt.setShadowLayer(4, 0, 1, Color.BLACK);
             GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
             lp.width = 0;
             lp.height = (int) (64 * dp);
@@ -80,6 +82,34 @@ public class WidgetConfigActivity extends Activity {
             grid.addView(bt);
         }
         root.addView(grid);
+
+        TextView shT = new TextView(this);
+        shT.setText("شكل الودجت");
+        shT.setTextSize(17);
+        shT.setTypeface(Typeface.DEFAULT_BOLD);
+        shT.setTextColor(Color.parseColor("#073B32"));
+        shT.setPadding(0, (int) (16 * dp), 0, (int) (6 * dp));
+        root.addView(shT);
+        String curShape = WidgetStyle.shapeFor(this, widgetId);
+        String artNow = cur != null && WidgetArt.isArt(cur) ? cur : WidgetStyle.global(this);
+        if (!WidgetArt.isArt(artNow)) artNow = WidgetStyle.DEFAULT;
+        LinearLayout shapes = new LinearLayout(this);
+        shapes.setOrientation(LinearLayout.HORIZONTAL);
+        for (int i = 0; i < WidgetArt.SHAPES.length; i++) {
+            final String sh = WidgetArt.SHAPES[i];
+            Button b2 = new Button(this);
+            b2.setAllCaps(false);
+            b2.setText(WidgetArt.SHAPE_NAMES[i] + (sh.equals(curShape) ? " ✓" : ""));
+            b2.setTextColor(Color.WHITE);
+            b2.setTextSize(13);
+            b2.setShadowLayer(4, 0, 1, Color.BLACK);
+            b2.setBackground(new android.graphics.drawable.BitmapDrawable(getResources(), WidgetArt.renderSized(this, artNow, sh, new int[] { (int) (110 * dp), (int) (80 * dp) })));
+            LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(0, (int) (80 * dp), 1f);
+            bl.setMargins((int) (4 * dp), 0, (int) (4 * dp), 0);
+            b2.setOnClickListener((v) -> { WidgetStyle.setShapeForWidget(this, widgetId, sh); finish(); });
+            shapes.addView(b2, bl);
+        }
+        root.addView(shapes);
 
         Button same = new Button(this);
         same.setText("مثل باقي الودجتات (التصميم العام)");

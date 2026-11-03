@@ -7,10 +7,17 @@ import { PageHead } from '../../components/Common'
 import { usePlus } from '../../billing/PlusContext'
 import { toast } from '../../hooks'
 import { platformName } from '../../platform'
-import { getWidgetStyle, setWidgetStyle } from '../../platform/widget'
+import { DEFAULT_WIDGET_STYLE, freeWidgetStyle, getWidgetShape, getWidgetStyle, setWidgetShape, setWidgetStyle } from '../../platform/widget'
+import { goldenPhoto } from '../../themes/golden'
 
-export const WIDGET_STYLES: { id: string; name: string; bg: [string, string]; stroke: string }[] = [
-  { id: 'emerald', name: 'الزمردي (الأصلي)', bg: ['#05302A', '#1F6F61'], stroke: '#E2C27E' },
+export const WIDGET_STYLES: { id: string; name: string; bg: [string, string]; stroke: string; photo?: string }[] = [
+  { id: 'g-night', name: 'ليلة الهلال (الأصلي)', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-home' },
+  { id: 'g-mosque', name: 'المسجد عند الغروب', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-mosque' },
+  { id: 'g-quran', name: 'المصحف الشريف', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-quran' },
+  { id: 'g-kaaba', name: 'الكعبة المشرفة', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-kaaba' },
+  { id: 'g-madinah', name: 'المسجد النبوي', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-madinah' },
+  { id: 'g-pattern', name: 'النقش الأخضر', bg: ['#0B4A2C', '#0F5A36'], stroke: '#E7C46E' },
+  { id: 'emerald', name: 'الزمردي الذهبي', bg: ['#05302A', '#1F6F61'], stroke: '#E2C27E' },
   { id: 'indigo', name: 'النيلي الذهبي', bg: ['#16134A', '#231E66'], stroke: '#F6C35A' },
   { id: 'royal', name: 'الملكي', bg: ['#070F26', '#1C3170'], stroke: '#D9B45A' },
   { id: 'night', name: 'الليلي', bg: ['#071330', '#21458F'], stroke: '#AED6FF' },
@@ -34,14 +41,29 @@ const WIDGETS: { name: string; desc: string; plus: boolean; body: (accent: strin
   { name: 'عدّاد رمضان', desc: 'الأيام الباقية على رمضان، والسحور والإفطار فيه.', plus: true, body: (a) => <><small>بقي على رمضان</small><b style={{ color: a }}>118 يومًا</b></> },
 ]
 
+const SHAPES: { id: string; name: string; clip: string }[] = [
+  { id: 'round', name: 'مستطيل بإطار ذهبي', clip: 'inset(0 round 14px)' },
+  { id: 'dome', name: 'قبة', clip: 'polygon(0 22%, 34% 22%, 42% 10%, 50% 0, 58% 10%, 66% 22%, 100% 22%, 100% 100%, 0 100%)' },
+  { id: 'frame', name: 'إطار مزخرف', clip: 'polygon(6% 16%, 36% 16%, 44% 7%, 50% 0, 56% 7%, 64% 16%, 94% 16%, 100% 26%, 100% 80%, 94% 88%, 60% 88%, 50% 100%, 40% 88%, 6% 88%, 0 80%, 0 26%)' },
+]
+const swatchBg = (s: (typeof WIDGET_STYLES)[number]) => s.photo
+  ? `linear-gradient(rgba(4,32,22,0.45), rgba(4,32,22,0.7)), url("${goldenPhoto(s.photo)}") center / cover`
+  : `linear-gradient(135deg, ${s.bg[0]}, ${s.bg[1]})`
+
 export function WidgetsPage() {
   const plus = usePlus()
-  const [style, setStyle] = useState('emerald')
+  const [style, setStyle] = useState(DEFAULT_WIDGET_STYLE)
+  const [shape, setShape] = useState('round')
   const android = platformName() === 'android'
-  useEffect(() => { getWidgetStyle().then(setStyle) }, [])
+  useEffect(() => { getWidgetStyle().then(setStyle); getWidgetShape().then(setShape) }, [])
+  const pickShape = async (id: string) => {
+    setShape(id)
+    if (android) toast((await setWidgetShape(id)) ? 'تغيّر شكل كل الودجتات' : 'تعذر تطبيق الشكل')
+    else toast('يُطبَّق الشكل على ودجتات تطبيق Android')
+  }
   const cur = WIDGET_STYLES.find((s) => s.id === style) ?? WIDGET_STYLES[0]
   const pick = async (id: string) => {
-    if (id !== 'emerald' && !plus.entitled) { toast('تصميم الودجت من مزايا رفيق بلس'); return }
+    if (!freeWidgetStyle(id) && !plus.entitled) { toast('تصميم الودجت من مزايا رفيق بلس'); return }
     setStyle(id)
     if (android) toast((await setWidgetStyle(id)) ? 'تغيّر تصميم كل الودجتات' : 'تعذر تطبيق التصميم')
     else toast('يُطبَّق التصميم على ودجتات تطبيق Android')
@@ -55,23 +77,33 @@ export function WidgetsPage() {
           <p className="small muted">خلفية واحدة لكل ودجتات رفيق المسلم، تتغير فورًا على الشاشة الرئيسية.{!plus.entitled && ' التصميمات الإضافية لمشتركي بلس.'}</p>
           <div className="wd-styles" role="radiogroup" aria-label="تصميم الودجت">
             {WIDGET_STYLES.map((s) => {
-              const locked = s.id !== 'emerald' && !plus.entitled
+              const locked = !freeWidgetStyle(s.id) && !plus.entitled
               return (
                 <button key={s.id} type="button" role="radio" aria-checked={style === s.id} className={'wd-style' + (style === s.id ? ' on' : '')} onClick={() => pick(s.id)}>
-                  <span className="wd-swatch" style={{ background: `linear-gradient(135deg, ${s.bg[0]}, ${s.bg[1]})`, borderColor: s.stroke }}>{style === s.id ? <Check size={14} /> : locked ? <Lock size={12} /> : null}</span>
+                  <span className="wd-swatch" style={{ background: swatchBg(s), borderColor: s.stroke }}>{style === s.id ? <Check size={14} /> : locked ? <Lock size={12} /> : null}</span>
                   <span>{s.name}</span>
                 </button>
               )
             })}
           </div>
           {!plus.entitled && <Link to="/plus" className="btn btn-sm btn-gold" style={{ marginTop: 8 }}>اشترك في بلس</Link>}
+          <h3 style={{ margin: '1rem 0 0.4rem' }}>شكل الودجت</h3>
+          <p className="small muted" style={{ marginTop: 0 }}>لصور التصميم الذهبي: إطار ذهبي مزدوج بالشكل الذي تختاره.</p>
+          <div className="wd-styles" role="radiogroup" aria-label="شكل الودجت">
+            {SHAPES.map((sh) => (
+              <button key={sh.id} type="button" role="radio" aria-checked={shape === sh.id} className={'wd-style' + (shape === sh.id ? ' on' : '')} onClick={() => pickShape(sh.id)}>
+                <span className="wd-swatch" style={{ background: swatchBg(WIDGET_STYLES[0]), clipPath: sh.clip, borderColor: '#E7C46E' }}>{shape === sh.id ? <Check size={14} /> : null}</span>
+                <span>{sh.name}</span>
+              </button>
+            ))}
+          </div>
         </section>
         <section className="card" aria-labelledby="wd-list">
           <h2 id="wd-list">كل الودجتات</h2>
           <div className="wd-list">
             {WIDGETS.map((w) => (
               <div key={w.name} className="wd-item">
-                <div className="wd-preview" style={{ background: `linear-gradient(135deg, ${cur.bg[0]}, ${cur.bg[1]})`, borderColor: cur.stroke }}>{w.body(cur.stroke)}</div>
+                <div className="wd-preview" style={{ background: swatchBg(cur), borderColor: cur.stroke, clipPath: cur.photo || cur.id === 'g-pattern' ? SHAPES.find((x) => x.id === shape)?.clip : undefined }}>{w.body(cur.stroke)}</div>
                 <div className="wd-meta"><strong>{w.name} <span className={'fx-badge ' + (w.plus ? 'plus' : 'free')}>{w.plus ? 'بلس' : 'مجاني'}</span></strong><p className="small muted">{w.desc}</p></div>
               </div>
             ))}
@@ -86,7 +118,7 @@ export function WidgetsPage() {
           </ol>
           <h2 style={{ marginTop: '1rem' }}>تعديل الودجت بعد وضعه</h2>
           <ol className="small" style={{ paddingInlineStart: '1.2rem', lineHeight: 1.9 }}>
-            <li><strong>الألوان:</strong> اضغط على الودجت مطولًا ← «إعداد» (أو أيقونة القلم)، واختر تصميمًا لهذا الودجت وحده.</li>
+            <li><strong>الخلفية والشكل:</strong> اضغط على الودجت مطولًا ← «إعداد» (أو أيقونة القلم)، واختر خلفية وشكلًا لهذا الودجت وحده.</li>
             <li><strong>الحجم:</strong> اضغط عليه مطولًا ثم اسحب المقابض حول حدوده لتكبيره أو تصغيره.</li>
           </ol>
           <p className="small muted" style={{ margin: 0 }}>الودجتات متاحة في Android. «إعداد» بعد الوضع في Android 12 فأحدث، وفي الأقدم تظهر شاشة التصميم عند إضافة الودجت. ودجتات iPhone تحتاج نسخة iOS (لم تُبنَ بعد).</p>

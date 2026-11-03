@@ -142,7 +142,7 @@ export function PlusProvider({ children, provider = billing() }: { children: Rea
   useEffect(() => {
     if (!ready || value.entitled || !appIconSupported()) return
     getAppIcon().then((id) => { if (id !== 'default') setAppIcon('default') }).catch(() => {})
-    import('../platform/widget').then(async (w) => { if ((await w.getWidgetStyle()) !== 'emerald') await w.setWidgetStyle('emerald') }).catch(() => {})
+    import('../platform/widget').then(async (w) => { if (!w.freeWidgetStyle(await w.getWidgetStyle())) await w.setWidgetStyle(w.DEFAULT_WIDGET_STYLE) }).catch(() => {})
   }, [ready, value.entitled])
 
   return <Ctx.Provider value={value}><PlusPaletteApplier entitled={value.entitled} /><SkinApplier entitled={value.entitled} />{children}</Ctx.Provider>
