@@ -71,6 +71,13 @@ describe('تصميم الودجت', () => {
     const java = readFileSync('android/app/src/main/java/org/rafiqalmuslim/app/WidgetStyle.java', 'utf8')
     for (const s of WIDGET_STYLES) {
       if (s.id === 'emerald') continue
+      if (s.id.startsWith('g-')) {
+        // صور التصميم الذهبي: تُرسم بمقاس الودجت في WidgetArt.java
+        const art = readFileSync('android/app/src/main/java/org/rafiqalmuslim/app/WidgetArt.java', 'utf8')
+        if (s.id !== 'g-night') expect(art).toContain(`case "${s.id}": return R.drawable.widget_ph_`)
+        expect(java).toContain(`"${s.id}"`)
+        continue
+      }
       expect(existsSync(`android/app/src/main/res/drawable/widget_bg_${s.id}.xml`), s.id).toBe(true)
       expect(java).toContain(`case "${s.id}": return R.drawable.widget_bg_${s.id};`)
     }
