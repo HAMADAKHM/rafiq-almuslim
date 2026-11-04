@@ -94,7 +94,7 @@ export function Layout() {
         {golden && !isHome && !isReader && <div className="gd-page-hero" style={{ backgroundImage: `url("${heroImg}")` }} aria-hidden="true" />}
         <header className="topbar">
           <button className="btn btn-ghost icon-btn" onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))} aria-label="رجوع"><ChevronRight /></button>
-          <div className="topbar-center">{golden && <span className="gd-emblem" aria-hidden="true"><LogoMark size={26} /></span>}<div id="topbar-title" className="topbar-title" />{golden && GOLDEN_SUB[loc.pathname] && <div className="gd-sub">{GOLDEN_SUB[loc.pathname]}</div>}<Brand /></div>
+          <div className="topbar-center">{golden && <span className="gd-emblem" aria-hidden="true">{night ? <img className="nt-emblem" src={`${import.meta.env.BASE_URL}golden/logo-night.png`} alt="" /> : <LogoMark size={26} />}</span>}<div id="topbar-title" className="topbar-title" />{golden && GOLDEN_SUB[loc.pathname] && <div className="gd-sub">{GOLDEN_SUB[loc.pathname]}</div>}<Brand /></div>
           <Link className="btn btn-ghost icon-btn" to="/search" aria-label={t('search', lang)}><Search size={20} /></Link>
         </header>
         {!online && (

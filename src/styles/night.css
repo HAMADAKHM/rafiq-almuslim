@@ -79,3 +79,7 @@
 :root[data-skin='e-night'] .gd-page-hero { filter: saturate(0.55) brightness(0.72); }
 :root[data-skin='e-night'] .gq-start { background: linear-gradient(180deg, #f4e3b8, #d5b36f) !important; color: #10221f !important; border-color: #c9a85c !important; }
 :root[data-skin='e-night'] .gq-start svg { color: #10221f !important; }
+
+/* شعار التطبيق نفسه في بطاقة الصلاة ورأس الصفحات */
+.gp-logo { width: 96px; height: auto; flex-shrink: 0; order: 2; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.45)); }
+.nt-emblem { width: 40px; height: auto; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6)); }

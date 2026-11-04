@@ -7,6 +7,7 @@ import { formatTime } from '../../lib/dates'
 import type { Settings } from '../../state/settings'
 import type { QuranData } from '../../services/quran'
 import { goldenPhoto } from '../../themes/golden'
+import { useSkinId } from '../../themes/useGolden'
 
 const ICON: Record<string, typeof Sun> = { fajr: Sunrise, dhuhr: Sun, asr: CloudSun, maghrib: Sunset, isha: Moon }
 const FIVE = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const
@@ -29,6 +30,7 @@ export function MosqueMark() {
 }
 
 export function GoldenPrayerTop({ settings, now, update }: { settings: Settings; now: Date; update: (p: Partial<Settings>) => void }) {
+  const night = useSkinId() === 'e-night'
   const loc = settings.location
   const [k, setK] = useState(1)
   if (!loc) return null
@@ -44,7 +46,7 @@ export function GoldenPrayerTop({ settings, now, update }: { settings: Settings;
   return (
     <div className="gp-prayer">
       <section className="gp-next" aria-live="polite">
-        <MosqueMark />
+        {night ? <img className="gp-logo" src={`${import.meta.env.BASE_URL}golden/logo-night.png`} alt="" /> : <MosqueMark />}
         <div className="gp-next-text">
           <strong>{PRAYER_LABELS[np.name]}</strong>
           <b>{formatTime(np.time, loc.tz)}</b>

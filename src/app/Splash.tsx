@@ -45,21 +45,10 @@ export function Splash() {
         {SPARKS.map((s, i) => <i key={i} style={{ left: `${s.x}%`, width: s.s, height: s.s, animationDelay: `${s.d}s`, animationDuration: `${s.dur}s` }} />)}
       </div>
       <div className="sp-center">
-        <svg className="sp-emblem" viewBox="0 0 120 140" aria-hidden="true">
-          <defs>
-            <linearGradient id="sp-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#FFF1C2" /><stop offset="0.5" stopColor="#E9C46A" /><stop offset="1" stopColor="#B8862F" /></linearGradient>
-            <mask id="sp-moon"><rect width="120" height="140" fill="#fff" /><circle cx="64" cy="18" r="9" fill="#000" /></mask>
-          </defs>
-          <circle className="sp-moon" cx="60" cy="20" r="11" fill="url(#sp-gold)" mask="url(#sp-moon)" />
-          <path className="sp-draw" pathLength={1} d="M18 132 V78 C18 54 36 40 60 30 C84 40 102 54 102 78 V132" />
-          <path className="sp-draw thin" pathLength={1} d="M30 132 V82 C30 64 44 52 60 45 C76 52 90 64 90 82 V132" />
-          <path className="sp-draw" pathLength={1} d="M60 118 C50 110 38 108 26 110 V92 C38 90 50 92 60 100 C70 92 82 90 94 92 V110 C82 108 70 110 60 118 Z" />
-          <path className="sp-draw thin" pathLength={1} d="M60 100 V118" />
-          <path className="sp-draw" pathLength={1} d="M10 134 H110" />
-        </svg>
+        <img className="sp-emblem sp-logo" src={`${import.meta.env.BASE_URL}golden/logo-night.png`} alt="" />
         <h1 className="sp-name"><span>رفيق المسلم</span></h1>
         <div className="sp-line" aria-hidden="true" />
-        <p className="sp-tag">رفيقك في كل خطوة</p>
+        <p className="sp-tag">معاً .. نحو حياة أرقى بالإيمان</p>
         <p className="sp-plus"><Crown size={14} aria-hidden="true" /> وفيه رفيق المسلم بلس</p>
       </div>
       <div className="sp-bottom">
