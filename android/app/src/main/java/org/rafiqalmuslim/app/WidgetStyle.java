@@ -13,12 +13,12 @@ final class WidgetStyle {
     private WidgetStyle() {}
 
     /** التصاميم بالترتيب (المعرّف، الاسم، والخلفية) — تعرضها شاشة «إعداد الودجت» */
-    static final String[] IDS = { "g-night", "g-mosque", "g-quran", "g-kaaba", "g-madinah", "g-pattern", "emerald", "indigo", "royal", "night", "turquoise", "dawn", "nature", "violet", "rose", "evening", "glass" };
-    static final String[] NAMES = { "ليلة الهلال (الأصلي)", "المسجد عند الغروب", "المصحف الشريف", "الكعبة المشرفة", "المسجد النبوي", "النقش الأخضر", "الزمردي الذهبي", "النيلي الذهبي", "الملكي", "الليلي", "الفيروزي", "الفجر", "الطبيعي", "البنفسجي", "الوردي", "المساء", "زجاجي شفاف" };
+    static final String[] IDS = { "g-app", "g-night", "g-mosque", "g-quran", "g-kaaba", "g-madinah", "g-pattern", "emerald", "indigo", "royal", "night", "turquoise", "dawn", "nature", "violet", "rose", "evening", "glass" };
+    static final String[] NAMES = { "تصميم التطبيق (الأصلي)", "ليلة الهلال", "المسجد عند الغروب", "المصحف الشريف", "الكعبة المشرفة", "المسجد النبوي", "النقش الأخضر", "الزمردي الذهبي", "النيلي الذهبي", "الملكي", "الليلي", "الفيروزي", "الفجر", "الطبيعي", "البنفسجي", "الوردي", "المساء", "زجاجي شفاف" };
     static final String KEY_PLUS = "plus";
     static final String KEY_TEXT = "text_";
 
-    static final String DEFAULT = "g-night";
+    static final String DEFAULT = "g-app";
     static final String KEY_SHAPE = "shape";
 
     static int background(Context c) {

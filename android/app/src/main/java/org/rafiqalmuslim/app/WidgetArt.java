@@ -34,6 +34,7 @@ final class WidgetArt {
             case "g-kaaba": return R.drawable.widget_ph_kaaba;
             case "g-madinah": return R.drawable.widget_ph_madinah;
             case "g-pattern": return R.drawable.widget_ph_pattern;
+            case "g-app": return R.drawable.widget_ph_night;
             default: return R.drawable.widget_ph_night;
         }
     }
@@ -121,6 +122,15 @@ final class WidgetArt {
             pp.setShader(sh);
             cv.drawRect(0, 0, w, h, pp);
             pp.setShader(null);
+        } else if ("g-app".equals(style) && ph != null) {
+            // كتصميم التطبيق: المشهد الليلي أهدأ وأغمق، تحت زجاج أخضر مزرق داكن
+            float sc = Math.max(w / (float) ph.getWidth(), h / (float) ph.getHeight());
+            float dw = ph.getWidth() * sc, dh = ph.getHeight() * sc, top = (h - dh) * 0.4f;
+            android.graphics.ColorMatrix cm = new android.graphics.ColorMatrix(); cm.setSaturation(0.45f);
+            android.graphics.ColorMatrix dim = new android.graphics.ColorMatrix(); dim.setScale(0.6f, 0.64f, 0.64f, 1f); cm.postConcat(dim);
+            pp.setColorFilter(new android.graphics.ColorMatrixColorFilter(cm));
+            cv.drawBitmap(ph, null, new RectF((w - dw) / 2f, top, (w + dw) / 2f, top + dh), pp);
+            pp.setColorFilter(null);
         } else if (ph != null) {
             // قص وسطي بلا تمطيط (مع ميل للأعلى حيث الهلال والمآذن)
             float sc = Math.max(w / (float) ph.getWidth(), h / (float) ph.getHeight());
@@ -132,6 +142,17 @@ final class WidgetArt {
         // تظليل أخضر داكن يضمن وضوح الكتابة كما في بطاقات التطبيق
         Paint veil = new Paint();
         boolean pat = "g-pattern".equals(style);
+        if ("g-app".equals(style)) {
+            veil.setShader(new LinearGradient(0, 0, w, h, new int[] { Color.argb(200, 30, 52, 49), Color.argb(225, 12, 29, 28) }, null, Shader.TileMode.CLAMP));
+            cv.drawRect(0, 0, w, h, veil);
+            cv.restore();
+            Paint line = new Paint(Paint.ANTI_ALIAS_FLAG);
+            line.setStyle(Paint.Style.STROKE);
+            line.setStrokeWidth(1.3f * u);
+            line.setColor(Color.argb(150, 227, 201, 143));
+            cv.drawPath(outer, line);
+            return out;
+        }
         veil.setShader(new LinearGradient(0, 0, 0, h,
             new int[] { Color.argb(pat ? 40 : 120, 4, 32, 22), Color.argb(pat ? 20 : 95, 4, 32, 22), Color.argb(pat ? 70 : 175, 4, 32, 22) },
             new float[] { 0f, 0.45f, 1f }, Shader.TileMode.CLAMP));

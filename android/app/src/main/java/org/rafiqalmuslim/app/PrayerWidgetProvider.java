@@ -111,7 +111,11 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
                 JSONObject p = prayers.getJSONObject(i);
                 v.setTextViewText(NAMES[i], p.getString("label"));
                 v.setTextViewText(TIMES[i], p.getString("time"));
-                v.setInt(CELLS[i], "setBackgroundResource", i == next[1] ? R.drawable.widget_cell_active : R.drawable.widget_cell);
+                boolean on = i == next[1];
+                v.setInt(CELLS[i], "setBackgroundResource", on ? R.drawable.widget_cell_active : R.drawable.widget_cell);
+                // كالتطبيق: الصلاة القادمة خانة ذهبية بنص داكن
+                v.setTextColor(NAMES[i], on ? 0xFF1B2F2A : 0xFFEFE4CC);
+                v.setTextColor(TIMES[i], on ? 0xFF10221F : 0xFFFFFFFF);
             }
         } catch (Exception e) {
             v.setViewVisibility(R.id.widget_content, View.GONE);

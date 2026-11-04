@@ -15,7 +15,7 @@ const PrayerWidget = registerPlugin<{
 }>('PrayerWidget')
 
 /** «تصميم الودجت» (رفيق بلس): خلفية كل ودجتات Android */
-export const DEFAULT_WIDGET_STYLE = 'g-night'
+export const DEFAULT_WIDGET_STYLE = 'g-app'
 /** التصاميم المجانية: صور التصميم الذهبي والزمردي؛ والملوّنة لبلس */
 export const freeWidgetStyle = (id: string) => id === 'emerald' || id.startsWith('g-')
 export async function getWidgetStyle(): Promise<string> {

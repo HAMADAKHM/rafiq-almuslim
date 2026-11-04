@@ -11,7 +11,8 @@ import { DEFAULT_WIDGET_STYLE, freeWidgetStyle, getWidgetShape, getWidgetStyle, 
 import { goldenPhoto } from '../../themes/golden'
 
 export const WIDGET_STYLES: { id: string; name: string; bg: [string, string]; stroke: string; photo?: string }[] = [
-  { id: 'g-night', name: 'ليلة الهلال (الأصلي)', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-home' },
+  { id: 'g-app', name: 'تصميم التطبيق (الأصلي)', bg: ['#0c1d1c', '#1e3431'], stroke: 'rgba(227,201,143,0.6)', photo: 'bg-home' },
+  { id: 'g-night', name: 'ليلة الهلال', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-home' },
   { id: 'g-mosque', name: 'المسجد عند الغروب', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-mosque' },
   { id: 'g-quran', name: 'المصحف الشريف', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-quran' },
   { id: 'g-kaaba', name: 'الكعبة المشرفة', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-kaaba' },
@@ -46,7 +47,9 @@ const SHAPES: { id: string; name: string; clip: string }[] = [
   { id: 'dome', name: 'قبة', clip: 'polygon(0 22%, 34% 22%, 42% 10%, 50% 0, 58% 10%, 66% 22%, 100% 22%, 100% 100%, 0 100%)' },
   { id: 'frame', name: 'إطار مزخرف', clip: 'polygon(6% 16%, 36% 16%, 44% 7%, 50% 0, 56% 7%, 64% 16%, 94% 16%, 100% 26%, 100% 80%, 94% 88%, 60% 88%, 50% 100%, 40% 88%, 6% 88%, 0 80%, 0 26%)' },
 ]
-const swatchBg = (s: (typeof WIDGET_STYLES)[number]) => s.photo
+const swatchBg = (s: (typeof WIDGET_STYLES)[number]) => s.id === 'g-app'
+  ? `linear-gradient(135deg, rgba(30,52,49,0.8), rgba(12,29,28,0.9)), url("${goldenPhoto('bg-home')}") center / cover`
+  : s.photo
   ? `linear-gradient(rgba(4,32,22,0.45), rgba(4,32,22,0.7)), url("${goldenPhoto(s.photo)}") center / cover`
   : `linear-gradient(135deg, ${s.bg[0]}, ${s.bg[1]})`
 
