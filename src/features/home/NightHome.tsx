@@ -3,7 +3,7 @@
 // البيانات كلها من التطبيق نفسه (لا تغيير في الوظائف).
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { BookOpen, CalendarDays, MapPin, Navigation, Play, Settings as Cog } from 'lucide-react'
+import { Bell, BookOpen, CalendarDays, MapPin, Palette, Play, Settings as Cog } from 'lucide-react'
 import { useQuran } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
 import { cityLabel } from '../../services/cities'
@@ -28,29 +28,12 @@ function splitTime(s: string): [string, string] {
   return m ? [m[1], m[2]] : [s, '']
 }
 
-function BeadsIcon() {
-  return (
-    <svg width="34" height="34" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-      {[[20, 5], [27, 7], [32, 12], [33, 19], [30, 25], [8, 12], [13, 7], [7, 19], [10, 25]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="2.6" />)}
-      <path d="M13 28 Q20 31 27 28" /><circle cx="20" cy="31" r="2.6" /><path d="M20 34 V38 M17 38 h6" />
-    </svg>
-  )
-}
-function MosqueIcon() {
-  return (
-    <svg width="36" height="34" viewBox="0 0 44 40" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 22 Q12 12 22 8 Q32 12 32 22" /><path d="M22 8 V4 M22 3 a1 1 0 1 0 0.1 0" />
-      <path d="M6 36 V16 l2 -4 l2 4 V36 M34 36 V16 l2 -4 l2 4 V36" /><path d="M10 22 H34 V36 H10 Z" />
-      <path d="M19 36 V29 Q22 25 25 29 V36" /><path d="M3 36 H41" />
-    </svg>
-  )
-}
-
+/** خانات الأقسام بأيقونات صاحب التطبيق الذهبية نفسها (من تصميمه) */
 const TILES = [
-  { to: '/quran', title: 'القرآن الكريم', icon: <BookOpen size={34} strokeWidth={1.5} /> },
-  { to: '/adhkar', title: 'الأذكار والأدعية', icon: <BeadsIcon /> },
-  { to: '/prayer', title: 'أوقات الصلاة', icon: <MosqueIcon /> },
-  { to: '/qibla', title: 'القبلة', icon: <span className="nh-qibla"><Navigation size={20} strokeWidth={1.8} /></span> },
+  { to: '/quran', title: 'القرآن الكريم', icon: 'quran' },
+  { to: '/adhkar', title: 'الأذكار والأدعية', icon: 'adhkar' },
+  { to: '/prayer', title: 'أوقات الصلاة', icon: 'prayer' },
+  { to: '/qibla', title: 'القبلة', icon: 'qibla' },
 ]
 
 export function NightHome({ now, loc, prayer, rest }: {
@@ -71,7 +54,11 @@ export function NightHome({ now, loc, prayer, rest }: {
     <div className="nh-home">
       <header className="nh-head" style={{ backgroundImage: `url("${goldenPhoto('bg-home')}")` }}>
         <div className="nh-veil" />
-        <Link to="/settings" className="nh-gear" aria-label="الإعدادات"><Cog size={22} /></Link>
+        <nav className="nh-btns" aria-label="اختصارات">
+          <Link to="/reminders" aria-label="التذكيرات"><Bell size={24} /></Link>
+          <Link to="/plus/themes" aria-label="الثيمات"><Palette size={24} /></Link>
+          <Link to="/settings" aria-label="الإعدادات"><Cog size={24} /></Link>
+        </nav>
         <div className="nh-brand">
           <img className="nh-logo" src={asset('logo-night.png')} alt="" />
           <h1>رفيق المسلم</h1>
@@ -118,7 +105,7 @@ export function NightHome({ now, loc, prayer, rest }: {
       </section>
 
       <nav className="nh-tiles" aria-label="الأقسام">
-        {TILES.map((t) => <Link key={t.to} to={t.to} className="nh-tile">{t.icon}<span>{t.title}</span></Link>)}
+        {TILES.map((t) => <Link key={t.to} to={t.to} className="nh-tile"><img src={asset(`nt-${t.icon}.png`)} alt="" /><span>{t.title}</span></Link>)}
       </nav>
 
       <div className="nh-rest">{rest}</div>

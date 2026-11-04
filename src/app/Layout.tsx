@@ -12,7 +12,7 @@ import { useGolden, useSkinId } from '../themes/useGolden'
 import { goldenPhoto, heroFor, landmarkFor } from '../themes/golden'
 import { startReminderLoop } from '../services/notifications'
 import { LogoMark } from '../components/Art'
-import { NAV, NIGHT_TABS, tabsFor } from './nav'
+import { NAV, tabsFor } from './nav'
 import { Splash } from './Splash'
 import { TvUpdateCheck } from './TvUpdateCheck'
 import { Spinner } from '../components/Common'
@@ -116,7 +116,7 @@ export function Layout() {
       {!isReader && <MiniPlayer />}
       {!isReader && (
         <nav className="tabbar" aria-label="التنقل السفلي">
-          {(night ? NIGHT_TABS : tabsFor(settings.tabs)).map(({ to, icon: Icon, short, match }) => {
+          {tabsFor(settings.tabs).map(({ to, icon: Icon, short, match }) => {
             const active = match.test(loc.pathname)
             return (
               <Link key={to} to={to} className={'tab-item' + (active ? ' active' : '')} aria-current={active ? 'page' : undefined}>

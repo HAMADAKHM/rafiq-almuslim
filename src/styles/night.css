@@ -8,7 +8,6 @@
 .nh-head { position: relative; height: 430px; background-size: cover; background-position: center 30%; color: #f3ead8; overflow: hidden; }
 .nh-head::before { content: ''; position: absolute; inset: 0; background: inherit; filter: saturate(0.45) brightness(0.62) hue-rotate(-12deg); }
 .nh-veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 22, 22, 0.55), rgba(8, 22, 22, 0.25) 40%, rgba(12, 29, 28, 0.6) 75%, #0c1d1c); }
-.nh-gear { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); inset-inline-start: 16px; z-index: 2; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; color: #e3c98f; background: rgba(14, 28, 26, 0.7); border: 1px solid rgba(227, 201, 143, 0.55); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
 .nh-brand { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding-top: calc(70px + env(safe-area-inset-top, 0px)); text-align: center; }
 .nh-logo { width: 104px; height: auto; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)); }
 .nh-brand h1 { margin: 10px 0 4px; font-family: 'Amiri', serif; font-size: 2.6rem; line-height: 1.1; background: linear-gradient(180deg, #f7ecd2, #d8b777); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55)); }
@@ -42,33 +41,38 @@
 .nh-t.on::before, .nh-t.on + .nh-t::before { display: none; }
 .nh-empty { display: block; text-align: center; padding: 18px; color: #e3c98f; }
 
-.nh-verse { position: relative; margin: 0 14px; padding: 16px 18px 12px; padding-inline-end: 42%; min-height: 168px; border-radius: 26px; overflow: hidden; color: #1f2a24;
+.nh-verse { position: relative; margin: 0 14px; padding: 12px 16px 10px; padding-inline-end: 40%; min-height: 136px; border-radius: 26px; overflow: hidden; color: #1f2a24;
   background: linear-gradient(270deg, #f6eedc 0%, #f1e6cf 52%, rgba(241, 230, 207, 0.55) 64%, rgba(241, 230, 207, 0) 82%), var(--img) left center / auto 100% no-repeat, #efe2c6;
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35); display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; justify-content: center; }
+.nh-verse > * { flex-shrink: 0; }
 .nh-tag { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; color: #1d3a33; }
-.nh-tag b { background: #ead9b0; padding: 3px 14px; border-radius: 16px; font-size: 1.05rem; }
-.nh-ayah { font-family: 'Amiri Quran', 'Amiri', serif; font-size: 1.45rem; line-height: 1.9; color: #1b2b25; text-decoration: none; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.nh-tag b { background: #ead9b0; padding: 2px 12px; border-radius: 14px; font-size: 0.95rem; }
+.nh-ayah { font-family: 'Amiri Quran', 'Amiri', serif; font-size: clamp(0.95rem, 4.6vw, 1.3rem); line-height: 1.75; color: #1b2b25; text-decoration: none; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .nh-ref { color: #4b5a52; font-size: 0.82rem; }
 .nh-play-row { display: flex; align-items: center; gap: 8px; width: 100%; }
 .nh-play-row i { flex: 1; height: 1px; background: rgba(29, 58, 51, 0.35); }
-.nh-play { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; border: 0; background: #1d3a33; color: #f3ead8; cursor: pointer; }
+.nh-play { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 0; background: #1d3a33; color: #f3ead8; cursor: pointer; }
 
 .nh-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 14px; }
 .nh-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 112px; padding: 10px 4px; border-radius: 22px; text-decoration: none; color: #e3c98f;
   background: linear-gradient(160deg, rgba(36, 58, 55, 0.95), rgba(14, 30, 28, 0.96)); border: 1px solid rgba(227, 201, 143, 0.3); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+.nh-tile img { width: 44px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 4px rgba(231, 196, 110, 0.35)); }
 .nh-tile span { color: #f3ead8; font-size: clamp(0.7rem, 3.2vw, 0.92rem); font-weight: 600; text-align: center; line-height: 1.3; }
-.nh-qibla { width: 34px; height: 34px; border-radius: 50%; border: 1.6px solid currentColor; display: grid; place-items: center; }
-.nh-qibla svg { transform: rotate(-45deg) translate(1px, -1px); }
 .nh-rest { padding: 0 2px; }
 
-/* الشريط السفلي: أربعة أقسام، والرئيسية ذهبية بخط تحتها */
-.app.night .tabbar { background: linear-gradient(180deg, #17302d, #0c1d1c); border-top: 1px solid rgba(227, 201, 143, 0.5); border-radius: 30px 30px 0 0; box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.4); }
-.app.night .tabbar a { order: 0 !important; }
-.app.night .tab-item { color: #efe4cc; position: relative; }
-.app.night .tab-item.active, .app.night .tab-item.active svg { color: #e3c98f !important; background: transparent !important; }
-.app.night .tab-item.active::after { content: ''; position: absolute; bottom: 4px; left: 22%; right: 22%; height: 3px; border-radius: 3px; background: #e3c98f; }
-.app.night .tabbar a[href='/'] svg { width: 22px !important; height: 22px !important; padding: 0 !important; margin-top: 0 !important; border: 0 !important; box-shadow: none !important; background: transparent !important; color: inherit !important; }
-.app.night .tabbar a:nth-child(2)::before { content: ''; position: absolute; inset-inline-end: 0; top: 22%; bottom: 22%; width: 1px; background: rgba(227, 201, 143, 0.4); }
+/* أزرار الرأس كما في التصميم: دائرة خضراء داكنة بحلقة ذهبية مزدوجة وأيقونة ذهبية */
+.nh-btns { position: absolute; z-index: 2; top: calc(14px + env(safe-area-inset-top, 0px)); inset-inline-end: 14px; display: flex; gap: 12px; }
+.nh-btns a { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; color: #f0d48e;
+  background: radial-gradient(circle at 50% 40%, rgba(22, 46, 32, 0.92), rgba(6, 20, 14, 0.95));
+  border: 2px solid #e7c46e; box-shadow: 0 0 0 1.5px rgba(6, 20, 14, 0.85), 0 0 0 3px rgba(231, 196, 110, 0.55), 0 0 12px rgba(231, 196, 110, 0.35), 0 4px 10px rgba(0, 0, 0, 0.45); }
+.nh-btns a svg { filter: drop-shadow(0 0 3px rgba(240, 212, 142, 0.55)); }
+
+/* الشريط السفلي كما في التصميم: أخضر داكن بحافة ذهبية، وزر الرئيسية دائرة ذهبية بارزة في الوسط */
+.app.night .tabbar { background: linear-gradient(180deg, #0f3324, #06170f); border-top: 1.5px solid #e7c46e; box-shadow: 0 -2px 0 rgba(231, 196, 110, 0.25), 0 -10px 22px rgba(0, 0, 0, 0.45); }
+.app.night .tab-item { color: #f0d48e; }
+.app.night .tab-item span { color: #f0d48e; font-weight: 700; }
+.app.night .tabbar a[href='/'] svg { background: radial-gradient(circle at 35% 30%, #fff1c4, #e7c46e 55%, #a97c2c) !important; color: #10261a !important;
+  border: 3px solid #0f3324 !important; box-shadow: 0 0 0 2px #e7c46e, 0 0 14px rgba(231, 196, 110, 0.5), 0 8px 16px rgba(0, 0, 0, 0.4) !important; }
 
 /* بقية الصفحات بروح التصميم نفسه: صور الرؤوس أهدأ، وأزرار الذهب بنص داكن */
 :root[data-skin='e-night'] .gd-page-hero { filter: saturate(0.55) brightness(0.72); }
