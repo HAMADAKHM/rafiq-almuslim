@@ -13,7 +13,7 @@ import {
   AYAH_FONTS, TEXT_FONTS, studioFont, BACKGROUNDS, PLUS_BACKGROUNDS, FORMATS, canvasToBlob, drawStudioFrame, isScene, loadStudioFonts, referenceText, sceneTone, svgToImage, versesText,
   type StudioBg, type StudioFormat, type StudioStyle, type Verse,
 } from '../../services/studio'
-import { MAX_VIDEO_AYAHS, decodeUserAudio, extFor, loadRecitation, pickVideoMime, recordVideo, silentDurations } from '../../services/studioVideo'
+import { MAX_VIDEO_AYAHS, decodeUserAudio, loadDhikrVoice, extFor, loadRecitation, pickVideoMime, recordVideo, silentDurations } from '../../services/studioVideo'
 import { VoiceAyahSearch } from '../../components/VoiceAyahSearch'
 import { matchSpokenAyah } from '../../services/voiceSearch'
 import { searchSkeleton, toArabicDigits } from '../../lib/arabic'
@@ -154,8 +154,11 @@ export function StudioPage() {
       const items = isAyah || !item ? undefined : [{ text: item.text ?? '', reference: item.source }]
       await loadStudioFonts(items ? items[0].text + ' ' + items[0].reference : versesText(verses) + ' ' + referenceText(meta.name, verses), reciterById(reciterId).name, style.note ?? '')
       setVideo({ phase: 'loading', done: 0, total: items ? 1 : verses.length })
+      // الذكر والدعاء: صوتك إن اخترته، وإلا التسجيل المطابق للنص (تسجيلك المحفوظ أو حصن المسلم)
+      const auto = withAudio && items && !voice && item?.id ? await loadDhikrVoice(actx, item.id).catch(() => null) : null
+      if (withAudio && items && !voice && !auto) toast('لا يوجد تسجيل صوتي لهذا النص — يُنشأ المقطع صامتًا، ويمكنك اختيار تسجيلك')
       const buffers = !withAudio ? null
-        : items ? (voice ? [await decodeUserAudio(actx, voice)] : null)
+        : items ? (voice ? [await decodeUserAudio(actx, voice)] : auto ? [auto.buffer] : null)
         : await loadRecitation(actx, reciterId, verses, (done, total) => setVideo({ phase: 'loading', done, total }))
       const useVideo = style.bg === 'video' ? bgVideo : null
       if (ctrl.signal.aborted) return
@@ -340,7 +343,7 @@ export function StudioPage() {
           <label className="check"><input type="checkbox" className="switch-input" checked={style.showBrand} onChange={(e) => set({ showBrand: e.target.checked })} /> اسم التطبيق أسفل التصميم</label>
 
           {mode === 'video' && (
-            <label className="check"><input type="checkbox" className="switch-input" checked={withAudio} disabled={busy} onChange={(e) => setWithAudio(e.target.checked)} aria-label={textOnly ? 'إضافة صوت' : 'إضافة صوت التلاوة'} /> {textOnly ? 'بصوت (تسجيلك أو ملف من جوالك)' : 'إضافة صوت التلاوة بصوت القارئ'}</label>
+            <label className="check"><input type="checkbox" className="switch-input" checked={withAudio} disabled={busy} onChange={(e) => setWithAudio(e.target.checked)} aria-label={textOnly ? 'إضافة صوت' : 'إضافة صوت التلاوة'} /> {textOnly ? 'بصوت (التسجيل المطابق للنص، أو تسجيلك)' : 'إضافة صوت التلاوة بصوت القارئ'}</label>
           )}
           {mode === 'video' && withAudio && textOnly && (
             <div className="stack" style={{ gap: 6 }}>
@@ -349,7 +352,7 @@ export function StudioPage() {
                 <button className="btn btn-sm" disabled={busy} onClick={() => voiceInput.current?.click()}><Upload size={14} /> {voice ? 'تغيير الصوت' : 'اختر تسجيلًا أو ملفًا صوتيًا'}</button>
                 {voice && <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => setVoice(null)}><X size={14} /> إزالة</button>}
               </div>
-              <p className="small muted" style={{ margin: 0 }}>{voice ? `الصوت: ${voice.name}` : 'سجّل صوتك بالذكر أو الدعاء من مسجل الجوال ثم اختره هنا (حتى دقيقتين). دون صوت يُنشأ المقطع صامتًا.'}</p>
+              <p className="small muted" style={{ margin: 0 }}>{voice ? `الصوت: ${voice.name}` : 'يُضاف تلقائيًا تسجيل «حصن المسلم» المطابق لنص هذا الذكر أو الدعاء (أو تسجيلك المحفوظ له). ولصوت آخر: اختر تسجيلًا من جوالك (حتى دقيقتين).'}</p>
             </div>
           )}
           {mode === 'video' && withAudio && !textOnly && (
@@ -393,7 +396,7 @@ export function StudioPage() {
                 <div className="studio-empty">
                   <Film size={36} aria-hidden="true" />
                   {textOnly
-                    ? <p>يُعرض النص مع مصدره{style.bg === 'video' ? ' فوق الفيديو الذي اخترته (صوته الأصلي مكتوم)' : ''}{withAudio && voice ? '، بصوتك الذي اخترته' : '، بلا صوت'}.</p>
+                    ? <p>يُعرض النص مع مصدره{style.bg === 'video' ? ' فوق الفيديو الذي اخترته (صوته الأصلي مكتوم)' : ''}{withAudio ? (voice ? '، بصوتك الذي اخترته' : '، بالتسجيل الصوتي المطابق للنص إن توفر') : '، بلا صوت'}.</p>
                     : withAudio
                     ? <p>تُعرض كل آية مع تلاوتها بصوت <strong>{reciterById(reciterId).name}</strong>{style.bg === 'video' ? ' فوق الفيديو الذي اخترته (صوته الأصلي مكتوم)' : ''}.</p>
                     : <p>تُعرض الآيات {style.bg === 'video' ? 'فوق الفيديو الذي اخترته، بلا صوت (صوته الأصلي مكتوم)' : 'بلا صوت'}.</p>}

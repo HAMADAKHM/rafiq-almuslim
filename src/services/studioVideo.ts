@@ -94,6 +94,22 @@ export interface VideoJob {
 
 /** مدة عرض كل آية في فيديو بلا تلاوة: بحسب طول الآية، أو تقسيم مدة فيديو المستخدم */
 /** صوت يختاره المستخدم من جواله (تسجيله أو ملف): يُفك إلى مقطع واحد يُعرض النص طوال مدته (حتى دقيقتين) */
+/**
+ * صوت الذكر أو الدعاء للفيديو: تسجيل المستخدم المحفوظ لهذا الذكر أولًا، ثم تسجيل «حصن المسلم» إن طابق نصه.
+ * يعيد null إن لم يوجد تسجيل لهذا النص (فلا يُنسب صوت إلى نص لا يطابقه).
+ */
+export async function loadDhikrVoice(actx: BaseAudioContext, itemId: string): Promise<{ buffer: AudioBuffer; credit: string } | null> {
+  const { getRecording } = await import('./dhikrAudio')
+  const rec = await getRecording(itemId).catch(() => null)
+  if (rec?.blob) {
+    try { return { buffer: await actx.decodeAudioData(await rec.blob.arrayBuffer()), credit: `بصوت ${rec.reciter}` } } catch { /* التسجيل التالي */ }
+  }
+  const { hisnAudioUrl, HISN_AUDIO_CREDIT } = await import('../content/hisnAudio')
+  const url = hisnAudioUrl(itemId)
+  if (!url) return null
+  return { buffer: await actx.decodeAudioData(await fetchBytes(url)), credit: HISN_AUDIO_CREDIT }
+}
+
 export async function decodeUserAudio(actx: BaseAudioContext, file: Blob): Promise<AudioBuffer> {
   if (file.size > 30 * 1024 * 1024) throw new Error('الملف الصوتي كبير جدًا (الحد 30 م.ب)')
   const buf = await actx.decodeAudioData(await file.arrayBuffer())
