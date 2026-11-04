@@ -33,6 +33,7 @@ import { activePlan, dailyTarget } from '../../services/khatma'
 import { dailySuggestion } from '../../services/dailySuggest'
 import { Lightbulb, Palette, ScrollText, GraduationCap, Trophy } from 'lucide-react'
 import { GoldenHome } from './GoldenHome'
+import { NightHome } from './NightHome'
 import { useAllLogs } from '../progress/ProgressPage'
 import { computeStats, dailySeries } from '../../services/stats'
 import { adhkarForNow, ayahOfDay, greeting } from '../../services/daily'
@@ -281,7 +282,9 @@ export function HomePage() {
 
   return (
     <div className={'home' + (golden ? ' home-golden' : '')}>
-      {golden ? (
+      {skinNow?.id === 'e-night' ? (
+        <NightHome now={now} loc={loc} prayer={settings.prayer} rest={null} />
+      ) : golden ? (
         <GoldenHome now={now} loc={loc} prayer={settings.prayer} hijriOffset={settings.hijriOffset} last={last} resumeTo={resumeTo} plusEntitled={plusEntitled} rest={null} />
       ) : designed ? (
         <>

@@ -1,6 +1,6 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby, LayoutDashboard, Library, Star, GalleryHorizontal,
+  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby, LayoutDashboard, Library, Star, GalleryHorizontal, Bookmark, UserRound,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
@@ -81,6 +81,14 @@ export const TABS: (NavItem & { short: string; match: RegExp })[] = [
   { to: '/prayer', key: 'prayer', icon: Clock, short: 'الصلاة', match: /^\/(prayer|qibla|calendar|mosques|date-tools)/ },
   { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|hadith|tasbih|my-adhkar|for-the-deceased|kids-adhkar|beloved|booklet)/ },
   { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|assistant|search|reminders|settings|plus|weather|ramadan|about|terms|widgets)/ },
+]
+
+/** الشريط السفلي في التصميم «الليلي الذهبي» كما أرسله صاحب التطبيق: الرئيسية، المزيد | المحفوظات، حسابي */
+export const NIGHT_TABS: (NavItem & { short: string; match: RegExp })[] = [
+  TABS[0],
+  TABS[4],
+  { to: '/favorites', key: 'favorites', icon: Bookmark, short: 'المحفوظات', match: /^\/(favorites|hadith\/favorites)/ },
+  { to: '/progress', key: 'progress', icon: UserRound, short: 'حسابي', match: /^\/(progress|journey)/ },
 ]
 
 /** أقسام يمكن وضعها في وسط الشريط السفلي (الرئيسية أولًا و«المزيد» آخرًا ثابتان) */

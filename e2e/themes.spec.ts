@@ -83,7 +83,7 @@ test('أيقونة التطبيق والودجتات: البديلة مقفلة 
   await page.goto('/widgets')
   await expect(page.locator('.wd-item')).toHaveCount(8)
   await page.getByRole('radio', { name: /الملكي/ }).click()
-  await expect(page.getByRole('radio', { name: /الزمردي/ })).toHaveAttribute('aria-checked', 'true')
+  await expect(page.getByRole('radio', { name: /ليلة الهلال/ })).toHaveAttribute('aria-checked', 'true')
   await page.goto('/more')
   await page.getByLabel('ابحث عن قسم').fill('الودجتات')
   await page.locator('.more-row').first().click()

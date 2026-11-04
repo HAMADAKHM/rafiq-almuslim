@@ -126,6 +126,8 @@ export interface Settings {
   skin: string
   /** طُبّق التصميم الذهبي افتراضيًا مرة واحدة (بعدها يبقى اختيار المستخدم كما هو) */
   goldenApplied?: boolean
+  /** نُقل مرة واحدة إلى التصميم «الليلي الذهبي» المعتمد */
+  nightApplied?: boolean
   /** إيقاف حركة مشهد الثيم (يبقى المشهد ثابتًا) */
   skinStill: boolean
   /** رفيق بلس: لوحة الألوان والخلفية الإضافية ('' = ألوان التطبيق الأصلية). تُطبَّق فقط مع اشتراك ساري */
@@ -267,7 +269,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
  * العرض الافتراضي: التصميم الذهبي المعتمد. يُطبَّق مرة واحدة على من كان على الثيم الأصلي، ثم يبقى اختياره.
  * VITE_DEFAULT_SKIN='' يُبقي الأصلي افتراضيًا (تستعمله اختبارات الواجهة القديمة التي تفحص الشكل الأصلي).
  */
-const DEFAULT_SKIN: string = (import.meta.env?.VITE_DEFAULT_SKIN as string | undefined) ?? 'e-golden'
+const DEFAULT_SKIN: string = (import.meta.env?.VITE_DEFAULT_SKIN as string | undefined) ?? 'e-night'
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
@@ -299,6 +301,7 @@ export const DEFAULT_SETTINGS: Settings = {
   plusPalette: '',
   skin: DEFAULT_SKIN,
   goldenApplied: true,
+  nightApplied: true,
   skinStill: false,
   customReminders: [],
   ramadan: { suhoorMinutes: 45, iftarMinutes: 10, imsakMinutes: 10, theme: 'auto' },
@@ -341,6 +344,8 @@ export function mergeSettings(saved: Partial<Settings> | null | undefined): Sett
     ...s,
     // التصميم الذهبي هو العرض المعتمد: يُطبَّق مرة واحدة على من كان على الثيم الأصلي، ثم يبقى اختياره له
     ...(DEFAULT_SKIN && !s.goldenApplied && (s.skin ?? '') === '' ? { skin: DEFAULT_SKIN, goldenApplied: true } : {}),
+    // التصميم «الليلي الذهبي» صار المعتمد: يُنقل إليه مرة واحدة من كان على الذهبي أو الأصلي (ويبقى الذهبي في الثيمات)
+    ...(DEFAULT_SKIN && !s.nightApplied && ['', 'e-golden'].includes(s.skin ?? '') ? { skin: DEFAULT_SKIN, goldenApplied: true, nightApplied: true } : {}),
     prayer: { ...DEFAULT_SETTINGS.prayer, ...s.prayer, adjustments: { ...DEFAULT_SETTINGS.prayer.adjustments, ...s.prayer?.adjustments } },
     notifications: {
       ...DEFAULT_NOTIFICATIONS,

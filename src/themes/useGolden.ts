@@ -9,3 +9,10 @@ export function useGolden(): boolean {
   // كل ثيمات الهوية تعرض المظهر الجديد بألوانها؛ «الذهبي الإسلامي» هو التصميم المعتمد نفسه
   return !!skinById(preview ?? settings.skin)?.identity
 }
+
+/** معرّف الثيم المعروض الآن (مع المعاينة) */
+export function useSkinId(): string {
+  const { settings } = useSettings()
+  const preview = useThemePreview()
+  return preview ?? settings.skin ?? ''
+}

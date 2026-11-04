@@ -8,11 +8,11 @@ import { FOOTER_LINE } from '../content/dedication'
 import { MiniPlayer } from '../components/MiniPlayer'
 import { useLive, useOnline, useToastMessage } from '../hooks'
 import { activeKidId, kidPathAllowed } from '../services/kids'
-import { useGolden } from '../themes/useGolden'
+import { useGolden, useSkinId } from '../themes/useGolden'
 import { goldenPhoto, heroFor, landmarkFor } from '../themes/golden'
 import { startReminderLoop } from '../services/notifications'
 import { LogoMark } from '../components/Art'
-import { NAV, tabsFor } from './nav'
+import { NAV, NIGHT_TABS, tabsFor } from './nav'
 import { Splash } from './Splash'
 import { TvUpdateCheck } from './TvUpdateCheck'
 import { Spinner } from '../components/Common'
@@ -60,12 +60,13 @@ export function Layout() {
   const isHome = loc.pathname === '/'
   const kidMode = useKidGuard(loc.pathname, navigate)
   const golden = useGolden()
+  const night = useSkinId() === 'e-night'
   // التصميم الذهبي: رأس بصورة حقيقية لكل صفحة؛ صفحة المواقيت تعرض معلم دولة المستخدم إن توفرت صورته
   const land = landmarkFor(settings.location?.country, settings.location?.name)
   const heroImg = goldenPhoto(loc.pathname.startsWith('/prayer') && land ? land.photo : heroFor(loc.pathname))
 
   return (
-    <div className={'app' + (isReader ? ' reading' : '') + (/^\/read\/?$/.test(loc.pathname) ? ' reading2' : '') + (isHome ? ' at-home' : '') + (kidMode ? ' kid-mode' : '') + (golden ? ' golden' + (GOLDEN_SUB[loc.pathname] ? ' gd-own-sub' : '') + (GOLDEN_ROOTS.includes(loc.pathname) ? ' gd-root' : '') : '')}>
+    <div className={'app' + (isReader ? ' reading' : '') + (/^\/read\/?$/.test(loc.pathname) ? ' reading2' : '') + (isHome ? ' at-home' : '') + (kidMode ? ' kid-mode' : '') + (night ? ' night' : '') + (golden ? ' golden' + (GOLDEN_SUB[loc.pathname] ? ' gd-own-sub' : '') + (GOLDEN_ROOTS.includes(loc.pathname) ? ' gd-root' : '') : '')}>
       <Splash />
       <TvUpdateCheck />
       <AdhanAlarm />
@@ -115,7 +116,7 @@ export function Layout() {
       {!isReader && <MiniPlayer />}
       {!isReader && (
         <nav className="tabbar" aria-label="التنقل السفلي">
-          {tabsFor(settings.tabs).map(({ to, icon: Icon, short, match }) => {
+          {(night ? NIGHT_TABS : tabsFor(settings.tabs)).map(({ to, icon: Icon, short, match }) => {
             const active = match.test(loc.pathname)
             return (
               <Link key={to} to={to} className={'tab-item' + (active ? ' active' : '')} aria-current={active ? 'page' : undefined}>

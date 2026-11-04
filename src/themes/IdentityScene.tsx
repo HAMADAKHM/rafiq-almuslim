@@ -8,6 +8,7 @@ interface Look { sky: [string, string, string]; line: string; lineOpacity: numbe
 
 // خلفيات التصاميم التسعة المعتمدة (ثم ثيمات الشروق والوردي والمساء)
 export const IDENTITY_LOOK: Record<IdentityId, Look> = {
+  'e-night': { sky: ['#13292a', '#0c1d1c', '#081413'], line: '#e3c98f', lineOpacity: 0, silhouette: '#000000', silOpacity: 0, accent: '#e3c98f', motif: 'none' },
   'e-golden': { sky: ['#f6eedb', '#f3ead6', '#ece0c4'], line: '#c9a24a', lineOpacity: 0.06, silhouette: '#0d3b2c', silOpacity: 0, accent: '#c9a24a', motif: 'none' },
   'e-emerald': { sky: ['#f6f9f4', '#f2f6f1', '#e6efe6'], line: '#b8913f', lineOpacity: 0.08, silhouette: '#0b6b4f', silOpacity: 0.14, accent: '#b8913f', motif: 'arch' },
   'e-midnight': { sky: ['#121a33', '#0b1020', '#070a14'], line: '#9cc2ff', lineOpacity: 0.04, silhouette: '#04060d', silOpacity: 0.92, accent: '#dfe8ff', motif: 'stars', glow: '#9cc2ff' },
