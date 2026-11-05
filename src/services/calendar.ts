@@ -1,5 +1,6 @@
 // التقويم الهجري والمناسبات. الحساب وفق تقويم أم القرى (Intl) مع تعديل يدوي ±2 يوم،
 // لأن بدايات الشهور قد تختلف بين البلدان بحسب رؤية الهلال.
+import { formatParts, partNum } from '../lib/intlParts'
 import { addDays } from '../lib/dates'
 
 export const HIJRI_MONTHS = ['محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة', 'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة']
@@ -7,9 +8,25 @@ export const HIJRI_MONTHS = ['محرم', 'صفر', 'ربيع الأول', 'رب�
 export interface HijriDate { day: number; month: number; year: number }
 
 export function toHijri(date: Date, timeZone?: string, offsetDays = 0): HijriDate {
-  const parts = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { timeZone, day: 'numeric', month: 'numeric', year: 'numeric' }).formatToParts(addDays(date, offsetDays))
-  const get = (t: string) => Number(parts.find((p) => p.type === t)!.value.replace(/\D/g, ''))
-  return { day: get('day'), month: get('month'), year: get('year') }
+  const d = addDays(date, offsetDays)
+  const fmt = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', { timeZone, day: 'numeric', month: 'numeric', year: 'numeric' })
+  // متصفحات قديمة بلا تقويم أم القرى: حساب جدولي تقريبي (قد يختلف يومًا) بدل تاريخ ميلادي خاطئ
+  if (!/islamic/.test(fmt.resolvedOptions().calendar ?? '')) return tabularHijri(d, timeZone)
+  const parts = formatParts('en-u-ca-islamic-umalqura-nu-latn', { timeZone, day: 'numeric', month: 'numeric', year: 'numeric' }, d)
+  return { day: partNum(parts, 'day'), month: partNum(parts, 'month'), year: partNum(parts, 'year') }
+}
+
+/** التقويم الهجري الجدولي (الحسابي) — بديل حين لا يدعم المتصفح تقويم أم القرى */
+function tabularHijri(date: Date, timeZone?: string): HijriDate {
+  const p = formatParts('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }, date)
+  const y = partNum(p, 'year'), m = partNum(p, 'month'), dd = partNum(p, 'day')
+  const a = Math.floor((14 - m) / 12), yy = y + 4800 - a, mm = m + 12 * a - 3
+  const jd = dd + Math.floor((153 * mm + 2) / 5) + 365 * yy + Math.floor(yy / 4) - Math.floor(yy / 100) + Math.floor(yy / 400) - 32045
+  const l0 = jd - 1948440 + 10632, n = Math.floor((l0 - 1) / 10631), l1 = l0 - 10631 * n + 354
+  const j = Math.floor((10985 - l1) / 5316) * Math.floor((50 * l1) / 17719) + Math.floor(l1 / 5670) * Math.floor((43 * l1) / 15238)
+  const l2 = l1 - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) - Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29
+  const month = Math.floor((24 * l2) / 709), day = l2 - Math.floor((709 * month) / 24), year = 30 * n + j - 30
+  return { day, month, year }
 }
 
 export interface Occasion {

@@ -1,5 +1,6 @@
 // مواقيت الصلاة باستخدام مكتبة adhan (MIT) — مكتبة مفتوحة المصدر عالية الدقة ومختبرة،
 // تعتمد معادلات "Astronomical Algorithms" لجان ميوس. انظر docs/SOURCES.md.
+import { formatParts, partNum } from '../lib/intlParts'
 import { CalculationMethod, Coordinates, HighLatitudeRule, Madhab, PrayerTimes, type CalculationParameters } from 'adhan'
 import { addDays, dateParts } from '../lib/dates'
 
@@ -116,9 +117,8 @@ export function upcomingDays(place: Place, s: PrayerSettings, days: number, now 
 
 /** الدقائق منذ منتصف الليل لوقتٍ ما في منطقة المدينة الزمنية */
 export function minutesInTz(d: Date, tz: string): number {
-  const parts = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d)
-  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0)
-  return get('hour') * 60 + get('minute')
+  const parts = formatParts('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }, d)
+  return (partNum(parts, 'hour') % 24) * 60 + partNum(parts, 'minute')
 }
 
 const parseHM = (s: string): number | null => {

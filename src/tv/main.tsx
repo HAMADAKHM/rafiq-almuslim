@@ -1,4 +1,5 @@
 // شاشة رفيق المسلم للتلفاز: تطبيق منفصل يُفتح في متصفح التلفاز (Samsung وغيره) ويعرض المواقيت والأذان.
+import '../lib/legacyPolyfills'
 import { Component, StrictMode, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@fontsource/ibm-plex-sans-arabic/400.css'

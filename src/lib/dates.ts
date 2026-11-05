@@ -1,11 +1,12 @@
+import { formatParts, partNum } from './intlParts'
 // أدوات التاريخ والمناطق الزمنية. كل الحسابات تعتمد Intl المدمجة في المتصفح
 // (تتضمن قاعدة بيانات المناطق الزمنية والتوقيت الصيفي والتقويم الهجري أم القرى).
 
 /** مفتاح اليوم YYYY-MM-DD في منطقة زمنية معينة. */
 export function dayKey(date: Date = new Date(), timeZone?: string): string {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date)
-  const get = (t: string) => parts.find((p) => p.type === t)!.value
-  return `${get('year')}-${get('month')}-${get('day')}`
+  const parts = formatParts('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }, date)
+  const p2 = (t: string) => String(partNum(parts, t)).padStart(2, '0')
+  return `${partNum(parts, 'year')}-${p2('month')}-${p2('day')}`
 }
 
 /** مكونات التاريخ (سنة/شهر/يوم) كما تُرى في المنطقة الزمنية المحددة. */

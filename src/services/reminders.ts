@@ -2,6 +2,7 @@
 // - في الويب: يعرضها التطبيق ما دام مفتوحًا.
 // - في Android/iOS: تُسلَّم القائمة كاملة لنظام الإشعارات المحلية المجدولة (لا حساب في الخلفية).
 // الرسائل قصيرة ومتنوعة، دون لوم ودون نسبة فضائل غير موثقة.
+import { formatParts, partNum } from '../lib/intlParts'
 import { prayerMessage } from '../content/prayerMessages'
 import { PRAYER_LABELS, prayerTimesFor } from './prayer'
 import type { PrayerKey, Settings } from '../state/settings'
@@ -98,8 +99,8 @@ export function atLocalTime(day: { y: number; m: number; d: number }, time: stri
   // تقريب أولي ثم تصحيح بفرق المنطقة الزمنية (مرتين لتجاوز حدود التوقيت الصيفي)
   let guess = Date.UTC(day.y, day.m - 1, day.d, h, m)
   for (let i = 0; i < 2; i++) {
-    const parts = new Intl.DateTimeFormat('en-GB', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date(guess))
-    const g = (t: string) => Number(parts.find((p) => p.type === t)!.value)
+    const parts = formatParts('en-GB', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }, new Date(guess))
+    const g = (t: string) => partNum(parts, t)
     const shown = Date.UTC(g('year'), g('month') - 1, g('day'), g('hour') % 24, g('minute'))
     guess += Date.UTC(day.y, day.m - 1, day.d, h, m) - shown
   }
