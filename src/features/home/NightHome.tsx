@@ -3,7 +3,7 @@
 // البيانات كلها من التطبيق نفسه (لا تغيير في الوظائف).
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { Bell, BookOpen, CalendarDays, MapPin, Palette, Play, Settings as Cog } from 'lucide-react'
+import { Bell, BookOpen, CalendarDays, Film, Image as ImageIcon, MapPin, Palette, Play, Settings as Cog } from 'lucide-react'
 import { useQuran } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
 import { cityLabel } from '../../services/cities'
@@ -100,6 +100,11 @@ export function NightHome({ now, loc, prayer, rest }: {
               <button type="button" className="nh-play" aria-label="استمع للآية"
                 onClick={() => player.play({ reciterId: settings.reciterId, surah: ref.surah, surahName: surah.name, from: ref.ayah, to: ref.ayah })}><Play size={16} /></button>
               <i /></span>
+            {/* مشاركة آية اليوم: صورة، أو فيديو بتلاوة القارئ */}
+            <span className="nh-share">
+              <Link to={`/studio?src=ayah&s=${ref.surah}&a=${ref.ayah}&mode=image`} aria-label="شارك آية اليوم صورة"><ImageIcon size={14} /> صورة</Link>
+              <Link to={`/studio?src=ayah&s=${ref.surah}&a=${ref.ayah}&mode=video`} aria-label="شارك آية اليوم فيديو بالصوت"><Film size={14} /> فيديو بالصوت</Link>
+            </span>
           </>
         ) : <small className="nh-ref">جارٍ تحميل الآية…</small>}
       </section>
