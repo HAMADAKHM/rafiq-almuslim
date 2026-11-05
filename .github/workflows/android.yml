@@ -92,7 +92,15 @@ jobs:
           VITE_PLUS_UNLOCK: "0"
       - run: npm run build
       - run: npx cap sync android
+      # تسجيلات حصن المسلم تُحفظ بين البناءات: لا يتوقف البناء إن كان الموقع بطيئًا أو متوقفًا
+      - name: Cache Hisn al-Muslim sounds
+        uses: actions/cache@v4
+        with:
+          path: android/app/src/main/res/raw
+          key: hisn-sounds-${{ hashFiles('src/content/hisnAudio.ts') }}
+          restore-keys: hisn-sounds-
       - name: Hisn al-Muslim notification sounds
+        timeout-minutes: 15
         run: bash scripts/fetch-hisn-sounds.sh
       - name: Build debug APK
         working-directory: android

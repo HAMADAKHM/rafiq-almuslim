@@ -5,16 +5,18 @@
 set -u
 DEST="android/app/src/main/res/raw"
 mkdir -p "$DEST"
-ok=0; bad=0
+ok=0; bad=0; streak=0
 MAP=src/content/hisnAudio.ts
 # أرقام التسجيلات من جدول HISN_AUDIO فقط
 for n in $(awk '/^export const HISN_AUDIO/{f=1;next} f&&/^}/{f=0} f' "$MAP" | grep -oE ": [0-9]+," | tr -dc '0-9\n' | sort -un); do
   f="$DEST/hisn_$n.mp3"
   [ -s "$f" ] && { ok=$((ok+1)); continue; }
-  if curl -sfL -m 60 --retry 3 -o "$f.tmp" "https://www.hisnmuslim.com/audio/ar/$n.mp3" && [ "$(head -c 3 "$f.tmp")" = "ID3" -o "$(head -c 2 "$f.tmp" | od -An -tx1 | tr -d ' ')" = "fffb" ] && [ "$(wc -c < "$f.tmp")" -gt 2000 ]; then
-    mv "$f.tmp" "$f"; ok=$((ok+1))
+  # الموقع لا يستجيب: لا يُعلَّق البناء ساعات (الإشعار يعمل بالنغمة العادية لما لم يُجلب)
+  [ "$streak" -ge 3 ] && { bad=$((bad+1)); continue; }
+  if curl -sfL --connect-timeout 10 -m 30 --retry 1 -o "$f.tmp" "https://www.hisnmuslim.com/audio/ar/$n.mp3" && [ "$(head -c 3 "$f.tmp")" = "ID3" -o "$(head -c 2 "$f.tmp" | od -An -tx1 | tr -d ' ')" = "fffb" ] && [ "$(wc -c < "$f.tmp")" -gt 2000 ]; then
+    mv "$f.tmp" "$f"; ok=$((ok+1)); streak=0
   else
-    rm -f "$f.tmp"; bad=$((bad+1)); echo "::warning::تعذر جلب تسجيل حصن المسلم $n"
+    rm -f "$f.tmp"; bad=$((bad+1)); streak=$((streak+1)); echo "::warning::تعذر جلب تسجيل حصن المسلم $n"
   fi
 done
 # مقاطع لصوت الإشعار (HISN_CLIPS): «m77: { src: 77, from: 0, to: 17.5, …» ← hisn_m77.mp3 بتلاشٍ قصير في آخره
