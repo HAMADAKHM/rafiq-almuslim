@@ -19,7 +19,22 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        web = TvWeb.create(this, false);
+        try {
+            web = TvWeb.create(this, false);
+        } catch (Throwable t) {
+            // بعض أجهزة التلفاز القديمة (Android 7 وما قبله) فيها مكوّن «Android System WebView» معطّل أو قديم:
+            // تُعرض رسالة واضحة بدل أن يُغلق التطبيق دون أي شيء
+            android.widget.TextView tv = new android.widget.TextView(this);
+            tv.setText("تعذر تشغيل شاشة رفيق المسلم على هذا التلفاز.\n\nالسبب: مكوّن «Android System WebView» معطّل أو قديم.\nفعّله أو حدّثه من: الإعدادات ← التطبيقات ← إظهار تطبيقات النظام ← Android System WebView ← تفعيل، ثم افتح التطبيق مجددًا.\n\n(" + t.getClass().getSimpleName() + ")");
+            tv.setTextSize(22);
+            tv.setTextColor(0xFFF3EAD8);
+            tv.setBackgroundColor(0xFF0C1D1C);
+            tv.setGravity(android.view.Gravity.CENTER);
+            tv.setPadding(80, 80, 80, 80);
+            setContentView(tv);
+            try { TvService.start(this); } catch (Throwable ignored) {}
+            return;
+        }
         web.setFocusable(true);
         web.setFocusableInTouchMode(true);
         setContentView(web);
@@ -33,6 +48,7 @@ public class MainActivity extends Activity {
         super.onResume();
         visible = true;
         if (web != null) web.onResume();
+        if (web == null) return;
         // أوامر الجوال تُطبَّق فورًا على الشاشة الظاهرة
         RemoteServer.screen = new RemoteServer.ScreenHook() {
             public void applyNow() { runOnUiThread(() -> { if (web != null) web.evaluateJavascript("window.__rafiqRemoteApply&&window.__rafiqRemoteApply()", null); }); }
@@ -69,6 +85,7 @@ public class MainActivity extends Activity {
     }
 
     private void hideSystemUi() {
+        if (web == null) return;
         web.setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
     }
 
