@@ -21,6 +21,11 @@ public class MainActivity extends BridgeActivity {
         // التحكم بشاشة التلفاز عبر الشبكة المنزلية
         registerPlugin(TvLinkPlugin.class);
         super.onCreate(savedInstanceState);
+        // حجم خط النظام الكبير جدًا يكسر تخطيط الصفحات: يُحترم حتى 115٪ (التطبيق فيه تكبير خط خاص للقراءة)
+        try {
+            android.webkit.WebSettings ws = getBridge().getWebView().getSettings();
+            if (ws.getTextZoom() > 115) ws.setTextZoom(115);
+        } catch (Exception ignored) {}
         capture(getIntent());
     }
 

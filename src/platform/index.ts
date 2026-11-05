@@ -12,26 +12,70 @@ export const platformName = () => Capacitor.getPlatform() as 'web' | 'android' |
 
 export interface GeoResult { lat: number; lng: number; accuracy: number }
 
+const MSG_DENIED = 'لم يُسمح للتطبيق بالوصول إلى الموقع. فعّله من: الإعدادات ← التطبيقات ← رفيق المسلم ← الأذونات ← الموقع، أو اختر مدينتك من القائمة.'
+const MSG_OFF = 'خدمة الموقع متوقفة في جوالك. فعّل «الموقع» من الشريط العلوي أو من الإعدادات ثم حاول مرة أخرى، أو اختر مدينتك من القائمة.'
+const MSG_FAIL = 'تعذر تحديد موقعك الآن (قد تكون الإشارة ضعيفة). حاول قرب نافذة أو في مكان مفتوح، أو اختر مدينتك من القائمة.'
+
+/** موقع المتصفح/WebView نفسه (بديل حين تفشل إضافة الموقع الأصلية، كالأجهزة بلا خدمات Google) */
+function webPosition(high: boolean, timeout: number): Promise<GeoResult> {
+  return new Promise((resolve, reject) => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) return reject(Object.assign(new Error('unsupported'), { code: 0 }))
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }),
+      (e) => reject(Object.assign(new Error(e.message), { code: e.code })),
+      { enableHighAccuracy: high, timeout, maximumAge: 30 * 60_000 },
+    )
+  })
+}
+
+/** يصنّف أخطاء إضافة الموقع (رموز OS-PLUG-GLOC) إلى: رفض الإذن، أو خدمة الموقع متوقفة، أو غيره */
+export function classifyGeoError(e: unknown): 'denied' | 'off' | 'other' {
+  const code = String((e as { code?: unknown })?.code ?? '')
+  const msg = String((e as Error)?.message ?? e ?? '').toLowerCase()
+  if (code === 'OS-PLUG-GLOC-0003' || msg.includes('permission') && msg.includes('denied') || msg === 'denied') return 'denied'
+  if (['OS-PLUG-GLOC-0007', 'OS-PLUG-GLOC-0009', 'OS-PLUG-GLOC-0016'].includes(code) || msg.includes('not enabled') || msg.includes('turned off') || msg.includes('enable location was denied')) return 'off'
+  return 'other'
+}
+
 export async function getCurrentPosition(): Promise<GeoResult> {
   if (isNative()) {
     const { Geolocation } = await import('@capacitor/geolocation')
+    // 1) الإذن: يُطلب «الموقع» (التقريبي والدقيق) فيختار المستخدم ما يريد
+    let perm
     try {
-      const perm = await Geolocation.requestPermissions({ permissions: ['coarseLocation'] })
-      if (perm.coarseLocation === 'denied' && perm.location === 'denied') throw new Error('denied')
-      const p = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 })
-      return { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }
+      perm = await Geolocation.checkPermissions()
+      if (perm.location !== 'granted' && perm.coarseLocation !== 'granted') perm = await Geolocation.requestPermissions({ permissions: ['location', 'coarseLocation'] })
     } catch (e) {
-      throw new Error((e as Error).message === 'denied' ? 'لم يُسمح بالوصول إلى الموقع. يمكنك اختيار المدينة يدويًا.' : 'تعذر تحديد الموقع حاليًا. حاول مجددًا أو اختر المدينة يدويًا.')
+      if (classifyGeoError(e) === 'off') throw new Error(MSG_OFF)
+      perm = null
     }
+    if (perm && perm.location !== 'granted' && perm.coarseLocation !== 'granted') throw new Error(MSG_DENIED)
+    // 2) محاولات متدرجة: سريعة تقريبية، ثم دقيقة بمهلة أطول (GPS)، ثم موقع WebView نفسه
+    const tries: (() => Promise<GeoResult>)[] = [
+      async () => { const p = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 12000, maximumAge: 30 * 60_000, enableLocationFallback: true }); return { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy } },
+      async () => { const p = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 30 * 60_000, enableLocationFallback: true }); return { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy } },
+      () => webPosition(true, 25000),
+    ]
+    let last: unknown = null
+    for (const t of tries) {
+      try { return await t() } catch (e) {
+        last = e
+        const k = classifyGeoError(e)
+        if (k === 'denied') throw new Error(MSG_DENIED)
+        if (k === 'off') throw new Error(MSG_OFF)
+      }
+    }
+    throw new Error(classifyGeoError(last) === 'off' ? MSG_OFF : MSG_FAIL)
   }
-  return new Promise((resolve, reject) => {
-    if (!('geolocation' in navigator)) return reject(new Error('المتصفح لا يدعم تحديد الموقع'))
-    navigator.geolocation.getCurrentPosition(
-      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy }),
-      (e) => reject(new Error(e.code === 1 ? 'لم يُسمح بالوصول إلى الموقع. يمكنك اختيار المدينة يدويًا.' : 'تعذر تحديد الموقع حاليًا. حاول مجددًا أو اختر المدينة يدويًا.')),
-      { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 },
-    )
-  })
+  try {
+    try { return await webPosition(false, 12000) } catch (e) {
+      if ((e as { code?: number }).code === 1) throw e
+      return await webPosition(true, 25000)
+    }
+  } catch (e) {
+    const c = (e as { code?: number }).code
+    throw new Error(c === 1 ? 'لم يُسمح بالوصول إلى الموقع. اسمح به من إعدادات المتصفح، أو اختر مدينتك من القائمة.' : c === 0 ? 'المتصفح لا يدعم تحديد الموقع. اختر مدينتك من القائمة.' : MSG_FAIL)
+  }
 }
 
 export function deviceTimeZone(): string {

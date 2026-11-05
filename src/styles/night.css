@@ -5,43 +5,44 @@
 
 /* ---------- الرئيسية ---------- */
 .nh-home { display: flex; flex-direction: column; gap: 16px; margin: -1rem -1rem 0; }
-.nh-head { position: relative; height: 430px; background-size: cover; background-position: center 30%; color: #f3ead8; overflow: hidden; }
+.nh-head { position: relative; height: clamp(290px, 50vh, 430px); background-size: cover; background-position: center 30%; color: #f3ead8; overflow: hidden; }
 .nh-head::before { content: ''; position: absolute; inset: 0; background: inherit; filter: saturate(0.45) brightness(0.62) hue-rotate(-12deg); }
 .nh-veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 22, 22, 0.55), rgba(8, 22, 22, 0.25) 40%, rgba(12, 29, 28, 0.6) 75%, #0c1d1c); }
-.nh-brand { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding-top: calc(70px + env(safe-area-inset-top, 0px)); text-align: center; }
-.nh-logo { width: 104px; height: auto; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)); }
-.nh-brand h1 { margin: 10px 0 4px; font-family: 'Amiri', serif; font-size: 2.6rem; line-height: 1.1; background: linear-gradient(180deg, #f7ecd2, #d8b777); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55)); }
-.nh-brand p { display: flex; align-items: center; gap: 12px; margin: 0; color: #efe4cc; font-size: 0.95rem; }
-.nh-brand p i { width: 70px; height: 1px; background: linear-gradient(90deg, transparent, #c9a85c, transparent); }
+.nh-brand { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; padding-top: calc(clamp(52px, 9vh, 70px) + env(safe-area-inset-top, 0px)); padding-inline: 12px; text-align: center; }
+.nh-logo { width: clamp(64px, min(26vw, 12vh), 104px); height: auto; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)); }
+.nh-brand h1 { margin: 10px 0 4px; font-family: 'Amiri', serif; font-size: clamp(1.7rem, min(10vw, 5.4vh), 2.6rem); line-height: 1.1; background: linear-gradient(180deg, #f7ecd2, #d8b777); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.55)); }
+.nh-brand p { display: flex; align-items: center; gap: 8px; margin: 0; color: #efe4cc; font-size: clamp(0.72rem, 3.6vw, 0.95rem); white-space: nowrap; }
+.nh-brand p i { flex: 0 1 70px; min-width: 14px; width: auto; height: 1px; background: linear-gradient(90deg, transparent, #c9a85c, transparent); }
 
-.nh-prayer { position: relative; z-index: 1; margin: -96px 14px 0; padding: 18px 14px 12px; border-radius: 26px; color: #f3ead8;
+.nh-prayer { position: relative; z-index: 1; margin: calc(-1 * clamp(56px, 10vh, 96px)) clamp(8px, 3.5vw, 14px) 0; padding: 16px clamp(8px, 3vw, 14px) 10px; border-radius: 26px; color: #f3ead8;
   background: linear-gradient(160deg, rgba(36, 58, 55, 0.92), rgba(14, 30, 28, 0.94)); border: 1px solid rgba(227, 201, 143, 0.35);
   box-shadow: 0 16px 30px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08); backdrop-filter: blur(8px); }
 .nh-top { display: grid; grid-template-columns: 1.15fr 1fr; align-items: center; padding-bottom: 12px; border-bottom: 1px solid rgba(227, 201, 143, 0.18); }
 .nh-next { display: flex; flex-direction: column; align-items: center; gap: 2px; color: inherit; text-decoration: none; border-inline-end: 1px solid rgba(227, 201, 143, 0.22); }
-.nh-title { font-size: 1.15rem; font-weight: 700; }
+.nh-title { font-size: clamp(0.9rem, 4.4vw, 1.15rem); font-weight: 700; }
 .nh-time { display: flex; align-items: baseline; gap: 6px; }
-.nh-time b { font-size: clamp(2.6rem, 13vw, 3.6rem); font-weight: 700; line-height: 1.05; letter-spacing: 1px; color: #f6efe0; font-variant-numeric: tabular-nums; }
-.nh-time small { font-size: 1.2rem; color: #f3ead8; }
-.nh-name { display: flex; align-items: center; gap: 10px; font-size: 1.35rem; font-weight: 700; color: #e3c98f; font-family: 'Amiri', serif; }
+.nh-time b { font-size: clamp(2rem, 12vw, 3.6rem); font-weight: 700; line-height: 1.05; letter-spacing: 1px; color: #f6efe0; font-variant-numeric: tabular-nums; }
+.nh-time small { font-size: clamp(0.85rem, 4.4vw, 1.2rem); color: #f3ead8; }
+.nh-name { display: flex; align-items: center; gap: 10px; font-size: clamp(1.05rem, 5.4vw, 1.35rem); font-weight: 700; color: #e3c98f; font-family: 'Amiri', serif; }
 .nh-name i { width: 34px; height: 1.5px; background: #c9a85c; }
 .nh-count { font-size: 0.78rem; color: #c9c1aa; }
 .nh-count b { color: #e3c98f; font-variant-numeric: tabular-nums; }
-.nh-place { display: flex; flex-direction: column; gap: 14px; padding-inline-start: 8px; font-size: clamp(0.72rem, 3.3vw, 0.9rem); }
-.nh-place span:last-child { white-space: nowrap; }
+.nh-place { display: flex; flex-direction: column; gap: 12px; padding-inline-start: 6px; min-width: 0; font-size: clamp(0.66rem, 3.2vw, 0.9rem); }
+.nh-place span { line-height: 1.35; }
 .nh-place span { display: flex; align-items: center; justify-content: center; gap: 6px; text-align: center; overflow-wrap: anywhere; }
 .nh-place svg { color: #e3c98f; flex-shrink: 0; }
 .nh-times { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); padding-top: 10px; }
 .nh-t { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; position: relative; }
 .nh-t + .nh-t::before { content: ''; position: absolute; inset-inline-start: 0; top: 18%; bottom: 18%; width: 1px; background: rgba(227, 201, 143, 0.2); }
-.nh-t small { font-size: 0.82rem; color: #efe4cc; }
-.nh-t b { font-size: 1.02rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.nh-t { min-width: 0; }
+.nh-t small { font-size: clamp(0.6rem, 3.1vw, 0.82rem); white-space: nowrap; color: #efe4cc; }
+.nh-t b { font-size: clamp(0.72rem, 3.7vw, 1.02rem); white-space: nowrap; letter-spacing: -0.2px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .nh-t.on { background: linear-gradient(180deg, #f4e3b8, #d5b36f); color: #10221f; border-radius: 14px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35); margin: 0 3px; }
 .nh-t.on small { color: #1b2f2a; }
 .nh-t.on::before, .nh-t.on + .nh-t::before { display: none; }
 .nh-empty { display: block; text-align: center; padding: 18px; color: #e3c98f; }
 
-.nh-verse { position: relative; margin: 0 14px; padding: 12px 16px 10px; padding-inline-end: 40%; min-height: 136px; border-radius: 26px; overflow: hidden; color: #1f2a24;
+.nh-verse { position: relative; margin: 0 clamp(8px, 3.5vw, 14px); padding: 12px 16px 10px; padding-inline-end: 40%; min-height: 136px; border-radius: 26px; overflow: hidden; color: #1f2a24;
   background: linear-gradient(270deg, #f6eedc 0%, #f1e6cf 52%, rgba(241, 230, 207, 0.55) 64%, rgba(241, 230, 207, 0) 82%), var(--img) left center / auto 100% no-repeat, #efe2c6;
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.35); display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; justify-content: center; }
 .nh-verse > * { flex-shrink: 0; }
@@ -53,16 +54,16 @@
 .nh-play-row i { flex: 1; height: 1px; background: rgba(29, 58, 51, 0.35); }
 .nh-play { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 0; background: #1d3a33; color: #f3ead8; cursor: pointer; }
 
-.nh-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 14px; }
-.nh-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 112px; padding: 10px 4px; border-radius: 22px; text-decoration: none; color: #e3c98f;
+.nh-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(6px, 2.4vw, 10px); margin: 0 clamp(8px, 3.5vw, 14px); }
+.nh-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: clamp(88px, 26vw, 112px); padding: 8px 3px; border-radius: 22px; text-decoration: none; color: #e3c98f;
   background: linear-gradient(160deg, rgba(36, 58, 55, 0.95), rgba(14, 30, 28, 0.96)); border: 1px solid rgba(227, 201, 143, 0.3); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06); }
-.nh-tile img { width: 44px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 4px rgba(231, 196, 110, 0.35)); }
+.nh-tile img { width: clamp(32px, 10vw, 44px); height: clamp(30px, 9vw, 40px); object-fit: contain; filter: drop-shadow(0 0 4px rgba(231, 196, 110, 0.35)); }
 .nh-tile span { color: #f3ead8; font-size: clamp(0.7rem, 3.2vw, 0.92rem); font-weight: 600; text-align: center; line-height: 1.3; }
 .nh-rest { padding: 0 2px; }
 
 /* أزرار الرأس بألوان التطبيق: زجاج أخضر مزرق داكن، وحلقة ذهبية هادئة، وأيقونة ذهبية */
-.nh-btns { position: absolute; z-index: 2; top: calc(14px + env(safe-area-inset-top, 0px)); inset-inline-end: 14px; display: flex; gap: 12px; }
-.nh-btns a { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; color: #e3c98f;
+.nh-btns { position: absolute; z-index: 2; top: calc(14px + env(safe-area-inset-top, 0px)); inset-inline-end: 12px; display: flex; gap: clamp(6px, 2.4vw, 12px); }
+.nh-btns a { width: clamp(40px, 12vw, 50px); height: clamp(40px, 12vw, 50px); border-radius: 50%; display: grid; place-items: center; color: #e3c98f;
   background: linear-gradient(160deg, rgba(36, 58, 55, 0.92), rgba(14, 30, 28, 0.94));
   border: 1.5px solid rgba(227, 201, 143, 0.75); box-shadow: 0 0 0 3px rgba(12, 29, 28, 0.65), 0 0 0 4px rgba(227, 201, 143, 0.3), 0 6px 14px rgba(0, 0, 0, 0.45); }
 
@@ -87,3 +88,7 @@
 /* مشاركة آية اليوم */
 .nh-share { display: flex; gap: 8px; justify-content: center; }
 .nh-share a { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 14px; font-size: 0.74rem; font-weight: 700; text-decoration: none; color: #1d3a33; background: #ead9b0; border: 1px solid rgba(29, 58, 51, 0.25); }
+
+/* الشاشات الصغيرة جدًا والقصيرة */
+@media (max-width: 340px) { .nh-verse { padding-inline-end: 34%; } .nh-share a { padding: 3px 7px; font-size: 0.68rem; } }
+@media (max-height: 680px) { .nh-brand p { display: none; } }

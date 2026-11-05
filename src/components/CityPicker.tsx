@@ -30,6 +30,8 @@ export function CityPicker({ onDone }: { onDone?: () => void }) {
   useEffect(() => { loadCities().then(setCities).catch(() => setErr('تعذر تحميل قائمة المدن.')) }, [])
   const countries = useMemo(() => (cities ? countryList(cities) : []), [cities])
   const results = useMemo(() => (cities ? searchCities(cities, q, country || undefined, 30) : []), [cities, q, country])
+  // حين يتعذر الموقع: أكبر المدن في المنطقة الزمنية نفسها للجوال (لا يُرسل شيء خارج الجهاز)
+  const tzSuggest = useMemo(() => { const tz = deviceTimeZone(); return cities ? [...cities].filter((c) => c.tz === tz).sort((a, b) => b.pop - a.pop).slice(0, 6) : [] }, [cities])
   const zones = useMemo(() => { try { return Intl.supportedValuesOf('timeZone') } catch { return [deviceTimeZone()] } }, [])
 
   const choose = (loc: SavedLocation) => {
@@ -73,6 +75,16 @@ export function CityPicker({ onDone }: { onDone?: () => void }) {
         <span className="small muted">اختياري — يُستخدم موقعك على جهازك فقط ولا يُرسل لأي خادم.</span>
       </div>
       {err && <div className="alert alert-error" role="alert">{err}</div>}
+      {err && tzSuggest.length > 0 && (
+        <div className="stack" style={{ gap: 6 }}>
+          <span className="small muted">مدن قريبة بحسب المنطقة الزمنية لجوالك:</span>
+          <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
+            {tzSuggest.map((c) => (
+              <button key={c.id} className="btn btn-sm" onClick={() => choose({ name: c.name, nameAr: c.nameAr, country: c.country, lat: c.lat, lng: c.lng, tz: c.tz, source: 'city' })}>{cityLabel(c)}</button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="grid grid-2" style={{ gap: '0.75rem' }}>
         <label className="field">
           <span>الدولة</span>
