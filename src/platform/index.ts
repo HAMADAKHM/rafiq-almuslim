@@ -142,7 +142,7 @@ export async function replaceScheduledNotifications(list: Reminder[]): Promise<n
       id: r.id, title: r.title, body: r.body, schedule: { at: r.at, allowWhileIdle: true },
       extra: { route: r.route, kind: r.kind, ...(r.itemId ? { itemId: r.itemId } : {}) },
       ...(r.actions ? { actionTypeId: ACTION_TYPES[r.actions] } : {}),
-      ...(r.channelId ? { channelId: r.channelId } : android && r.actions && r.actions !== 'ayah' ? { channelId: r.silent ? COMPANION_SILENT_CHANNEL : COMPANION_CHANNEL } : {}),
+      ...(r.channelId ? { channelId: r.channelId } : android && r.actions && r.actions !== 'ayah' ? { channelId: r.silent ? COMPANION_SILENT_CHANNEL : COMPANION_CHANNEL } : android && !r.silent ? { channelId: CHIME_CHANNEL } : {}),
       ...(r.sound ? { sound: r.sound } : {}),
       ...(r.bigText ? { largeBody: r.bigText } : r.body.length > 60 ? { largeBody: r.body } : {}),
     })),
@@ -177,7 +177,10 @@ async function ensureHisnChannels(ids: string[]) {
   }
 }
 
-export const COMPANION_CHANNEL = 'rafiq-companion-v1'
+export const COMPANION_CHANNEL = 'rafiq-companion-v2'
+/** النغمة الخاصة برفيق المسلم (res/raw/rafiq_chime.ogg) لكل التذكيرات التي ليس لها صوت خاص بها */
+export const CHIME_CHANNEL = 'rafiq-chime-v1'
+export const CHIME_SOUND = 'rafiq_chime.ogg'
 export const COMPANION_SILENT_CHANNEL = 'rafiq-companion-silent-v1'
 const ACTION_TYPES = { dhikr: 'RAFIQ_DHIKR', quran: 'RAFIQ_QURAN', ayah: 'RAFIQ_AYAH' } as const
 let actionsRegistered = false
@@ -196,7 +199,8 @@ async function registerNotificationActions() {
   }).catch(() => {})
   if (platformName() === 'android') {
     // بلا حقل sound تستخدم القناة نغمة الإشعار الافتراضية التي اختارها المستخدم في النظام
-    await LocalNotifications.createChannel({ id: COMPANION_CHANNEL, name: 'رفيقي يذكّرني', description: 'تذكير الأذكار وموعد القرآن بنغمة الإشعار', importance: 4, visibility: 1, vibration: true }).catch(() => {})
+    await LocalNotifications.createChannel({ id: COMPANION_CHANNEL, name: 'رفيقي يذكّرني', description: 'تذكير الأذكار وموعد القرآن بنغمة رفيق المسلم', sound: CHIME_SOUND, importance: 4, visibility: 1, vibration: true }).catch(() => {})
+    await LocalNotifications.createChannel({ id: CHIME_CHANNEL, name: 'تذكيرات رفيق المسلم', description: 'آية اليوم والورد والتذكيرات بنغمة رفيق المسلم الخاصة', sound: CHIME_SOUND, importance: 4, visibility: 1, vibration: true }).catch(() => {})
     await LocalNotifications.createChannel({ id: COMPANION_SILENT_CHANNEL, name: 'رفيقي يذكّرني — بلا صوت', description: 'إشعار مكتوب فقط', importance: 2, visibility: 1, vibration: false }).catch(() => {})
   }
   actionsRegistered = true

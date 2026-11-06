@@ -48,6 +48,12 @@ export function RemindersPage() {
       <div className="stack">
         <section className="card">
           <div className="spread">
+            <span><strong>نغمة رفيق المسلم</strong><br /><small className="muted">نغمة خاصة بالتطبيق لآية اليوم والورد والتذكيرات (والأذان بصوته المختار)</small></span>
+            <button type="button" className="btn btn-sm" onClick={() => { try { void new Audio(`${import.meta.env.BASE_URL}sounds/rafiq_chime.mp3`).play() } catch { /* لا صوت */ } }}>استمع للنغمة</button>
+          </div>
+        </section>
+        <section className="card">
+          <div className="spread">
             <h2 style={{ margin: 0 }}>{n.enabled ? <Bell size={18} /> : <BellOff size={18} />} التذكيرات</h2>
             <label className="check switch"><input type="checkbox" className="switch-input" checked={n.enabled} onChange={(e) => enable(e.target.checked)} disabled={!notificationsSupported()} aria-label="تفعيل التذكيرات" /> {n.enabled ? 'مفعّلة' : 'متوقفة'}</label>
           </div>

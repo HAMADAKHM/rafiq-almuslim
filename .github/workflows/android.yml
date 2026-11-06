@@ -96,7 +96,7 @@ jobs:
       - name: Cache Hisn al-Muslim sounds
         uses: actions/cache@v4
         with:
-          path: android/app/src/main/res/raw
+          path: android/app/src/main/res/raw/hisn_*.mp3
           key: hisn-sounds-${{ hashFiles('src/content/hisnAudio.ts') }}
           restore-keys: hisn-sounds-
       - name: Hisn al-Muslim notification sounds
