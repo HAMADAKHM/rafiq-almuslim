@@ -85,6 +85,7 @@ public class WidgetBridgePlugin extends Plugin {
         boolean on = Boolean.TRUE.equals(call.getBoolean("on", false));
         getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).edit().putBoolean(WidgetStyle.KEY_PLUS, on).apply();
         WidgetStyle.refreshEverything(getContext());
+        LockNotif.update(getContext());
         call.resolve();
     }
 
@@ -93,6 +94,8 @@ public class WidgetBridgePlugin extends Plugin {
         JSObject r = new JSObject();
         r.put("style", getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).getString(WidgetStyle.KEY, WidgetStyle.DEFAULT));
         r.put("shape", getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).getString(WidgetStyle.KEY_SHAPE, "round"));
+        r.put("alpha", getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).getInt("alpha", 100));
+        r.put("lock", getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).getBoolean(LockNotif.KEY, false));
         call.resolve(r);
     }
 
@@ -106,6 +109,25 @@ public class WidgetBridgePlugin extends Plugin {
         for (String k : p.getAll().keySet()) if (k.startsWith("s_")) e.remove(k);
         e.apply();
         WidgetStyle.refreshEverything(getContext());
+        call.resolve();
+    }
+
+    /** شفافية خلفية كل الودجتات (رفيق بلس) */
+    @PluginMethod
+    public void setAlpha(PluginCall call) {
+        int a = Math.max(0, Math.min(100, call.getInt("alpha", 100)));
+        android.content.SharedPreferences p = getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE);
+        android.content.SharedPreferences.Editor e = p.edit().putInt("alpha", a);
+        for (String k : p.getAll().keySet()) if (k.startsWith("a_")) e.remove(k);
+        e.apply();
+        WidgetStyle.refreshEverything(getContext());
+        call.resolve();
+    }
+
+    /** المواقيت على شاشة القفل (رفيق بلس) */
+    @PluginMethod
+    public void setLockScreen(PluginCall call) {
+        LockNotif.set(getContext(), Boolean.TRUE.equals(call.getBoolean("on", false)));
         call.resolve();
     }
 

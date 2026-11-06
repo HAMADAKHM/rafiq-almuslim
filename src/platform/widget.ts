@@ -11,7 +11,7 @@ import type { Settings } from '../state/settings'
 const PrayerWidget = registerPlugin<{
   update(o: { data: string }): Promise<void>; updateDaily(o: { data: string }): Promise<void>; updatePlus(o: { data: string }): Promise<void>
   updateResume(o: { data: string }): Promise<void>; consumeRoute(): Promise<{ route?: string | null }>
-  setStyle(o: { style: string }): Promise<void>; getStyle(): Promise<{ style: string; shape?: string }>; setShape(o: { shape: string }): Promise<void>; setPlus(o: { on: boolean }): Promise<void>
+  setStyle(o: { style: string }): Promise<void>; getStyle(): Promise<{ style: string; shape?: string; alpha?: number; lock?: boolean }>; setShape(o: { shape: string }): Promise<void>; setAlpha(o: { alpha: number }): Promise<void>; setLockScreen(o: { on: boolean }): Promise<void>; setPlus(o: { on: boolean }): Promise<void>
 }>('PrayerWidget')
 
 /** «تصميم الودجت» (رفيق بلس): خلفية كل ودجتات Android */
@@ -25,6 +25,20 @@ export async function getWidgetStyle(): Promise<string> {
 export async function getWidgetShape(): Promise<string> {
   if (platformName() !== 'android') return 'round'
   try { return (await PrayerWidget.getStyle()).shape || 'round' } catch { return 'round' }
+}
+export async function getWidgetExtras(): Promise<{ alpha: number; lock: boolean }> {
+  if (platformName() !== 'android') return { alpha: 100, lock: false }
+  try { const r = await PrayerWidget.getStyle(); return { alpha: r.alpha ?? 100, lock: !!r.lock } } catch { return { alpha: 100, lock: false } }
+}
+/** شفافية خلفية الودجتات (رفيق بلس) */
+export async function setWidgetAlpha(alpha: number): Promise<boolean> {
+  if (platformName() !== 'android') return false
+  try { await PrayerWidget.setAlpha({ alpha }); return true } catch { return false }
+}
+/** المواقيت على شاشة القفل (رفيق بلس) */
+export async function setLockScreenTimes(on: boolean): Promise<boolean> {
+  if (platformName() !== 'android') return false
+  try { await PrayerWidget.setLockScreen({ on }); return true } catch { return false }
 }
 export async function setWidgetShape(shape: string): Promise<boolean> {
   if (platformName() !== 'android') return false

@@ -9,7 +9,7 @@
     android:padding="12dp">
     <ImageView android:id="@+id/wbg" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:importantForAccessibility="no" android:visibility="gone" />
 
-    <TextView
+    <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1"
         android:id="@+id/widget_empty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -37,9 +37,9 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/widget_next" android:textColor="#E3C98F" android:textSize="11sp" />
-                <TextView android:id="@+id/next_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold" android:maxLines="1" />
-                <TextView android:id="@+id/city" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CFC6AE" android:textSize="11sp" android:maxLines="1" android:ellipsize="end" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/widget_next" android:textColor="#E3C98F" android:textSize="11sp" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/next_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/city" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CFC6AE" android:textSize="11sp" android:maxLines="1" android:ellipsize="end" />
             </LinearLayout>
 
             <LinearLayout
@@ -47,9 +47,9 @@
                 android:layout_height="wrap_content"
                 android:gravity="end"
                 android:orientation="vertical">
-                <TextView android:id="@+id/next_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" />
-                <Chronometer android:id="@+id/countdown" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#E3C98F" android:textSize="14sp" android:layoutDirection="ltr" />
-                <TextView android:id="@+id/hijri" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CFC6AE" android:textSize="10sp" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/next_time" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" />
+                <Chronometer android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/countdown" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#E3C98F" android:textSize="14sp" android:layoutDirection="ltr" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/hijri" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CFC6AE" android:textSize="10sp" android:maxLines="1" />
             </LinearLayout>
         </LinearLayout>
 
@@ -70,8 +70,8 @@
                 android:orientation="vertical"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp">
-                <TextView android:id="@+id/p_name_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#EFE4CC" android:textSize="11sp" android:maxLines="1" />
-                <TextView android:id="@+id/p_time_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/p_name_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#EFE4CC" android:textSize="11sp" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/p_time_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
             </LinearLayout>
             <LinearLayout
                 android:id="@+id/cell_1"
@@ -85,8 +85,8 @@
                 android:orientation="vertical"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp">
-                <TextView android:id="@+id/p_name_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#EFE4CC" android:textSize="11sp" android:maxLines="1" />
-                <TextView android:id="@+id/p_time_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/p_name_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#EFE4CC" android:textSize="11sp" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/p_time_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
             </LinearLayout>
             <LinearLayout
                 android:id="@+id/cell_2"
@@ -100,8 +100,8 @@
                 android:orientation="vertical"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp">
-                <TextView android:id="@+id/p_name_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#EFE4CC" android:textSize="11sp" android:maxLines="1" />
-                <TextView android:id="@+id/p_time_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/p_name_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#EFE4CC" android:textSize="11sp" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/p_time_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
             </LinearLayout>
             <LinearLayout
                 android:id="@+id/cell_3"
@@ -115,8 +115,8 @@
                 android:orientation="vertical"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp">
-                <TextView android:id="@+id/p_name_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#EFE4CC" android:textSize="11sp" android:maxLines="1" />
-                <TextView android:id="@+id/p_time_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/p_name_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#EFE4CC" android:textSize="11sp" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/p_time_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
             </LinearLayout>
             <LinearLayout
                 android:id="@+id/cell_4"
@@ -130,8 +130,8 @@
                 android:orientation="vertical"
                 android:paddingTop="5dp"
                 android:paddingBottom="5dp">
-                <TextView android:id="@+id/p_name_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#EFE4CC" android:textSize="11sp" android:maxLines="1" />
-                <TextView android:id="@+id/p_time_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/p_name_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#EFE4CC" android:textSize="11sp" android:maxLines="1" />
+                <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/p_time_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

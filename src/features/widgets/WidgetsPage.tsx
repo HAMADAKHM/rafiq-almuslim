@@ -7,7 +7,7 @@ import { PageHead } from '../../components/Common'
 import { usePlus } from '../../billing/PlusContext'
 import { toast } from '../../hooks'
 import { platformName } from '../../platform'
-import { DEFAULT_WIDGET_STYLE, freeWidgetStyle, getWidgetShape, getWidgetStyle, setWidgetShape, setWidgetStyle } from '../../platform/widget'
+import { DEFAULT_WIDGET_STYLE, freeWidgetStyle, getWidgetExtras, getWidgetShape, getWidgetStyle, setLockScreenTimes, setWidgetAlpha, setWidgetShape, setWidgetStyle } from '../../platform/widget'
 import { goldenPhoto } from '../../themes/golden'
 
 export const WIDGET_STYLES: { id: string; name: string; bg: [string, string]; stroke: string; photo?: string }[] = [
@@ -58,7 +58,21 @@ export function WidgetsPage() {
   const [style, setStyle] = useState(DEFAULT_WIDGET_STYLE)
   const [shape, setShape] = useState('round')
   const android = platformName() === 'android'
-  useEffect(() => { getWidgetStyle().then(setStyle); getWidgetShape().then(setShape) }, [])
+  const [alpha, setAlpha] = useState(100)
+  const [lock, setLock] = useState(false)
+  useEffect(() => { getWidgetStyle().then(setStyle); getWidgetShape().then(setShape); getWidgetExtras().then((x) => { setAlpha(x.alpha); setLock(x.lock) }) }, [])
+  const pickAlpha = async (a: number) => {
+    if (!plus.entitled) { toast('الودجت الشفاف من مزايا رفيق بلس'); return }
+    setAlpha(a)
+    if (android) toast((await setWidgetAlpha(a)) ? (a === 0 ? 'صارت الودجتات شفافة تمامًا' : `شفافية الخلفية ${100 - a}٪`) : 'تعذر التطبيق')
+    else toast('يُطبَّق على ودجتات تطبيق Android')
+  }
+  const toggleLock = async (on: boolean) => {
+    if (!plus.entitled) { toast('المواقيت على شاشة القفل من مزايا رفيق بلس'); return }
+    setLock(on)
+    if (android) toast((await setLockScreenTimes(on)) ? (on ? 'تظهر المواقيت الآن على شاشة القفل' : 'أُوقف عرض المواقيت على شاشة القفل') : 'تعذر التطبيق')
+    else toast('متاح في تطبيق Android')
+  }
   const pickShape = async (id: string) => {
     setShape(id)
     if (android) toast((await setWidgetShape(id)) ? 'تغيّر شكل كل الودجتات' : 'تعذر تطبيق الشكل')
@@ -100,6 +114,28 @@ export function WidgetsPage() {
               </button>
             ))}
           </div>
+        </section>
+        <section className="card" aria-labelledby="wd-clear">
+          <h2 id="wd-clear">{plus.entitled ? <Crown size={18} /> : <Lock size={18} />} ودجت شفاف</h2>
+          <p className="small muted">اجعل خلفية الودجت شفافة لتظهر خلفية جوالك من خلفه، والكتابة واضحة كما هي.{!plus.entitled && ' من مزايا بلس.'}</p>
+          <div className="wd-styles" role="radiogroup" aria-label="شفافية الودجت">
+            {[[100, 'معتمة'], [75, '75٪'], [50, 'نصف شفافة'], [25, '25٪'], [0, 'شفافة تمامًا']].map(([a, label]) => (
+              <button key={a} type="button" role="radio" aria-checked={alpha === a} className={'wd-style' + (alpha === a ? ' on' : '')} onClick={() => pickAlpha(a as number)}>
+                <span className="wd-swatch" style={{ background: `linear-gradient(45deg, #ddd 25%, transparent 25%, transparent 75%, #ddd 75%), linear-gradient(45deg, #ddd 25%, #fff 25%, #fff 75%, #ddd 75%)`, backgroundSize: '12px 12px', backgroundPosition: '0 0, 6px 6px', position: 'relative', overflow: 'hidden' }}>
+                  <i style={{ position: 'absolute', inset: 0, background: `rgba(12,29,28,${(a as number) / 100})` }} />
+                  {alpha === a ? <Check size={14} style={{ position: 'relative', color: (a as number) >= 50 ? '#fff' : '#073B32' }} /> : !plus.entitled ? <Lock size={12} style={{ position: 'relative' }} /> : null}
+                </span>
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+        <section className="card" aria-labelledby="wd-lock">
+          <div className="spread">
+            <h2 id="wd-lock" style={{ margin: 0 }}>{plus.entitled ? <Crown size={18} /> : <Lock size={18} />} المواقيت على شاشة القفل</h2>
+            <label className="check switch"><input type="checkbox" className="switch-input" checked={lock} onChange={(e) => toggleLock(e.target.checked)} aria-label="المواقيت على شاشة القفل" /> {lock ? 'مفعّل' : 'متوقف'}</label>
+          </div>
+          <p className="small muted" style={{ marginBottom: 0 }}>تظهر الصلاة القادمة ووقتها وعدّ تنازلي حي على شاشة القفل، وتحتها مواقيت اليوم، وتتحدث وحدها عند كل صلاة، بلا صوت ولا اهتزاز.{!plus.entitled && ' من مزايا بلس.'} نظام Android لا يسمح بوضع ودجتات التطبيقات على شاشة قفل الجوال، إلا في أجهزة قليلة تدعمها، وفيها تظهر ودجتات «مواقيت الصلاة» و«بطاقة الصلاة» و«آية اليوم» ضمن خيارات شاشة القفل.</p>
         </section>
         <section className="card" aria-labelledby="wd-list">
           <h2 id="wd-list">كل الودجتات</h2>

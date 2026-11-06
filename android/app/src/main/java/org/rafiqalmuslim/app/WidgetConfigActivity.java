@@ -111,6 +111,42 @@ public class WidgetConfigActivity extends Activity {
         }
         root.addView(shapes);
 
+        // شفافية الخلفية (رفيق بلس): من المعتمة إلى الشفافة تمامًا فتظهر خلفية الجوال
+        TextView aT = new TextView(this);
+        aT.setText("شفافية الخلفية" + (plus ? "" : "  🔒 (رفيق المسلم بلس)"));
+        aT.setTextSize(17);
+        aT.setTypeface(Typeface.DEFAULT_BOLD);
+        aT.setTextColor(Color.parseColor("#073B32"));
+        aT.setPadding(0, (int) (16 * dp), 0, (int) (6 * dp));
+        root.addView(aT);
+        int curA = WidgetStyle.alphaFor(this, widgetId);
+        int[] levels = { 100, 75, 50, 25, 0 };
+        String[] labels = { "معتمة", "75٪", "50٪", "25٪", "شفافة" };
+        LinearLayout alphas = new LinearLayout(this);
+        alphas.setOrientation(LinearLayout.HORIZONTAL);
+        for (int i = 0; i < levels.length; i++) {
+            final int lv = levels[i];
+            Button b3 = new Button(this);
+            b3.setAllCaps(false);
+            b3.setText(labels[i] + (lv == curA ? " ✓" : ""));
+            b3.setTextSize(12);
+            GradientDrawable gd = new GradientDrawable();
+            gd.setCornerRadius(12 * dp);
+            gd.setColor(Color.argb(Math.round(lv * 2.55f), 12, 29, 28));
+            gd.setStroke((int) dp, Color.parseColor("#C9A85C"));
+            b3.setBackground(gd);
+            b3.setTextColor(lv >= 50 ? Color.WHITE : Color.parseColor("#073B32"));
+            LinearLayout.LayoutParams al = new LinearLayout.LayoutParams(0, (int) (48 * dp), 1f);
+            al.setMargins((int) (3 * dp), 0, (int) (3 * dp), 0);
+            b3.setOnClickListener((v) -> {
+                if (!plus) { Toast.makeText(this, "الودجت الشفاف من مزايا رفيق المسلم بلس", Toast.LENGTH_SHORT).show(); return; }
+                WidgetStyle.setAlphaForWidget(this, widgetId, lv);
+                finish();
+            });
+            alphas.addView(b3, al);
+        }
+        root.addView(alphas);
+
         Button same = new Button(this);
         same.setText("مثل باقي الودجتات (التصميم العام)");
         same.setAllCaps(false);

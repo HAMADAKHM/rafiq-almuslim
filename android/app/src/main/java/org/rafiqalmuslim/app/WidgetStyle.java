@@ -39,6 +39,18 @@ final class WidgetStyle {
         return p.getString("s_" + widgetId, p.getString(KEY_SHAPE, "round"));
     }
 
+    /** شفافية خلفية الودجت (رفيق بلس): 100 معتمة … 0 شفافة تمامًا؛ الخاصة بالودجت أو العامة */
+    static int alphaFor(Context c, int widgetId) {
+        if (!plus(c)) return 100;
+        android.content.SharedPreferences p = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        return Math.max(0, Math.min(100, p.getInt("a_" + widgetId, p.getInt("alpha", 100))));
+    }
+
+    static void setAlphaForWidget(Context c, int widgetId, int alpha) {
+        c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt("a_" + widgetId, alpha).apply();
+        refreshEverything(c);
+    }
+
     static void setShapeForWidget(Context c, int widgetId, String shape) {
         c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString("s_" + widgetId, shape).apply();
         refreshEverything(c);
@@ -76,16 +88,20 @@ final class WidgetStyle {
         String own = forWidget(c, widgetId);
         String style = own != null && (free(own) || plus(c)) ? own : global(c);
         if (!free(style) && !plus(c)) style = DEFAULT;
+        int alpha = alphaFor(c, widgetId);
+        // الخلفية صورة خلف المحتوى، فتُضبط شفافيتها دون أن تتأثر الكتابة
+        v.setInt(rootId, "setBackgroundColor", 0);
+        if (alpha <= 0) { v.setViewVisibility(R.id.wbg, android.view.View.GONE); return; }
+        boolean drawn = false;
         if (WidgetArt.isArt(style)) {
             try {
                 v.setImageViewBitmap(R.id.wbg, WidgetArt.render(c, style, shapeFor(c, widgetId), widgetId));
-                v.setViewVisibility(R.id.wbg, android.view.View.VISIBLE);
-                v.setInt(rootId, "setBackgroundColor", 0);
-                return;
+                drawn = true;
             } catch (Throwable t) { style = "emerald"; }
         }
-        v.setViewVisibility(R.id.wbg, android.view.View.GONE);
-        v.setInt(rootId, "setBackgroundResource", resOf(style));
+        if (!drawn) v.setImageViewResource(R.id.wbg, resOf(style));
+        v.setViewVisibility(R.id.wbg, android.view.View.VISIBLE);
+        v.setInt(R.id.wbg, "setImageAlpha", Math.round(alpha * 2.55f));
     }
 
     static void setForWidget(Context c, int widgetId, String style) {

@@ -55,6 +55,7 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
         for (int id : cards) PrayerCardWidgetProvider.render(context, manager, id);
         if (ids.length > 0 || cards.length > 0) scheduleNext(context);
         PlusWidgets.refreshAll(context);
+        LockNotif.update(context);
     }
 
     static JSONObject load(Context context) {
