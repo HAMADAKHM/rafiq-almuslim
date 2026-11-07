@@ -51,7 +51,7 @@ export function WidgetsPage() {
       <div className="stack">
         <section className="card" aria-labelledby="wd-gallery">
           <h2 id="wd-gallery">تصاميم الودجتات</h2>
-          <p className="small muted">كل ودجت بتصميمه المعتمد، والكتابة فيه حية بمواقيت مدينتك وآية اليوم وأذكار التطبيق. الصورة توضيحية من لوحة التصاميم.</p>
+          <p className="small muted">كل ودجت بتصميمه كما في لوحة التصاميم تمامًا، والكتابة فيه حية بمواقيت مدينتك وآية اليوم وأذكار التطبيق.</p>
           <div className="wd-gallery">
             {WIDGET_DESIGNS.map((d) => (
               <figure key={d.id} className="wd-item">

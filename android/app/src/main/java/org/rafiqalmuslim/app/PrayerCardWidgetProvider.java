@@ -29,40 +29,27 @@ public class PrayerCardWidgetProvider extends AppWidgetProvider {
     }
 
     static void render(Context context, AppWidgetManager manager, int widgetId) {
-        RemoteViews v = new RemoteViews(context.getPackageName(), R.layout.widget_prayer_card);
-        WidgetDesign.apply(context, v, R.id.k_root, widgetId, WidgetDesign.Kind.PRAYER_L);
-        v.setOnClickPendingIntent(R.id.k_root, WidgetKit.route(context, "/prayer", 7));
-        JSONObject data = PrayerWidgetProvider.load(context);
+        Tile t = new Tile(context, widgetId, R.drawable.wt_prayer_l, 545, 270);
         try {
+            JSONObject data = PrayerWidgetProvider.load(context);
             JSONArray days = data == null ? null : data.getJSONArray("days");
             long now = System.currentTimeMillis();
             int[] next = days == null ? null : PrayerWidgetProvider.findNext(days, now);
-            if (data == null || data.isNull("city") || next == null) {
-                v.setViewVisibility(R.id.k_content, View.GONE);
-                v.setViewVisibility(R.id.k_empty, View.VISIBLE);
-                manager.updateAppWidget(widgetId, v);
-                return;
-            }
-            v.setViewVisibility(R.id.k_content, View.VISIBLE);
-            v.setViewVisibility(R.id.k_empty, View.GONE);
+            if (data == null || data.isNull("city") || next == null) throw new Exception("no data");
             JSONObject day = days.getJSONObject(next[0]);
             JSONObject np = day.getJSONArray("prayers").getJSONObject(next[1]);
-            v.setTextViewText(R.id.k_time, np.getString("time"));
-            v.setTextViewText(R.id.k_name, "—  " + np.getString("label") + "  —");
-            boolean cd = WidgetKit.show(context, "countdown");
-            v.setViewVisibility(R.id.k_count, cd ? View.VISIBLE : View.GONE);
-            if (cd) {
-                v.setChronometer(R.id.k_count, SystemClock.elapsedRealtime() + (np.getLong("at") - now), null, true);
-                v.setChronometerCountDown(R.id.k_count, true);
-            }
-            v.setTextViewText(R.id.k_greg, new java.text.SimpleDateFormat("EEEE d MMMM yyyy", new java.util.Locale("ar")).format(new java.util.Date()));
-            v.setTextViewText(R.id.k_hijri, day.optString("hijri", ""));
-            v.setViewVisibility(R.id.k_hijri, WidgetKit.show(context, "hijri") ? View.VISIBLE : View.GONE);
-            WidgetKit.text(context, v, R.id.k_time, 50);
+            t.text(Tile.hm(np.getString("time")), 268, 84, 500, 168, 76, Tile.GOLD, Tile.CENTER, Tile.BOLD, 1);
+            t.text(np.getString("label"), 361, 174, 446, 206, 21, Tile.GOLD, Tile.CENTER, Tile.BOLD, 1);
+            java.util.Date d = new java.util.Date();
+            java.util.Locale ar = new java.util.Locale("ar");
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            String greg = new java.text.SimpleDateFormat("EEEE", ar).format(d) + " " + cal.get(java.util.Calendar.DAY_OF_MONTH) + " "
+                + new java.text.SimpleDateFormat("MMMM", ar).format(d) + " " + cal.get(java.util.Calendar.YEAR);
+            t.text(greg, 288, 216, 478, 250, 19, Tile.WHITE, Tile.RIGHT, Tile.BOLD, 1);
+            if (WidgetKit.show(context, "hijri")) t.text(day.optString("hijri", ""), 20, 216, 216, 250, 19, Tile.WHITE, Tile.RIGHT, Tile.BOLD, 1);
         } catch (Exception e) {
-            v.setViewVisibility(R.id.k_content, View.GONE);
-            v.setViewVisibility(R.id.k_empty, View.VISIBLE);
+            t.text(context.getString(R.string.widget_empty), 270, 90, 500, 200, 20, Tile.WHITE, Tile.CENTER, Tile.BOLD, 4);
         }
-        manager.updateAppWidget(widgetId, v);
+        manager.updateAppWidget(widgetId, t.done(WidgetKit.route(context, "/prayer", 7)));
     }
 }

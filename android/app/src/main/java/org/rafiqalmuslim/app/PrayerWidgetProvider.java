@@ -7,30 +7,20 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.os.SystemClock;
-import android.view.View;
-import android.widget.RemoteViews;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * ودجت مواقيت الصلاة: الصلاة القادمة مع عدّ تنازلي، ومواقيت اليوم الخمس.
- * البيانات محسوبة في التطبيق لسبعة أيام (لا حساب هنا)، ويُعاد رسم الودجت عند دخول كل وقت.
+ * ودجت مواقيت الصلاة (صغير) بتصميم اللوحة المعتمدة: «العصر القادم» ووقته الكبير والعدّ التنازلي الحي،
+ * وصف الصلوات الخمس والقادمة مميزة. البيانات محسوبة في التطبيق لسبعة أيام، ويُعاد الرسم عند دخول كل وقت.
  */
 public class PrayerWidgetProvider extends AppWidgetProvider {
-    /** تغيير المقاس: تُرسم الخلفية من جديد بالمقاس الجديد */
     @Override
-    public void onAppWidgetOptionsChanged(android.content.Context c, android.appwidget.AppWidgetManager m, int id, android.os.Bundle o) {
-        WidgetStyle.refreshEverything(c);
-    }
+    public void onAppWidgetOptionsChanged(Context c, AppWidgetManager m, int id, android.os.Bundle o) { render(c, m, id); }
 
     static final String PREFS = "rafiq_widget";
     static final String KEY = "data";
     static final String ACTION_TICK = "org.rafiqalmuslim.app.WIDGET_TICK";
-
-    private static final int[] CELLS = { R.id.cell_0, R.id.cell_1, R.id.cell_2, R.id.cell_3, R.id.cell_4 };
-    private static final int[] NAMES = { R.id.p_name_0, R.id.p_name_1, R.id.p_name_2, R.id.p_name_3, R.id.p_name_4 };
-    private static final int[] TIMES = { R.id.p_time_0, R.id.p_time_1, R.id.p_time_2, R.id.p_time_3, R.id.p_time_4 };
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
@@ -80,58 +70,34 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
     }
 
     static void render(Context context, AppWidgetManager manager, int widgetId) {
-        RemoteViews v = new RemoteViews(context.getPackageName(), R.layout.widget_prayer);
-        WidgetDesign.apply(context, v, R.id.widget_root, widgetId, WidgetDesign.Kind.PRAYER_S);
-        Intent open = new Intent(context, MainActivity.class);
-        open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        v.setOnClickPendingIntent(R.id.widget_root, PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-
-        JSONObject data = load(context);
+        Tile t = new Tile(context, widgetId, R.drawable.wt_prayer, 470, 296);
         try {
+            JSONObject data = load(context);
             JSONArray days = data == null ? null : data.getJSONArray("days");
             long now = System.currentTimeMillis();
             int[] next = days == null ? null : findNext(days, now);
-            if (data == null || data.isNull("city") || next == null) {
-                v.setViewVisibility(R.id.widget_content, View.GONE);
-                v.setViewVisibility(R.id.widget_empty, View.VISIBLE);
-                manager.updateAppWidget(widgetId, v);
-                return;
-            }
-            v.setViewVisibility(R.id.widget_content, View.VISIBLE);
-            v.setViewVisibility(R.id.widget_empty, View.GONE);
+            if (data == null || data.isNull("city") || next == null) throw new Exception("no data");
             JSONObject day = days.getJSONObject(next[0]);
             JSONArray prayers = day.getJSONArray("prayers");
             JSONObject np = prayers.getJSONObject(next[1]);
-            v.setTextViewText(R.id.city, data.getString("city"));
-            v.setTextViewText(R.id.hijri, day.optString("hijri", ""));
-            v.setTextViewText(R.id.next_name, np.getString("label") + " القادم");
-            v.setTextViewText(R.id.next_time, np.getString("time"));
-            long left = np.getLong("at") - now;
-            v.setChronometer(R.id.countdown, SystemClock.elapsedRealtime() + left, null, true);
-            v.setChronometerCountDown(R.id.countdown, true);
-            // إعدادات «استوديو الودجت»: العناصر الظاهرة وحجم الخط، والتكيف مع المقاس
-            v.setViewVisibility(R.id.city, WidgetKit.show(context, "city") ? View.VISIBLE : View.GONE);
-            v.setViewVisibility(R.id.hijri, WidgetKit.show(context, "hijri") ? View.VISIBLE : View.GONE);
-            v.setViewVisibility(R.id.countdown, WidgetKit.show(context, "countdown") ? View.VISIBLE : View.GONE);
-            int size = WidgetKit.size(context, widgetId);
-            v.setViewVisibility(R.id.cells_row, size == 0 ? View.GONE : View.VISIBLE);
-            WidgetKit.text(context, v, R.id.next_time, 34);
-            boolean lightBg = false;
-            for (int i = 0; i < CELLS.length && i < prayers.length(); i++) {
+            t.text(np.getString("label") + " القادم", 196, 60, 364, 100, 25, Tile.GOLD, Tile.RIGHT, Tile.BOLD, 1);
+            t.text(Tile.hm(np.getString("time")), 205, 100, 392, 164, 62, Tile.WHITE, Tile.RIGHT, Tile.BOLD, 1);
+            if (WidgetKit.show(context, "countdown")) t.countdown(np.getLong("at") - now, 200, 172, 352, 202, 23, Tile.WHITE);
+            // الصلوات الخمس من اليمين: الفجر … العشاء، والقادمة مميزة كما في التصميم
+            float x0 = 14, cw = 88.4f;
+            for (int i = 0; i < 5 && i < prayers.length(); i++) {
                 JSONObject p = prayers.getJSONObject(i);
-                v.setTextViewText(NAMES[i], p.getString("label"));
-                v.setTextViewText(TIMES[i], p.getString("time"));
+                float r = 456 - i * cw, l = r - cw + 5;
                 boolean on = i == next[1];
-                v.setInt(CELLS[i], "setBackgroundResource", on ? R.drawable.widget_cell_active : R.drawable.widget_cell);
-                // كالتطبيق: الصلاة القادمة خانة ذهبية بنص داكن
-                v.setTextColor(NAMES[i], on || lightBg ? 0xFF1B2F2A : 0xFFEFE4CC);
-                v.setTextColor(TIMES[i], on || lightBg ? 0xFF10221F : 0xFFFFFFFF);
+                t.rrect(l, 223, r, 285, 10, on ? 0x80A8913C : 0x2E000000);
+                t.stroke(l, 223, r, 285, 10, on ? 0x66E9C46A : 0x1FFFFFFF, 0.8f);
+                t.text(p.getString("label"), l, 227, r, 251, 18, on ? Tile.GOLD : 0xFFF2EAD8, Tile.CENTER, Tile.BOLD, 1);
+                t.text(Tile.hm(p.getString("time")), l, 252, r, 280, 21, Tile.WHITE, Tile.CENTER, Tile.BOLD, 1);
             }
         } catch (Exception e) {
-            v.setViewVisibility(R.id.widget_content, View.GONE);
-            v.setViewVisibility(R.id.widget_empty, View.VISIBLE);
+            t.text(context.getString(R.string.widget_empty), 196, 70, 460, 205, 19, Tile.WHITE, Tile.CENTER, Tile.BOLD, 4);
         }
-        manager.updateAppWidget(widgetId, v);
+        manager.updateAppWidget(widgetId, t.done(WidgetKit.route(context, "/prayer", 0)));
     }
 
     /** إعادة الرسم بعد دخول الصلاة القادمة مباشرة (تنبيه غير دقيق يكفي لتحديث الشكل) */

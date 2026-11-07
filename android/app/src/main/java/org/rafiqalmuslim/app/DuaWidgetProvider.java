@@ -45,39 +45,24 @@ public class DuaWidgetProvider extends AppWidgetProvider {
     static int dayIndex() { return (int) ((System.currentTimeMillis() + java.util.TimeZone.getDefault().getOffset(System.currentTimeMillis())) / 86_400_000L); }
 
     static void render(Context c, AppWidgetManager m, int id) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_dua);
-        int day = dayIndex();
-        // خلفية اليوم ما لم يُختر تصميم خاص لهذا الودجت
-        WidgetDesign.apply(c, v, R.id.u_root, id, WidgetDesign.Kind.DUA);
+        Tile t = new Tile(c, id, R.drawable.wt_dua, 464, 264);
         JSONObject x = WidgetKit.extra(c);
         JSONArray list = x == null ? null : x.optJSONArray("duas");
         if (list == null || list.length() == 0) {
-            v.setViewVisibility(R.id.u_content, View.GONE);
-            v.setViewVisibility(R.id.u_empty, View.VISIBLE);
-            v.setOnClickPendingIntent(R.id.u_root, WidgetKit.route(c, "/duas", 50));
-            m.updateAppWidget(id, v);
+            t.text(c.getString(R.string.plus_empty), 146, 96, 342, 184, 20, 0xFF14231C, Tile.CENTER, Tile.BOLD, 3);
+            m.updateAppWidget(id, t.done(WidgetKit.route(c, "/duas", 50)));
             return;
         }
-        v.setViewVisibility(R.id.u_content, View.VISIBLE);
-        v.setViewVisibility(R.id.u_empty, View.GONE);
-        int idx = Math.floorMod(day * 5 + 3 + WidgetKit.data(c).getInt("du_off_" + id, 0), list.length());
+        int idx = Math.floorMod(dayIndex() * 5 + 3 + WidgetKit.data(c).getInt("du_off_" + id, 0), list.length());
         JSONObject d = list.optJSONObject(idx);
         String text = d.optString("t"), src = d.optString("s");
-        int size = WidgetKit.size(c, id);
-        v.setTextViewText(R.id.u_text, text);
-        v.setTextViewText(R.id.u_src, src);
-        v.setInt(R.id.u_text, "setMaxLines", size == 0 ? 2 : size == 1 ? 3 : 8);
-        v.setViewVisibility(R.id.u_actions, size == 0 ? View.GONE : View.VISIBLE);
-        WidgetKit.text(c, v, R.id.u_text, size == 2 ? 19 : 18);
-        v.setViewVisibility(R.id.u_src, size == 0 ? View.GONE : View.VISIBLE);
+        t.text(text, 140, 94, 348, 186, 29, 0xFF14231C, Tile.CENTER, Tile.NASKH, 4);
         String full = text + "\n— " + src + "\n\nمن تطبيق رفيق المسلم";
         Intent send = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, full);
         Intent chooser = Intent.createChooser(send, "مشاركة الدعاء").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        v.setOnClickPendingIntent(R.id.u_share, PendingIntent.getActivity(c, 51 * 1000 + (id % 1000), chooser, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-        Intent copy = new Intent(c, CopyActivity.class).putExtra(CopyActivity.EXTRA_TEXT, full).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_ANIMATION);
-        v.setOnClickPendingIntent(R.id.u_copy, PendingIntent.getActivity(c, 52 * 1000 + (id % 1000), copy, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-        v.setOnClickPendingIntent(R.id.u_next, WidgetKit.action(c, DuaWidgetProvider.class, NEXT, id, 5));
-        v.setOnClickPendingIntent(R.id.u_text, WidgetKit.route(c, "/duas", 53));
-        m.updateAppWidget(id, v);
+        t.zone(8, 210, 162, 254, PendingIntent.getActivity(c, 51 * 1000 + (id % 1000), chooser, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE), "مشاركة");
+        // «دعاء اليوم» يعرض دعاءً آخر
+        t.zone(136, 10, 322, 60, WidgetKit.action(c, DuaWidgetProvider.class, NEXT, id, 5), "دعاء آخر");
+        m.updateAppWidget(id, t.done(WidgetKit.route(c, "/duas", 53)));
     }
 }

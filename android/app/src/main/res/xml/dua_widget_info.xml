@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/dua_description"
-    android:initialLayout="@layout/widget_dua"
-    android:previewLayout="@layout/widget_dua"
+    android:initialLayout="@layout/widget_tile"
+    android:previewImage="@drawable/wp_dua"
     android:minWidth="250dp"
     android:minHeight="110dp"
     android:minResizeWidth="180dp"

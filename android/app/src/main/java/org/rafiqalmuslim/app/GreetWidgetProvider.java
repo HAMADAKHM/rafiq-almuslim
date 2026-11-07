@@ -42,16 +42,13 @@ public class GreetWidgetProvider extends AppWidgetProvider {
     }
 
     static void render(Context c, AppWidgetManager m, int id) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_greet);
-        WidgetDesign.apply(c, v, R.id.g_root, id, WidgetDesign.Kind.GREET);
-        v.setTextViewText(R.id.g_title, greeting());
+        Tile t = new Tile(c, id, R.drawable.wt_greet, 494, 270);
         String phrase = "تقبّل الله منا ومنكم";
         JSONObject x = WidgetKit.extra(c);
         JSONArray ph = x == null ? null : x.optJSONArray("phrases");
         if (ph != null && ph.length() > 0) phrase = ph.optString(Math.floorMod(DuaWidgetProvider.dayIndex(), ph.length()), phrase);
-        v.setTextViewText(R.id.g_phrase, phrase);
-        WidgetKit.text(c, v, R.id.g_title, 26);
-        v.setOnClickPendingIntent(R.id.g_root, WidgetKit.route(c, "/", 70));
-        m.updateAppWidget(id, v);
+        t.text(greeting(), 66, 76, 288, 132, 42, Tile.WHITE, Tile.CENTER, Tile.NASKH, 1);
+        t.text(phrase, 66, 134, 288, 176, 23, Tile.WHITE, Tile.CENTER, Tile.BOLD, 2);
+        m.updateAppWidget(id, t.done(WidgetKit.route(c, "/", 70)));
     }
 }

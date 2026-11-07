@@ -67,13 +67,21 @@ describe('أيقونات التطبيق', () => {
 })
 
 describe('تصميم الودجت', () => {
-  it('كل تصميم معتمد له صورته في الاستوديو، وخلفيته مرسومة في WidgetDesign.java', () => {
-    const java = readFileSync('android/app/src/main/java/org/rafiqalmuslim/app/WidgetDesign.java', 'utf8')
+  it('كل تصميم معتمد له صورته (من لوحة صاحب التطبيق) ويُرسم بها ودجت Android', () => {
     expect(WIDGET_DESIGNS).toHaveLength(9)
     for (const d of WIDGET_DESIGNS) expect(existsSync(`public/widgets/w-${d.id}.jpg`), d.id).toBe(true)
-    for (const k of ['PRAYER_S', 'PRAYER_L', 'QURAN', 'ADHKAR', 'TASBIH', 'DUA', 'ALL', 'GREET', 'DAILY']) expect(java).toContain(`case ${k}:`)
-    for (const r of ['wd_night', 'wd_quran', 'wd_dua', 'wd_all', 'wd_greet_1', 'wd_morning', 'wd_evening', 'wd_beads']) {
-      expect(existsSync(`android/app/src/main/res/drawable-nodpi/${r}.${r === 'wd_beads' ? 'png' : 'jpg'}`), r).toBe(true)
+    const dir = 'android/app/src/main/'
+    const tiles: Record<string, string> = { PrayerWidgetProvider: 'wt_prayer', PrayerCardWidgetProvider: 'wt_prayer_l', DailyWidgetProvider: 'wt_quran', AdhkarWidgetProvider: 'wt_adhkar_m', TasbihWidgetProvider: 'wt_tasbih', DuaWidgetProvider: 'wt_dua', AllInOneWidgetProvider: 'wt_all', GreetWidgetProvider: 'wt_greet', DailyAdhkarWidgetProvider: 'wt_dadhkar' }
+    for (const [cls, res] of Object.entries(tiles)) {
+      expect(readFileSync(`${dir}java/org/rafiqalmuslim/app/${cls}.java`, 'utf8'), cls).toContain(`new Tile(`)
+      expect(readFileSync(`${dir}java/org/rafiqalmuslim/app/${cls}.java`, 'utf8'), cls).toContain(`R.drawable.${res}`)
+      expect(existsSync(`${dir}res/drawable-nodpi/${res}.webp`), res).toBe(true)
+    }
+    // معاينة كل ودجت في قائمة ودجتات الجوال هي تصميمه من اللوحة
+    for (const f of ['prayer', 'prayer_card', 'daily', 'adhkar', 'tasbih', 'dua', 'all', 'greet', 'dadhkar']) {
+      const x = readFileSync(`${dir}res/xml/${f}_widget_info.xml`, 'utf8')
+      expect(x, f).toContain('@layout/widget_tile')
+      expect(x, f).toMatch(/previewImage="@drawable\/wp_/)
     }
   })
 })

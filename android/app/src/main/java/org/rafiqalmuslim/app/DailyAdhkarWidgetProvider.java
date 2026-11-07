@@ -31,16 +31,15 @@ public class DailyAdhkarWidgetProvider extends AppWidgetProvider {
     }
 
     static void render(Context c, AppWidgetManager m, int id) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_dadhkar);
-        WidgetDesign.apply(c, v, R.id.d_root, id, WidgetDesign.Kind.DAILY);
+        Tile t = new Tile(c, id, R.drawable.wt_dadhkar, 413, 254);
         JSONObject x = WidgetKit.extra(c);
         JSONObject done = x == null ? null : x.optJSONObject("done");
         boolean today = done != null && WidgetKit.today().equals(done.optString("date"));
         boolean mo = today && done.optBoolean("morning"), ev = today && done.optBoolean("evening");
-        v.setTextViewText(R.id.d_m_status, mo ? "تم ✓" : "لم تبدأ بعد");
-        v.setTextViewText(R.id.d_e_status, ev ? "تم ✓" : "لم تبدأ بعد");
-        v.setOnClickPendingIntent(R.id.d_m, WidgetKit.route(c, "/adhkar/morning", 71));
-        v.setOnClickPendingIntent(R.id.d_e, WidgetKit.route(c, "/adhkar/evening", 72));
-        m.updateAppWidget(id, v);
+        t.text(ev ? "تم" : "لم تبدأ بعد", 12, 136, 198, 174, 21, 0xFFEFF3F8, Tile.CENTER, Tile.BOLD, 1);
+        t.text(mo ? "تم" : "لم تبدأ بعد", 214, 136, 400, 174, 21, 0xFFFBEFD6, Tile.CENTER, Tile.BOLD, 1);
+        t.zone(206, 0, 413, 190, WidgetKit.route(c, "/adhkar/morning", 71), "أذكار الصباح");
+        t.zone(0, 0, 206, 190, WidgetKit.route(c, "/adhkar/evening", 72), "أذكار المساء");
+        m.updateAppWidget(id, t.done(WidgetKit.route(c, "/adhkar", 73)));
     }
 }

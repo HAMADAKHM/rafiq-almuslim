@@ -81,35 +81,28 @@ public class TasbihWidgetProvider extends AppWidgetProvider {
     }
 
     static void render(Context c, AppWidgetManager m, int id) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_tasbih);
-        WidgetDesign.apply(c, v, R.id.t_root, id, WidgetDesign.Kind.TASBIH);
+        Tile t = new Tile(c, id, R.drawable.wt_tasbih, 342, 250);
         JSONObject data = PlusWidgets.load(c);
-        if (PlusWidgets.showGate(c, v, data, R.id.t_content, R.id.t_empty)) {
-            v.setOnClickPendingIntent(R.id.t_root, PlusWidgets.openApp(c, 5));
-            m.updateAppWidget(id, v);
+        if (data == null || !data.optBoolean("entitled", false)) {
+            t.text(c.getString(data == null ? R.string.plus_empty : R.string.plus_locked), 70, 70, 196, 150, 15, Tile.WHITE, Tile.CENTER, Tile.BOLD, 4);
+            m.updateAppWidget(id, t.done(PlusWidgets.openApp(c, 5)));
             return;
         }
-        v.setViewVisibility(R.id.t_content, View.VISIBLE);
-        v.setViewVisibility(R.id.t_empty, View.GONE);
         SharedPreferences p = c.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE);
         int total = p.getInt(countKey(p, id), 0);
         int mode = modeOf(c, id);
+        String phrase, count, target;
         if (mode == 0) {
-            int round = total % 99;
-            int idx = Math.min(2, round / 33);
-            v.setTextViewText(R.id.t_phrase, PHRASES[idx]);
-            v.setTextViewText(R.id.t_count, String.valueOf(round - idx * 33));
-            v.setTextViewText(R.id.t_target, "/ 33");
+            int round = total % 99, idx = Math.min(2, round / 33);
+            phrase = PHRASES[idx]; count = String.valueOf(round - idx * 33); target = "/ 33";
         } else {
-            v.setTextViewText(R.id.t_phrase, MODE_TEXT[mode]);
-            v.setTextViewText(R.id.t_count, String.valueOf(total % 100));
-            v.setTextViewText(R.id.t_target, "/ 100");
+            phrase = MODE_TEXT[mode]; count = String.valueOf(total % 100); target = "/ 100";
         }
-        v.setTextViewText(R.id.t_total, "المجموع " + ar(total));
-        WidgetKit.text(c, v, R.id.t_phrase, 22);
-        v.setOnClickPendingIntent(R.id.t_root, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_INC, id, 6));
-        v.setOnClickPendingIntent(R.id.t_reset, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_RESET, id, 7));
-        v.setOnClickPendingIntent(R.id.t_phrase, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_MODE, id, 4));
-        m.updateAppWidget(id, v);
+        t.text(count, 82, 62, 182, 138, 66, Tile.WHITE, Tile.CENTER, Tile.BOLD, 1);
+        t.text(Tile.ltr(target), 94, 136, 172, 166, 23, Tile.WHITE, Tile.CENTER, Tile.BOLD, 1);
+        t.text(phrase, 224, 36, 332, 146, 31, Tile.CREAM, Tile.CENTER, Tile.NASKH, 3);
+        t.zone(240, 162, 314, 234, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_RESET, id, 7), "تصفير");
+        t.zone(224, 36, 332, 146, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_MODE, id, 4), "تغيير الذكر");
+        m.updateAppWidget(id, t.done(WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_INC, id, 6)));
     }
 }

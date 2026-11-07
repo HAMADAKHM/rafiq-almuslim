@@ -76,38 +76,29 @@ public class AdhkarWidgetProvider extends AppWidgetProvider {
     }
 
     static void render(Context c, AppWidgetManager m, int id) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_adhkar);
-        WidgetDesign.apply(c, v, R.id.a_root, id, WidgetDesign.Kind.ADHKAR);
         int cat = catOf(c, id);
+        Tile t = new Tile(c, id, cat == 0 ? R.drawable.wt_adhkar_m : R.drawable.wt_adhkar_e, 472, 298);
+        t.text(TITLES[cat], 226, 24, 368, 68, 23, Tile.GOLD, Tile.RIGHT, Tile.BOLD, 1);
+        t.zone(38, 92, 92, 146, WidgetKit.action(c, AdhkarWidgetProvider.class, SWITCH, id, 3), "تبديل الأذكار");
         JSONArray list = items(c, cat);
         if (list == null || list.length() == 0) {
-            v.setViewVisibility(R.id.a_content, View.GONE);
-            v.setViewVisibility(R.id.a_empty, View.VISIBLE);
-            v.setOnClickPendingIntent(R.id.a_root, WidgetKit.route(c, "/adhkar", 40));
-            m.updateAppWidget(id, v);
+            t.text(c.getString(R.string.plus_empty), 98, 82, 434, 154, 20, Tile.WHITE, Tile.CENTER, Tile.BOLD, 3);
+            m.updateAppWidget(id, t.done(WidgetKit.route(c, "/adhkar", 40)));
             return;
         }
-        v.setViewVisibility(R.id.a_content, View.VISIBLE);
-        v.setViewVisibility(R.id.a_empty, View.GONE);
         SharedPreferences p = WidgetKit.data(c);
         int i = Math.min(p.getInt("ad_i_" + id, 0), list.length() - 1), n = p.getInt("ad_n_" + id, 0);
         JSONObject d = list.optJSONObject(i);
-        int need = d.optInt("c", 1), size = WidgetKit.size(c, id);
-        v.setTextViewText(R.id.a_cat, (cat == 0 ? "☀  " : "☾  ") + TITLES[cat]);
-        v.setTextViewText(R.id.a_text, d.optString("t"));
-        v.setTextViewText(R.id.a_src, d.optString("s"));
-        v.setTextViewText(R.id.a_count, n + " / " + need);
-        v.setProgressBar(R.id.a_progress, Math.max(1, need), Math.min(n, need), false);
-        v.setInt(R.id.a_text, "setMaxLines", size == 0 ? 2 : size == 1 ? 3 : 8);
-        v.setViewVisibility(R.id.a_src, size == 2 ? View.VISIBLE : View.GONE);
-        v.setViewVisibility(R.id.a_switch, size == 0 ? View.GONE : View.VISIBLE);
-        WidgetKit.text(c, v, R.id.a_text, size == 2 ? 19 : 18);
-        v.setOnClickPendingIntent(R.id.a_text, WidgetKit.route(c, "/adhkar/" + CATS[cat], 41));
-        v.setOnClickPendingIntent(R.id.a_inc, WidgetKit.action(c, AdhkarWidgetProvider.class, INC, id, 1));
-        v.setOnClickPendingIntent(R.id.a_count, WidgetKit.action(c, AdhkarWidgetProvider.class, INC, id, 1));
-        v.setOnClickPendingIntent(R.id.a_next, WidgetKit.action(c, AdhkarWidgetProvider.class, NEXT, id, 2));
-        v.setOnClickPendingIntent(R.id.a_switch, WidgetKit.action(c, AdhkarWidgetProvider.class, SWITCH, id, 3));
-        v.setOnClickPendingIntent(R.id.a_prev, WidgetKit.action(c, AdhkarWidgetProvider.class, PREV, id, 4));
-        m.updateAppWidget(id, v);
+        int need = Math.max(1, d.optInt("c", 1));
+        t.text(d.optString("t"), 98, 80, 434, 156, 31, Tile.WHITE, Tile.CENTER, Tile.NASKH, 3);
+        t.text(Tile.ltr(n + " / " + need), 160, 162, 312, 194, 22, Tile.WHITE, Tile.CENTER, Tile.BOLD, 1);
+        float frac = Math.min(1f, n / (float) need);
+        t.rrect(70, 195, 411, 208, 6.5f, 0x40FFFFFF);
+        if (frac > 0) t.rrect(70, 195, Math.max(83, 70 + 341 * frac), 208, 6.5f, 0xFFF2B728);
+        t.zone(110, 228, 162, 278, WidgetKit.action(c, AdhkarWidgetProvider.class, PREV, id, 4), "الذكر السابق");
+        t.zone(206, 216, 278, 288, WidgetKit.action(c, AdhkarWidgetProvider.class, INC, id, 1), "عدّ");
+        t.zone(320, 228, 374, 278, WidgetKit.action(c, AdhkarWidgetProvider.class, NEXT, id, 2), "الذكر التالي");
+        t.zone(98, 80, 434, 194, WidgetKit.action(c, AdhkarWidgetProvider.class, INC, id, 5), "عدّ");
+        m.updateAppWidget(id, t.done(WidgetKit.route(c, "/adhkar/" + CATS[cat], 41)));
     }
 }

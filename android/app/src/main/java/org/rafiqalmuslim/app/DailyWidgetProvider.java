@@ -57,11 +57,10 @@ public class DailyWidgetProvider extends AppWidgetProvider {
     }
 
     static void render(Context context, AppWidgetManager manager, int widgetId) {
-        RemoteViews v = new RemoteViews(context.getPackageName(), R.layout.widget_daily);
-        WidgetDesign.apply(context, v, R.id.daily_root, widgetId, WidgetDesign.Kind.QURAN);
-        Intent open = new Intent(context, MainActivity.class);
-        open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        v.setOnClickPendingIntent(R.id.daily_root, PendingIntent.getActivity(context, 2, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        Tile t = new Tile(context, widgetId, R.drawable.wt_quran, 522, 296);
+        JSONObject rs = WidgetKit.resume(context);
+        String rr = rs == null ? null : rs.optString("route", null);
+        t.zone(40, 240, 210, 282, WidgetKit.route(context, rr != null && rr.startsWith("/") ? rr : "/quran", 9), "متابعة القراءة");
         try {
             String s = context.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE).getString(KEY, null);
             JSONObject data = s == null ? null : new JSONObject(s);
@@ -71,14 +70,7 @@ public class DailyWidgetProvider extends AppWidgetProvider {
             for (int i = 0; days != null && i < days.length(); i++) {
                 if (today.equals(days.getJSONObject(i).getString("date"))) { day = days.getJSONObject(i); break; }
             }
-            if (day == null) {
-                v.setViewVisibility(R.id.daily_content, View.GONE);
-                v.setViewVisibility(R.id.daily_empty, View.VISIBLE);
-                manager.updateAppWidget(widgetId, v);
-                return;
-            }
-            v.setViewVisibility(R.id.daily_content, View.VISIBLE);
-            v.setViewVisibility(R.id.daily_empty, View.GONE);
+            if (day == null) throw new Exception("no data");
             boolean hasText = !day.isNull("text");
             String ayah = hasText ? day.getString("text") : null, ref = day.getString("ref"), route = "/quran";
             android.content.SharedPreferences p = WidgetKit.data(context);
@@ -89,37 +81,15 @@ public class DailyWidgetProvider extends AppWidgetProvider {
                 JSONObject o = pool.getJSONObject(Math.floorMod(DuaWidgetProvider.dayIndex() * 7 + off, pool.length()));
                 ayah = o.optString("t"); ref = o.optString("ref"); route = "/quran/" + o.optInt("s") + "?ayah=" + o.optInt("a");
             }
-            v.setTextViewText(R.id.daily_ayah, ayah != null ? "﴿" + ayah + "﴾" : context.getString(R.string.daily_long_ayah));
-            v.setTextViewText(R.id.daily_ref, ref);
-            int size = WidgetKit.size(context, widgetId);
-            v.setInt(R.id.daily_ayah, "setMaxLines", size == 0 ? 2 : size == 1 ? 3 : 7);
-            WidgetKit.text(context, v, R.id.daily_ayah, size == 2 ? 21 : 18);
-            v.setViewVisibility(R.id.daily_actions, size == 0 ? View.GONE : View.VISIBLE);
-            v.setViewVisibility(R.id.daily_next, pool == null ? View.GONE : View.VISIBLE);
-            v.setOnClickPendingIntent(R.id.daily_next, WidgetKit.action(context, DailyWidgetProvider.class, NEXT, widgetId, 8));
-            // «تابع القراءة»: آخر موضع قراءة فعلية (يحفظه التطبيق) أو المصحف
-            JSONObject rs = WidgetKit.resume(context);
-            String rr = rs == null ? null : rs.optString("route", null);
-            v.setOnClickPendingIntent(R.id.daily_resume, WidgetKit.route(context, rr != null && rr.startsWith("/") ? rr : "/quran", 9));
-            v.setOnClickPendingIntent(R.id.daily_ayah, WidgetKit.route(context, route, 10));
-            JSONObject w = data.isNull("wird") ? null : data.getJSONObject("wird");
-            if (w == null) {
-                v.setTextViewText(R.id.daily_wird, context.getString(R.string.daily_no_wird));
-                v.setViewVisibility(R.id.daily_progress, View.GONE);
-                v.setViewVisibility(R.id.daily_wird, View.GONE);
-            } else {
-                boolean sameDay = today.equals(w.getString("date"));
-                // حالة الإتمام صحيحة ليوم آخر فتح فقط؛ في يوم جديد يُعرض ورد اليوم كأنه لم يُقرأ بعد حتى يُفتح التطبيق
-                String status = sameDay && w.getBoolean("done") ? context.getString(R.string.daily_wird_done) : context.getString(R.string.daily_wird_pending);
-                v.setTextViewText(R.id.daily_wird, context.getString(R.string.daily_wird) + " " + (sameDay ? w.getString("label") + " • " : "") + status);
-                v.setViewVisibility(R.id.daily_progress, WidgetKit.size(context, widgetId) == 2 ? View.VISIBLE : View.GONE);
-                v.setViewVisibility(R.id.daily_wird, WidgetKit.size(context, widgetId) == 2 ? View.VISIBLE : View.GONE);
-                v.setProgressBar(R.id.daily_progress, 100, w.getInt("percent"), false);
-            }
+            if (ayah != null) t.text("﴿" + ayah + "﴾", 204, 90, 494, 166, 31, Tile.INK, Tile.CENTER, Tile.NASKH, 3);
+            else t.text(context.getString(R.string.daily_long_ayah), 204, 90, 494, 166, 20, Tile.INK, Tile.CENTER, Tile.BOLD, 3);
+            t.text(Tile.refShort(ref), 292, 170, 408, 203, 18, 0xFF3B2F1E, Tile.CENTER, Tile.BOLD, 1);
+            t.zone(204, 86, 494, 205, WidgetKit.route(context, route, 10), "آية اليوم");
+            // «قال تعالى» يعرض آية أخرى لهذا اليوم
+            if (pool != null) t.zone(232, 22, 396, 78, WidgetKit.action(context, DailyWidgetProvider.class, NEXT, widgetId, 8), "آية أخرى");
         } catch (Exception e) {
-            v.setViewVisibility(R.id.daily_content, View.GONE);
-            v.setViewVisibility(R.id.daily_empty, View.VISIBLE);
+            t.text(context.getString(R.string.daily_empty), 204, 90, 494, 200, 20, Tile.INK, Tile.CENTER, Tile.BOLD, 3);
         }
-        manager.updateAppWidget(widgetId, v);
+        manager.updateAppWidget(widgetId, t.done(WidgetKit.route(context, "/quran", 2)));
     }
 }

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/adhkar_description"
-    android:initialLayout="@layout/widget_adhkar"
-    android:previewLayout="@layout/widget_adhkar"
+    android:initialLayout="@layout/widget_tile"
+    android:previewImage="@drawable/wp_adhkar"
     android:minWidth="250dp"
     android:minHeight="110dp"
     android:minResizeWidth="180dp"

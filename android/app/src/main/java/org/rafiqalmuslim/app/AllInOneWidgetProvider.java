@@ -35,29 +35,24 @@ public class AllInOneWidgetProvider extends AppWidgetProvider {
     }
 
     static void render(Context c, AppWidgetManager m, int id) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_all);
-        WidgetDesign.apply(c, v, R.id.o_root, id, WidgetDesign.Kind.ALL);
-        v.setOnClickPendingIntent(R.id.o_top, WidgetKit.route(c, "/prayer", 60));
-        v.setOnClickPendingIntent(R.id.o_q, WidgetKit.route(c, "/quran", 61));
-        v.setOnClickPendingIntent(R.id.o_s, WidgetKit.route(c, "/tasbih", 62));
-        v.setOnClickPendingIntent(R.id.o_k, WidgetKit.route(c, "/qibla", 63));
-        v.setOnClickPendingIntent(R.id.o_a, WidgetKit.route(c, "/prayer", 64));
+        Tile t = new Tile(c, id, R.drawable.wt_all, 657, 282);
+        // أيقونات التصميم: القرآن، السبحة، القبلة، الأذكار (من اليمين)
+        t.text("الأذكار", 356, 244, 416, 268, 15, Tile.WHITE, Tile.CENTER, Tile.BOLD, 1);
+        t.zone(570, 205, 632, 270, WidgetKit.route(c, "/quran", 61), "القرآن");
+        t.zone(502, 205, 564, 270, WidgetKit.route(c, "/tasbih", 62), "السبحة");
+        t.zone(430, 205, 494, 270, WidgetKit.route(c, "/qibla", 63), "القبلة");
+        t.zone(356, 205, 420, 270, WidgetKit.route(c, "/adhkar", 64), "الأذكار");
         try {
             JSONObject data = PrayerWidgetProvider.load(c);
             JSONArray days = data == null ? null : data.getJSONArray("days");
             long now = System.currentTimeMillis();
             int[] next = days == null ? null : PrayerWidgetProvider.findNext(days, now);
-            if (data == null || data.isNull("city") || next == null) throw new Exception("no data");
-            v.setViewVisibility(R.id.o_content, View.VISIBLE);
-            v.setViewVisibility(R.id.o_empty, View.GONE);
-            JSONObject np = days.getJSONObject(next[0]).getJSONArray("prayers").getJSONObject(next[1]);
-            v.setTextViewText(R.id.o_label, "الصلاة القادمة: " + np.getString("label"));
-            v.setTextViewText(R.id.o_next, np.getString("time"));
-            boolean cd = WidgetKit.show(c, "countdown");
-            v.setViewVisibility(R.id.o_count, cd ? View.VISIBLE : View.GONE);
-            if (cd) {
-                v.setChronometer(R.id.o_count, SystemClock.elapsedRealtime() + (np.getLong("at") - now), null, true);
-                v.setChronometerCountDown(R.id.o_count, true);
+            if (data != null && !data.isNull("city") && next != null) {
+                JSONObject np = days.getJSONObject(next[0]).getJSONArray("prayers").getJSONObject(next[1]);
+                t.text(Tile.hm(np.getString("time")), 468, 108, 630, 162, 52, Tile.WHITE, Tile.RIGHT, Tile.BOLD, 1);
+                if (WidgetKit.show(c, "countdown")) t.countdown(np.getLong("at") - now, 460, 166, 594, 190, 18, Tile.WHITE);
+            } else {
+                t.text(c.getString(R.string.widget_empty), 460, 108, 640, 192, 14, Tile.WHITE, Tile.RIGHT, Tile.BOLD, 3);
             }
             String ayah = null, ref = null, dhikr = null, today = WidgetKit.today();
             String ds = WidgetKit.data(c).getString(DailyWidgetProvider.KEY, null);
@@ -72,20 +67,16 @@ public class AllInOneWidgetProvider extends AppWidgetProvider {
                 JSONObject o = dk.getJSONObject(i);
                 if (today.equals(o.optString("date"))) { dhikr = o.optString("t"); break; }
             }
-            v.setTextViewText(R.id.o_ayah, ayah != null ? "﴿" + ayah + "﴾" : "");
-            v.setTextViewText(R.id.o_ayah_ref, ref != null ? ref : "");
-            v.setTextViewText(R.id.o_dhikr, dhikr != null && !dhikr.isEmpty() ? "ذكر اليوم: " + dhikr : "ذكر اليوم: سبحان الله وبحمده");
-            int size = WidgetKit.size(c, id);
-            v.setInt(R.id.o_ayah, "setMaxLines", size == 2 ? 4 : 2);
-            v.setOnClickPendingIntent(R.id.o_ayah, WidgetKit.route(c, "/quran", 65));
-            v.setOnClickPendingIntent(R.id.o_dhikr, WidgetKit.route(c, "/adhkar", 66));
-            WidgetKit.text(c, v, R.id.o_next, 30);
-            WidgetKit.text(c, v, R.id.o_ayah, 16);
-        } catch (Exception e) {
-            v.setViewVisibility(R.id.o_content, View.GONE);
-            v.setViewVisibility(R.id.o_empty, View.VISIBLE);
-            v.setOnClickPendingIntent(R.id.o_root, WidgetKit.route(c, "/", 67));
-        }
-        m.updateAppWidget(id, v);
+            if (ayah != null) t.text("﴿" + ayah + "﴾", 32, 86, 328, 142, 27, Tile.WHITE, Tile.CENTER, Tile.NASKH, 2);
+            else if (ref != null) t.text(c.getString(R.string.daily_long_ayah), 32, 86, 328, 142, 17, Tile.WHITE, Tile.CENTER, Tile.BOLD, 2);
+            if (ref != null) t.text(Tile.refShort(ref), 96, 148, 272, 180, 18, Tile.WHITE, Tile.CENTER, Tile.BOLD, 1);
+            android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder("ذكر اليوم: ");
+            sb.setSpan(new android.text.style.ForegroundColorSpan(Tile.GOLD), 0, sb.length(), 0);
+            sb.append(dhikr != null && !dhikr.isEmpty() ? dhikr : "سبحان الله وبحمده");
+            t.text(sb, 36, 208, 272, 246, 20, Tile.WHITE, Tile.RIGHT, Tile.BOLD, 1);
+            t.zone(32, 86, 328, 182, WidgetKit.route(c, "/quran", 65), "آية اليوم");
+            t.zone(36, 204, 300, 250, WidgetKit.route(c, "/adhkar", 66), "ذكر اليوم");
+        } catch (Exception ignored) {}
+        m.updateAppWidget(id, t.done(WidgetKit.route(c, "/prayer", 60)));
     }
 }
