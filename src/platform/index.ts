@@ -177,9 +177,9 @@ async function ensureHisnChannels(ids: string[]) {
   }
 }
 
-export const COMPANION_CHANNEL = 'rafiq-companion-v2'
+export const COMPANION_CHANNEL = 'rafiq-companion-v3'
 /** النغمة الخاصة برفيق المسلم (res/raw/rafiq_chime.ogg) لكل التذكيرات التي ليس لها صوت خاص بها */
-export const CHIME_CHANNEL = 'rafiq-chime-v1'
+export const CHIME_CHANNEL = 'rafiq-chime-v2'
 export const CHIME_SOUND = 'rafiq_chime.ogg'
 export const COMPANION_SILENT_CHANNEL = 'rafiq-companion-silent-v1'
 const ACTION_TYPES = { dhikr: 'RAFIQ_DHIKR', quran: 'RAFIQ_QURAN', ayah: 'RAFIQ_AYAH' } as const
