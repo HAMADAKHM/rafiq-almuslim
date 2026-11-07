@@ -10,25 +10,53 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: makkahlive
+      - name: makkahlive-verify
         run: |
-          for p in en/audio/morning-evening-adhkar audio/morning-evening-adhkar; do
-            curl -sL -m 60 -A "Mozilla/5.0" "https://makkahlive.net/$p" -o ml.html
-            echo "::notice::ML $p size=$(wc -c < ml.html)"
-            grep -oE 'https?://[^"'"'"' <>]+\.(mp3|m4a)' ml.html | sort -u > links.txt
-            grep -oE 'archive\.org/(details|download)/[^"'"'"' <>]+' ml.html | sort -u >> links.txt
-            split -l 5 links.txt mlp_ 2>/dev/null; for f in mlp_*; do echo "::notice::MLL $(tr '\n' ' ' < $f)"; done; rm -f mlp_*
-            grep -oE '"(title|name|reciter)"[^,]{0,120}' ml.html | head -40 | tr '\n' '|' | head -c 1800 | sed 's/^/::notice::MLT /'; echo
-          done
-      - name: archive-search
+          curl -sL -m 60 -A "Mozilla/5.0" "https://makkahlive.net/audio/morning-evening-adhkar" -o ml.html
+          python3 - <<'PY' > map.txt
+          import re, json
+          h = open('ml.html', encoding='utf-8', errors='ignore').read()
+          for m in re.finditer(r'<script type="application/ld\+json">(.*?)</script>', h, re.S):
+              try: d = json.loads(m.group(1))
+              except Exception: continue
+              def walk(x):
+                  if isinstance(x, dict):
+                      if 'contentUrl' in x or 'url' in x and str(x.get('url','')).endswith('.mp3'):
+                          print('T', x.get('name'), '=>', x.get('contentUrl') or x.get('url'), x.get('duration'))
+                      for v in x.values(): walk(v)
+                  elif isinstance(x, list):
+                      for v in x: walk(v)
+              walk(d)
+          # بديل: الاسم الأقرب قبل كل رابط
+          for m in re.finditer(r'MakkahLive\.Net_athkar_(\d+)\.mp3', h):
+              ctx = re.sub(r'<[^>]+>', ' ', h[max(0, m.start()-700):m.start()])
+              ctx = re.sub(r'\s+', ' ', ctx)[-160:]
+              print('C', m.group(1), ctx)
+          PY
+          sort -u map.txt | head -60 | while read -r l; do echo "::notice::$(echo "$l" | head -c 400)"; done
+          curl -s -m 60 "https://archive.org/metadata/makkah-live.-net-athkar-01" -o meta.json
+          python3 -c "
+          import json; d=json.load(open('meta.json'))
+          print('META', json.dumps({k:d['metadata'].get(k) for k in ['title','creator','licenseurl','rights','description','date']}, ensure_ascii=False)[:1500])
+          for f in d['files']:
+              if f['name'].endswith('.mp3'): print('F', f['name'], f.get('length'), f.get('size'), f.get('title',''), f.get('artist',''))
+          " | while read -r l; do echo "::notice::$(echo "$l" | head -c 1500)"; done
+      - name: makkahlive-transcribe
         run: |
-          for q in 'أذكار الصباح' 'أذكار المساء' 'اذكار الصباح والمساء' 'athkar mishary' 'adhkar morning evening' 'azkar sabah' 'حصن المسلم صوت'; do
-            curl -s -m 60 -G "https://archive.org/advancedsearch.php" --data-urlencode "q=($q) AND mediatype:audio" --data-urlencode "fl[]=identifier" --data-urlencode "fl[]=title" --data-urlencode "fl[]=creator" --data-urlencode "rows=25" --data-urlencode "output=json" -o s.json
-            python3 -c "
-          import json,sys
-          d=json.load(open('s.json'))['response']['docs']
-          out=' | '.join(f\"{x['identifier']}: {str(x.get('title',''))[:50]} [{str(x.get('creator',''))[:30]}]\" for x in d)
-          print(out[:1900])
-          " > o.txt 2>&1 || true
-            echo "::notice::AS $q => $(cat o.txt)"
-          done
+          pip install -q "av>=11,<13" faster-whisper > /dev/null 2>&1
+          for n in 01 02 03 04 05 06 07 08 09 10 11; do curl -sL -m 120 -r 0-700000 -o "a$n.mp3" "https://archive.org/download/makkah-live.-net-athkar-01/MakkahLive.Net_athkar_$n.mp3"; done
+          python3 - <<'PY' > tr.txt 2>err.txt || true
+          from faster_whisper import WhisperModel
+          m = WhisperModel("small", device="cpu", compute_type="int8")
+          for n in ['01','02','03','04','05','06','07','08','09','10','11']:
+              try:
+                  segs, info = m.transcribe(f"a{n}.mp3", language="ar", beam_size=3)
+                  t = ''
+                  for s in segs:
+                      if s.start > 40: break
+                      t += s.text
+                  print(f"TR{n} {t.strip()[:400]}")
+              except Exception as e: print(f"TR{n} ERR {e}")
+          PY
+          while read -r l; do echo "::notice::$l"; done < tr.txt
+          echo "::notice::ERR $(tail -c 300 err.txt | tr -d '\n:')"
