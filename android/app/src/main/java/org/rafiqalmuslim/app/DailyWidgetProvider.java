@@ -26,6 +26,7 @@ public class DailyWidgetProvider extends AppWidgetProvider {
     }
 
     static final String KEY = "daily";
+    static final String NEXT = "org.rafiqalmuslim.app.AYAH_NEXT";
 
     @Override
     public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
@@ -36,6 +37,17 @@ public class DailyWidgetProvider extends AppWidgetProvider {
     public void onReceive(Context context, Intent intent) {
         super.onReceive(context, intent);
         String a = intent.getAction();
+        if (NEXT.equals(a)) {
+            int id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID);
+            if (id == AppWidgetManager.INVALID_APPWIDGET_ID) return;
+            android.content.SharedPreferences p = WidgetKit.data(context);
+            // «آية أخرى» لهذا اليوم فقط: يعود لآية اليوم في اليوم التالي
+            String today = WidgetKit.today();
+            int off = today.equals(p.getString("ay_day_" + id, "")) ? p.getInt("ay_off_" + id, 0) + 1 : 1;
+            p.edit().putInt("ay_off_" + id, off).putString("ay_day_" + id, today).apply();
+            render(context, AppWidgetManager.getInstance(context), id);
+            return;
+        }
         if (Intent.ACTION_DATE_CHANGED.equals(a) || Intent.ACTION_TIMEZONE_CHANGED.equals(a) || Intent.ACTION_TIME_CHANGED.equals(a)) refreshAll(context);
     }
 
@@ -68,8 +80,28 @@ public class DailyWidgetProvider extends AppWidgetProvider {
             v.setViewVisibility(R.id.daily_content, View.VISIBLE);
             v.setViewVisibility(R.id.daily_empty, View.GONE);
             boolean hasText = !day.isNull("text");
-            v.setTextViewText(R.id.daily_ayah, hasText ? "﴿" + day.getString("text") + "﴾" : context.getString(R.string.daily_long_ayah));
-            v.setTextViewText(R.id.daily_ref, day.getString("ref"));
+            String ayah = hasText ? day.getString("text") : null, ref = day.getString("ref"), route = "/quran";
+            android.content.SharedPreferences p = WidgetKit.data(context);
+            int off = today.equals(p.getString("ay_day_" + widgetId, "")) ? p.getInt("ay_off_" + widgetId, 0) : 0;
+            JSONObject x = WidgetKit.extra(context);
+            JSONArray pool = x == null ? null : x.optJSONArray("ayat");
+            if (off > 0 && pool != null && pool.length() > 0) {
+                JSONObject o = pool.getJSONObject(Math.floorMod(DuaWidgetProvider.dayIndex() * 7 + off, pool.length()));
+                ayah = o.optString("t"); ref = o.optString("ref"); route = "/quran/" + o.optInt("s") + "?ayah=" + o.optInt("a");
+            }
+            v.setTextViewText(R.id.daily_ayah, ayah != null ? "﴿" + ayah + "﴾" : context.getString(R.string.daily_long_ayah));
+            v.setTextViewText(R.id.daily_ref, ref);
+            int size = WidgetKit.size(context, widgetId);
+            v.setInt(R.id.daily_ayah, "setMaxLines", size == 0 ? 2 : size == 1 ? 4 : 8);
+            WidgetKit.text(context, v, R.id.daily_ayah, size == 2 ? 19 : 16);
+            v.setViewVisibility(R.id.daily_actions, size == 0 || pool == null ? View.GONE : View.VISIBLE);
+            v.setOnClickPendingIntent(R.id.daily_next, WidgetKit.action(context, DailyWidgetProvider.class, NEXT, widgetId, 8));
+            // «تابع القراءة»: آخر موضع قراءة فعلية (من بيانات ودجت المتابعة) أو المصحف
+            JSONObject rs = ResumeWidgetProvider.load(context);
+            String rr = rs == null ? null : rs.optString("route", null);
+            v.setOnClickPendingIntent(R.id.daily_resume, WidgetKit.route(context, rr != null && rr.startsWith("/") ? rr : "/quran", 9));
+            v.setOnClickPendingIntent(R.id.daily_ayah, WidgetKit.route(context, route, 10));
+            WidgetKit.tint(v, WidgetKit.light(context, widgetId), new int[] { R.id.daily_ayah }, new int[] { R.id.daily_ref }, new int[] { R.id.daily_wird, R.id.daily_next });
             JSONObject w = data.isNull("wird") ? null : data.getJSONObject("wird");
             if (w == null) {
                 v.setTextViewText(R.id.daily_wird, context.getString(R.string.daily_no_wird));

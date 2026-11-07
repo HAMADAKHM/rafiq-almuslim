@@ -13,8 +13,8 @@ final class WidgetStyle {
     private WidgetStyle() {}
 
     /** التصاميم بالترتيب (المعرّف، الاسم، والخلفية) — تعرضها شاشة «إعداد الودجت» */
-    static final String[] IDS = { "g-app", "g-night", "g-mosque", "g-quran", "g-kaaba", "g-madinah", "g-pattern", "emerald", "indigo", "royal", "night", "turquoise", "dawn", "nature", "violet", "rose", "evening", "glass" };
-    static final String[] NAMES = { "تصميم التطبيق (الأصلي)", "ليلة الهلال", "المسجد عند الغروب", "المصحف الشريف", "الكعبة المشرفة", "المسجد النبوي", "النقش الأخضر", "الزمردي الذهبي", "النيلي الذهبي", "الملكي", "الليلي", "الفيروزي", "الفجر", "الطبيعي", "البنفسجي", "الوردي", "المساء", "زجاجي شفاف" };
+    static final String[] IDS = { "g-app", "g-light", "g-night", "g-mosque", "g-quran", "g-kaaba", "g-madinah", "g-pattern", "emerald", "indigo", "royal", "night", "turquoise", "dawn", "nature", "violet", "rose", "evening", "glass" };
+    static final String[] NAMES = { "تصميم التطبيق (الأصلي)", "الفاتح العاجي", "ليلة الهلال", "المسجد عند الغروب", "المصحف الشريف", "الكعبة المشرفة", "المسجد النبوي", "النقش الأخضر", "الزمردي الذهبي", "النيلي الذهبي", "الملكي", "الليلي", "الفيروزي", "الفجر", "الطبيعي", "البنفسجي", "الوردي", "المساء", "زجاجي شفاف" };
     static final String KEY_PLUS = "plus";
     static final String KEY_TEXT = "text_";
 
@@ -88,6 +88,11 @@ final class WidgetStyle {
         String own = forWidget(c, widgetId);
         String style = own != null && (free(own) || plus(c)) ? own : global(c);
         if (!free(style) && !plus(c)) style = DEFAULT;
+        applyStyle(c, v, rootId, widgetId, style);
+    }
+
+    /** يرسم خلفية بتصميم محدد (مثل خلفية اليوم في ودجت الدعاء) مع الشكل والشفافية المختارين */
+    static void applyStyle(Context c, RemoteViews v, int rootId, int widgetId, String style) {
         int alpha = alphaFor(c, widgetId);
         // الخلفية صورة خلف المحتوى، فتُضبط شفافيتها دون أن تتأثر الكتابة
         v.setInt(rootId, "setBackgroundColor", 0);
@@ -114,6 +119,9 @@ final class WidgetStyle {
         DailyWidgetProvider.refreshAll(c);
         ResumeWidgetProvider.refreshAll(c);
         PlusWidgets.refreshAll(c);
+        AdhkarWidgetProvider.refreshAll(c);
+        DuaWidgetProvider.refreshAll(c);
+        AllInOneWidgetProvider.refreshAll(c);
     }
 
     static void set(Context c, String style) {

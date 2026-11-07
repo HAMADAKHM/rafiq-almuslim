@@ -24,6 +24,10 @@ public class TasbihWidgetProvider extends AppWidgetProvider {
 
     static final String ACTION_INC = "org.rafiqalmuslim.app.TASBIH_INC";
     static final String ACTION_RESET = "org.rafiqalmuslim.app.TASBIH_RESET";
+    static final String ACTION_MODE = "org.rafiqalmuslim.app.TASBIH_MODE";
+    /** الأذكار: «seq» التسبيح بعد الصلاة ٣٣×٣ (كما كان)، أو ذكر واحد بعدّ ١٠٠ */
+    static final String[] MODES = { "seq", "subhan", "hamd", "akbar", "tahlil", "istighfar", "salawat", "hawqala" };
+    static final String[] MODE_TEXT = { "", "سبحان الله", "الحمد لله", "الله أكبر", "لا إله إلا الله", "أستغفر الله", "اللهم صلِّ على محمد", "لا حول ولا قوة إلا بالله" };
     private static final String KEY_COUNT = "tasbih_count";
     private static final String[] PHRASES = { "سبحان الله", "الحمد لله", "الله أكبر" };
 
@@ -35,15 +39,34 @@ public class TasbihWidgetProvider extends AppWidgetProvider {
         super.onReceive(c, intent);
         String a = intent.getAction();
         SharedPreferences p = c.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE);
-        if (ACTION_INC.equals(a)) p.edit().putInt(KEY_COUNT, p.getInt(KEY_COUNT, 0) + 1).apply();
-        else if (ACTION_RESET.equals(a)) p.edit().putInt(KEY_COUNT, 0).apply();
+        int id = intent.getIntExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
+        String k = countKey(p, id);
+        if (ACTION_INC.equals(a)) { p.edit().putInt(k, p.getInt(k, 0) + 1).apply(); WidgetKit.tick(c); }
+        else if (ACTION_RESET.equals(a)) p.edit().putInt(k, 0).apply();
+        else if (ACTION_MODE.equals(a) && id >= 0) p.edit().putInt("ts_mode_" + id, (modeOf(c, id) + 1) % MODES.length).putInt(k, 0).apply();
         else return;
-        refreshAll(c);
+        if (id >= 0) render(c, AppWidgetManager.getInstance(c), id); else refreshAll(c);
     }
 
     static void refreshAll(Context c) {
         AppWidgetManager m = AppWidgetManager.getInstance(c);
         for (int id : m.getAppWidgetIds(new ComponentName(c, TasbihWidgetProvider.class))) render(c, m, id);
+    }
+
+    /** عدّ كل ودجت محفوظ وحده (ويبدأ من العدّ السابق المشترك أول مرة) */
+    static String countKey(SharedPreferences p, int id) {
+        if (id < 0) return KEY_COUNT;
+        String k = "ts_n_" + id;
+        if (!p.contains(k)) p.edit().putInt(k, p.getInt(KEY_COUNT, 0)).apply();
+        return k;
+    }
+
+    static int modeOf(Context c, int id) {
+        int own = c.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE).getInt("ts_mode_" + id, -1);
+        if (own >= 0) return own % MODES.length;
+        String pref = WidgetKit.prefs(c).optString("tasbih", "seq");
+        for (int i = 0; i < MODES.length; i++) if (MODES[i].equals(pref)) return i;
+        return 0;
     }
 
     private static PendingIntent broadcast(Context c, String action, int code) {
@@ -68,14 +91,24 @@ public class TasbihWidgetProvider extends AppWidgetProvider {
         }
         v.setViewVisibility(R.id.t_content, View.VISIBLE);
         v.setViewVisibility(R.id.t_empty, View.GONE);
-        int total = c.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE).getInt(KEY_COUNT, 0);
-        int round = total % 99;
-        int idx = Math.min(2, round / 33);
-        v.setTextViewText(R.id.t_phrase, PHRASES[idx]);
-        v.setTextViewText(R.id.t_count, ar(round - idx * 33) + " / ٣٣");
+        SharedPreferences p = c.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE);
+        int total = p.getInt(countKey(p, id), 0);
+        int mode = modeOf(c, id);
+        if (mode == 0) {
+            int round = total % 99;
+            int idx = Math.min(2, round / 33);
+            v.setTextViewText(R.id.t_phrase, PHRASES[idx]);
+            v.setTextViewText(R.id.t_count, ar(round - idx * 33) + " / ٣٣");
+        } else {
+            v.setTextViewText(R.id.t_phrase, MODE_TEXT[mode]);
+            v.setTextViewText(R.id.t_count, ar(total % 100) + " / ١٠٠");
+        }
         v.setTextViewText(R.id.t_total, "المجموع " + ar(total));
-        v.setOnClickPendingIntent(R.id.t_root, broadcast(c, ACTION_INC, 6));
-        v.setOnClickPendingIntent(R.id.t_reset, broadcast(c, ACTION_RESET, 7));
+        WidgetKit.text(c, v, R.id.t_phrase, 16);
+        WidgetKit.tint(v, WidgetKit.light(c, id), new int[] { R.id.t_count }, new int[] { R.id.t_phrase }, new int[] { R.id.t_total });
+        v.setOnClickPendingIntent(R.id.t_root, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_INC, id, 6));
+        v.setOnClickPendingIntent(R.id.t_reset, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_RESET, id, 7));
+        v.setOnClickPendingIntent(R.id.t_phrase, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_MODE, id, 4));
         m.updateAppWidget(id, v);
     }
 }

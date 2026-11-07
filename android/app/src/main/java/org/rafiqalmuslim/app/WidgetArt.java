@@ -35,6 +35,7 @@ final class WidgetArt {
             case "g-madinah": return R.drawable.widget_ph_madinah;
             case "g-pattern": return R.drawable.widget_ph_pattern;
             case "g-app": return R.drawable.widget_ph_night;
+            case "g-light": return R.drawable.widget_ph_pattern;
             default: return R.drawable.widget_ph_night;
         }
     }
@@ -115,6 +116,22 @@ final class WidgetArt {
         op.inScaled = false;
         Bitmap ph = BitmapFactory.decodeResource(c.getResources(), photoOf(style), op);
         Paint pp = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+        if ("g-light".equals(style)) {
+            // الفاتح العاجي: كريمي دافئ بنقش خفيف وإطار ذهبي (للوضع الفاتح؛ الكتابة داكنة)
+            Paint lg = new Paint();
+            lg.setShader(new LinearGradient(0, 0, 0, h, new int[] { Color.parseColor("#FBF5E6"), Color.parseColor("#F1E4C4") }, null, Shader.TileMode.CLAMP));
+            cv.drawRect(0, 0, w, h, lg);
+            if (ph != null) {
+                BitmapShader sh = new BitmapShader(ph, Shader.TileMode.MIRROR, Shader.TileMode.MIRROR);
+                pp.setShader(sh); pp.setAlpha(28); cv.drawRect(0, 0, w, h, pp); pp.setShader(null); pp.setAlpha(255);
+                ph.recycle();
+            }
+            cv.restore();
+            Paint gl = new Paint(Paint.ANTI_ALIAS_FLAG);
+            gl.setStyle(Paint.Style.STROKE); gl.setStrokeWidth(1.6f * u); gl.setColor(Color.parseColor("#C9A24A"));
+            cv.drawPath(outer, gl);
+            return out;
+        }
         if ("g-pattern".equals(style)) {
             cv.drawColor(Color.parseColor("#0B4A2C"));
             BitmapShader sh = new BitmapShader(ph, Shader.TileMode.MIRROR, Shader.TileMode.MIRROR);

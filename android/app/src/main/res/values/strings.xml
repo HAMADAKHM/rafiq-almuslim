@@ -29,4 +29,17 @@
     <string name="ramadan_description">رفيق بلس: رمضان — العدّ التنازلي للسحور والإفطار</string>
     <string name="widget_card_description">بطاقة الصلاة القادمة: الوقت والعدّ التنازلي والمواقيت الخمس</string>
     <string name="widget_left">باقي على الأذان</string>
+    <string name="adhkar_description">الأذكار: الذكر مباشرة مع عدّاد التكرار (صباح، مساء، نوم)</string>
+    <string name="dua_description">دعاء اليوم بمصدره، مع النسخ والمشاركة</string>
+    <string name="all_description">الكل في واحد: الصلاة القادمة والمواقيت وآية اليوم وذكر اليوم والاختصارات</string>
+    <string name="extra_empty">افتح رفيق المسلم مرة لتظهر الأذكار</string>
+    <string name="adhkar_switch">تبديل</string>
+    <string name="adhkar_next">التالي</string>
+    <string name="adhkar_inc">+١</string>
+    <string name="dua_title">دعاء اليوم</string>
+    <string name="dua_copy">نسخ</string>
+    <string name="dua_share">مشاركة</string>
+    <string name="dua_next">دعاء آخر</string>
+    <string name="ayah_next">آية أخرى</string>
+    <string name="ayah_resume">تابع القراءة</string>
 </resources>

@@ -112,6 +112,28 @@ public class WidgetBridgePlugin extends Plugin {
         call.resolve();
     }
 
+    /** بيانات ودجتات الأذكار والدعاء و«الكل في واحد» (نصوص موثقة من التطبيق) */
+    @PluginMethod
+    public void updateExtra(PluginCall call) {
+        String data = call.getString("data");
+        if (data == null) { call.reject("missing data"); return; }
+        getContext().getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE).edit().putString(WidgetKit.KEY_EXTRA, data).apply();
+        AdhkarWidgetProvider.refreshAll(getContext());
+        DuaWidgetProvider.refreshAll(getContext());
+        AllInOneWidgetProvider.refreshAll(getContext());
+        call.resolve();
+    }
+
+    /** إعدادات «استوديو الودجت»: العناصر الظاهرة وحجم الخط ونوع الأذكار والاهتزاز وذكر المسبحة */
+    @PluginMethod
+    public void setPrefs(PluginCall call) {
+        String data = call.getString("data");
+        if (data == null) { call.reject("missing data"); return; }
+        getContext().getSharedPreferences(WidgetStyle.PREFS, Context.MODE_PRIVATE).edit().putString(WidgetKit.KEY_PREFS, data).apply();
+        WidgetStyle.refreshEverything(getContext());
+        call.resolve();
+    }
+
     /** شفافية خلفية كل الودجتات (رفيق بلس) */
     @PluginMethod
     public void setAlpha(PluginCall call) {

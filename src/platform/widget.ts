@@ -1,16 +1,16 @@
 // جسر ودجت Android: يرسل بيانات المواقيت إلى الإضافة الأصلية PrayerWidget (android/app/.../WidgetBridgePlugin.java).
 import { registerPlugin } from '@capacitor/core'
 import { platformName } from './index'
-import { buildDailyWidgetData, buildWidgetData } from '../services/widget'
+import { buildDailyWidgetData, buildExtraWidgetData, buildWidgetData } from '../services/widget'
 import { loadQuran } from '../services/quran'
 import { activePlan, dailyTarget, loadKhatmas, progress } from '../services/khatma'
 import { dayKey } from '../lib/dates'
 import { toArabicDigits } from '../lib/arabic'
-import type { Settings } from '../state/settings'
+import type { Settings, WidgetPrefs } from '../state/settings'
 
 const PrayerWidget = registerPlugin<{
   update(o: { data: string }): Promise<void>; updateDaily(o: { data: string }): Promise<void>; updatePlus(o: { data: string }): Promise<void>
-  updateResume(o: { data: string }): Promise<void>; consumeRoute(): Promise<{ route?: string | null }>
+  updateResume(o: { data: string }): Promise<void>; updateExtra(o: { data: string }): Promise<void>; setPrefs(o: { data: string }): Promise<void>; consumeRoute(): Promise<{ route?: string | null }>
   setStyle(o: { style: string }): Promise<void>; getStyle(): Promise<{ style: string; shape?: string; alpha?: number; lock?: boolean }>; setShape(o: { shape: string }): Promise<void>; setAlpha(o: { alpha: number }): Promise<void>; setLockScreen(o: { on: boolean }): Promise<void>; setPlus(o: { on: boolean }): Promise<void>
 }>('PrayerWidget')
 
@@ -88,6 +88,19 @@ export async function updateDailyWidget(settings: Settings): Promise<void> {
   const t = plan ? dailyTarget(plan, dayKey(new Date(), tz)) : null
   const wird = plan && t ? { from: t.from, to: t.to, doneToday: t.doneToday >= t.pages, percent: progress(plan) * 100 } : null
   await PrayerWidget.updateDaily({ data: JSON.stringify(buildDailyWidgetData(quran, wird, tz)) })
+}
+
+/** ودجتات الأذكار والدعاء و«الكل في واحد»: نصوص موثقة من بيانات التطبيق نفسها، تعمل دون فتحه */
+export async function updateExtraWidgets(settings: Settings): Promise<void> {
+  if (platformName() !== 'android') return
+  const quran = await loadQuran().catch(() => null)
+  try { await PrayerWidget.updateExtra({ data: JSON.stringify(buildExtraWidgetData(quran, settings.location?.tz)) }) } catch { /* نسخة أقدم */ }
+}
+
+/** إعدادات «استوديو الودجت»: العناصر الظاهرة وحجم الخط ونوع الأذكار والاهتزاز */
+export async function setWidgetPrefs(p: WidgetPrefs): Promise<boolean> {
+  if (platformName() !== 'android') return false
+  try { await PrayerWidget.setPrefs({ data: JSON.stringify(p) }); return true } catch { return false }
 }
 
 /** ودجتات رفيق بلس: الطقس والصلاة القادمة، والتقدّم (الأيام المتتالية والورد والأذكار). دون اشتراك تعرض «من مزايا رفيق بلس» */

@@ -629,3 +629,5 @@ ul.plain { list-style: none; padding: 0; margin: 0; }
 .tv-pad-btn.ok { background: var(--primary); color: var(--on-primary); border-color: var(--primary); font-size: 0.9rem; }
 .tv-pad-btn:active:not(:disabled) { transform: scale(0.94); }
 .tv-pad-btn:disabled { opacity: 0.45; cursor: default; }
+/* استوديو الودجت: منصة المعاينة بخلفية تشبه شاشة الجوال */
+.wd-stage { margin: 0.8rem 0; padding: 1.2rem 0.8rem; border-radius: 18px; display: flex; justify-content: center; background: linear-gradient(135deg, #6b8fa8, #a7b9a0 45%, #d9c49a); }

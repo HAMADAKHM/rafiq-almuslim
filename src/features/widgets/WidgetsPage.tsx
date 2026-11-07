@@ -9,9 +9,15 @@ import { toast } from '../../hooks'
 import { platformName } from '../../platform'
 import { DEFAULT_WIDGET_STYLE, freeWidgetStyle, getWidgetExtras, getWidgetShape, getWidgetStyle, setLockScreenTimes, setWidgetAlpha, setWidgetShape, setWidgetStyle } from '../../platform/widget'
 import { goldenPhoto } from '../../themes/golden'
+import { useSettings } from '../../state/SettingsContext'
+import { DEFAULT_WIDGET_PREFS, type WidgetPrefs } from '../../state/settings'
+import { cityLabel } from '../../services/cities'
+import { useNow } from '../../hooks'
+import { WIDGET_KINDS, WidgetPreview, type WidgetKind } from './WidgetPreview'
 
 export const WIDGET_STYLES: { id: string; name: string; bg: [string, string]; stroke: string; photo?: string }[] = [
   { id: 'g-app', name: 'تصميم التطبيق (الأصلي)', bg: ['#0c1d1c', '#1e3431'], stroke: 'rgba(227,201,143,0.6)', photo: 'bg-home' },
+  { id: 'g-light', name: 'الفاتح العاجي', bg: ['#FBF5E6', '#F1E4C4'], stroke: '#C9A24A' },
   { id: 'g-night', name: 'ليلة الهلال', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-home' },
   { id: 'g-mosque', name: 'المسجد عند الغروب', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-mosque' },
   { id: 'g-quran', name: 'المصحف الشريف', bg: ['#04201A', '#0F4A37'], stroke: '#E7C46E', photo: 'bg-quran' },
@@ -35,6 +41,9 @@ const WIDGETS: { name: string; desc: string; plus: boolean; body: (accent: strin
   { name: 'مواقيت الصلاة', desc: 'الصلاة القادمة والعدّ التنازلي ومواقيت اليوم.', plus: false, body: (a) => <><small>الصلاة القادمة</small><b style={{ color: a }}>العصر 2:28</b><span className="wd-row">{['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'].map((x) => <i key={x}>{x}</i>)}</span></> },
   { name: 'بطاقة الصلاة القادمة', desc: 'كقسم الصلاة في الرئيسية: الوقت والعدّ التنازلي ولوحة المسجد والصلوات الخمس بأيقوناتها.', plus: false, body: () => <><small>الصلاة القادمة</small><b>الفجر <span style={{ color: '#F6C35A' }}>4:31 ص</span></b><small style={{ color: '#F6C35A' }}>05:54:05</small><span className="wd-row">{['الفجر', 'الظهر', 'العصر', 'المغرب', 'العشاء'].map((x, i) => <i key={x} style={i === 0 ? { background: '#F6C35A', color: '#1B1640', borderRadius: 8, padding: '0 4px' } : undefined}>{x}</i>)}</span></> },
   { name: 'آية اليوم والورد', desc: 'آية تتجدد كل يوم، وورد الختمة.', plus: false, body: (a) => <><small>آية اليوم</small><b className="wd-q">﴿أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ﴾</b><small style={{ color: a }}>ورد اليوم: صفحتان</small></> },
+  { name: 'الأذكار', desc: 'الذكر مباشرة مع عدّاد التكرار، وزرّا «+١» و«التالي»؛ أذكار الصباح والمساء والنوم.', plus: false, body: (a) => <><small>أذكار الصباح ١/٢٠</small><b className="wd-q">أصبحنا وأصبح الملك لله…</b><small style={{ color: a }}>٠ / ١ • +١ • التالي</small></> },
+  { name: 'دعاء اليوم', desc: 'دعاء من القرآن والسنة بمصدره، بخلفية تتبدل كل يوم، مع النسخ والمشاركة و«دعاء آخر».', plus: false, body: (a) => <><small>دعاء اليوم</small><b className="wd-q">﴿رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً﴾</b><small style={{ color: a }}>نسخ • مشاركة</small></> },
+  { name: 'الكل في واحد', desc: 'الصلاة القادمة وعدّها، ومواقيت اليوم، وآية اليوم، وذكر اليوم، واختصارات الأقسام — ويتكيف مع الحجم.', plus: false, body: (a) => <><small>الصلاة القادمة</small><b style={{ color: a }}>العصر 2:23</b><span className="wd-row">{['القرآن', 'الأذكار', 'القبلة', 'المسبحة'].map((x) => <i key={x}>{x}</i>)}</span></> },
   { name: 'أكمل من حيث وصلت', desc: 'آخر موضع قراءة فعلية، يفتح المصحف عنده.', plus: true, body: (a) => <><small>أكمل قراءتك</small><b>سورة الكهف</b><small style={{ color: a }}>صفحة 293 • الختمة 46٪</small></> },
   { name: 'الطقس والصلاة القادمة', desc: 'طقس مدينتك مع موعد الصلاة القادمة.', plus: true, body: (a) => <><small>نابلس</small><b>☀️ 24°</b><small style={{ color: a }}>المغرب بعد 1:12</small></> },
   { name: 'تقدّمي', desc: 'الأيام المتتالية وورد اليوم وأذكار الصباح والمساء.', plus: true, body: (a) => <><small>أيام متتالية</small><b style={{ color: a }}>12 🔥</b><span className="wd-row"><i>الصباح ✓</i><i>المساء</i></span></> },
@@ -49,12 +58,20 @@ const SHAPES: { id: string; name: string; clip: string }[] = [
 ]
 const swatchBg = (s: (typeof WIDGET_STYLES)[number]) => s.id === 'g-app'
   ? `linear-gradient(135deg, rgba(30,52,49,0.8), rgba(12,29,28,0.9)), url("${goldenPhoto('bg-home')}") center / cover`
+  : s.id === 'g-light'
+  ? 'linear-gradient(180deg, #FBF5E6, #F1E4C4)'
   : s.photo
   ? `linear-gradient(rgba(4,32,22,0.45), rgba(4,32,22,0.7)), url("${goldenPhoto(s.photo)}") center / cover`
   : `linear-gradient(135deg, ${s.bg[0]}, ${s.bg[1]})`
 
 export function WidgetsPage() {
   const plus = usePlus()
+  const { settings, update } = useSettings()
+  const wp: WidgetPrefs = { ...DEFAULT_WIDGET_PREFS, ...settings.widgetPrefs }
+  const setWp = (patch: Partial<WidgetPrefs>) => update({ widgetPrefs: { ...wp, ...patch } })
+  const [kind, setKind] = useState<WidgetKind>('prayer')
+  const [size, setSize] = useState<'S' | 'M' | 'L'>('M')
+  const now = useNow(1000)
   const [style, setStyle] = useState(DEFAULT_WIDGET_STYLE)
   const [shape, setShape] = useState('round')
   const android = platformName() === 'android'
@@ -87,8 +104,41 @@ export function WidgetsPage() {
   }
   return (
     <>
-      <PageHead title="الودجتات" subtitle="أدوات الشاشة الرئيسية — واختر تصميمها بألوان ثيمك" />
+      <PageHead title="استوديو الودجت" subtitle="صمّم ودجتات رفيق المسلم وعاينها قبل إضافتها للشاشة الرئيسية" />
       <div className="stack">
+        <section className="card wd-studio" aria-labelledby="wd-studio">
+          <h2 id="wd-studio">المعاينة</h2>
+          <div className="chips" role="tablist" aria-label="نوع الودجت">
+            {WIDGET_KINDS.map((k) => <button key={k.id} type="button" role="tab" aria-selected={kind === k.id} className={'chip' + (kind === k.id ? ' active' : '')} onClick={() => setKind(k.id)}>{k.name}</button>)}
+          </div>
+          <div className="chips" role="radiogroup" aria-label="حجم المعاينة" style={{ marginTop: 6 }}>
+            {([['S', 'صغير'], ['M', 'متوسط'], ['L', 'كبير']] as const).map(([id, n]) => <button key={id} type="button" role="radio" aria-checked={size === id} className={'chip' + (size === id ? ' active' : '')} onClick={() => setSize(id)}>{n}</button>)}
+          </div>
+          <div className="wd-stage">
+            <WidgetPreview kind={kind} size={size} now={now} alpha={plus.entitled ? alpha : 100} light={style === 'g-light'} bg={swatchBg(cur)} clip={cur.photo || cur.id === 'g-pattern' ? SHAPES.find((x) => x.id === shape)?.clip : undefined} />
+          </div>
+          <p className="small muted" style={{ margin: 0 }}>المعاينة بالبيانات الحقيقية: مواقيت مدينتك وآية اليوم وأذكار التطبيق. التصميم والشكل والشفافية من الأقسام التالية، وتنطبق على كل الودجتات.</p>
+        </section>
+        <section className="card" aria-labelledby="wd-els">
+          <h2 id="wd-els">العناصر والخط</h2>
+          <div className="stack" style={{ gap: 8 }}>
+            {([['city', 'اسم المدينة'], ['hijri', 'التاريخ الهجري'], ['greg', 'التاريخ الميلادي'], ['countdown', 'العدّ التنازلي']] as const).map(([k, n]) => (
+              <label key={k} className="check switch"><input type="checkbox" className="switch-input" checked={wp[k]} onChange={(e) => setWp({ [k]: e.target.checked })} /> {n}</label>
+            ))}
+            <label className="field"><span>حجم الخط في الودجت: {wp.font}٪</span>
+              <input type="range" min={85} max={130} step={5} value={wp.font} onChange={(e) => setWp({ font: Number(e.target.value) })} aria-label="حجم الخط في الودجت" /></label>
+            <label className="field"><span>أذكار ودجت الأذكار</span>
+              <select className="select" value={wp.adhkar} onChange={(e) => setWp({ adhkar: e.target.value as WidgetPrefs['adhkar'] })}>
+                <option value="auto">تلقائي بحسب الوقت</option><option value="morning">أذكار الصباح</option><option value="evening">أذكار المساء</option><option value="sleep">أذكار النوم</option>
+              </select></label>
+            <label className="field"><span>ذكر ودجت المسبحة</span>
+              <select className="select" value={wp.tasbih} onChange={(e) => setWp({ tasbih: e.target.value })}>
+                <option value="seq">التسبيح بعد الصلاة (٣٣ × ٣)</option><option value="subhan">سبحان الله</option><option value="hamd">الحمد لله</option><option value="akbar">الله أكبر</option><option value="tahlil">لا إله إلا الله</option><option value="istighfar">أستغفر الله</option><option value="salawat">الصلاة على النبي ﷺ</option><option value="hawqala">لا حول ولا قوة إلا بالله</option>
+              </select></label>
+            <label className="check switch"><input type="checkbox" className="switch-input" checked={wp.vibrate} onChange={(e) => setWp({ vibrate: e.target.checked })} /> اهتزاز خفيف عند الضغط (المسبحة والأذكار)</label>
+            <div className="spread"><span className="small">المدينة: <strong>{settings.location ? cityLabel(settings.location) : 'لم تُختر'}</strong></span><Link className="btn btn-sm" to="/prayer">تغيير المدينة</Link></div>
+          </div>
+        </section>
         <section className="card" aria-labelledby="wd-design">
           <h2 id="wd-design">{plus.entitled ? <Crown size={18} /> : <Lock size={18} />} تصميم الودجت</h2>
           <p className="small muted">خلفية واحدة لكل ودجتات رفيق المسلم، تتغير فورًا على الشاشة الرئيسية.{!plus.entitled && ' التصميمات الإضافية لمشتركي بلس.'}</p>

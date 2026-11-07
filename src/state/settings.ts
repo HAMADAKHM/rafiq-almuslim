@@ -83,6 +83,9 @@ export const QURAN_FONTS: { id: QuranFont; label: string; family: string; note: 
 ]
 export type HomeCardId = 'sections' | 'companion' | 'continue' | 'suggest' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
 
+export interface WidgetPrefs { hijri: boolean; greg: boolean; city: boolean; countdown: boolean; font: number; adhkar: 'morning' | 'evening' | 'sleep' | 'auto'; vibrate: boolean; tasbih: string }
+export const DEFAULT_WIDGET_PREFS: WidgetPrefs = { hijri: true, greg: true, city: true, countdown: true, font: 100, adhkar: 'auto', vibrate: true, tasbih: 'seq' }
+
 export interface Settings {
   /** gold: أسود وذهبي (مبني على الوضع الداكن مع لون ذهبي بدل الأخضر) */
   theme: 'system' | 'light' | 'dark' | 'gold'
@@ -136,6 +139,8 @@ export interface Settings {
   customReminders: CustomReminder[]
   /** الأقسام الثلاثة في وسط الشريط السفلي */
   tabs?: string[]
+  /** «استوديو الودجت»: العناصر الظاهرة وحجم الخط ونوع الأذكار والاهتزاز وذكر المسبحة */
+  widgetPrefs?: WidgetPrefs
   /** رفيق بلس — وضع رمضان: تذكير السحور قبل الفجر بدقائق، والإفطار قبل المغرب بدقائق (0 = بلا تذكير)، والإمساك الاحتياطي */
   /** theme: وضع رمضان يغيّر ثيم التطبيق كله — 'auto' في شهر رمضان فقط، 'on' دائمًا، 'off' لا */
   ramadan: { suhoorMinutes: number; iftarMinutes: number; imsakMinutes: number; theme?: 'auto' | 'on' | 'off' }

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSettings } from '../state/SettingsContext'
+import { DEFAULT_WIDGET_PREFS } from '../state/settings'
 import { onChange } from '../db/events'
 import { isNative, onAppResume, onNotificationTap, scheduleSnooze } from '../platform'
 import { markDhikrDone } from '../services/companionStore'
@@ -8,7 +9,7 @@ import { snoozeId } from '../services/companion'
 import { toast } from '../hooks'
 import { rescheduleNative } from '../services/notifications'
 import { usePlus } from '../billing/PlusContext'
-import { consumeWidgetRoute, updateDailyWidget, updatePlusWidgets, updatePrayerWidget, updateResumeWidget } from '../platform/widget'
+import { consumeWidgetRoute, setWidgetPrefs, updateDailyWidget, updateExtraWidgets, updatePlusWidgets, updatePrayerWidget, updateResumeWidget } from '../platform/widget'
 
 /**
  * جسر المنصة الأصلية (Android/iOS) — لا يفعل شيئًا في المتصفح:
@@ -26,9 +27,15 @@ export function NativeBridge() {
 
   useEffect(() => {
     if (!ready || !isNative()) return
-    const t = setTimeout(() => { rescheduleNative(settings).catch(() => {}); updatePrayerWidget(settings).catch(() => {}); updateDailyWidget(settings).catch(() => {}) }, 800)
+    const t = setTimeout(() => { rescheduleNative(settings).catch(() => {}); updatePrayerWidget(settings).catch(() => {}); updateDailyWidget(settings).catch(() => {}); updateExtraWidgets(settings).catch(() => {}) }, 800)
     return () => clearTimeout(t)
   }, [ready, settings.notifications, settings.location, settings.prayer, settings.hijriOffset, settings.customReminders, settings.companion, entitled]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // «استوديو الودجت»: تُرسل الإعدادات للودجتات عند تغيّرها
+  useEffect(() => {
+    if (!ready || !isNative()) return
+    setWidgetPrefs({ ...DEFAULT_WIDGET_PREFS, ...settings.widgetPrefs }).catch(() => {})
+  }, [ready, settings.widgetPrefs])
 
   // ودجتات رفيق بلس: عند تغيّر الاشتراك أو المدينة
   const plusRef = useRef(entitled)

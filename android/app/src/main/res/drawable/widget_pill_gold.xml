@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- الزر الرئيسي في الودجت: ذهبي كالتطبيق -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient android:angle="270" android:startColor="#F4E3B8" android:endColor="#D5B36F" />
+    <corners android:radius="18dp" />
+</shape>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ودجت الأذكار: الذكر مباشرة مع عدّاد التكرار وزرّي الزيادة والتالي (صباح/مساء/نوم) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/a_root" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="@drawable/widget_bg" android:layoutDirection="rtl" android:padding="12dp">
+    <ImageView android:id="@+id/wbg" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:importantForAccessibility="no" android:visibility="gone" />
+    <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/a_empty" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="@string/extra_empty" android:textColor="#FFFFFF" android:textSize="14sp" android:visibility="gone" />
+    <LinearLayout android:id="@+id/a_content" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+        <LinearLayout android:id="@+id/a_head" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/a_cat" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#E3C98F" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" />
+            <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/a_switch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/widget_pill" android:paddingStart="10dp" android:paddingEnd="10dp" android:paddingTop="3dp" android:paddingBottom="3dp" android:text="@string/adhkar_switch" android:textColor="#EFE4CC" android:textSize="11sp" />
+        </LinearLayout>
+        <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/a_text" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="4dp" android:gravity="center" android:textColor="#FFFFFF" android:textSize="16sp" android:lineSpacingMultiplier="1.3" android:ellipsize="end" android:maxLines="4" />
+        <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/a_src" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:textColor="#CFC6AE" android:textSize="10sp" android:maxLines="1" android:ellipsize="end" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/a_next" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/widget_pill" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="5dp" android:paddingBottom="5dp" android:text="@string/adhkar_next" android:textColor="#EFE4CC" android:textSize="12sp" />
+            <TextView android:shadowColor="#99000000" android:shadowRadius="3" android:shadowDy="1" android:id="@+id/a_count" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:textColor="#E3C98F" android:textSize="18sp" android:textStyle="bold" />
+            <TextView android:id="@+id/a_inc" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/widget_pill_gold" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingTop="5dp" android:paddingBottom="5dp" android:text="@string/adhkar_inc" android:textColor="#10221F" android:textSize="14sp" android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

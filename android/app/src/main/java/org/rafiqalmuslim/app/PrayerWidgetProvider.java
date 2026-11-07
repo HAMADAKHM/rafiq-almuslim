@@ -56,6 +56,7 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
         if (ids.length > 0 || cards.length > 0) scheduleNext(context);
         PlusWidgets.refreshAll(context);
         LockNotif.update(context);
+        AllInOneWidgetProvider.refreshAll(context);
     }
 
     static JSONObject load(Context context) {
@@ -108,6 +109,16 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
             long left = np.getLong("at") - now;
             v.setChronometer(R.id.countdown, SystemClock.elapsedRealtime() + left, null, true);
             v.setChronometerCountDown(R.id.countdown, true);
+            // إعدادات «استوديو الودجت»: العناصر الظاهرة وحجم الخط، والتكيف مع المقاس
+            v.setViewVisibility(R.id.city, WidgetKit.show(context, "city") ? View.VISIBLE : View.GONE);
+            v.setViewVisibility(R.id.hijri, WidgetKit.show(context, "hijri") ? View.VISIBLE : View.GONE);
+            v.setViewVisibility(R.id.countdown, WidgetKit.show(context, "countdown") ? View.VISIBLE : View.GONE);
+            int size = WidgetKit.size(context, widgetId);
+            v.setViewVisibility(R.id.cells_row, size == 0 ? View.GONE : View.VISIBLE);
+            WidgetKit.text(context, v, R.id.next_name, 22);
+            WidgetKit.text(context, v, R.id.next_time, 20);
+            boolean lightBg = WidgetKit.light(context, widgetId);
+            WidgetKit.tint(v, lightBg, new int[] { R.id.next_name, R.id.next_time }, new int[] { R.id.countdown }, new int[] { R.id.city, R.id.hijri });
             for (int i = 0; i < CELLS.length && i < prayers.length(); i++) {
                 JSONObject p = prayers.getJSONObject(i);
                 v.setTextViewText(NAMES[i], p.getString("label"));
@@ -115,8 +126,8 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
                 boolean on = i == next[1];
                 v.setInt(CELLS[i], "setBackgroundResource", on ? R.drawable.widget_cell_active : R.drawable.widget_cell);
                 // كالتطبيق: الصلاة القادمة خانة ذهبية بنص داكن
-                v.setTextColor(NAMES[i], on ? 0xFF1B2F2A : 0xFFEFE4CC);
-                v.setTextColor(TIMES[i], on ? 0xFF10221F : 0xFFFFFFFF);
+                v.setTextColor(NAMES[i], on || lightBg ? 0xFF1B2F2A : 0xFFEFE4CC);
+                v.setTextColor(TIMES[i], on || lightBg ? 0xFF10221F : 0xFFFFFFFF);
             }
         } catch (Exception e) {
             v.setViewVisibility(R.id.widget_content, View.GONE);

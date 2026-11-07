@@ -227,6 +227,39 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/tasbih_widget_info" />
         </receiver>
         <receiver
+            android:name=".AdhkarWidgetProvider"
+            android:exported="false"
+            android:label="@string/adhkar_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/adhkar_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".DuaWidgetProvider"
+            android:exported="false"
+            android:label="@string/dua_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/dua_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".AllInOneWidgetProvider"
+            android:exported="false"
+            android:label="@string/all_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/all_widget_info" />
+        </receiver>
+        <!-- نسخ نص من الودجت إلى الحافظة -->
+        <activity android:name=".CopyActivity" android:exported="false" android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <receiver
             android:name=".RamadanWidgetProvider"
             android:exported="false"
             android:label="@string/ramadan_description">
@@ -269,6 +302,7 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!-- الموقع التقريبي يكفي لحساب المواقيت والقبلة؛ يُطلب فقط عند ضغط «استخدم موقعي الحالي» -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-feature android:name="android.hardware.location" android:required="false" />

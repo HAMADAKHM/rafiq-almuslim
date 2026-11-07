@@ -22,7 +22,7 @@ const isNativePlatform = () => Capacitor.isNativePlatform()
 
 /** فهرس الإعدادات بمجموعات: المظهر، الصلاة، القرآن، الأذكار، الخصوصية، عام */
 const SETTINGS_GROUPS: { title: string; rows: (readonly [string, string, typeof Bell, string])[] }[] = [
-  { title: 'المظهر', rows: [['#appearance', 'الوضع الفاتح والداكن وحجم الخط', Palette, '#6366f1'], ['/plus/themes', 'الثيمات والمظهر', Palette, '#8b5cf6'], ['/plus/themes#icon-h', 'أيقونة التطبيق', Smartphone, '#ec4899'], ['/widgets', 'الودجتات وتصميمها', LayoutDashboard, '#14a3b8'], ['#tabs', 'الشريط السفلي', LayoutDashboard, '#22a861']] },
+  { title: 'المظهر', rows: [['#appearance', 'الوضع الفاتح والداكن وحجم الخط', Palette, '#6366f1'], ['/plus/themes', 'الثيمات والمظهر', Palette, '#8b5cf6'], ['/plus/themes#icon-h', 'أيقونة التطبيق', Smartphone, '#ec4899'], ['/widgets', 'استوديو الودجت', LayoutDashboard, '#14a3b8'], ['#tabs', 'الشريط السفلي', LayoutDashboard, '#22a861']] },
   { title: 'الصلاة', rows: [['#location', 'المدينة أو الموقع', MapPin, '#ef5350'], ['#prayer', 'طريقة الحساب وتعديل التوقيت', Clock, '#3b82f6'], ['#notifications', 'تنبيهات الصلاة والأذان', Bell, '#f59e0b']] },
   { title: 'القرآن', rows: [['#appearance', 'القراءة والتلاوة والتفسير', BookOpen, '#22a861'], ['/plus/downloads', 'التنزيلات دون إنترنت', Download, '#0ea5a4'], ['/wird', 'خطة الختمة', BookOpen, '#f97316']] },
   { title: 'الأذكار', rows: [['/reminders', 'تذكيرات الأذكار والأصوات', Bell, '#f59e0b'], ['/adhkar', 'عرض الأذكار والاهتزاز (من شاشة الذكر)', BookOpen, '#8b5cf6']] },
