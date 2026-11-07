@@ -81,7 +81,7 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
 
     static void render(Context context, AppWidgetManager manager, int widgetId) {
         RemoteViews v = new RemoteViews(context.getPackageName(), R.layout.widget_prayer);
-        WidgetStyle.apply(context, v, R.id.widget_root, widgetId, 0);
+        WidgetDesign.apply(context, v, R.id.widget_root, widgetId, WidgetDesign.Kind.PRAYER_S);
         Intent open = new Intent(context, MainActivity.class);
         open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         v.setOnClickPendingIntent(R.id.widget_root, PendingIntent.getActivity(context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
@@ -104,7 +104,7 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
             JSONObject np = prayers.getJSONObject(next[1]);
             v.setTextViewText(R.id.city, data.getString("city"));
             v.setTextViewText(R.id.hijri, day.optString("hijri", ""));
-            v.setTextViewText(R.id.next_name, np.getString("label"));
+            v.setTextViewText(R.id.next_name, np.getString("label") + " القادم");
             v.setTextViewText(R.id.next_time, np.getString("time"));
             long left = np.getLong("at") - now;
             v.setChronometer(R.id.countdown, SystemClock.elapsedRealtime() + left, null, true);
@@ -115,10 +115,8 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
             v.setViewVisibility(R.id.countdown, WidgetKit.show(context, "countdown") ? View.VISIBLE : View.GONE);
             int size = WidgetKit.size(context, widgetId);
             v.setViewVisibility(R.id.cells_row, size == 0 ? View.GONE : View.VISIBLE);
-            WidgetKit.text(context, v, R.id.next_name, 22);
-            WidgetKit.text(context, v, R.id.next_time, 20);
-            boolean lightBg = WidgetKit.light(context, widgetId);
-            WidgetKit.tint(v, lightBg, new int[] { R.id.next_name, R.id.next_time }, new int[] { R.id.countdown }, new int[] { R.id.city, R.id.hijri });
+            WidgetKit.text(context, v, R.id.next_time, 34);
+            boolean lightBg = false;
             for (int i = 0; i < CELLS.length && i < prayers.length(); i++) {
                 JSONObject p = prayers.getJSONObject(i);
                 v.setTextViewText(NAMES[i], p.getString("label"));

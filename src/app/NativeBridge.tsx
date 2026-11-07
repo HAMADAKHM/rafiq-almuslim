@@ -52,6 +52,8 @@ export function NativeBridge() {
     let t: ReturnType<typeof setTimeout> | undefined
     let r: ReturnType<typeof setTimeout> | undefined
     const off = onChange((topic) => {
+      // إتمام أذكار الصباح أو المساء: يتحدث ودجت «الأذكار اليومية»
+      if (topic === 'adhkarLog') { updateExtraWidgets(latest.current).catch(() => {}); return }
       // موضع القراءة الفعلية والأذكار المكتملة يغيّران نص إشعارات «رفيقي يذكّرني»
       if (topic === 'kv:quran:actual' || topic === 'kv:companion:done') {
         clearTimeout(r)

@@ -48,8 +48,7 @@ public class DuaWidgetProvider extends AppWidgetProvider {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_dua);
         int day = dayIndex();
         // خلفية اليوم ما لم يُختر تصميم خاص لهذا الودجت
-        if (WidgetStyle.forWidget(c, id) == null) WidgetStyle.applyStyle(c, v, R.id.u_root, id, DAILY_BG[Math.floorMod(day, DAILY_BG.length)]);
-        else WidgetStyle.apply(c, v, R.id.u_root, id, 0);
+        WidgetDesign.apply(c, v, R.id.u_root, id, WidgetDesign.Kind.DUA);
         JSONObject x = WidgetKit.extra(c);
         JSONArray list = x == null ? null : x.optJSONArray("duas");
         if (list == null || list.length() == 0) {
@@ -67,10 +66,10 @@ public class DuaWidgetProvider extends AppWidgetProvider {
         int size = WidgetKit.size(c, id);
         v.setTextViewText(R.id.u_text, text);
         v.setTextViewText(R.id.u_src, src);
-        v.setInt(R.id.u_text, "setMaxLines", size == 0 ? 2 : size == 1 ? 5 : 10);
+        v.setInt(R.id.u_text, "setMaxLines", size == 0 ? 2 : size == 1 ? 3 : 8);
         v.setViewVisibility(R.id.u_actions, size == 0 ? View.GONE : View.VISIBLE);
-        WidgetKit.text(c, v, R.id.u_text, size == 2 ? 17 : 15);
-        WidgetKit.tint(v, WidgetKit.light(c, id), new int[] { R.id.u_text }, new int[] { R.id.u_title }, new int[] { R.id.u_src, R.id.u_copy, R.id.u_next });
+        WidgetKit.text(c, v, R.id.u_text, size == 2 ? 19 : 18);
+        v.setViewVisibility(R.id.u_src, size == 0 ? View.GONE : View.VISIBLE);
         String full = text + "\n— " + src + "\n\nمن تطبيق رفيق المسلم";
         Intent send = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, full);
         Intent chooser = Intent.createChooser(send, "مشاركة الدعاء").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

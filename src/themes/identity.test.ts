@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { activeSkin, SKINS } from './skins'
 import { APP_ICON_IDS, APP_ICONS, aliasOf } from './appIcons'
 import { IDENTITY_LOOK } from './IdentityScene'
-import { WIDGET_STYLES } from '../features/widgets/WidgetsPage'
+import { WIDGET_DESIGNS } from '../features/widgets/WidgetsPage'
 
 const ident = SKINS.filter((s) => s.identity)
 const designs = ident.filter((s) => s.id.startsWith('t-'))
@@ -67,19 +67,13 @@ describe('أيقونات التطبيق', () => {
 })
 
 describe('تصميم الودجت', () => {
-  it('كل تصميم له خلفية Android ومعالَج في WidgetStyle.java', () => {
-    const java = readFileSync('android/app/src/main/java/org/rafiqalmuslim/app/WidgetStyle.java', 'utf8')
-    for (const s of WIDGET_STYLES) {
-      if (s.id === 'emerald') continue
-      if (s.id.startsWith('g-')) {
-        // صور التصميم الذهبي: تُرسم بمقاس الودجت في WidgetArt.java
-        const art = readFileSync('android/app/src/main/java/org/rafiqalmuslim/app/WidgetArt.java', 'utf8')
-        if (s.id !== 'g-night') expect(art).toContain(`case "${s.id}": return R.drawable.widget_ph_`)
-        expect(java).toContain(`"${s.id}"`)
-        continue
-      }
-      expect(existsSync(`android/app/src/main/res/drawable/widget_bg_${s.id}.xml`), s.id).toBe(true)
-      expect(java).toContain(`case "${s.id}": return R.drawable.widget_bg_${s.id};`)
+  it('كل تصميم معتمد له صورته في الاستوديو، وخلفيته مرسومة في WidgetDesign.java', () => {
+    const java = readFileSync('android/app/src/main/java/org/rafiqalmuslim/app/WidgetDesign.java', 'utf8')
+    expect(WIDGET_DESIGNS).toHaveLength(9)
+    for (const d of WIDGET_DESIGNS) expect(existsSync(`public/widgets/w-${d.id}.jpg`), d.id).toBe(true)
+    for (const k of ['PRAYER_S', 'PRAYER_L', 'QURAN', 'ADHKAR', 'TASBIH', 'DUA', 'ALL', 'GREET', 'DAILY']) expect(java).toContain(`case ${k}:`)
+    for (const r of ['wd_night', 'wd_quran', 'wd_dua', 'wd_all', 'wd_greet_1', 'wd_morning', 'wd_evening', 'wd_beads']) {
+      expect(existsSync(`android/app/src/main/res/drawable-nodpi/${r}.${r === 'wd_beads' ? 'png' : 'jpg'}`), r).toBe(true)
     }
   })
 })

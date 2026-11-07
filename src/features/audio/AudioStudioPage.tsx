@@ -159,7 +159,7 @@ export function AudioStudioPage() {
           </div>
         </section>
 
-        <DownloadsSection />
+        <DownloadsSection auto={a.autoDownload !== false} setAuto={(on) => set({ autoDownload: on })} />
       </div>
       <MiniPlayer />
     </div>
@@ -285,7 +285,7 @@ function RecordingRow({ s, active }: { s: StudioSound; active: boolean }) {
   )
 }
 
-function DownloadsSection() {
+function DownloadsSection({ auto, setAuto }: { auto: boolean; setAuto: (on: boolean) => void }) {
   useDownloads()
   const urls = remoteUrls()
   const b = batchState()
@@ -310,7 +310,8 @@ function DownloadsSection() {
         <button type="button" className="btn btn-sm" onClick={() => void measure()} disabled={est === -1}>{est === -1 ? 'جارٍ الحساب…' : 'احسب حجم المكتبة'}</button>
         {done.length > 0 && <button type="button" className="btn btn-sm btn-ghost" onClick={() => void Promise.all(done.map(removeDownload)).then(() => toast('حُذفت التسجيلات المحفوظة'))}><Trash2 size={14} /> حذف المحفوظ</button>}
       </div>
-      <p className="small muted" style={{ margin: 0 }}>لا يُنزَّل شيء تلقائيًا دون طلبك. يُتحقق من كل ملف (رأس MP3 وحجمه) قبل حفظه. النغمات وأصوات السبحة والطبيعة مضمّنة في التطبيق وتعمل دون إنترنت.</p>
+      <label className="check switch"><input type="checkbox" className="switch-input" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> تنزيل تسجيلات الأذكار تلقائيًا للعمل دون إنترنت</label>
+      <p className="small muted" style={{ margin: 0 }}>{auto ? 'تُنزَّل تسجيلات الأذكار البشرية (حصن المسلم) وحدها في الخلفية عند الاتصال بالإنترنت، ويمكنك إيقاف ذلك من هنا.' : 'التنزيل التلقائي متوقف: لا يُنزَّل شيء إلا بطلبك.'} يُتحقق من كل ملف (رأس MP3 وحجمه) قبل حفظه. النغمات وأصوات السبحة والطبيعة مضمّنة في التطبيق وتعمل دون إنترنت.</p>
     </section>
   )
 }

@@ -223,3 +223,11 @@ export function ayahUrls(reciterId: string, ranges: { surah: number; from: numbe
 
 export const remoteUrls = () => ALL_STUDIO_SOUNDS.filter((s) => s.url).map((s) => s.url!)
 export const fmtBytes = (n?: number | null) => (n == null ? '—' : n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} ك.ب` : `${(n / 1024 / 1024).toFixed(1)} م.ب`)
+
+/** التنزيل التلقائي لتسجيلات الأذكار (مرة واحدة، ثم ما ينقص فقط)، في الخلفية دون إزعاج */
+export async function autoDownloadAdhkar() {
+  if (batch.running) return
+  await scanDownloads()
+  const missing = remoteUrls().filter((u) => dlState(u).status !== 'done')
+  if (missing.length) await downloadAll(missing)
+}

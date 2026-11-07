@@ -18,7 +18,7 @@ import org.json.JSONObject;
  * القسم تلقائي بحسب الوقت (أو كما يُختار في الاستوديو)، و«تبديل» ينقل بين الأقسام الثلاثة.
  */
 public class AdhkarWidgetProvider extends AppWidgetProvider {
-    static final String INC = "org.rafiqalmuslim.app.ADHKAR_INC", NEXT = "org.rafiqalmuslim.app.ADHKAR_NEXT", SWITCH = "org.rafiqalmuslim.app.ADHKAR_SWITCH";
+    static final String INC = "org.rafiqalmuslim.app.ADHKAR_INC", NEXT = "org.rafiqalmuslim.app.ADHKAR_NEXT", SWITCH = "org.rafiqalmuslim.app.ADHKAR_SWITCH", PREV = "org.rafiqalmuslim.app.ADHKAR_PREV";
     static final String[] CATS = { "morning", "evening", "sleep" };
     static final String[] TITLES = { "أذكار الصباح", "أذكار المساء", "أذكار النوم" };
 
@@ -46,6 +46,8 @@ public class AdhkarWidgetProvider extends AppWidgetProvider {
             p.edit().putInt("ad_i_" + id, i).putInt("ad_n_" + id, n).apply();
         } else if (NEXT.equals(a) && len > 0) {
             p.edit().putInt("ad_i_" + id, (i + 1) % len).putInt("ad_n_" + id, 0).apply();
+        } else if (PREV.equals(a) && len > 0) {
+            p.edit().putInt("ad_i_" + id, Math.floorMod(i - 1, len)).putInt("ad_n_" + id, 0).apply();
         } else if (SWITCH.equals(a)) {
             p.edit().putInt("ad_cat_" + id, (cat + 1) % 3).putInt("ad_i_" + id, 0).putInt("ad_n_" + id, 0).apply();
         } else return;
@@ -75,7 +77,7 @@ public class AdhkarWidgetProvider extends AppWidgetProvider {
 
     static void render(Context c, AppWidgetManager m, int id) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_adhkar);
-        WidgetStyle.apply(c, v, R.id.a_root, id, 0);
+        WidgetDesign.apply(c, v, R.id.a_root, id, WidgetDesign.Kind.ADHKAR);
         int cat = catOf(c, id);
         JSONArray list = items(c, cat);
         if (list == null || list.length() == 0) {
@@ -91,20 +93,21 @@ public class AdhkarWidgetProvider extends AppWidgetProvider {
         int i = Math.min(p.getInt("ad_i_" + id, 0), list.length() - 1), n = p.getInt("ad_n_" + id, 0);
         JSONObject d = list.optJSONObject(i);
         int need = d.optInt("c", 1), size = WidgetKit.size(c, id);
-        v.setTextViewText(R.id.a_cat, TITLES[cat] + "  " + WidgetKit.ar(i + 1) + "/" + WidgetKit.ar(list.length()));
+        v.setTextViewText(R.id.a_cat, (cat == 0 ? "☀  " : "☾  ") + TITLES[cat]);
         v.setTextViewText(R.id.a_text, d.optString("t"));
         v.setTextViewText(R.id.a_src, d.optString("s"));
-        v.setTextViewText(R.id.a_count, WidgetKit.ar(n) + " / " + WidgetKit.ar(need));
-        v.setInt(R.id.a_text, "setMaxLines", size == 0 ? 2 : size == 1 ? 4 : 9);
-        v.setViewVisibility(R.id.a_src, size == 0 ? View.GONE : View.VISIBLE);
+        v.setTextViewText(R.id.a_count, n + " / " + need);
+        v.setProgressBar(R.id.a_progress, Math.max(1, need), Math.min(n, need), false);
+        v.setInt(R.id.a_text, "setMaxLines", size == 0 ? 2 : size == 1 ? 3 : 8);
+        v.setViewVisibility(R.id.a_src, size == 2 ? View.VISIBLE : View.GONE);
         v.setViewVisibility(R.id.a_switch, size == 0 ? View.GONE : View.VISIBLE);
-        WidgetKit.text(c, v, R.id.a_text, size == 2 ? 17 : 15);
-        WidgetKit.tint(v, WidgetKit.light(c, id), new int[] { R.id.a_text }, new int[] { R.id.a_cat, R.id.a_count }, new int[] { R.id.a_src, R.id.a_next, R.id.a_switch });
+        WidgetKit.text(c, v, R.id.a_text, size == 2 ? 19 : 18);
         v.setOnClickPendingIntent(R.id.a_text, WidgetKit.route(c, "/adhkar/" + CATS[cat], 41));
         v.setOnClickPendingIntent(R.id.a_inc, WidgetKit.action(c, AdhkarWidgetProvider.class, INC, id, 1));
         v.setOnClickPendingIntent(R.id.a_count, WidgetKit.action(c, AdhkarWidgetProvider.class, INC, id, 1));
         v.setOnClickPendingIntent(R.id.a_next, WidgetKit.action(c, AdhkarWidgetProvider.class, NEXT, id, 2));
         v.setOnClickPendingIntent(R.id.a_switch, WidgetKit.action(c, AdhkarWidgetProvider.class, SWITCH, id, 3));
+        v.setOnClickPendingIntent(R.id.a_prev, WidgetKit.action(c, AdhkarWidgetProvider.class, PREV, id, 4));
         m.updateAppWidget(id, v);
     }
 }

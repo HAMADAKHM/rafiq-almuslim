@@ -82,7 +82,7 @@ public class TasbihWidgetProvider extends AppWidgetProvider {
 
     static void render(Context c, AppWidgetManager m, int id) {
         RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.widget_tasbih);
-        WidgetStyle.apply(c, v, R.id.t_root, id, 0);
+        WidgetDesign.apply(c, v, R.id.t_root, id, WidgetDesign.Kind.TASBIH);
         JSONObject data = PlusWidgets.load(c);
         if (PlusWidgets.showGate(c, v, data, R.id.t_content, R.id.t_empty)) {
             v.setOnClickPendingIntent(R.id.t_root, PlusWidgets.openApp(c, 5));
@@ -98,14 +98,15 @@ public class TasbihWidgetProvider extends AppWidgetProvider {
             int round = total % 99;
             int idx = Math.min(2, round / 33);
             v.setTextViewText(R.id.t_phrase, PHRASES[idx]);
-            v.setTextViewText(R.id.t_count, ar(round - idx * 33) + " / ٣٣");
+            v.setTextViewText(R.id.t_count, String.valueOf(round - idx * 33));
+            v.setTextViewText(R.id.t_target, "/ 33");
         } else {
             v.setTextViewText(R.id.t_phrase, MODE_TEXT[mode]);
-            v.setTextViewText(R.id.t_count, ar(total % 100) + " / ١٠٠");
+            v.setTextViewText(R.id.t_count, String.valueOf(total % 100));
+            v.setTextViewText(R.id.t_target, "/ 100");
         }
         v.setTextViewText(R.id.t_total, "المجموع " + ar(total));
-        WidgetKit.text(c, v, R.id.t_phrase, 16);
-        WidgetKit.tint(v, WidgetKit.light(c, id), new int[] { R.id.t_count }, new int[] { R.id.t_phrase }, new int[] { R.id.t_total });
+        WidgetKit.text(c, v, R.id.t_phrase, 22);
         v.setOnClickPendingIntent(R.id.t_root, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_INC, id, 6));
         v.setOnClickPendingIntent(R.id.t_reset, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_RESET, id, 7));
         v.setOnClickPendingIntent(R.id.t_phrase, WidgetKit.action(c, TasbihWidgetProvider.class, ACTION_MODE, id, 4));

@@ -116,7 +116,7 @@ export function BelovedPage() {
             <section className="card stack" style={{ gap: 8 }}>
               <h3 style={{ margin: 0 }}>أضف دعاءً</h3>
               <textarea className="input" rows={3} value={draft} maxLength={600} onChange={(e) => setDraft(e.target.value)} placeholder={`اللهم احفظ ${cur.name}…`} aria-label="دعاء جديد" />
-              <button className="btn btn-sm" style={{ alignSelf: 'start' }} disabled={!draft.trim()} onClick={async () => { await patch((p) => ({ ...p, custom: [...p.custom, draft.trim()] })); setDraft('') }}><Plus size={14} /> إضافة</button>
+              <button className="btn btn-sm" style={{ alignSelf: 'start' }} disabled={!draft.trim()} onClick={() => { const d = draft.trim(); setDraft(''); void patch((p) => ({ ...p, custom: [...p.custom, d] })) }}><Plus size={14} /> إضافة</button>
               <div className="small muted">أو من المكتبة الموثقة:</div>
               <div className="chips">
                 {RELATIONS.flatMap((r) => r.suggest).filter((id, i, a) => a.indexOf(id) === i && !cur.items.includes(id)).slice(0, 10).map((id) => {

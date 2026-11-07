@@ -631,3 +631,8 @@ ul.plain { list-style: none; padding: 0; margin: 0; }
 .tv-pad-btn:disabled { opacity: 0.45; cursor: default; }
 /* استوديو الودجت: منصة المعاينة بخلفية تشبه شاشة الجوال */
 .wd-stage { margin: 0.8rem 0; padding: 1.2rem 0.8rem; border-radius: 18px; display: flex; justify-content: center; background: linear-gradient(135deg, #6b8fa8, #a7b9a0 45%, #d9c49a); }
+.wd-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 0.9rem; }
+.wd-gallery .wd-item { margin: 0; display: flex; flex-direction: column; gap: 0.4rem; align-items: stretch; }
+.wd-gallery img { width: 100%; height: auto; border-radius: 18px; display: block; box-shadow: 0 6px 16px rgba(0,0,0,0.22); }
+.wd-gallery figcaption { display: flex; flex-direction: column; gap: 0.2rem; }
+.wd-extra p { margin: 0.2rem 0 0; }

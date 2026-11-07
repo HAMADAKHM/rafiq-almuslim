@@ -94,7 +94,10 @@ export async function updateDailyWidget(settings: Settings): Promise<void> {
 export async function updateExtraWidgets(settings: Settings): Promise<void> {
   if (platformName() !== 'android') return
   const quran = await loadQuran().catch(() => null)
-  try { await PrayerWidget.updateExtra({ data: JSON.stringify(buildExtraWidgetData(quran, settings.location?.tz)) }) } catch { /* نسخة أقدم */ }
+  const tz = settings.location?.tz
+  const { adhkarLog } = await import('../db/repos')
+  const doneCats = (await adhkarLog.forDay(dayKey(new Date(), tz)).catch(() => [])).map((x) => x.category)
+  try { await PrayerWidget.updateExtra({ data: JSON.stringify(buildExtraWidgetData(quran, tz, new Date(), doneCats)) }) } catch { /* نسخة أقدم */ }
 }
 
 /** إعدادات «استوديو الودجت»: العناصر الظاهرة وحجم الخط ونوع الأذكار والاهتزاز */

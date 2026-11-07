@@ -58,7 +58,7 @@ public class DailyWidgetProvider extends AppWidgetProvider {
 
     static void render(Context context, AppWidgetManager manager, int widgetId) {
         RemoteViews v = new RemoteViews(context.getPackageName(), R.layout.widget_daily);
-        WidgetStyle.apply(context, v, R.id.daily_root, widgetId, 0);
+        WidgetDesign.apply(context, v, R.id.daily_root, widgetId, WidgetDesign.Kind.QURAN);
         Intent open = new Intent(context, MainActivity.class);
         open.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         v.setOnClickPendingIntent(R.id.daily_root, PendingIntent.getActivity(context, 2, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
@@ -92,26 +92,28 @@ public class DailyWidgetProvider extends AppWidgetProvider {
             v.setTextViewText(R.id.daily_ayah, ayah != null ? "﴿" + ayah + "﴾" : context.getString(R.string.daily_long_ayah));
             v.setTextViewText(R.id.daily_ref, ref);
             int size = WidgetKit.size(context, widgetId);
-            v.setInt(R.id.daily_ayah, "setMaxLines", size == 0 ? 2 : size == 1 ? 4 : 8);
-            WidgetKit.text(context, v, R.id.daily_ayah, size == 2 ? 19 : 16);
-            v.setViewVisibility(R.id.daily_actions, size == 0 || pool == null ? View.GONE : View.VISIBLE);
+            v.setInt(R.id.daily_ayah, "setMaxLines", size == 0 ? 2 : size == 1 ? 3 : 7);
+            WidgetKit.text(context, v, R.id.daily_ayah, size == 2 ? 21 : 18);
+            v.setViewVisibility(R.id.daily_actions, size == 0 ? View.GONE : View.VISIBLE);
+            v.setViewVisibility(R.id.daily_next, pool == null ? View.GONE : View.VISIBLE);
             v.setOnClickPendingIntent(R.id.daily_next, WidgetKit.action(context, DailyWidgetProvider.class, NEXT, widgetId, 8));
             // «تابع القراءة»: آخر موضع قراءة فعلية (من بيانات ودجت المتابعة) أو المصحف
             JSONObject rs = ResumeWidgetProvider.load(context);
             String rr = rs == null ? null : rs.optString("route", null);
             v.setOnClickPendingIntent(R.id.daily_resume, WidgetKit.route(context, rr != null && rr.startsWith("/") ? rr : "/quran", 9));
             v.setOnClickPendingIntent(R.id.daily_ayah, WidgetKit.route(context, route, 10));
-            WidgetKit.tint(v, WidgetKit.light(context, widgetId), new int[] { R.id.daily_ayah }, new int[] { R.id.daily_ref }, new int[] { R.id.daily_wird, R.id.daily_next });
             JSONObject w = data.isNull("wird") ? null : data.getJSONObject("wird");
             if (w == null) {
                 v.setTextViewText(R.id.daily_wird, context.getString(R.string.daily_no_wird));
                 v.setViewVisibility(R.id.daily_progress, View.GONE);
+                v.setViewVisibility(R.id.daily_wird, View.GONE);
             } else {
                 boolean sameDay = today.equals(w.getString("date"));
                 // حالة الإتمام صحيحة ليوم آخر فتح فقط؛ في يوم جديد يُعرض ورد اليوم كأنه لم يُقرأ بعد حتى يُفتح التطبيق
                 String status = sameDay && w.getBoolean("done") ? context.getString(R.string.daily_wird_done) : context.getString(R.string.daily_wird_pending);
                 v.setTextViewText(R.id.daily_wird, context.getString(R.string.daily_wird) + " " + (sameDay ? w.getString("label") + " • " : "") + status);
-                v.setViewVisibility(R.id.daily_progress, View.VISIBLE);
+                v.setViewVisibility(R.id.daily_progress, WidgetKit.size(context, widgetId) == 2 ? View.VISIBLE : View.GONE);
+                v.setViewVisibility(R.id.daily_wird, WidgetKit.size(context, widgetId) == 2 ? View.VISIBLE : View.GONE);
                 v.setProgressBar(R.id.daily_progress, 100, w.getInt("percent"), false);
             }
         } catch (Exception e) {

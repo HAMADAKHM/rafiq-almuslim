@@ -122,6 +122,9 @@ final class WidgetStyle {
         AdhkarWidgetProvider.refreshAll(c);
         DuaWidgetProvider.refreshAll(c);
         AllInOneWidgetProvider.refreshAll(c);
+        GreetWidgetProvider.refreshAll(c);
+        DailyAdhkarWidgetProvider.refreshAll(c);
+        PrayerCardWidgetProvider.refreshAll(c);
     }
 
     static void set(Context c, String style) {

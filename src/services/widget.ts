@@ -6,6 +6,7 @@ import { ayahOfDay, dhikrOfDay } from './daily'
 import { ADHKAR } from '../content/adhkar'
 import { DUAS } from '../content/duas'
 import { AYAH_OF_DAY_REFS } from '../content/ayahOfDay'
+import { TV_PHRASES } from '../content/tvPhrases'
 import type { DhikrItem } from '../content/types'
 import { toArabicDigits } from '../lib/arabic'
 import type { QuranData } from './quran'
@@ -74,6 +75,10 @@ export interface ExtraWidgetData {
   ayat: { t: string; ref: string; s: number; a: number }[]
   /** ذكر اليوم لثلاثين يومًا (ودجت «الكل في واحد») */
   dhikrDays: { date: string; t: string; s: string }[]
+  /** عبارات قصيرة لودجت «البطاقات العصرية» (من عبارات التطبيق) */
+  phrases: string[]
+  /** حالة أذكار اليوم لودجت «الأذكار اليومية» */
+  done: { date: string; morning: boolean; evening: boolean }
 }
 
 /** نص الذكر: نصه، أو آياته من المصحف كما هي؛ وإلا null (لا نص من عندنا) */
@@ -83,7 +88,7 @@ export function dhikrText(item: DhikrItem, quran: Pick<QuranData, 'verses'> | nu
   return null
 }
 
-export function buildExtraWidgetData(quran: Pick<QuranData, 'verses' | 'meta'> | null, tz: string | undefined, now = new Date()): ExtraWidgetData {
+export function buildExtraWidgetData(quran: Pick<QuranData, 'verses' | 'meta'> | null, tz: string | undefined, now = new Date(), doneCats: string[] = []): ExtraWidgetData {
   const toW = (it: DhikrItem): WidgetDhikr | null => {
     const t = dhikrText(it, quran)
     return t ? { t, c: Math.max(1, it.count ?? 1), s: it.source } : null
@@ -99,5 +104,7 @@ export function buildExtraWidgetData(quran: Pick<QuranData, 'verses' | 'meta'> |
     const d = dhikrOfDay(date).item
     return { date, t: d.text ?? '', s: d.source }
   })
-  return { v: 1, adhkar: { morning: cat('morning'), evening: cat('evening'), sleep: cat('sleep') }, duas, ayat, dhikrDays }
+  const phrases = TV_PHRASES.filter((p) => p.length <= 40)
+  const done = { date: dayKey(now, tz), morning: doneCats.includes('morning'), evening: doneCats.includes('evening') }
+  return { v: 1, adhkar: { morning: cat('morning'), evening: cat('evening'), sleep: cat('sleep') }, duas, ayat, dhikrDays, phrases, done }
 }

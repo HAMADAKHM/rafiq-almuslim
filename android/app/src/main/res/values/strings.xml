@@ -42,4 +42,6 @@
     <string name="dua_next">دعاء آخر</string>
     <string name="ayah_next">آية أخرى</string>
     <string name="ayah_resume">تابع القراءة</string>
+    <string name="greet_description">بطاقات عصرية: صورة طبيعة وتحية الوقت وعبارة اليوم</string>
+    <string name="dadhkar_description">الأذكار اليومية: حالة أذكار الصباح والمساء اليوم</string>
 </resources>

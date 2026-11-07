@@ -260,6 +260,30 @@
         <!-- نسخ نص من الودجت إلى الحافظة -->
         <activity android:name=".CopyActivity" android:exported="false" android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <receiver
+            android:name=".GreetWidgetProvider"
+            android:exported="false"
+            android:label="@string/greet_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/greet_widget_info" />
+        </receiver>
+        <receiver
+            android:name=".DailyAdhkarWidgetProvider"
+            android:exported="false"
+            android:label="@string/dadhkar_description">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.DATE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/dadhkar_widget_info" />
+        </receiver>
+        <receiver
             android:name=".RamadanWidgetProvider"
             android:exported="false"
             android:label="@string/ramadan_description">

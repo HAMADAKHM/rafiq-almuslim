@@ -99,6 +99,8 @@ export interface AudioStudioSettings {
   tasbih: { clickOn: boolean; click: string; m33: string; m100: string; done: string }
   /** قارئ آيات كل مجموعة أذكار */
   reciters: Partial<Record<'morning' | 'evening' | 'sleep', string>>
+  /** تنزيل تسجيلات الأذكار تلقائيًا (لتعمل دون إنترنت) */
+  autoDownload?: boolean
 }
 export const DEFAULT_AUDIO_STUDIO: AudioStudioSettings = {
   volume: 80, muteAll: false, repeat: 'once', natureMode: 'off', nature: 'n_rain', defaultTone: 'chime',

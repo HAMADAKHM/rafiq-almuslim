@@ -121,6 +121,8 @@ public class WidgetBridgePlugin extends Plugin {
         AdhkarWidgetProvider.refreshAll(getContext());
         DuaWidgetProvider.refreshAll(getContext());
         AllInOneWidgetProvider.refreshAll(getContext());
+        GreetWidgetProvider.refreshAll(getContext());
+        DailyAdhkarWidgetProvider.refreshAll(getContext());
         call.resolve();
     }
 
