@@ -61,6 +61,8 @@ export const HISN_AUDIO: Record<string, number> = {
   'di-2': 96,
   'm-tahlil': 93,
   'm-fitra': 90,
+  'm-subhan': 91,
+  'e-subhan': 91,
   's-bismika': 102,
   's-tasbih': 106,
 }
