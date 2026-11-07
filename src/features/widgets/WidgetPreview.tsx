@@ -55,7 +55,7 @@ export function WidgetPreview({ kind, bg, clip, alpha, light, size, now }: {
   )
   const nextBlock = np && loc ? (
     <div style={{ ...z, display: 'flex', alignItems: 'center' }}>
-      <div style={{ flex: 1 }}><small style={{ color: gold, fontSize: 11 * f }}>الصلاة القادمة</small><div style={{ fontSize: 21 * f, fontWeight: 700 }}>{PRAYER_LABELS[np.name]} {formatTime(np.time, tz)}</div></div>
+      <div style={{ flex: 1 }}><small style={{ color: gold, fontSize: 11 * f }}>الصلاة القادمة</small><div style={{ fontSize: (size === 'S' ? 18 : 21) * f, fontWeight: 700, whiteSpace: 'nowrap' }}>{PRAYER_LABELS[np.name]} {formatTime(np.time, tz)}</div></div>
       {p.countdown && <b dir="ltr" style={{ color: gold, fontSize: 18 * f, fontVariantNumeric: 'tabular-nums' }}>{cd}</b>}
     </div>
   ) : <div style={z}>اختر مدينتك في التطبيق</div>
