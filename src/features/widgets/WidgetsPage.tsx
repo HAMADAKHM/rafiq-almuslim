@@ -13,22 +13,15 @@ import { cityLabel } from '../../services/cities'
 
 /** التصاميم المعتمدة (لوحة تصاميم صاحب التطبيق): صورة كل ودجت كما في اللوحة */
 export const WIDGET_DESIGNS: { id: string; name: string; size: string; desc: string }[] = [
-  { id: 'prayer', name: 'مواقيت الصلاة', size: 'صغير', desc: 'الصلاة القادمة بوقتها الكبير والعدّ التنازلي، وصف الصلوات الخمس، على صورة المسجد والهلال.' },
-  { id: 'quran', name: 'آية اليوم', size: 'متوسط', desc: 'ورق عاجي بإطار ذهبي مزخرف: «قال تعالى» والآية ومرجعها، و«متابعة القراءة».' },
-  { id: 'adhkar', name: 'الأذكار', size: 'متوسط', desc: 'الذكر مباشرة مع عدّاد التكرار وشريط التقدم الذهبي، وأزرار السابق والعدّ والتالي.' },
-  { id: 'tasbih', name: 'المسبحة', size: 'صغير', desc: 'حلقة المسبحة والعدد في وسطها، اضغط للتسبيح، وزر التصفير الذهبي.' },
-  { id: 'dua', name: 'دعاء اليوم', size: 'متوسط', desc: 'دعاء من القرآن والسنة بمصدره على صورة الغروب، مع المشاركة والنسخ و«دعاء آخر».' },
-  { id: 'all', name: 'الكل في واحد', size: 'كبير', desc: 'آية اليوم، والصلاة القادمة وعدّها، وذكر اليوم، واختصارات القرآن والأذكار والصلاة والقبلة.' },
-  { id: 'greet', name: 'البطاقات العصرية', size: 'متوسط', desc: 'تحية بحسب الوقت (صباح الخير / مساء الخير) وعبارة طيبة تتجدد كل يوم على صورة طبيعية.' },
-  { id: 'prayer-large', name: 'الصلاة القادمة', size: 'كبير', desc: 'وقت الصلاة القادمة بالذهبي واسمها والعدّ التنازلي، والتاريخان الميلادي والهجري.' },
-  { id: 'daily-adhkar', name: 'الأذكار اليومية', size: 'صغير', desc: 'أذكار الصباح والمساء: «تم» أو «لم تبدأ بعد» بحسب ما أتممته اليوم.' },
-]
-
-const EXTRA_WIDGETS: { name: string; desc: string }[] = [
-  { name: 'أكمل من حيث وصلت', desc: 'آخر موضع قراءة فعلية، يفتح المصحف عنده.' },
-  { name: 'الطقس والصلاة القادمة', desc: 'طقس مدينتك مع موعد الصلاة القادمة.' },
-  { name: 'تقدّمي', desc: 'الأيام المتتالية وورد اليوم وأذكار الصباح والمساء.' },
-  { name: 'عدّاد رمضان', desc: 'الأيام الباقية على رمضان، والسحور والإفطار فيه.' },
+  { id: 'prayer', name: 'مواقيت الصلاة', size: 'صغير 2×1', desc: 'الصلاة القادمة بوقتها الكبير والعدّ التنازلي، وصف الصلوات الخمس، على صورة المسجد والهلال.' },
+  { id: 'quran', name: 'آية اليوم', size: 'متوسط 4×2', desc: 'ورق عاجي بإطار ذهبي مزخرف: «قال تعالى» والآية ومرجعها، و«متابعة القراءة».' },
+  { id: 'adhkar', name: 'الأذكار', size: 'متوسط 4×2', desc: 'الذكر مباشرة مع عدّاد التكرار وشريط التقدم الذهبي، وأزرار السابق والعدّ والتالي.' },
+  { id: 'tasbih', name: 'المسبحة', size: 'صغير 2×1', desc: 'حلقة المسبحة والعدد في وسطها، اضغط للتسبيح، وزر التصفير الذهبي.' },
+  { id: 'dua', name: 'دعاء اليوم', size: 'متوسط 4×2', desc: 'دعاء من القرآن والسنة بمصدره على صورة الغروب، مع المشاركة والنسخ و«دعاء آخر».' },
+  { id: 'all', name: 'الكل في واحد', size: 'كبير 4×4', desc: 'آية اليوم، والصلاة القادمة وعدّها، وذكر اليوم، واختصارات القرآن والأذكار والصلاة والقبلة.' },
+  { id: 'greet', name: 'البطاقات العصرية', size: 'متوسط 4×2', desc: 'تحية بحسب الوقت (صباح الخير / مساء الخير) وعبارة طيبة تتجدد كل يوم على صورة طبيعية.' },
+  { id: 'prayer-large', name: 'الصلاة القادمة', size: 'كبير 4×4', desc: 'وقت الصلاة القادمة بالذهبي واسمها والعدّ التنازلي، والتاريخان الميلادي والهجري.' },
+  { id: 'daily-adhkar', name: 'الأذكار اليومية', size: 'صغير 2×1', desc: 'أذكار الصباح والمساء: «تم» أو «لم تبدأ بعد» بحسب ما أتممته اليوم.' },
 ]
 
 export function WidgetsPage() {
@@ -63,7 +56,7 @@ export function WidgetsPage() {
             {WIDGET_DESIGNS.map((d) => (
               <figure key={d.id} className="wd-item">
                 <img src={`/widgets/w-${d.id}.jpg`} alt={'ودجت ' + d.name} loading="lazy" />
-                <figcaption><strong>{d.name} <span className="fx-badge free">{d.size}</span></strong><span className="small muted">{d.desc}</span></figcaption>
+                <figcaption><strong>{d.name} <span className="fx-badge free">{d.size}</span>{d.id === 'tasbih' && <span className="fx-badge plus">بلس</span>}</strong><span className="small muted">{d.desc}</span></figcaption>
               </figure>
             ))}
           </div>
@@ -110,15 +103,6 @@ export function WidgetsPage() {
           </div>
           <p className="small muted" style={{ marginBottom: 0 }}>تظهر الصلاة القادمة ووقتها وعدّ تنازلي حي على شاشة القفل، وتحتها مواقيت اليوم، وتتحدث وحدها عند كل صلاة، بلا صوت ولا اهتزاز.{!plus.entitled && ' من مزايا بلس.'} نظام Android لا يسمح بوضع ودجتات التطبيقات على شاشة قفل الجوال، إلا في أجهزة قليلة تدعمها، وفيها تظهر ودجتات «مواقيت الصلاة» و«بطاقة الصلاة» و«آية اليوم» ضمن خيارات شاشة القفل.</p>
         </section>
-        <section className="card" aria-labelledby="wd-list">
-          <h2 id="wd-list">{plus.entitled ? <Crown size={18} /> : <Lock size={18} />} ودجتات بلس الإضافية</h2>
-          <div className="wd-list">
-            {EXTRA_WIDGETS.map((w) => (
-              <div key={w.name} className="wd-extra"><strong>{w.name} <span className="fx-badge plus">بلس</span></strong><p className="small muted">{w.desc}</p></div>
-            ))}
-          </div>
-          {!plus.entitled && <Link to="/plus" className="btn btn-sm btn-gold" style={{ marginTop: 8 }}>اشترك في بلس</Link>}
-        </section>
         <section className="card">
           <h2>طريقة الإضافة</h2>
           <ol className="small" style={{ paddingInlineStart: '1.2rem', lineHeight: 1.9 }}>
@@ -128,10 +112,9 @@ export function WidgetsPage() {
           </ol>
           <h2 style={{ marginTop: '1rem' }}>تعديل الودجت بعد وضعه</h2>
           <ol className="small" style={{ paddingInlineStart: '1.2rem', lineHeight: 1.9 }}>
-            <li><strong>الإعداد:</strong> اضغط على الودجت مطولًا ← «إعداد» (أو أيقونة القلم).</li>
             <li><strong>الحجم:</strong> اضغط عليه مطولًا ثم اسحب المقابض حول حدوده لتكبيره أو تصغيره.</li>
           </ol>
-          <p className="small muted" style={{ margin: 0 }}>الودجتات متاحة في Android. «إعداد» بعد الوضع في Android 12 فأحدث، وفي الأقدم تظهر شاشة التصميم عند إضافة الودجت. ودجتات iPhone تحتاج نسخة iOS (لم تُبنَ بعد).</p>
+          <p className="small muted" style={{ margin: 0 }}>الودجتات متاحة في Android. إن كان لديك ودجت قديم على الشاشة فاحذفه وأضفه من جديد ليظهر بالتصميم الجديد. ودجتات iPhone تحتاج نسخة iOS (لم تُبنَ بعد).</p>
         </section>
       </div>
     </>

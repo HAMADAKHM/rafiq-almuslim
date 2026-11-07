@@ -93,4 +93,13 @@ final class WidgetKit {
             else vib.vibrate(18);
         } catch (Exception ignored) {}
     }
+
+    /** آخر موضع قراءة فعلية (يحفظه التطبيق) — لزر «متابعة القراءة» في ودجت القرآن */
+    static final String RESUME = "resume";
+    static org.json.JSONObject resume(Context c) {
+        try {
+            String s = c.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE).getString(RESUME, null);
+            return s == null ? null : new org.json.JSONObject(s);
+        } catch (Exception e) { return null; }
+    }
 }

@@ -97,8 +97,8 @@ public class DailyWidgetProvider extends AppWidgetProvider {
             v.setViewVisibility(R.id.daily_actions, size == 0 ? View.GONE : View.VISIBLE);
             v.setViewVisibility(R.id.daily_next, pool == null ? View.GONE : View.VISIBLE);
             v.setOnClickPendingIntent(R.id.daily_next, WidgetKit.action(context, DailyWidgetProvider.class, NEXT, widgetId, 8));
-            // «تابع القراءة»: آخر موضع قراءة فعلية (من بيانات ودجت المتابعة) أو المصحف
-            JSONObject rs = ResumeWidgetProvider.load(context);
+            // «تابع القراءة»: آخر موضع قراءة فعلية (يحفظه التطبيق) أو المصحف
+            JSONObject rs = WidgetKit.resume(context);
             String rr = rs == null ? null : rs.optString("route", null);
             v.setOnClickPendingIntent(R.id.daily_resume, WidgetKit.route(context, rr != null && rr.startsWith("/") ? rr : "/quran", 9));
             v.setOnClickPendingIntent(R.id.daily_ayah, WidgetKit.route(context, route, 10));

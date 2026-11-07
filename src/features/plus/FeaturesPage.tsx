@@ -59,7 +59,7 @@ export const FEATURE_GROUPS: { title: string; items: Feature[] }[] = [
     { title: 'بطاقات الآيات والأذكار', text: 'صمّم بطاقة أو فيديو لآية أو ذكر وشاركه.', to: '/studio', icon: Image, tier: 'free', color: C.gold },
     { title: 'الثيمات والمظهر', text: 'تسعة ثيمات هوية للتطبيق كله (الكلاسيكي مجاني)، وستة عشر ثيمًا حيًا وفنيًا، مع المعاينة قبل التطبيق.', to: '/plus/themes', icon: Palette, tier: 'plus', color: C.violet },
     { title: 'تخصيص شريط التنقل', text: 'اختر الأقسام التي تظهر في الشريط السفلي.', to: '/settings#tabs', icon: LayoutGrid, tier: 'free', color: C.teal },
-    { title: 'ودجتات الشاشة الرئيسية وتصميمها', text: 'سبعة ودجتات (المواقيت وآية اليوم مجانًا)، واختر تصميمها بألوان ثيمك مع بلس.', to: '/widgets', icon: Sparkles, tier: 'plus', color: C.green },
+    { title: 'ودجتات الشاشة الرئيسية', text: 'تسعة ودجتات بالتصاميم الجديدة (المسبحة والشفافية مع بلس).', to: '/widgets', icon: Sparkles, tier: 'plus', color: C.green },
     { title: 'أيقونة التطبيق', text: 'ثماني أيقونات بديلة بألوان الثيمات تغيّر أيقونة التطبيق في الشاشة الرئيسية (Android).', to: '/plus/themes', icon: Crown, tier: 'plus', color: C.gold },
     { title: 'التحكم بشاشة التلفاز', text: 'غيّر مشاهد شاشة المواقيت على التلفاز من جوالك.', to: '/tv-remote', icon: MonitorSmartphone, tier: 'plus', color: C.blue },
     { title: 'خلفيات التلفاز من صورك', text: 'أرسل صورك من الجوال لتكون خلفية شاشة التلفاز.', to: '/tv-remote', icon: ImagePlus, tier: 'plus', color: C.rose },

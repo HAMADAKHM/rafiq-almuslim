@@ -64,8 +64,8 @@ public class WidgetBridgePlugin extends Plugin {
         }
         Context ctx = getContext();
         ctx.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE)
-            .edit().putString(ResumeWidgetProvider.KEY, data).apply();
-        ResumeWidgetProvider.refreshAll(ctx);
+            .edit().putString(WidgetKit.RESUME, data).apply();
+        DailyWidgetProvider.refreshAll(ctx);
         call.resolve();
     }
 

@@ -11,6 +11,4 @@
     android:targetCellHeight="2"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="3600000"
-    android:widgetCategory="home_screen|keyguard"
-    android:configure="org.rafiqalmuslim.app.WidgetConfigActivity"
-    android:widgetFeatures="reconfigurable|configuration_optional" />
+    android:widgetCategory="home_screen|keyguard" />

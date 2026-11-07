@@ -117,7 +117,6 @@ final class WidgetStyle {
     static void refreshEverything(Context c) {
         PrayerWidgetProvider.refreshAll(c);
         DailyWidgetProvider.refreshAll(c);
-        ResumeWidgetProvider.refreshAll(c);
         PlusWidgets.refreshAll(c);
         AdhkarWidgetProvider.refreshAll(c);
         DuaWidgetProvider.refreshAll(c);

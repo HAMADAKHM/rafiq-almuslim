@@ -89,8 +89,8 @@ export function PlusThemesPage() {
       </section>
       <section className="card">
         <h2>الودجتات</h2>
-        <p className="small muted">اختر تصميم ودجتات الشاشة الرئيسية بألوان ثيمك.</p>
-        <Link className="btn btn-sm" to="/widgets">الودجتات وتصميمها</Link>
+        <p className="small muted">تسعة ودجتات للشاشة الرئيسية بالتصاميم الجديدة، والشفافية مع بلس.</p>
+        <Link className="btn btn-sm" to="/widgets">الودجتات</Link>
       </section>
       <PlusGate feature="themes" title="لوحات ألوان إضافية">
         <section className="card">

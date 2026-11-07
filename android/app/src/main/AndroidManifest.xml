@@ -140,16 +140,6 @@
         </activity-alias>
 
         <!-- ودجت مواقيت الصلاة -->
-        <!-- «إعداد الودجت» بعد وضعه (ضغطة مطوّلة ← إعداد) -->
-        <activity
-            android:name=".WidgetConfigActivity"
-            android:exported="true"
-            android:label="إعداد الودجت"
-            android:theme="@android:style/Theme.Material.Light.NoActionBar">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
-            </intent-filter>
-        </activity>
         <receiver
             android:name=".PrayerWidgetProvider"
             android:exported="false"
@@ -187,35 +177,7 @@
                 android:resource="@xml/daily_widget_info" />
         </receiver>
 
-        <receiver
-            android:name=".WeatherWidgetProvider"
-            android:exported="false"
-            android:label="@string/weather_description">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/weather_widget_info" />
-        </receiver>
-        <receiver
-            android:name=".ProgressWidgetProvider"
-            android:exported="false"
-            android:label="@string/progress_description">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="android.intent.action.DATE_CHANGED" />
-            </intent-filter>
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/progress_widget_info" />
-        </receiver>
 
-        <receiver
-            android:name=".ResumeWidgetProvider"
-            android:exported="false"
-            android:label="@string/resume_description">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/resume_widget_info" />
-        </receiver>
 
         <receiver
             android:name=".TasbihWidgetProvider"
@@ -282,16 +244,6 @@
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/dadhkar_widget_info" />
-        </receiver>
-        <receiver
-            android:name=".RamadanWidgetProvider"
-            android:exported="false"
-            android:label="@string/ramadan_description">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="android.intent.action.DATE_CHANGED" />
-            </intent-filter>
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/ramadan_widget_info" />
         </receiver>
 
         <provider
