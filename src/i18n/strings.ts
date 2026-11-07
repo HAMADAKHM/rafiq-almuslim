@@ -41,6 +41,7 @@ const STRINGS = {
   kidsAdhkar: { ar: 'أذكار الصغار', en: 'Kids Adhkar' },
   booklet: { ar: 'كتيّب الأذكار', en: 'Adhkar Booklet' },
   widgets: { ar: 'الودجتات', en: 'Widgets' },
+  audioStudio: { ar: 'استوديو الأصوات', en: 'Audio Studio' },
   appearance: { ar: 'الثيمات والمظهر', en: 'Themes & Look' },
   plusDownloads: { ar: 'تنزيل الأجزاء والمصحف', en: 'Downloads' },
   plusReminders: { ar: 'تذكيراتي الخاصة', en: 'My Reminders' },

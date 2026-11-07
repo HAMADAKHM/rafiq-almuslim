@@ -70,7 +70,7 @@ export function slotSpeech(slot: VoiceSlot): string {
 
 /** ما يُسمع فعليًا (لنص الإشعار): custom = قناة صوت الهاتف أو تسجيل المستخدم جاهزة */
 export function heardText(slot: VoiceSlot, opt: VoiceOpt, custom: boolean): string {
-  if (opt === 'tone') return ''
+  if (opt === 'tone' || opt.startsWith('snd:')) return ''
   return custom ? SLOT_DEFS[slot].ownHeard : SLOT_DEFS[slot].hisnHeard
 }
 

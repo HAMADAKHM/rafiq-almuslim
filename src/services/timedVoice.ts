@@ -117,6 +117,11 @@ export async function prepareVoiceChannels(n: NotificationSettings): Promise<Par
 export async function previewSource(n: NotificationSettings, slot: VoiceSlot): Promise<{ url: string; from?: number; to?: number; revoke?: boolean } | { speak: string } | null> {
   const v = voiceFor(n, slot)
   if (v === 'tone') return null
+  if (v.startsWith('snd:')) {
+    const { soundById } = await import('../content/soundLibrary')
+    const snd = soundById(v.slice(4))
+    return snd?.file ? { url: `${import.meta.env.BASE_URL}${snd.file}` } : null
+  }
   if (v === 'hisn') {
     const c = HISN_CLIPS[SLOT_DEFS[slot].hisn]
     return { url: `https://www.hisnmuslim.com/audio/ar/${c.src}.mp3`, from: c.from, to: c.to }

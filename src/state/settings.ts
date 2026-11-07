@@ -66,7 +66,8 @@ export interface NotificationSettings {
 
 /** hisn = تسجيل بشري من حصن المسلم، device = نطق الذكر بمحرك الكلام العربي في الهاتف، mine = تسجيل أضافه المستخدم */
 export type TimedVoice = 'hisn' | 'device' | 'mine'
-export type VoiceOpt = TimedVoice | 'tone'
+/** snd:<id> = نغمة من «استوديو الأصوات» */
+export type VoiceOpt = TimedVoice | 'tone' | `snd:${string}`
 
 /** طريقة العرض: متتابعة (آية بآية)، صفحات المصحف، أو التركيز (آية واحدة في الشاشة) */
 export type ReaderMode = 'flow' | 'mushaf' | 'focus'
@@ -82,6 +83,29 @@ export const QURAN_FONTS: { id: QuranFont; label: string; family: string; note: 
   { id: 'noto-naskh', label: 'نسخ حديث', family: '"Noto Naskh Arabic", "Amiri Quran", serif', note: 'خط حديث بسيط' },
 ]
 export type HomeCardId = 'sections' | 'companion' | 'continue' | 'suggest' | 'khatma' | 'adhkar' | 'ayah' | 'quick' | 'summary' | 'dedication' | 'shortcuts'
+
+/** «استوديو أصوات رفيق المسلم» */
+export interface AudioStudioSettings {
+  volume: number
+  muteAll: boolean
+  repeat: 'once' | 'loop'
+  /** أصوات الطبيعة مع الذكر في الاستوديو، أو بدله، أو بلا */
+  natureMode: 'off' | 'with' | 'instead'
+  nature: string
+  /** النغمة الافتراضية لكل التذكيرات */
+  defaultTone: string
+  /** نغمة كل مناسبة (بلس) — '' = الافتراضية */
+  occasions: { salawat: string; adhkarDone: string }
+  tasbih: { clickOn: boolean; click: string; m33: string; m100: string; done: string }
+  /** قارئ آيات كل مجموعة أذكار */
+  reciters: Partial<Record<'morning' | 'evening' | 'sleep', string>>
+}
+export const DEFAULT_AUDIO_STUDIO: AudioStudioSettings = {
+  volume: 80, muteAll: false, repeat: 'once', natureMode: 'off', nature: 'n_rain', defaultTone: 'chime',
+  occasions: { salawat: '', adhkarDone: 'k_done' },
+  tasbih: { clickOn: true, click: 'k_click', m33: 'k_33', m100: 'k_100', done: 'k_done' },
+  reciters: {},
+}
 
 export interface WidgetPrefs { hijri: boolean; greg: boolean; city: boolean; countdown: boolean; font: number; adhkar: 'morning' | 'evening' | 'sleep' | 'auto'; vibrate: boolean; tasbih: string }
 export const DEFAULT_WIDGET_PREFS: WidgetPrefs = { hijri: true, greg: true, city: true, countdown: true, font: 100, adhkar: 'auto', vibrate: true, tasbih: 'seq' }
@@ -141,6 +165,7 @@ export interface Settings {
   tabs?: string[]
   /** «استوديو الودجت»: العناصر الظاهرة وحجم الخط ونوع الأذكار والاهتزاز وذكر المسبحة */
   widgetPrefs?: WidgetPrefs
+  audioStudio?: AudioStudioSettings
   /** رفيق بلس — وضع رمضان: تذكير السحور قبل الفجر بدقائق، والإفطار قبل المغرب بدقائق (0 = بلا تذكير)، والإمساك الاحتياطي */
   /** theme: وضع رمضان يغيّر ثيم التطبيق كله — 'auto' في شهر رمضان فقط، 'on' دائمًا، 'off' لا */
   ramadan: { suhoorMinutes: number; iftarMinutes: number; imsakMinutes: number; theme?: 'auto' | 'on' | 'off' }

@@ -137,6 +137,7 @@ export async function replaceScheduledNotifications(list: Reminder[]): Promise<n
   if (!list.length) return 0
   const android = platformName() === 'android'
   if (android) await ensureHisnChannels(list.map((r) => r.channelId).filter((c): c is string => !!c && c.startsWith(HISN_SOUND_PREFIX)))
+  if (android) await ensureSoundChannels(list.map((r) => r.channelId).filter((c): c is string => !!c && c.startsWith('rafiq-snd-')))
   await LocalNotifications.schedule({
     notifications: list.map((r) => ({
       id: r.id, title: r.title, body: r.body, schedule: { at: r.at, allowWhileIdle: true },
@@ -155,10 +156,26 @@ export async function sendTestReminder(r: { title: string; body: string; route: 
   if (!isNative()) { await showNotification(r.title, r.body, 'test'); return true }
   const { LocalNotifications } = await import('@capacitor/local-notifications')
   if (platformName() === 'android' && r.channelId?.startsWith(HISN_SOUND_PREFIX)) await ensureHisnChannels([r.channelId])
+  if (platformName() === 'android' && r.channelId?.startsWith('rafiq-snd-')) await ensureSoundChannels([r.channelId])
   await LocalNotifications.schedule({
     notifications: [{ id: 2_145_000_000 + Math.floor(Math.random() * 2_000_000) /* فوق نطاق الجدولة: لا تلغيه إعادة الجدولة */, title: r.title, body: r.body, schedule: { at: new Date(Date.now() + delayMs), allowWhileIdle: true }, extra: { route: r.route }, ...(r.channelId ? { channelId: r.channelId } : {}) }],
   })
   return true
+}
+
+const sndMade = new Set<string>()
+/** قنوات نغمات «استوديو الأصوات»: rafiq-snd-<id>-<flags> وصوتها res/raw (يحترم الصامت وعدم الإزعاج كأي إشعار) */
+export async function ensureSoundChannels(ids: string[]) {
+  const { LocalNotifications } = await import('@capacitor/local-notifications')
+  const { soundById, soundRawName } = await import('../content/soundLibrary')
+  for (const id of new Set(ids)) {
+    if (sndMade.has(id)) continue
+    const m = /^rafiq-snd-(.+)-([vn])([1p])$/.exec(id)
+    const snd = m ? soundById(m[1]) : undefined
+    if (!m || !snd?.notify) continue
+    await LocalNotifications.createChannel({ id, name: `${snd.name} — نغمات رفيق المسلم`, description: snd.desc, sound: soundRawName(snd.id), importance: 4, visibility: m[3] === 'p' ? 0 : 1, vibration: m[2] === 'v' }).catch(() => {})
+    sndMade.add(id)
+  }
 }
 
 const hisnMade = new Set<string>()

@@ -49,7 +49,10 @@ export function RemindersPage() {
         <section className="card">
           <div className="spread">
             <span><strong>نغمة رفيق المسلم</strong><br /><small className="muted">نغمة خاصة بالتطبيق لآية اليوم والورد والتذكيرات (والأذان بصوته المختار)</small></span>
-            <button type="button" className="btn btn-sm" onClick={() => { try { void new Audio(`${import.meta.env.BASE_URL}sounds/rafiq_chime.mp3`).play() } catch { /* لا صوت */ } }}>استمع للنغمة</button>
+            <span className="row" style={{ gap: 6 }}>
+              <button type="button" className="btn btn-sm" onClick={() => { try { void new Audio(`${import.meta.env.BASE_URL}sounds/rafiq_chime.mp3`).play() } catch { /* لا صوت */ } }}>استمع للنغمة</button>
+              <Link className="btn btn-sm btn-primary" to="/audio-studio">استوديو الأصوات</Link>
+            </span>
           </div>
         </section>
         <section className="card">

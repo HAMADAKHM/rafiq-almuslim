@@ -34,7 +34,7 @@ export function frameAt(tl: { start: number; end: number }[], t: number): { inde
   return { index: i, alpha: Math.min(inA, outA) }
 }
 
-async function fetchBytes(url: string): Promise<ArrayBuffer> {
+export async function fetchBytes(url: string): Promise<ArrayBuffer> {
   // ما نزّله المستخدم للاستماع دون اتصال يُستخدم أولًا
   try {
     const hit = await caches?.match(url)

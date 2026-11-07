@@ -10,24 +10,15 @@ import { toast } from '../../hooks'
 import { dayKey, shiftDayKey } from '../../lib/dates'
 import { BEADS, TASBIH_BGS, activeBead, activeTasbihBg, DEFAULT_TASBIH, dhikrText, increment, loadTasbih, saveTasbih, TASBIH_DHIKR, todayTotal, type TasbihState } from '../../services/tasbih'
 import { vibrate } from '../../platform'
+import { useSettings } from '../../state/SettingsContext'
+import { DEFAULT_AUDIO_STUDIO } from '../../state/settings'
+import { playEffect, preloadEffects, tasbihEvent } from '../../services/audioStudio'
 
-let audioCtx: AudioContext | null = null
-function beep(goal: boolean) {
-  try {
-    audioCtx ??= new AudioContext()
-    const o = audioCtx.createOscillator()
-    const g = audioCtx.createGain()
-    o.frequency.value = goal ? 880 : 520
-    g.gain.value = 0.05
-    o.connect(g).connect(audioCtx.destination)
-    o.start()
-    o.stop(audioCtx.currentTime + (goal ? 0.25 : 0.05))
-  } catch {
-    // الصوت اختياري
-  }
-}
 
 export function TasbihPage() {
+  const { settings: appSettings } = useSettings()
+  const studio = { ...DEFAULT_AUDIO_STUDIO, ...appSettings.audioStudio }
+  useEffect(() => { preloadEffects([studio.tasbih.click, studio.tasbih.m33, studio.tasbih.m100, studio.tasbih.done]) }, [studio.tasbih.click, studio.tasbih.m33, studio.tasbih.m100, studio.tasbih.done])
   const { entitled } = usePlus()
   const [s, setS] = useState<TasbihState | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
@@ -55,7 +46,8 @@ export function TasbihPage() {
     const { state, reachedTarget } = increment(s, today)
     persist(state)
     if (s.vibrate) vibrate(reachedTarget ? 'goal' : 'tap')
-    if (s.sound) beep(reachedTarget)
+    // أصوات السبحة من «استوديو الأصوات»: نقرة (يمكن إيقافها مع بقاء الاهتزاز)، وتمام 33 و100، وإكمال العدد
+    if (s.sound) { const ev = tasbihEvent(state.count, s.target, studio); if (ev) void playEffect(ev) }
     if (reachedTarget) { setPulse(true); setTimeout(() => setPulse(false), 700); toast(`أتممت ${s.target}`) }
   }
   const week = Array.from({ length: 7 }, (_, i) => shiftDayKey(today, i - 6))
@@ -122,7 +114,7 @@ export function TasbihPage() {
             </select>
           </label>
           <label className="check"><input type="checkbox" checked={s.vibrate} onChange={(e) => persist({ ...s, vibrate: e.target.checked }, true)} /> <Vibrate size={16} /> اهتزاز عند الضغط (إن دعمه الجهاز)</label>
-          <label className="check"><input type="checkbox" checked={s.sound} onChange={(e) => persist({ ...s, sound: e.target.checked }, true)} /> <Volume2 size={16} /> صوت خفيف</label>
+          <label className="check"><input type="checkbox" checked={s.sound} onChange={(e) => persist({ ...s, sound: e.target.checked }, true)} /> <Volume2 size={16} /> أصوات السبحة (نقرة وتمام 33 و100 — تُختار من <Link to="/audio-studio#tasbih">استوديو الأصوات</Link>)</label>
           <label className="check"><input type="checkbox" checked={s.keepLog} onChange={(e) => persist({ ...s, keepLog: e.target.checked }, true)} /> حفظ سجل يومي (على جهازك فقط)</label>
           {s.keepLog && (
             <div>

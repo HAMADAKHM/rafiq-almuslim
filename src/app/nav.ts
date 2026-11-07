@@ -1,6 +1,6 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby, LayoutDashboard, Library, Star, GalleryHorizontal,
+  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, Baby, LayoutDashboard, Library, Star, GalleryHorizontal, Music,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
@@ -30,6 +30,7 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
     { to: '/plus/downloads', key: 'plusDownloads', icon: HardDriveDownload },
     { to: '/plus/themes', key: 'appearance', icon: PaletteIcon },
     { to: '/widgets', key: 'widgets', icon: LayoutDashboard },
+    { to: '/audio-studio', key: 'audioStudio', icon: Music },
     { to: '/plus/reminders', key: 'plusReminders', icon: BellPlus },
     { to: '/plus/insights', key: 'plusInsights', icon: ChartNoAxesColumn },
   ] },

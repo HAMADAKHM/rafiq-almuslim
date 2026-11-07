@@ -1,3 +1,5 @@
+import { playEffect } from '../../services/audioStudio'
+import { completionSound } from '../../services/audioStudioPrefs'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronRight, ChevronLeft, RotateCcw, Star, Image, Copy, Play, AArrowDown, AArrowUp, CircleCheck } from 'lucide-react'
 import type { DhikrItem } from '../../content/types'
@@ -41,7 +43,7 @@ export function AdhkarSession({ items, counts, onCount, favs, favKind, onAllDone
 
   const allDone = items.length > 0 && items.every((it) => (counts[it.id] ?? 0) >= targetOf(it))
   useEffect(() => {
-    if (allDone && !reportedDone.current) { reportedDone.current = true; onAllDone?.() }
+    if (allDone && !reportedDone.current) { reportedDone.current = true; onAllDone?.(); void playEffect(completionSound()) }
     if (!allDone) reportedDone.current = false
   }, [allDone, onAllDone])
 

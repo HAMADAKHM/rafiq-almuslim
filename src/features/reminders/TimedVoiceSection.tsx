@@ -1,6 +1,8 @@
 // «أذكار مسموعة» في صفحة التذكيرات: لكل تذكير (الاستيقاظ، الصباح، المساء، النوم، ما بعد الصلاة) وقته وأيامه
 // وصوته — جملة قصيرة من الذكر نفسه تُسمع مع الإشعار: تسجيل حصن المسلم، أو صوت الهاتف، أو تسجيلك، أو نغمة —
 // مع الاستماع للصوت، وإشعار تجريبي حقيقي، والاهتزاز، وإظهار النص على شاشة القفل، وإعادة الضبط.
+import { soundById, soundChannel } from '../../content/soundLibrary'
+import { channelFlags } from '../../services/voiceSlots'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BellRing, Play, RotateCcw, Square } from 'lucide-react'
@@ -66,7 +68,7 @@ export function TimedVoiceSection() {
     const custom = opt === 'device' || opt === 'mine' ? await prepareVoiceChannel(n, slot) : null
     if ((opt === 'device' || opt === 'mine') && !custom && android) toast(opt === 'device' ? 'لا يوجد صوت عربي في الهاتف: سيُستعمل تسجيل حصن المسلم' : 'لم تضف تسجيلًا لهذا الذكر: سيُستعمل تسجيل حصن المسلم')
     const heard = heardText(slot, opt, !!custom)
-    await sendTestReminder({ title: d.title, body: heard ? `🔊 ${heard} — ${d.body}` : d.body, route: d.route, channelId: opt === 'tone' ? undefined : custom ?? hisnSlotChannel(n, slot) }).catch(() => null)
+    await sendTestReminder({ title: d.title, body: heard ? `🔊 ${heard} — ${d.body}` : d.body, route: d.route, channelId: opt === 'tone' ? undefined : opt.startsWith('snd:') ? soundChannel(opt.slice(4), channelFlags(n)) : custom ?? hisnSlotChannel(n, slot) }).catch(() => null)
     setBusy(null)
     toast(android ? 'سيصل الإشعار التجريبي بعد 5 ثوانٍ — أغلق التطبيق لتجربته' : 'أُرسل إشعار تجريبي')
   }
@@ -104,6 +106,7 @@ export function TimedVoiceSection() {
           { id: 'device', label: 'صوت الهاتف', off: !android },
           { id: 'mine', label: 'تسجيلي', off: !mine[slot] },
           { id: 'tone', label: 'نغمة فقط' },
+          ...(v.startsWith('snd:') ? [{ id: v, label: `نغمة الاستوديو: ${soundById(v.slice(4))?.name ?? ''}` }] : []),
         ]
         return (
           <div key={slot} className="card-inset stack" style={{ gap: 6 }} aria-label={d.label}>
@@ -137,7 +140,7 @@ export function TimedVoiceSection() {
                 <div className="chips" role="radiogroup" aria-label={`صوت ${d.label}`}>
                   {options.map((o) => <button key={o.id} type="button" role="radio" aria-checked={v === o.id} disabled={o.off} className={'chip' + (v === o.id ? ' active' : '')} onClick={() => setVoice(slot, o.id)}>{o.label}</button>)}
                 </div>
-                <p className="small muted" style={{ margin: 0 }}>{v === 'tone' ? 'نغمة الإشعار العادية دون ذكر مسموع.' : `يُسمع: ${heardText(slot, v, v !== 'hisn')}${v === 'device' ? ' — نطق آلي من هاتفك للنص المعتمد، استمع إليه أولًا' : v === 'mine' ? ' — بتسجيلك' : ' — بتسجيل حصن المسلم'}.`}</p>
+                <p className="small muted" style={{ margin: 0 }}>{v === 'tone' ? 'نغمة الإشعار العادية دون ذكر مسموع.' : v.startsWith('snd:') ? 'نغمة من استوديو الأصوات، دون ذكر مسموع.' : `يُسمع: ${heardText(slot, v, v !== 'hisn')}${v === 'device' ? ' — نطق آلي من هاتفك للنص المعتمد، استمع إليه أولًا' : v === 'mine' ? ' — بتسجيلك' : ' — بتسجيل حصن المسلم'}.`}</p>
                 {slot === 'evening' && v === 'hisn' && <p className="small muted" style={{ margin: 0 }}>لا يوجد في حصن المسلم تسجيل لـ«أمسينا وأمسى الملك لله»؛ لسماعه اختر صوت الهاتف أو سجّله بصوتك.</p>}
                 {!mine[slot] && <p className="small muted" style={{ margin: 0 }}>لتسمعه بصوتك: أضف تسجيلًا لهذا الذكر من <Link to="/adhkar-audio">تسجيلات الأذكار</Link>.</p>}
               </>

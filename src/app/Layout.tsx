@@ -1,3 +1,6 @@
+import { setStudioSettings } from '../services/audioStudio'
+import { setCompletionPrefs } from '../services/audioStudioPrefs'
+import { DEFAULT_AUDIO_STUDIO } from '../state/settings'
 import { Suspense, useEffect, useRef } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
 import { WifiOff, ChevronRight, Search } from 'lucide-react'
@@ -51,6 +54,8 @@ export function Layout() {
   const mainRef = useRef<HTMLElement>(null)
   const settingsRef = useRef(settings)
   useEffect(() => { settingsRef.current = settings }, [settings])
+  // إعدادات «استوديو الأصوات» للمؤثرات (السبحة وإتمام الأذكار) ومستوى الصوت
+  useEffect(() => { setStudioSettings({ ...DEFAULT_AUDIO_STUDIO, ...settings.audioStudio }); setCompletionPrefs(settings.audioStudio) }, [settings.audioStudio])
 
   useEffect(() => { window.scrollTo?.(0, 0) }, [loc.pathname])
   useEffect(() => startReminderLoop(() => settingsRef.current), [])

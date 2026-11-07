@@ -3,6 +3,7 @@
 // - في Android/iOS: تُسلَّم القائمة كاملة لنظام الإشعارات المحلية المجدولة (لا حساب في الخلفية).
 // الرسائل قصيرة ومتنوعة، دون لوم ودون نسبة فضائل غير موثقة.
 import { formatParts, partNum } from '../lib/intlParts'
+import { soundChannel } from '../content/soundLibrary'
 import { prayerMessage } from '../content/prayerMessages'
 import { PRAYER_LABELS, prayerTimesFor } from './prayer'
 import type { PrayerKey, Settings } from '../state/settings'
@@ -166,8 +167,13 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
   const pool = plus && comp?.adhkar.enabled && !n.reduce ? companionPool(comp.adhkar.groups, comp.adhkar.voicedOnly !== false) : []
   // تذكير الأذكار المسموع: صوت الإشعار جملة من الذكر نفسه، والنص يطابق ما يُسمع
   const flags = channelFlags(n)
+  const studio = settings.audioStudio
   const voiced = (slot: VoiceSlot, msg: { title: string; body: string }) => {
     const opt = n.adhkarVoice === false ? 'tone' : voiceFor(n, slot)
+    // نغمة من «استوديو الأصوات» لهذا التذكير
+    if (opt.startsWith('snd:')) return { title: msg.title, body: msg.body, channelId: soundChannel(opt.slice(4), flags) }
+    // «أصوات الطبيعة بدل الذكر»: نغمة طبيعية بحسب الوقت (عصافير صباحًا، نسيم مساءً، همس للنوم)
+    if (studio?.natureMode === 'instead' && (slot === 'morning' || slot === 'evening' || slot === 'sleep')) return { title: msg.title, body: msg.body, channelId: soundChannel(`t_${slot}`, flags) }
     if (opt === 'tone') return { title: msg.title, body: msg.body }
     const custom = opt === 'device' || opt === 'mine' ? ctx.voiceChannels?.[slot] : undefined
     const heard = heardText(slot, opt, !!custom)
@@ -292,7 +298,9 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
           if (!p) return
           // يُقرأ الذكر نفسه في الإشعار بتسجيل حصن المسلم (قناة صوتها الملف) إن وُجد
           const voiceN = a.sound && a.voice !== false ? HISN_AUDIO[p.item.id] : undefined
-          intervals.push({ id: intervalId(day, slot), at, kind: 'dhikr-interval', title: voiceN ? 'رفيقي يذكّرني 🔊' : 'رفيقي يذكّرني', body: dhikrBody(p.item), route: `/companion/dhikr/${p.item.id}`, actions: 'dhikr', silent: !a.sound, itemId: p.item.id, ...(voiceN ? { channelId: hisnChannel(voiceN) } : {}) })
+          // التذكير بالصلاة على النبي ﷺ بنغمته المختارة في الاستوديو (حين لا يوجد تسجيل للذكر نفسه)
+          const salawatTone = !voiceN && p.group === 'salawat' && studio?.occasions.salawat ? soundChannel(studio.occasions.salawat, flags) : undefined
+          intervals.push({ id: intervalId(day, slot), at, kind: 'dhikr-interval', title: voiceN ? 'رفيقي يذكّرني 🔊' : 'رفيقي يذكّرني', body: dhikrBody(p.item), route: `/companion/dhikr/${p.item.id}`, actions: 'dhikr', silent: !a.sound, itemId: p.item.id, ...(voiceN ? { channelId: hisnChannel(voiceN) } : salawatTone ? { channelId: salawatTone } : {}) })
         })
       }
     }
@@ -306,6 +314,11 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
     }
   }
   const byTime = (a: Reminder, b: Reminder) => a.at.getTime() - b.at.getTime()
+  // النغمة الافتراضية المختارة في الاستوديو لكل تذكير بلا صوت خاص (غير الأذان)
+  if (studio?.defaultTone && studio.defaultTone !== 'chime') {
+    const ch = soundChannel(studio.defaultTone, flags)
+    for (const r of out.values()) if (!r.channelId && !r.silent && r.kind !== 'prayer' && (!r.actions || r.actions === 'ayah')) r.channelId = ch
+  }
   const base = [...out.values()].sort(byTime)
   if (!intervals.length) return base.slice(0, MAX_SCHEDULED)
   // الأولوية لتذكيرات الـ48 ساعة القادمة (الصلاة وغيرها)، ثم الذكر الدوري، ثم ما بعدها من الأيام
