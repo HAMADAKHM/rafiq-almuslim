@@ -8,7 +8,7 @@ import { usePlus } from '../../billing/PlusContext'
 import { useSettings } from '../../state/SettingsContext'
 import { DEFAULT_AUDIO_STUDIO, type AudioStudioSettings, type VoiceOpt } from '../../state/settings'
 import { toast } from '../../hooks'
-import { BUNDLED, GROUP_TITLES, HUMAN_PHRASES, SINGLE_DHIKR, hisnRecordings, quranItems, type DhikrGroup, type StudioSound } from '../../content/soundLibrary'
+import { BUNDLED, FULL_SESSIONS, FULL_SESSIONS_CREDIT, GROUP_TITLES, fmtDur, sessionsFor, type FullSession, HUMAN_PHRASES, SINGLE_DHIKR, hisnRecordings, quranItems, type DhikrGroup, type StudioSound } from '../../content/soundLibrary'
 import { HISN_AUDIO_CREDIT } from '../../content/hisnAudio'
 import { RECITERS, reciterById } from '../../content/reciters'
 import { goldenPhoto } from '../../themes/golden'
@@ -36,7 +36,7 @@ export function AudioStudioPage() {
   const { settings, update } = useSettings()
   const a: AudioStudioSettings = { ...DEFAULT_AUDIO_STUDIO, ...settings.audioStudio, occasions: { ...DEFAULT_AUDIO_STUDIO.occasions, ...settings.audioStudio?.occasions }, tasbih: { ...DEFAULT_AUDIO_STUDIO.tasbih, ...settings.audioStudio?.tasbih } }
   const set = (p: Partial<AudioStudioSettings>) => update({ audioStudio: { ...a, ...p } })
-  const [tab, setTab] = useState<Tab>(() => (location.hash === '#tasbih' ? 'tasbih' : 'tones'))
+  const [tab, setTab] = useState<Tab>(() => (location.hash === '#tasbih' ? 'tasbih' : location.hash.startsWith('#dhikr') ? 'dhikr' : 'tones'))
   const p = usePlayer()
   useDownloads()
   useEffect(() => { void scanDownloads() }, [])
@@ -222,7 +222,7 @@ function AddRecording({ id, onDone }: { id: string; onDone: () => void }) {
 
 function DhikrSection({ a, set, playing }: { a: AudioStudioSettings; set: (p: Partial<AudioStudioSettings>) => void; playing: ReturnType<typeof playerState> }) {
   const { settings } = useSettings()
-  const [g, setG] = useState<DhikrGroup>('morning')
+  const [g, setG] = useState<DhikrGroup>(() => { const h = location.hash.split('-')[1]; return (GROUPS as string[]).includes(h) ? (h as DhikrGroup) : 'morning' })
   const recs = useMemo(() => hisnRecordings(g), [g])
   const quran = useMemo(() => quranItems(g), [g])
   const reciter = a.reciters[g] ?? settings.reciterId
@@ -239,6 +239,9 @@ function DhikrSection({ a, set, playing }: { a: AudioStudioSettings; set: (p: Pa
       <div className="row"><button type="button" className="btn btn-primary btn-sm" onClick={playAll}><Play size={14} /> {GROUP_TITLES[g]} كاملة ({recs.length})</button>
         <button type="button" className="btn btn-sm" onClick={() => void downloadAll(recs.map((r) => r.url!))}><Download size={14} /> تنزيل المجموعة</button></div>
       <div className="as-list">{recs.map((r) => <RecordingRow key={r.id} s={r} active={playing.id === r.id && playing.playing} />)}</div>
+      <h3>{GROUP_TITLES[g]} كاملة بأصوات القرّاء</h3>
+      <p className="small muted" style={{ marginTop: 0 }}>تسجيل واحد متصل للأذكار كلها. {FULL_SESSIONS_CREDIT}. تُشغَّل من الإنترنت، ويمكن تنزيلها للعمل دونه.</p>
+      <div className="as-list">{sessionsFor(g).map((x) => <SessionRow key={x.id} x={x} active={playing.id === x.id && playing.playing} />)}</div>
       {quran.length > 0 && (
         <>
           <h3>الآيات في {GROUP_TITLES[g]}</h3>
@@ -255,6 +258,7 @@ function DhikrSection({ a, set, playing }: { a: AudioStudioSettings; set: (p: Pa
       )}
       <h3>القرّاء</h3>
       <div className="as-readers">
+        {[...new Set(FULL_SESSIONS.map((x) => x.reciter).filter(Boolean))].map((r) => <div key={r} className="as-reader"><span className="as-avatar">{r!.slice(0, 1)}</span><div><strong>{r}</strong><small className="muted">الأذكار كاملة: {FULL_SESSIONS.filter((x) => x.reciter === r).map((x) => x.title.replace('أذكار ', '')).join('، ')}</small></div></div>)}
         <div className="as-reader"><span className="as-avatar">ح</span><div><strong>مشروع حصن المسلم</strong><small className="muted">تسجيلات الأذكار المسموعة ({hisnRecordings('morning').length + hisnRecordings('evening').length + hisnRecordings('sleep').length} تسجيلًا) — بإذن المشروع</small></div></div>
         {RECITERS.slice(0, 6).map((r) => <div key={r.id} className="as-reader"><span className="as-avatar">{r.name.slice(0, 1)}</span><div><strong>{r.name}</strong><small className="muted">آيات الأذكار من المصحف{settings.reciterId === r.id ? ' • القارئ الافتراضي' : ''}</small></div></div>)}
       </div>
@@ -268,6 +272,22 @@ function bed(s: StudioSound) {
   bedEl?.pause()
   bedEl = new Audio(bundledUrl(s)); bedEl.loop = true; bedEl.volume = 0.18; void bedEl.play().catch(() => {})
   const off = subscribePlayer(() => { if (!playerState().playing) { bedEl?.pause(); off() } })
+}
+
+function SessionRow({ x, active }: { x: FullSession; active: boolean }) {
+  useDownloads()
+  const d = dlState(x.url)
+  const title = x.reciter ? `${x.title} — ${x.reciter}` : x.title
+  return (
+    <div className={'as-sound' + (active ? ' on' : '')}>
+      <button type="button" className="as-play" aria-label={(active ? 'إيقاف ' : 'استمع ') + title} onClick={() => (active ? stopPlayer(false) : void playList([{ id: x.id, title, url: x.url }]).catch(() => toast('تعذر التشغيل — تحقق من الاتصال')))}>{active ? <Square size={16} /> : <Play size={16} />}</button>
+      <div className="as-info"><strong>{x.title}</strong><small className="muted">{x.reciter ? `بصوت ${x.reciter}` : 'القارئ غير مذكور في المصدر'} • {fmtDur(x.secs)} • {fmtBytes(x.bytes)}</small>
+        <small className="as-credit">{d.status === 'done' ? 'محفوظ للعمل دون إنترنت' : d.status === 'downloading' ? 'جارٍ التنزيل…' : d.status === 'queued' ? 'في الانتظار' : d.status === 'error' ? `تعذر: ${d.error}` : 'يُشغَّل من الإنترنت'}</small></div>
+      {d.status === 'done'
+        ? <button type="button" className="btn btn-sm btn-ghost" aria-label={'حذف ' + title} onClick={() => void removeDownload(x.url)}><Trash2 size={14} /></button>
+        : <button type="button" className="btn btn-sm btn-ghost" aria-label={'تنزيل ' + title} disabled={d.status === 'downloading'} onClick={() => void downloadUrl(x.url).catch(() => toast('تعذر التنزيل'))}><Download size={14} /></button>}
+    </div>
+  )
 }
 
 function RecordingRow({ s, active }: { s: StudioSound; active: boolean }) {

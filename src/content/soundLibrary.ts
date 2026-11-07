@@ -4,6 +4,10 @@
 // - تلاوات الأذكار: تسجيلات بشرية حقيقية من مشروع «حصن المسلم» (hisnmuslim.com — بإذن المشروع كما أفاد صاحب التطبيق)،
 //   مربوطة بالذكر الذي يطابق نصّه نصَّ التسجيل فقط (src/content/hisnAudio.ts)، وتُنزَّل عند الطلب.
 // - الآيات في الأذكار (آية الكرسي، المعوذات…): بأصوات قرّاء المصحف المعروفين في التطبيق (src/content/reciters.ts).
+// - الأذكار كاملة بأصوات القرّاء (العفاسي، فارس عباد، محمد جبريل، ناصر القطامي): مجموعة «مكة لايف» على أرشيف الإنترنت
+//   (archive.org/details/makkah-live.-net-athkar-01) — باعتماد صاحب التطبيق أنها مسموح استخدامها. نُسب كل ملف لقارئه بعد
+//   التحقق من ثلاثة مصادر: وسوم الملف في الأرشيف، وصفحة مكة لايف، ونسخ بداية التسجيل آليًا (scripts عبر net-check).
+//   تُشغَّل من الإنترنت وتُنزَّل للعمل دونه عند الطلب فقط (حجمها كبير).
 // لا تُنسب أي تسجيلات لشخص لم يُتحقق منه، ولا يُستعمل صوت آلي على أنه قارئ.
 import { ADHKAR } from './adhkar'
 import { HISN_AUDIO, HISN_AUDIO_CREDIT, hisnAudioUrl } from './hisnAudio'
@@ -88,6 +92,28 @@ export function quranItems(group: DhikrGroup): { id: string; label: string; rang
   const cat = ADHKAR.find((c) => c.id === group)
   return (cat?.items ?? []).filter((it) => it.quran?.length).map((it) => ({ id: it.id, label: it.source, ranges: it.quran! }))
 }
+
+export type SessionGroup = DhikrGroup | 'wake'
+export interface FullSession { id: string; group: SessionGroup; title: string; reciter: string | null; url: string; secs: number; bytes: number }
+const ML = (n: string) => `https://archive.org/download/makkah-live.-net-athkar-01/MakkahLive.Net_athkar_${n}.mp3`
+export const FULL_SESSIONS_CREDIT = 'التسجيلات: مجموعة «مكة لايف» على أرشيف الإنترنت (archive.org)'
+/** تسجيلات الأذكار كاملة (جلسة واحدة لكل تسجيل) بأصوات قرّاء معروفين — مُتحقق من نسبة كل ملف لقارئه */
+export const FULL_SESSIONS: FullSession[] = [
+  { id: 'fs-m-afasy', group: 'morning', title: 'أذكار الصباح', reciter: 'مشاري العفاسي', url: ML('03'), secs: 1265, bytes: 10168000 },
+  { id: 'fs-m-abbad', group: 'morning', title: 'أذكار الصباح', reciter: 'فارس عباد', url: ML('05'), secs: 1233, bytes: 9913046 },
+  { id: 'fs-m-jibril', group: 'morning', title: 'أذكار الصباح', reciter: 'محمد جبريل', url: ML('07'), secs: 1308, bytes: 10513240 },
+  { id: 'fs-m-short', group: 'morning', title: 'أذكار الصباح (مختصرة)', reciter: null, url: ML('09'), secs: 223, bytes: 1830323 },
+  { id: 'fs-e-afasy', group: 'evening', title: 'أذكار المساء', reciter: 'مشاري العفاسي', url: ML('04'), secs: 1257, bytes: 10103425 },
+  { id: 'fs-e-abbad', group: 'evening', title: 'أذكار المساء', reciter: 'فارس عباد', url: ML('06'), secs: 1228, bytes: 9870208 },
+  { id: 'fs-e-jibril', group: 'evening', title: 'أذكار المساء', reciter: 'محمد جبريل', url: ML('08'), secs: 1347, bytes: 10821903 },
+  { id: 'fs-e-short', group: 'evening', title: 'أذكار المساء (مختصرة)', reciter: null, url: ML('10'), secs: 234, bytes: 1917676 },
+  { id: 'fs-daynight', group: 'morning', title: 'أذكار اليوم والليلة', reciter: 'ناصر القطامي', url: ML('02'), secs: 354, bytes: 2877353 },
+  { id: 'fs-s-afasy', group: 'sleep', title: 'أذكار النوم', reciter: 'مشاري العفاسي', url: ML('11'), secs: 634, bytes: 5121558 },
+  { id: 'fs-w-afasy', group: 'wake', title: 'أذكار الاستيقاظ من النوم', reciter: 'مشاري العفاسي', url: ML('01'), secs: 132, bytes: 1104804 },
+]
+/** التسجيلات الكاملة لمجموعة (أذكار اليوم والليلة تظهر مع الصباح والمساء، والاستيقاظ مع النوم) */
+export const sessionsFor = (g: DhikrGroup) => FULL_SESSIONS.filter((x) => x.group === g || (g === 'evening' && x.id === 'fs-daynight') || (g === 'sleep' && x.group === 'wake'))
+export const fmtDur = (secs: number) => `${Math.floor(secs / 60)}:${String(Math.round(secs % 60)).padStart(2, '0')}`
 
 export const ALL_STUDIO_SOUNDS: StudioSound[] = [...BUNDLED, ...hisnRecordings('morning'), ...hisnRecordings('evening'), ...hisnRecordings('sleep')]
 export const soundById = (id: string) => ALL_STUDIO_SOUNDS.find((s) => s.id === id)

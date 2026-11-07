@@ -2,9 +2,10 @@ import { useGolden } from '../../themes/useGolden'
 import { ADHKAR_THUMB, goldenPhoto } from '../../themes/golden'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, NavLink, useParams } from 'react-router-dom'
+import { sessionsFor, type DhikrGroup } from '../../content/soundLibrary'
 import {
   CircleCheck, Star, Plus, AArrowDown, AArrowUp, ChevronLeft, Sun, Moon, Landmark, BedDouble, Sunrise, DoorOpen, Utensils, Plane,
-  Droplets, Sparkles, Heart, BookOpen, HandHeart, Users, Coins, CloudSun, ShieldPlus, RefreshCcw, HeartPulse, Route, MessageCircleHeart,
+  Droplets, Sparkles, Heart, BookOpen, HandHeart, Users, Coins, CloudSun, ShieldPlus, RefreshCcw, HeartPulse, Route, MessageCircleHeart, Headphones,
 } from 'lucide-react'
 import { Empty, PageHead, Tabs } from '../../components/Common'
 import { AdhkarSession } from './AdhkarSession'
@@ -193,6 +194,13 @@ export function ContentLibrary({ kind }: { kind: 'adhkar' | 'duas' | 'hadith' })
         <Link to="/my-adhkar?new=1" className="list-card add-dhikr" style={{ marginBottom: '1rem' }}>
           <span className="icon-chip green"><Plus size={22} /></span>
           <span className="lc-body"><strong>إضافة ذكر</strong><small>أضف ذكرًا أو دعاءً خاصًا بك مع عدّاد، يظهر في «أذكاري»</small></span>
+          <span className="lc-end"><ChevronLeft size={18} /></span>
+        </Link>
+      )}
+      {cat && kind === 'adhkar' && sessionsFor(cat.id as DhikrGroup).length > 0 && (cat.id === 'morning' || cat.id === 'evening' || cat.id === 'sleep') && (
+        <Link to={`/audio-studio#dhikr-${cat.id}`} className="list-card" style={{ marginBottom: '1rem' }}>
+          <span className="icon-chip green"><Headphones size={22} /></span>
+          <span className="lc-body"><strong>استمع إلى {cat.title} كاملة</strong><small>بصوت {[...new Set(sessionsFor(cat.id as DhikrGroup).map((x) => x.reciter).filter(Boolean))].join(' و')}</small></span>
           <span className="lc-end"><ChevronLeft size={18} /></span>
         </Link>
       )}

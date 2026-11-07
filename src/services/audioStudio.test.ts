@@ -58,3 +58,19 @@ describe('استوديو الأصوات: الإشعارات', () => {
     expect(list.filter((r) => r.kind === 'prayer').every((r) => !r.channelId?.startsWith('rafiq-snd-'))).toBe(true)
   })
 })
+
+describe('الأذكار كاملة بأصوات القرّاء', () => {
+  it('كل تسجيل منسوب لقارئه بملف مستقل من مجموعة مكة لايف، ويظهر في مجموعته', async () => {
+    const { FULL_SESSIONS, sessionsFor } = await import('../content/soundLibrary')
+    expect(FULL_SESSIONS).toHaveLength(11)
+    expect(new Set(FULL_SESSIONS.map((x) => x.url)).size).toBe(11)
+    for (const x of FULL_SESSIONS) expect(x.url).toMatch(/^https:\/\/archive\.org\/download\/makkah-live\.-net-athkar-01\/MakkahLive\.Net_athkar_(0[1-9]|1[01])\.mp3$/)
+    expect(sessionsFor('morning').map((x) => x.reciter)).toEqual(expect.arrayContaining(['مشاري العفاسي', 'فارس عباد', 'محمد جبريل']))
+    expect(sessionsFor('sleep').every((x) => x.reciter === 'مشاري العفاسي')).toBe(true)
+  })
+  it('لا تدخل التنزيل التلقائي (حجمها كبير) — تُنزَّل بطلب المستخدم فقط', async () => {
+    const { FULL_SESSIONS } = await import('../content/soundLibrary')
+    const { remoteUrls } = await import('./audioStudio')
+    for (const x of FULL_SESSIONS) expect(remoteUrls()).not.toContain(x.url)
+  })
+})
