@@ -341,6 +341,7 @@ export function TvApp() {
             ? <button className="tv-btn" onClick={() => { const b = bridge()!; if (!b.openOriginalHome!()) { try { setApps(JSON.parse(b.getApps?.() ?? '[]') as TvAppEntry[]) } catch { setApps([]) } } }}>واجهة التلفاز</button>
             : bridge()?.getApps && <button className="tv-btn" onClick={() => { try { setApps(JSON.parse(bridge()!.getApps!()) as TvAppEntry[]) } catch { setApps([]) } }}>التطبيقات</button>}
           {bridge()?.startPairing && <button className="tv-btn" onClick={() => { setSetupPage('remote'); setSetup(true) }}>📱 التحكم من الجوال</button>}
+          {bridge() && <button className="tv-btn" onClick={() => { setSetupPage('auto'); setSetup(true) }}>⚡ التشغيل التلقائي</button>}
           <button className="tv-btn" onClick={() => { setSetupPage(null); setSetup(true) }}>الإعدادات</button>
           <span className="tv-hint">{TV_VERSION}</span>
         </span>}
@@ -650,7 +651,7 @@ function TvSetup({ s, data, startPage, onSave, canCancel, onCancel }: { s: TvSet
       <div className="tv-setup-body">
         <h1><LogoMark size={40} /> إعدادات شاشة رفيق المسلم</h1>
         <div className="tv-setup-layout">
-          <nav className={'tv-setup-nav' + (PREMIUM || pages.length > 8 ? ' compact' : '')} aria-label="أقسام الإعدادات">
+          <nav className={'tv-setup-nav' + (PREMIUM || pages.length > 7 ? ' compact' : '')} aria-label="أقسام الإعدادات">
             {pages.map((p) => <button key={p.id} className={'tv-nav' + (page === p.id ? ' on' : '')} aria-current={page === p.id ? 'page' : undefined} onClick={() => setPage(p.id)} autoFocus={page === p.id}>{p.label}</button>)}
             <button className={'tv-nav save' + (draft.city ? '' : ' wait')} onClick={() => {
               // بلا مدينة لا تُحسب المواقيت: ينتقل إلى صفحة المدينة مع توضيح بدل زر معطل لا يستجيب

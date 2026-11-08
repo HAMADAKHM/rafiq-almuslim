@@ -79,3 +79,13 @@ test('زر «التحكم من الجوال» على الشاشة الرئيسي
   await expect(page.getByRole('heading', { name: 'التحكم من الجوال' })).toBeVisible()
   await expect(page.locator('.tv-pair-code')).toHaveText('048 213')
 })
+
+test('زر «التشغيل التلقائي» على الشاشة الرئيسية يفتح صفحته، وكل أقسام الإعدادات وزر الحفظ ظاهرة', async ({ page }) => {
+  await fakeBridge(page, [])
+  await open(page, '/tv.html?app=1', { city: CITY })
+  await page.getByRole('button', { name: '⚡ التشغيل التلقائي' }).click()
+  await expect(page.getByRole('button', { name: /⚡ التشغيل التلقائي/ })).toHaveAttribute('aria-current', 'page')
+  const nav = page.getByRole('navigation', { name: 'أقسام الإعدادات' })
+  for (const n of ['المدينة', 'الخلفية', 'التحكم من الجوال', 'القارئ والصوت', 'التشغيل التلقائي']) await expect(nav.getByRole('button', { name: new RegExp(n) })).toBeAttached()
+  await expect(nav.getByRole('button', { name: /حفظ وعرض الشاشة/ })).toBeInViewport()
+})
