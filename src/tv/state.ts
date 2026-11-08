@@ -4,6 +4,7 @@ import { GALLERY_CATS, type GalleryCat } from './gallery'
 import { DEFAULT_PRAYER_SETTINGS, type DayTimes, type PrayerName, type PrayerSettings } from '../services/prayer'
 import type { City } from '../services/cities'
 import { DEFAULT_PREMIUM, normalizePremium, type PremiumSettings } from './premium'
+import { DEFAULT_STUDIO, normalizeStudio, type StudioSettings } from './studio'
 
 export type TvPrayer = Exclude<PrayerName, 'sunrise'>
 export const TV_PRAYERS: TvPrayer[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
@@ -45,6 +46,8 @@ export interface TvSettings {
   quality: 'auto' | 'eco' | 'high'
   /** مزايا نسخة «بريميوم» (لا تؤثر في النسخة الجديدة): الجداول وحماية الشاشة والتلاوة والإهداء */
   premium: PremiumSettings
+  /** استوديو الشاشة من الجوال (بريميوم): أحجام العناصر وأماكنها والخط والألوان */
+  studio: StudioSettings
 }
 
 export const DEFAULT_TV: TvSettings = {
@@ -69,6 +72,7 @@ export const DEFAULT_TV: TvSettings = {
   shuffle: true,
   quality: 'auto',
   premium: DEFAULT_PREMIUM,
+  studio: DEFAULT_STUDIO,
 }
 
 const KEY = 'rafiq-tv:settings'
@@ -86,7 +90,7 @@ export function normalizeTv(raw: Partial<TvSettings>): TvSettings {
     const playlist = Array.isArray(raw.playlist) ? raw.playlist.filter((x): x is SceneId => SCENES.some((sc) => sc.id === x)) : []
     const scene = raw.scene === 'rotate' || raw.scene === 'classic' || raw.scene === 'photos' || raw.scene === 'gallery' || SCENES.some((sc) => sc.id === raw.scene) ? raw.scene! : DEFAULT_TV.scene
     const galleryCat = GALLERY_CATS.some((c) => c.id === raw.galleryCat) ? raw.galleryCat! : 'all'
-    return { ...DEFAULT_TV, ...raw, scene, playlist, galleryCat, prayer: { ...DEFAULT_TV.prayer, ...raw.prayer, adjustments: { ...DEFAULT_TV.prayer.adjustments, ...raw.prayer?.adjustments } }, iqama: { ...DEFAULT_TV.iqama, ...raw.iqama }, premium: normalizePremium(raw.premium) }
+    return { ...DEFAULT_TV, ...raw, scene, playlist, galleryCat, prayer: { ...DEFAULT_TV.prayer, ...raw.prayer, adjustments: { ...DEFAULT_TV.prayer.adjustments, ...raw.prayer?.adjustments } }, iqama: { ...DEFAULT_TV.iqama, ...raw.iqama }, premium: normalizePremium(raw.premium), studio: normalizeStudio(raw.studio) }
   } catch { return DEFAULT_TV }
 }
 export function saveTv(s: TvSettings) { try { localStorage.setItem(KEY, JSON.stringify(s)) } catch { /* التخزين غير متاح */ } }

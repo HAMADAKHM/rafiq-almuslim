@@ -55,6 +55,8 @@ final class RemoteCore {
         JSONObject version();
         /** يبدأ تنزيل التحديث وتثبيته: "started" أو "!رمز الخطأ" */
         String startUpdate(String url);
+        /** لقطة مصغرة من الشاشة الظاهرة (JPEG بترميز Base64) أو «!رمز الخطأ» — نسخة بريميوم فقط */
+        default String screenshot() { return "!not_supported"; }
     }
 
     /** روابط التحديث المسموحة: ملف تطبيق الشاشة من إصدارات المشروع على GitHub فقط */
@@ -225,6 +227,7 @@ final class RemoteCore {
                     if (!(v instanceof String) || !((String) v).matches("[a-z][a-z-]{1,23}")) throw new IllegalArgumentException(k);
                     screen.put(k, v); break;
                 case "clockShift": screen.put(k, intIn(v, k, -60, 60, new int[] { -60, 0, 60 })); break;
+                case "studio": screen.put(k, validStudio(v)); break;
                 case "idleMinutes": nat.put(k, intIn(v, k, 0, 30, new int[] { 0, 5, 10, 15, 30 })); break;
                 case "idleTakeover": case "autostart":
                     if (!(v instanceof Boolean)) throw new IllegalArgumentException(k);
@@ -233,6 +236,37 @@ final class RemoteCore {
             }
         }
         return new JSONObject[] { screen, nat };
+    }
+
+    // ---------- استوديو الشاشة (نسخة بريميوم): أحجام العناصر وأماكنها والخط والألوان، بقيم محددة فقط ----------
+    static final int[] STUDIO_SCALES = { 80, 90, 100, 110, 120, 130, 140 };
+    static final String[] STUDIO_FONTS = { "plex", "amiri", "naskh", "kufi", "ruqaa" };
+    static final String[] STUDIO_ACCENTS = { "#e2c27e", "#ffffff", "#7fd8be", "#8ec9ff", "#f2a7b5", "#ffb547" };
+    static final String[] STUDIO_TEXTS = { "#ffffff", "#f3ebd7", "#e8f1f8" };
+
+    static JSONObject validStudio(Object v) throws Exception {
+        if (!(v instanceof JSONObject)) throw new IllegalArgumentException("studio");
+        JSONObject in = (JSONObject) v, out = new JSONObject();
+        for (Iterator<String> it = in.keys(); it.hasNext(); ) {
+            String k = it.next();
+            Object x = in.get(k);
+            switch (k) {
+                case "clockScale": case "prayersScale": case "cardScale": out.put(k, intIn(x, "studio." + k, 80, 140, STUDIO_SCALES)); break;
+                case "clockSide": out.put(k, str(x, k, new String[] { "right", "left" })); break;
+                case "prayersPos": out.put(k, str(x, k, new String[] { "bottom", "top", "hidden" })); break;
+                case "showCard": if (!(x instanceof Boolean)) throw new IllegalArgumentException("studio." + k); out.put(k, x); break;
+                case "font": out.put(k, str(x, k, STUDIO_FONTS)); break;
+                case "accent": out.put(k, str(x, k, STUDIO_ACCENTS)); break;
+                case "text": out.put(k, str(x, k, STUDIO_TEXTS)); break;
+                default: throw new IllegalArgumentException("studio." + k);
+            }
+        }
+        return out;
+    }
+
+    private static String str(Object x, String k, String[] allowed) {
+        if (!(x instanceof String) || !oneOf((String) x, allowed)) throw new IllegalArgumentException("studio." + k);
+        return (String) x;
     }
 
     private static int intIn(Object v, String k, int min, int max, int[] allowed) {
@@ -287,6 +321,11 @@ final class RemoteCore {
                 String a = json(body).optString("action", "");
                 if (!oneOf(a, ACTIONS)) return status(400, error(400, "invalid_action"));
                 return ok(new JSONObject().put("ok", applier.action(a)));
+            }
+            if (method.equals("GET") && path.equals("/screen")) {
+                String shot = applier.screenshot();
+                if (shot == null || shot.startsWith("!")) return status(409, error(409, shot == null ? "not_visible" : shot.substring(1)));
+                return ok(new JSONObject().put("jpeg", shot));
             }
             if (method.equals("GET") && path.equals("/backgrounds")) return ok(new JSONObject().put("items", applier.backgrounds()).put("max", MAX_BACKGROUNDS));
             if (method.equals("POST") && path.equals("/backgrounds")) {

@@ -30,7 +30,7 @@ public class RemoteCoreTest {
         public void put(String k, String v) { m.put(k, v); }
     }
 
-    static final class FakeApplier implements RemoteCore.Applier {
+    static class FakeApplier implements RemoteCore.Applier {
         JSONObject screen = new JSONObject(), nat = new JSONObject();
         String lastAction;
         public JSONObject snapshot() { return screen; }
@@ -266,5 +266,31 @@ public class RemoteCoreTest {
         RemoteHttp.write(out, 200, "{\"ok\":true}");
         assertTrue(out.toString("UTF-8").startsWith("HTTP/1.1 200 OK"));
         assertTrue(out.toString("UTF-8").endsWith("{\"ok\":true}"));
+    }
+
+    @Test public void studioSettingsWhitelistAndScreenPreview() throws Exception {
+        JSONObject[] ok = RemoteCore.validate(new JSONObject("{\"studio\":{\"clockScale\":120,\"prayersScale\":90,\"cardScale\":100,\"clockSide\":\"left\",\"prayersPos\":\"top\",\"showCard\":false,\"font\":\"naskh\",\"accent\":\"#7fd8be\",\"text\":\"#f3ebd7\"}}"));
+        assertEquals(120, ok[0].getJSONObject("studio").getInt("clockScale"));
+        assertEquals("left", ok[0].getJSONObject("studio").getString("clockSide"));
+        for (String bad : new String[] {
+            "{\"studio\":{\"clockScale\":125}}", "{\"studio\":{\"clockScale\":200}}", "{\"studio\":{\"font\":\"comic\"}}",
+            "{\"studio\":{\"accent\":\"#123456\"}}", "{\"studio\":{\"accent\":\"red;background:url(x)\"}}", "{\"studio\":{\"showCard\":\"yes\"}}",
+            "{\"studio\":{\"extra\":1}}", "{\"studio\":\"big\"}",
+        }) {
+            try { RemoteCore.validate(new JSONObject(bad)); throw new AssertionError("قُبل: " + bad); } catch (IllegalArgumentException expected) { /* مرفوض */ }
+        }
+        // معاينة الشاشة: تحتاج توقيعًا، ودون دعم (النسخة الجديدة) تعيد رمز خطأ واضحًا
+        RemoteCore core = new RemoteCore(new MemStore(), new SecureRandom(), "TV");
+        String[] dev = pair(core, core.startPairing(NOW), NOW + 1000);
+        long t = NOW + 3000;
+        assertEquals(401, core.handle("GET", "/screen", new HashMap<>(), new byte[0], new FakeApplier(), t).getInt("status"));
+        JSONObject r = core.handle("GET", "/screen", h(dev[0], t, sign(dev[1], "GET", "/screen", t, new byte[0])), new byte[0], new FakeApplier(), t);
+        assertEquals(409, r.getInt("status"));
+        assertEquals("not_supported", r.getJSONObject("body").getString("error"));
+        FakeApplier shot = new FakeApplier() { @Override public String screenshot() { return "QUJD"; } };
+        long t2 = t + 1000;
+        JSONObject r2 = core.handle("GET", "/screen", h(dev[0], t2, sign(dev[1], "GET", "/screen", t2, new byte[0])), new byte[0], shot, t2);
+        assertEquals(200, r2.getInt("status"));
+        assertEquals("QUJD", r2.getJSONObject("body").getString("jpeg"));
     }
 }

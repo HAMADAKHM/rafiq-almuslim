@@ -22,6 +22,7 @@ import { reciterById } from '../content/reciters'
 import { Choices, Stepper, Toggle } from './controls'
 import { activeRule, dedicationText, orderReciters, nightDim, occasionsOn, pixelShift, PREMIUM, swapSides } from './premium'
 import { GiftPage, OledPage, PlaylistExtras, ReciterExtras, SmartDisplayPage } from './PremiumPages'
+import { fontCss, pairLink, qrMatrix, qrSvgPath } from './studio'
 import { toHijri } from '../services/calendar'
 
 declare const __TV_VERSION__: string
@@ -277,10 +278,13 @@ export function TvApp() {
   const gift = PREMIUM ? dedicationText(pm.dedication) : null
   const tr = PREMIUM ? pm.transition : null
   const sceneKey = `${view.scene}:${view.galleryCat}`
+  // استوديو الشاشة من الجوال (بريميوم)
+  const st = s.studio
   const left = np.time.getTime() - now.getTime()
 
   return (
-    <div className={'tv' + (PREMIUM ? ' tv-premium' : '') + (PREMIUM && swapSides(hour, pm.oled.swap) ? ' swap' : '')} style={PREMIUM ? { ['--sx' as string]: `${shift.x}vw`, ['--sy' as string]: `${shift.y}vw` } : undefined}>
+    <div className={'tv' + (PREMIUM ? ` tv-premium st-prayers-${st.prayersPos}${st.showCard ? '' : ' st-no-card'}` : '') + (PREMIUM && swapSides(hour, pm.oled.swap) !== (st.clockSide === 'left') ? ' swap' : '')}
+      style={PREMIUM ? { ['--sx' as string]: `${shift.x}vw`, ['--sy' as string]: `${shift.y}vw`, ['--st-clock' as string]: st.clockScale / 100, ['--st-prayers' as string]: st.prayersScale / 100, ['--st-card' as string]: st.cardScale / 100, ['--st-accent' as string]: st.accent, ['--st-text' as string]: st.text, ['--st-font' as string]: fontCss(st.font) } : undefined}>
       <div key={tr ? sceneKey : 'art'} data-scene={sceneKey} className={'tv-art-wrap' + (tr && tr.style !== 'none' ? ` tr-${tr.style}` : '')} style={tr ? { animationDuration: `${tr.seconds}s` } : undefined}>
       {view.scene === 'gallery'
         ? <><PhotoScene key={view.galleryCat} src={gallerySource(view.galleryCat)} minutes={s.rotateMin} shuffle={s.shuffle} animate={view.animate} className="tv-art" /><div className="tv-veil scene" /></>
@@ -426,7 +430,20 @@ function remoteView(s: TvSettings) {
     adhan: s.adhan, hour12: s.hour12, reciteOn: s.reciteOn, reciteVolume: s.reciteVolume, clockShift: s.clockShift,
     reciteMode: s.reciteMode, reciterId: s.reciterId, adhkarVoice: s.adhkarVoice, phrases: s.phrases, galleryCat: s.galleryCat,
     city: s.city ? (s.city.nameAr ?? s.city.name) : '',
+    // بريميوم: استوديو الشاشة والمعاينة متاحان (الجوال يُظهر الاستوديو لهذه النسخة فقط)
+    ...(PREMIUM ? { premium: true, studio: s.studio } : {}),
   }
+}
+
+/** رمز QR للربط: يمسحه الجوال من «إضافة تلفاز» فيُربط دون كتابة الرمز ولا البحث عن العنوان */
+function PairQr({ text }: { text: string }) {
+  const q = useMemo(() => qrSvgPath(qrMatrix(text)), [text])
+  return (
+    <div className="tv-pair-qr">
+      <svg viewBox={`0 0 ${q.size} ${q.size}`} role="img" aria-label="رمز QR للربط" shapeRendering="crispEdges"><rect width={q.size} height={q.size} fill="#fff" /><path d={q.d} fill="#000" /></svg>
+      <span className="tv-muted">أو امسح الرمز من الجوال: «إضافة تلفاز» ← «مسح رمز QR»</span>
+    </div>
+  )
 }
 
 /** ربط الجوال: رمز من 6 أرقام يظهر هنا ويُكتب في تطبيق رفيق المسلم بلس، وقائمة الأجهزة المرتبطة */
@@ -447,6 +464,7 @@ function TvRemotePage() {
         <div className="tv-pair-box">
           <span className="tv-muted">اكتب هذا الرمز في الجوال</span>
           <b className="tv-pair-code" dir="ltr">{st.code.slice(0, 3)} {st.code.slice(3)}</b>
+          {PREMIUM && st.ip && st.port ? <PairQr text={pairLink(st.ip, st.port, st.code)} /> : null}
           <span className="tv-muted">ينتهي بعد {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}</span>
           <button className="tv-btn" onClick={() => { b.stopPairing?.(); setSt(read()) }}>إلغاء الربط</button>
         </div>

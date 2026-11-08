@@ -121,6 +121,8 @@ final class RemoteServer {
     }
 
     private final RemoteCore.Applier applier = new RemoteCore.Applier() {
+        @Override
+        public String screenshot() { return BuildConfig.PREMIUM ? TvWeb.screenshot() : "!not_supported"; }
         public JSONObject snapshot() {
             SharedPreferences p = TvService.prefs(ctx);
             JSONObject o;

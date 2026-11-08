@@ -199,3 +199,32 @@ button, input, select { font: inherit; }
 .tv-card-text.quran.long { font-size: 2.3vw; line-height: 1.95; }
 .tv-card-text.xlong { font-size: 1.75vw; line-height: 1.75; -webkit-line-clamp: 11; }
 .tv-card-text.quran.xlong { font-size: 1.9vw; line-height: 1.85; }
+/* ===== استوديو الشاشة من الجوال (بريميوم) ===== */
+.tv-premium { color: var(--st-text, #F5F0E6); }
+.tv-premium .tv-next-name, .tv-premium .tv-card-title, .tv-premium .tv-next-label, .tv-premium .tv-prayer span, .tv-premium .tv-brand small, .tv-premium .tv-dates { font-family: var(--st-font, inherit); }
+.tv-premium .tv-clock { font-size: calc(7.4vw * var(--st-clock, 1)); }
+.tv-premium .tv-next-name { font-size: calc(3.6vw * var(--st-clock, 1)); }
+.tv-premium .tv-next-time { font-size: calc(2.8vw * var(--st-clock, 1)); color: var(--st-accent, #E2C27E); }
+.tv-premium .tv-next-left b { font-size: calc(2.2vw * var(--st-clock, 1)); }
+.tv-premium .tv-hijri, .tv-premium .tv-card-title, .tv-premium .tv-prayer.next small { color: var(--st-accent, #E2C27E); }
+.tv-premium .tv-prayer.next { border-color: var(--st-accent, #E2C27E); }
+.tv-premium .tv-prayer span { font-size: calc(1.5vw * var(--st-prayers, 1)); }
+.tv-premium .tv-prayer b { font-size: calc(2.4vw * var(--st-prayers, 1)); }
+.tv-premium .tv-card-text { font-size: calc(2.5vw * var(--st-card, 1)); }
+.tv-premium .tv-card-text.quran { font-size: calc(2.8vw * var(--st-card, 1)); }
+.tv-premium .tv-card-text.long { font-size: calc(2.1vw * var(--st-card, 1)); }
+.tv-premium .tv-card-text.quran.long { font-size: calc(2.3vw * var(--st-card, 1)); }
+.tv-premium .tv-card-text.xlong { font-size: calc(1.75vw * var(--st-card, 1)); }
+.tv-premium .tv-card-text.quran.xlong { font-size: calc(1.9vw * var(--st-card, 1)); }
+/* الأماكن: شريط المواقيت أعلى أو مخفي، والبطاقة مخفية (الساعة تتوسط) */
+.tv-premium .tv-top { order: 0; }
+.tv-premium .tv-main { order: 2; }
+.tv-premium .tv-prayers { order: 3; }
+.tv-premium .tv-foot { order: 4; }
+.tv-premium.st-prayers-top .tv-prayers { order: 1; }
+.tv-premium.st-prayers-hidden .tv-prayers { display: none; }
+.tv-premium.st-no-card .tv-card { display: none; }
+.tv-premium.st-no-card .tv-clock-col { flex: 1; align-items: center; }
+.tv-premium.st-no-card .tv-clock { text-align: center; }
+.tv-pair-qr { display: flex; flex-direction: column; align-items: center; gap: 0.6vw; margin-top: 0.8vw; }
+.tv-pair-qr svg { width: 13vw; height: 13vw; border-radius: 0.6vw; }

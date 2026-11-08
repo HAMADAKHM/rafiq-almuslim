@@ -7,6 +7,10 @@ import '@fontsource/ibm-plex-sans-arabic/700.css'
 import '@fontsource/amiri/400.css'
 import '@fontsource/amiri/700.css'
 import '@fontsource/amiri-quran/400.css'
+// خطوط «استوديو الشاشة» (تُحمَّل عند اختيارها فقط)
+import '@fontsource/noto-naskh-arabic/700.css'
+import '@fontsource/reem-kufi-ink/400.css'
+import '@fontsource/aref-ruqaa/700.css'
 import './tv.css'
 import { TvApp } from './TvApp'
 

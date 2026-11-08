@@ -28,12 +28,41 @@ final class TvWeb {
         return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_AUTOSTART, true);
     }
 
+    /** الشاشة الظاهرة الآن (لمعاينتها من الجوال في نسخة بريميوم) — مرجع ضعيف لا يمنع تحرير الذاكرة */
+    static java.lang.ref.WeakReference<WebView> live = new java.lang.ref.WeakReference<>(null);
+
+    /** لقطة مصغرة (عرض 640) من الشاشة الظاهرة بترميز Base64، أو «!not_visible» — تُرسم على خيط الواجهة */
+    static String screenshot() {
+        final String[] out = { "!not_visible" };
+        final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            try {
+                WebView w = live.get();
+                if (w != null && w.isShown() && w.getWidth() > 0 && w.getHeight() > 0) {
+                    float sc = 640f / w.getWidth();
+                    android.graphics.Bitmap bmp = android.graphics.Bitmap.createBitmap(640, Math.max(1, Math.round(w.getHeight() * sc)), android.graphics.Bitmap.Config.RGB_565);
+                    android.graphics.Canvas cv = new android.graphics.Canvas(bmp);
+                    cv.scale(sc, sc);
+                    w.draw(cv);
+                    java.io.ByteArrayOutputStream bo = new java.io.ByteArrayOutputStream();
+                    bmp.compress(android.graphics.Bitmap.CompressFormat.JPEG, 70, bo);
+                    bmp.recycle();
+                    out[0] = android.util.Base64.encodeToString(bo.toByteArray(), android.util.Base64.NO_WRAP);
+                }
+            } catch (Throwable t) { out[0] = "!capture_failed"; }
+            done.countDown();
+        });
+        try { done.await(3, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException ignored) {}
+        return out[0];
+    }
+
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     static WebView create(final Context ctx, boolean dream) {
         final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(ctx))
             .build();
         WebView web = new WebView(ctx);
+        if (!dream) live = new java.lang.ref.WeakReference<>(web);
         WebSettings ws = web.getSettings();
         ws.setJavaScriptEnabled(true);
         ws.setDomStorageEnabled(true);
