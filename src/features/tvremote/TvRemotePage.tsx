@@ -14,6 +14,7 @@ import { SCENES } from '../../tv/scenes'
 import { RECITE_MODES, TV_RECITERS } from '../../tv/recite'
 import { GALLERY_CATS } from '../../tv/gallery'
 import { reciterById } from '../../content/reciters'
+import { QrPair, TvStudio } from './TvStudio'
 
 const send = tvRequest
 const errMsg = (e: unknown) => (e instanceof TvRemoteError ? e.message : 'تعذر تنفيذ الطلب')
@@ -74,8 +75,21 @@ function AddTv({ onDone }: { onDone: (tv: PairedTv) => void }) {
       </section>
     )
   }
+  // رمز QR من التلفاز: العنوان والمنفذ والرمز معًا، فيُربط مباشرة
+  const pairQr = async (q: { host: string; port: number; code: string }) => {
+    setBusy(true)
+    try {
+      const tv = await pairTv(send, q.host, q.port, q.code, 'رفيق المسلم بلس — جوالي')
+      toast(`رُبط الجوال بـ «${tv.name}»`)
+      onDone(tv)
+    } catch (e) { toast(errMsg(e)) }
+    setBusy(false)
+  }
   return (
     <section className="card">
+      <h2 style={{ marginTop: 0 }}>الربط برمز QR</h2>
+      {busy ? <Spinner label="جارٍ الربط" /> : <QrPair onFound={pairQr} />}
+      <hr className="sep" />
       <div className="spread">
         <h2 style={{ margin: 0 }}>إضافة تلفاز</h2>
         <button className="btn btn-sm" onClick={scan} disabled={scanning}><Search size={14} /> {scanning ? 'يبحث…' : 'بحث مجددًا'}</button>
@@ -319,6 +333,9 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
             <Switch on={st.phrases ?? true} disabled={busy} label="«عبارة اليوم» على الشاشة (تتغير كل يوم)" onChange={(v) => set({ phrases: v })} />
           </section>
           <TvPhotos tv={tv} showing={st.scene === 'photos'} disabled={!online} onShow={() => set({ scene: 'photos' })} />
+          {st.premium ? <TvStudio send={send} tv={tv} st={st} set={set} busy={busy} /> : (
+            <section className="card small muted">استوديو الشاشة (أحجام العناصر وأماكنها والخط والألوان، والمعاينة، والتصاميم المحفوظة) متاح حين يكون على التلفاز تطبيق «رفيق المسلم TV بريميوم».</section>
+          )}
           <section className="card stack" style={{ gap: 10 }}>
             <h2 style={{ margin: 0 }}>الشاشة والأذان</h2>
             <Switch on={st.adhan} disabled={busy} label="رفع الأذان عند دخول الوقت" onChange={(v) => set({ adhan: v })} />

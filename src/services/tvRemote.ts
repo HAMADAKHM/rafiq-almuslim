@@ -4,6 +4,7 @@
 //   كل طلب: HMAC(token, METHOD\nPATH\nTIME\nSHA256hex(body)) في الترويسات X-Rafiq-*
 // الرمز لا يُرسل في الشبكة، والمفتاح السري يبقى على الجهاز فقط.
 import { kv } from '../db/repos'
+import type { StudioSettings } from '../tv/studio'
 
 /** النسخة الجديدة: هوية تطبيق الشاشة واسم ملف تحديثه (مختلفان عن النسخة الأصلية) */
 export const TV_APP_ID = 'rafiq-tv-new'
@@ -15,6 +16,9 @@ export interface TvSettingsView {
   adhan?: boolean; hour12?: boolean; reciteOn?: boolean; reciteVolume?: number; clockShift?: number; city?: string
   idleMinutes?: number; idleTakeover?: boolean; autostart?: boolean
   reciteMode?: 'ayah' | 'surah' | 'adhkar'; reciterId?: string; adhkarVoice?: 'human' | 'mixed'; phrases?: boolean; galleryCat?: 'all' | 'islamic' | 'nature' | 'sport' | 'clubs' | 'space' | 'other'
+  /** نسخة «بريميوم» على التلفاز: استوديو الشاشة والمعاينة متاحان */
+  premium?: boolean
+  studio?: StudioSettings
 }
 
 /** وسيلة الإرسال (TvLink في التطبيق، ومحاكاة في الاختبارات) */
@@ -70,6 +74,9 @@ const MESSAGES: Record<string, string> = {
   needs_permission: 'على التلفاز ظهرت شاشة «السماح بالتثبيت من هذا التطبيق»: فعّلها بجهاز التحكم، ثم اضغط «تحديث» مرة أخرى.',
   busy: 'التحديث جارٍ بالفعل على التلفاز.',
   bad_url: 'رابط التحديث غير مقبول.',
+  not_supported: 'المعاينة الحقيقية متاحة في نسخة «رفيق المسلم TV بريميوم» على التلفاز.',
+  not_visible: 'شاشة رفيق المسلم غير ظاهرة على التلفاز الآن: اضغط «اعرض الشاشة» ثم أعد المحاولة.',
+  capture_failed: 'تعذر التقاط الشاشة على هذا التلفاز.',
   unreachable: 'تعذر الوصول إلى التلفاز. تأكد أن الجوال والتلفاز على شبكة الواي فاي نفسها وأن تطبيق الشاشة مثبت.',
 }
 export const remoteMessage = (code: string) => MESSAGES[code] ?? (code.startsWith('invalid') ? 'قيمة غير مقبولة.' : 'حدث خطأ غير متوقع.')
@@ -121,6 +128,12 @@ export async function setTvSettings(send: Transport, tv: PairedTv, patch: Partia
   return ((await signedCall(send, tv, 'POST', '/settings', clean)).settings ?? {}) as TvSettingsView
 }
 /** خلفيات الشاشة من صور المستخدم (تُحفظ على التلفاز فقط) */
+/** لقطة مصغرة من شاشة التلفاز الظاهرة (JPEG بترميز Base64) — نسخة بريميوم */
+export async function getTvScreen(send: Transport, tv: PairedTv): Promise<string> {
+  const r = await signedCall(send, tv, 'GET', '/screen', undefined, 10000)
+  return String(r.jpeg ?? '')
+}
+
 export interface TvBackground { id: string; at: number; size: number }
 export const MAX_TV_BACKGROUNDS = 12
 const items = (j: Record<string, unknown>) => (Array.isArray(j.items) ? j.items : []) as TvBackground[]

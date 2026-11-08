@@ -274,6 +274,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- مسح رمز QR الظاهر على التلفاز للربط (يُطلب عند الضغط على «مسح رمز QR» فقط) -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <!-- إيجاد شاشة التلفاز في الشبكة المنزلية (التحكم بالتلفاز) -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
