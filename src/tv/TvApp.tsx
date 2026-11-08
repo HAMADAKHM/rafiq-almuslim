@@ -19,6 +19,10 @@ import { RECITE_MODES, TV_RECITERS } from './recite'
 import { resetRecitePos, useRecitation } from './useRecitation'
 import { voiceStatus } from './voice'
 import { reciterById } from '../content/reciters'
+import { Choices, Stepper, Toggle } from './controls'
+import { activeRule, dedicationText, orderReciters, nightDim, occasionsOn, pixelShift, PREMIUM, swapSides } from './premium'
+import { GiftPage, OledPage, PlaylistExtras, ReciterExtras, SmartDisplayPage } from './PremiumPages'
+import { toHijri } from '../services/calendar'
 
 declare const __TV_VERSION__: string
 const TV_VERSION = typeof __TV_VERSION__ === 'string' ? __TV_VERSION__ : ''
@@ -262,17 +266,32 @@ export function TvApp() {
   } : null
   const item = playingText ?? spoken ?? rotating[slide % Math.max(1, rotating.length)]
   const tone = toneFor(np.name)
+  // بريميوم: جدول العرض الفعّال يختار المشهد، والوضع الاقتصادي يوقف الحركة، وحماية الشاشة تزيح العناصر وتعتّم ليلًا
+  const pm = s.premium
+  const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(new Intl.DateTimeFormat('en-US', { timeZone: city.tz, weekday: 'short' }).format(now))
+  const rule = PREMIUM && pm.schedule.on ? activeRule(pm.schedule.rules, { now, hour, weekday, times, occasions: occasionsOn(toHijri(now, city.tz), weekday) }) : null
+  const eco = PREMIUM && pm.oled.eco
+  const view = { scene: rule ? rule.show.scene : s.scene, galleryCat: rule ? rule.show.galleryCat : s.galleryCat, animate: s.animate && !eco, quality: eco ? 'eco' as const : s.quality }
+  const shift = PREMIUM ? pixelShift(now, pm.oled.shift) : { x: 0, y: 0 }
+  const dim = PREMIUM && phase.kind === 'normal' ? nightDim(now, times, pm.oled.dim, pm.oled.dimLevel) : 0
+  const gift = PREMIUM ? dedicationText(pm.dedication) : null
+  const tr = PREMIUM ? pm.transition : null
+  const sceneKey = `${view.scene}:${view.galleryCat}`
   const left = np.time.getTime() - now.getTime()
 
   return (
-    <div className="tv">
-      {s.scene === 'gallery'
-        ? <><PhotoScene key={s.galleryCat} src={gallerySource(s.galleryCat)} minutes={s.rotateMin} shuffle={s.shuffle} animate={s.animate} className="tv-art" /><div className="tv-veil scene" /></>
-        : s.scene === 'photos' && photos && photoCount > 0
-        ? <><PhotoScene src={photos} minutes={s.rotateMin} shuffle={s.shuffle} animate={s.animate} className="tv-art" /><div className="tv-veil scene" /></>
-        : s.scene === 'classic' || !s.animate
-        ? <><PaintedScene tone={tone} variant="hero" className="tv-art" /><div className="tv-veil" />{s.animate && <SkyLife night={tone === 'night'} />}</>
-        : <><SceneCanvas scene={s.scene === 'rotate' || s.scene === 'photos' ? null : s.scene} playlist={s.playlist} rotateMin={s.rotateMin} shuffle={s.shuffle} quality={s.quality} className="tv-art" /><div className="tv-veil scene" /></>}
+    <div className={'tv' + (PREMIUM ? ' tv-premium' : '') + (PREMIUM && swapSides(hour, pm.oled.swap) ? ' swap' : '')} style={PREMIUM ? { ['--sx' as string]: `${shift.x}vw`, ['--sy' as string]: `${shift.y}vw` } : undefined}>
+      <div key={tr ? sceneKey : 'art'} data-scene={sceneKey} className={'tv-art-wrap' + (tr && tr.style !== 'none' ? ` tr-${tr.style}` : '')} style={tr ? { animationDuration: `${tr.seconds}s` } : undefined}>
+      {view.scene === 'gallery'
+        ? <><PhotoScene key={view.galleryCat} src={gallerySource(view.galleryCat)} minutes={s.rotateMin} shuffle={s.shuffle} animate={view.animate} className="tv-art" /><div className="tv-veil scene" /></>
+        : view.scene === 'photos' && photos && photoCount > 0
+        ? <><PhotoScene src={photos} minutes={s.rotateMin} shuffle={s.shuffle} animate={view.animate} className="tv-art" /><div className="tv-veil scene" /></>
+        : view.scene === 'classic' || !view.animate
+        ? <><PaintedScene tone={tone} variant="hero" className="tv-art" /><div className="tv-veil" />{view.animate && <SkyLife night={tone === 'night'} />}</>
+        : <><SceneCanvas scene={view.scene === 'rotate' || view.scene === 'photos' ? null : view.scene} playlist={s.playlist} rotateMin={s.rotateMin} shuffle={s.shuffle} quality={view.quality} className="tv-art" /><div className="tv-veil scene" /></>}
+      </div>
+      {gift && <div className="tv-gift">{gift}</div>}
+      {dim > 0 && <div className="tv-dim" style={{ opacity: dim }} aria-hidden="true" />}
 
       <header className="tv-top">
         <div className="tv-brand"><span className="tv-logo"><LogoMark size={44} /></span><div><strong>{HOME_CARD.app}</strong><small>{city.nameAr ?? city.name}</small></div></div>
@@ -292,7 +311,7 @@ export function TvApp() {
         {item && (
           <section className={'tv-card' + (playingText || spoken ? ' playing' : '')} key={playingText ? `${rec.current!.surah}:${rec.current!.ayah}` : spoken ? `d:${spoken.text.slice(0, 24)}` : slide}>
             <div className="tv-card-title">{item.title}</div>
-            <p className={'tv-card-text' + (item.quran ? ' quran' : '')}>{item.quran ? `﴿${item.text}﴾` : 'plain' in item && item.plain ? item.text : `«${item.text}»`}</p>
+            <p className={'tv-card-text' + (item.quran ? ' quran' : '') + (item.text.length > 260 ? ' xlong' : item.text.length > 150 ? ' long' : '')}>{item.quran ? `﴿${item.text}﴾` : 'plain' in item && item.plain ? item.text : `«${item.text}»`}</p>
             {item.ref && <div className="tv-card-ref">{item.ref}</div>}
             {rec.failed && <div className="tv-card-ref">تعذر تحميل التلاوة — تحقق من اتصال التلفاز بالإنترنت</div>}
           </section>
@@ -398,7 +417,7 @@ function VoiceNote() {
   )
 }
 
-type SetupPage = 'city' | 'prayer' | 'iqama' | 'scenes' | 'remote' | 'recite' | 'voice' | 'auto'
+type SetupPage = 'city' | 'prayer' | 'iqama' | 'scenes' | 'remote' | 'recite' | 'voice' | 'auto' | 'smart' | 'oled' | 'gift'
 
 /** الإعدادات التي يقرؤها الجوال ويستطيع تعديلها (RemoteCore.validate في Java يقبل هذه فقط) */
 function remoteView(s: TvSettings) {
@@ -526,32 +545,6 @@ function TvPhotosPanel({ src, on }: { src: NonNullable<ReturnType<typeof photoSo
   )
 }
 
-/** أزرار اختيار كبيرة (أسهل من القوائم المنسدلة بجهاز التحكم) */
-function Choices<T extends string | number>({ value, options, onChange, label, cols = 3 }: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void; label: string; cols?: number }) {
-  return (
-    <div className="tv-choices" role="radiogroup" aria-label={label} style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
-      {options.map((o) => <button key={String(o.id)} role="radio" aria-checked={value === o.id} className={'tv-choice' + (value === o.id ? ' on' : '')} onClick={() => onChange(o.id)}>{value === o.id ? '✓ ' : ''}{o.label}</button>)}
-    </div>
-  )
-}
-
-/** مفتاح تشغيل/إيقاف بزر كبير */
-function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
-  return <button role="switch" aria-checked={on} className={'tv-toggle' + (on ? ' on' : '')} onClick={() => onChange(!on)}><span>{label}</span><b>{on ? 'مفعّل' : 'متوقف'}</b></button>
-}
-
-/** رقم بزرّي − و + (أسهل من الكتابة بجهاز التحكم) */
-function Stepper({ value, onChange, min, max, label, suffix = '' }: { value: number; onChange: (v: number) => void; min: number; max: number; label: string; suffix?: string }) {
-  return (
-    <div className="tv-stepper" aria-label={label}>
-      <span className="tv-stepper-label">{label}</span>
-      <button className="tv-step" onClick={() => onChange(Math.max(min, value - 1))} aria-label={`إنقاص ${label}`}>−</button>
-      <b>{value}{suffix}</b>
-      <button className="tv-step" onClick={() => onChange(Math.min(max, value + 1))} aria-label={`زيادة ${label}`}>+</button>
-    </div>
-  )
-}
-
 const QUICK_SURAHS = [1, 2, 18, 36, 55, 56, 67, 112]
 
 /** مدن جاهزة للاختيار دون كتابة بجهاز التحكم */
@@ -587,6 +580,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
     ...(b?.startPairing ? [{ id: 'remote' as const, label: '📱 التحكم من الجوال' }] : []),
     { id: 'recite', label: '📖 القراءة' },
     { id: 'voice', label: '🎙 القارئ والصوت' },
+    ...(PREMIUM ? [{ id: 'smart' as const, label: '🗓 جداول العرض' }, { id: 'oled' as const, label: '🛡 حماية الشاشة' }, { id: 'gift' as const, label: '🤲 الإهداء' }] : []),
     ...(b ? [{ id: 'auto' as const, label: '⚡ التشغيل التلقائي' }] : []),
   ]
   const surahs = data?.meta.surahs ?? []
@@ -597,7 +591,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
       <div className="tv-setup-body">
         <h1><LogoMark size={40} /> إعدادات شاشة رفيق المسلم</h1>
         <div className="tv-setup-layout">
-          <nav className="tv-setup-nav" aria-label="أقسام الإعدادات">
+          <nav className={'tv-setup-nav' + (pages.length > 8 ? ' compact' : '')} aria-label="أقسام الإعدادات">
             {pages.map((p) => <button key={p.id} className={'tv-nav' + (page === p.id ? ' on' : '')} aria-current={page === p.id ? 'page' : undefined} onClick={() => setPage(p.id)} autoFocus={page === p.id}>{p.label}</button>)}
             <button className={'tv-nav save' + (draft.city ? '' : ' wait')} onClick={() => {
               // بلا مدينة لا تُحسب المواقيت: ينتقل إلى صفحة المدينة مع توضيح بدل زر معطل لا يستجيب
@@ -666,6 +660,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
                       <button className="tv-step" onClick={() => set({ reciteSurah: draft.reciteSurah >= 114 ? 1 : draft.reciteSurah + 1 })} aria-label="السورة التالية">+</button>
                     </div>
                     <Choices label="سور مختارة" cols={4} value={draft.reciteSurah} onChange={(v) => set({ reciteSurah: v })} options={QUICK_SURAHS.map((n) => ({ id: n, label: surahs[n - 1]?.name ?? String(n) }))} />
+                    {PREMIUM && <PlaylistExtras draft={draft} set={set} surahs={surahs} quick={QUICK_SURAHS} />}
                   </>
                 )}
               </>
@@ -673,7 +668,8 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
             {page === 'voice' && (
               <>
                 <h2>القارئ</h2>
-                <Choices label="القارئ" cols={3} value={draft.reciterId} onChange={(v) => set({ reciterId: v })} options={TV_RECITERS.map((id) => reciterById(id)).map((r) => ({ id: r.id, label: `${r.name}${r.style.includes('مجود') ? ' (مجود)' : ''}` }))} />
+                <Choices label="القارئ" cols={3} value={draft.reciterId} onChange={(v) => set({ reciterId: v })} options={(PREMIUM ? orderReciters(TV_RECITERS, draft.premium.quran.fav) : TV_RECITERS).map((id) => reciterById(id)).map((r) => ({ id: r.id, label: `${r.name}${r.style.includes('مجود') ? ' (مجود)' : ''}` }))} />
+                {PREMIUM && <ReciterExtras draft={draft} set={set} />}
                 <h2>صوت الأذكار</h2>
                 <Choices label="صوت الأذكار" cols={2} value={draft.adhkarVoice} onChange={(v) => set({ adhkarVoice: v })} options={[{ id: 'human' as const, label: 'تسجيل بشري فقط' }, { id: 'mixed' as const, label: 'بشري + صوت التلفاز' }]} />
                 <p className="tv-muted">التسجيل البشري من مشروع حصن المسلم، والآيات بصوت القارئ. الذكر الذي لا تسجيل له يُعرض نصه على الشاشة دون صوت آلي، إلا إن اخترت «بشري + صوت التلفاز».</p>
@@ -682,6 +678,9 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
               </>
             )}
             {page === 'auto' && b && <TvAutoStart />}
+            {page === 'smart' && <SmartDisplayPage draft={draft} set={set} />}
+            {page === 'oled' && <OledPage draft={draft} set={set} />}
+            {page === 'gift' && <GiftPage draft={draft} set={set} />}
           </section>
         </div>
         <p className="tv-muted tv-setup-foot">{SADAQAH_LINE} • الإصدار {TV_VERSION}</p>

@@ -7,6 +7,7 @@ import { ADHKAR } from '../content/adhkar'
 import { hisnAudioUrl } from '../content/hisnAudio'
 import { adhkarForNow } from '../services/daily'
 import { speak, stopVoice } from './voice'
+import { nextFromPlaylist, PREMIUM } from './premium'
 
 /** الذكر المقروء الآن بالصوت (نصوص الأذكار غير القرآنية) */
 export interface SpokenDhikr { title: string; text: string; source: string; count?: number; voice: boolean }
@@ -16,6 +17,10 @@ const MAX_SPOKEN_REPEAT = 3
 const POS_KEY = 'rafiq-tv:recite-pos'
 function loadPos(): AyahRef | null { try { return JSON.parse(localStorage.getItem(POS_KEY) || 'null') } catch { return null } }
 function savePos(p: AyahRef) { try { localStorage.setItem(POS_KEY, JSON.stringify(p)) } catch { /* اختياري */ } }
+
+/** سرعة التلاوة (بريميوم): تُطبَّق على كل ملف آية حين يدعمها متصفح التلفاز */
+let RATE = 1
+function applyRate(el: HTMLAudioElement) { try { el.defaultPlaybackRate = RATE; el.playbackRate = RATE } catch { /* غير مدعوم */ } }
 
 const sourcesFor = (r: Reciter, a: AyahRef) => (a.ayah === BASMALA_AYAH ? ayahAudioSources(r, 1, 1) : ayahAudioSources(r, a.surah, a.ayah))
 
@@ -35,6 +40,7 @@ function playPrepared(p: Prepared, cur: { current: HTMLAudioElement | null }, al
   return new Promise((resolve) => {
     const el = p.el
     cur.current = el
+    applyRate(el)
     const fail = () => {
       if (!alive()) return resolve(false)
       p.i++
@@ -139,7 +145,7 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
           // تعذر التحميل (انقطاع الإنترنت): انتظار ثم المتابعة دون ضغط على الشبكة
           if (misses >= 3) await sleep(60_000, alive)
         }
-        if (s.reciteMode === 'surah') { surah = nextSurah(surah); from = 1; savePos({ surah, ayah: 1 }) }
+        if (s.reciteMode === 'surah') { surah = PREMIUM ? nextFromPlaylist(surah, s.premium.quran.playlist, nextSurah) : nextSurah(surah); from = 1; savePos({ surah, ayah: 1 }) }
         else { setCurrent(null); await sleep(REPEAT_GAP_MS, alive) }
       }
     })()
@@ -150,6 +156,10 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
       if (pending) { pending.el.removeAttribute('src'); pending.el.load(); pending = null }
     }
   }, [active, s.reciteMode, s.reciterId, s.reciteSurah, s.adhkarVoice, ctx.day, data]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // سرعة التلاوة (بريميوم) تتغير فورًا أثناء التلاوة
+  RATE = PREMIUM ? s.premium.quran.speed : 1
+  useEffect(() => { if (audio.current) applyRate(audio.current) }, [RATE]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // تغيير مستوى الصوت أثناء التلاوة
   useEffect(() => { if (audio.current) audio.current.volume = s.reciteVolume }, [s.reciteVolume])
