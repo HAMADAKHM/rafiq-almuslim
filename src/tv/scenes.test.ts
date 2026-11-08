@@ -22,18 +22,24 @@ describe('مكتبة مشاهد التلفاز', () => {
 
 describe('إعدادات المشاهد', () => {
   beforeEach(() => localStorage.clear())
-  it('الإعدادات القديمة تبقى كما هي وتحصل على التنقل بين المشاهد افتراضيًا', () => {
+  it('الإعدادات القديمة تبقى كما هي، والخلفية الافتراضية تنقل بين الصور الجاهزة بلا صورة ثابتة', () => {
     localStorage.setItem('rafiq-tv:settings', JSON.stringify({ hour12: false, animate: true, reciteOn: true }))
     const s = loadTv()
     expect(s.hour12).toBe(false)
     expect(s.reciteOn).toBe(true)
-    expect(s.scene).toBe('rotate')
+    expect(s.scene).toBe('gallery')
+    expect(s.fixedPhoto).toBe('')
     expect(s.quality).toBe('auto')
   })
   it('القيم غير المعروفة تُستبعد، والاختيار يُحفظ ويبقى بعد إعادة التشغيل', () => {
     localStorage.setItem('rafiq-tv:settings', JSON.stringify({ scene: 'unknown', playlist: ['aurora', 'nope', 'desert'] }))
-    expect(loadTv().scene).toBe('rotate')
+    expect(loadTv().scene).toBe('gallery')
     expect(loadTv().playlist).toEqual(['aurora', 'desert'])
+    // الصورة الثابتة: معرّف آمن فقط
+    localStorage.setItem('rafiq-tv:settings', JSON.stringify({ scene: 'gallery', fixedPhoto: 'nature-03' }))
+    expect(loadTv().fixedPhoto).toBe('nature-03')
+    localStorage.setItem('rafiq-tv:settings', JSON.stringify({ scene: 'gallery', fixedPhoto: '../../x' }))
+    expect(loadTv().fixedPhoto).toBe('')
     saveTv({ ...DEFAULT_TV, scene: 'galaxy', rotateMin: 30, shuffle: false })
     expect(loadTv()).toMatchObject({ scene: 'galaxy', rotateMin: 30, shuffle: false })
   })

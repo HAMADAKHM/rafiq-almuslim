@@ -293,4 +293,12 @@ public class RemoteCoreTest {
         assertEquals(200, r2.getInt("status"));
         assertEquals("QUJD", r2.getJSONObject("body").getString("jpeg"));
     }
+
+    @Test public void fixedPhotoSetting() throws Exception {
+        assertEquals("nature-03", RemoteCore.validate(new JSONObject("{\"fixedPhoto\":\"nature-03\"}"))[0].getString("fixedPhoto"));
+        assertEquals("", RemoteCore.validate(new JSONObject("{\"fixedPhoto\":\"\"}"))[0].getString("fixedPhoto"));
+        for (String bad : new String[] { "{\"fixedPhoto\":\"../x\"}", "{\"fixedPhoto\":\"A B\"}", "{\"fixedPhoto\":5}", "{\"fixedPhoto\":\"aaaaaaaaaaaaaaaaaaaaaaaaa\"}" }) {
+            try { RemoteCore.validate(new JSONObject(bad)); throw new AssertionError("قُبل: " + bad); } catch (IllegalArgumentException expected) { /* مرفوض */ }
+        }
+    }
 }

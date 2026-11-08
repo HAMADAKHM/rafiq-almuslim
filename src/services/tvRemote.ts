@@ -19,6 +19,8 @@ export interface TvSettingsView {
   /** نسخة «بريميوم» على التلفاز: استوديو الشاشة والمعاينة متاحان */
   premium?: boolean
   studio?: StudioSettings
+  /** صورة ثابتة (معرّف) أو فارغ = تنقل بين الصور */
+  fixedPhoto?: string
 }
 
 /** وسيلة الإرسال (TvLink في التطبيق، ومحاكاة في الاختبارات) */

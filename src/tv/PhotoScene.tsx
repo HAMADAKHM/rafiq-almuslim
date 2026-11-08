@@ -48,7 +48,8 @@ export function usePhotoIds(src: PhotoSource | null): string[] {
   return ids
 }
 
-export function PhotoScene({ src, minutes, shuffle, animate, className }: { src: PhotoSource; minutes: number; shuffle: boolean; animate: boolean; className?: string }) {
+/** fixed: صورة ثابتة لا تتبدل (إن كانت موجودة)، وإلا تنقل بين الصور */
+export function PhotoScene({ src, minutes, shuffle, animate, className, fixed }: { src: PhotoSource; minutes: number; shuffle: boolean; animate: boolean; className?: string; fixed?: string }) {
   const ids = usePhotoIds(src)
   // طبقتان تتبادلان: الظاهرة والقادمة
   const [layers, setLayers] = useState<{ id: string; url: string; key: number }[]>([])
@@ -61,8 +62,9 @@ export function PhotoScene({ src, minutes, shuffle, animate, className }: { src:
     const prev = prevIds.current
     prevIds.current = ids
     const added = prev ? ids.filter((x) => !prev.includes(x)) : []
+    const still = !!fixed && ids.includes(fixed)
     const show = (force?: string) => {
-      const id = force && ids.includes(force) ? force : nextPhoto(ids, cur, shuffle)
+      const id = still ? fixed! : force && ids.includes(force) ? force : nextPhoto(ids, cur, shuffle)
       if (!id) { setLayers([]); return }
       if (id === cur) return
       const url = src.load(id)
@@ -72,12 +74,12 @@ export function PhotoScene({ src, minutes, shuffle, animate, className }: { src:
       setLayers((l) => [...l.slice(-1), { id, url, key }])
     }
     show(added[added.length - 1])
-    // صورة كل دقيقة على الأقل حتى مع مدة طويلة (التنقل بين الصور أسرع من المشاهد)
-    const t = setInterval(() => show(), Math.max(1, Math.min(minutes, 10)) * 60_000)
+    // صورة كل دقيقة على الأقل حتى مع مدة طويلة (التنقل بين الصور أسرع من المشاهد)؛ والثابتة لا تتبدل
+    const t = still ? 0 : setInterval(() => show(), Math.max(1, Math.min(minutes, 10)) * 60_000)
     const onNext = () => show()
     window.addEventListener('rafiq-next-scene', onNext)
     return () => { alive = false; clearInterval(t); window.removeEventListener('rafiq-next-scene', onNext) }
-  }, [ids.join(','), minutes, shuffle]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ids.join(','), minutes, shuffle, fixed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={className} aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', background: '#000' }}>

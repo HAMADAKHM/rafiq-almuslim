@@ -287,9 +287,9 @@ export function TvApp() {
       style={PREMIUM ? { ['--sx' as string]: `${shift.x}vw`, ['--sy' as string]: `${shift.y}vw`, ['--st-clock' as string]: st.clockScale / 100, ['--st-prayers' as string]: st.prayersScale / 100, ['--st-card' as string]: st.cardScale / 100, ['--st-accent' as string]: st.accent, ['--st-text' as string]: st.text, ['--st-font' as string]: fontCss(st.font) } : undefined}>
       <div key={tr ? sceneKey : 'art'} data-scene={sceneKey} className={'tv-art-wrap' + (tr && tr.style !== 'none' ? ` tr-${tr.style}` : '')} style={tr ? { animationDuration: `${tr.seconds}s` } : undefined}>
       {view.scene === 'gallery'
-        ? <><PhotoScene key={view.galleryCat} src={gallerySource(view.galleryCat)} minutes={s.rotateMin} shuffle={s.shuffle} animate={view.animate} className="tv-art" /><div className="tv-veil scene" /></>
+        ? <><PhotoScene key={view.galleryCat} src={gallerySource(view.galleryCat)} minutes={s.rotateMin} shuffle={s.shuffle} animate={view.animate} className="tv-art" fixed={rule ? undefined : s.fixedPhoto} /><div className="tv-veil scene" /></>
         : view.scene === 'photos' && photos && photoCount > 0
-        ? <><PhotoScene src={photos} minutes={s.rotateMin} shuffle={s.shuffle} animate={view.animate} className="tv-art" /><div className="tv-veil scene" /></>
+        ? <><PhotoScene src={photos} minutes={s.rotateMin} shuffle={s.shuffle} animate={view.animate} className="tv-art" fixed={rule ? undefined : s.fixedPhoto} /><div className="tv-veil scene" /></>
         : view.scene === 'classic' || !view.animate
         ? <><PaintedScene tone={tone} variant="hero" className="tv-art" /><div className="tv-veil" />{view.animate && <SkyLife night={tone === 'night'} />}</>
         : <><SceneCanvas scene={view.scene === 'rotate' || view.scene === 'photos' ? null : view.scene} playlist={s.playlist} rotateMin={s.rotateMin} shuffle={s.shuffle} quality={view.quality} className="tv-art" /><div className="tv-veil scene" /></>}
@@ -428,7 +428,7 @@ function remoteView(s: TvSettings) {
   return {
     scene: s.scene, playlist: s.playlist, rotateMin: s.rotateMin, shuffle: s.shuffle, quality: s.quality, animate: s.animate,
     adhan: s.adhan, hour12: s.hour12, reciteOn: s.reciteOn, reciteVolume: s.reciteVolume, clockShift: s.clockShift,
-    reciteMode: s.reciteMode, reciterId: s.reciterId, adhkarVoice: s.adhkarVoice, phrases: s.phrases, galleryCat: s.galleryCat,
+    reciteMode: s.reciteMode, reciterId: s.reciterId, adhkarVoice: s.adhkarVoice, phrases: s.phrases, galleryCat: s.galleryCat, fixedPhoto: s.fixedPhoto,
     city: s.city ? (s.city.nameAr ?? s.city.name) : '',
     // بريميوم: استوديو الشاشة والمعاينة متاحان (الجوال يُظهر الاستوديو لهذه النسخة فقط)
     ...(PREMIUM ? { premium: true, studio: s.studio } : {}),
@@ -494,18 +494,57 @@ function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSe
   const inList = (id: SceneId) => draft.playlist.includes(id)
   const toggleList = (id: SceneId) => set({ playlist: inList(id) ? draft.playlist.filter((x) => x !== id) : [...draft.playlist, id] })
   const cats = [...new Set(SCENES.map((x) => x.category))]
+  const photoIds = usePhotoIds(photos)
+  const bgMode: 'fixed' | 'rotate' | 'scenes' = draft.scene === 'gallery' || draft.scene === 'photos' ? (draft.fixedPhoto ? 'fixed' : 'rotate') : 'scenes'
+  // الصور المتاحة للتثبيت: صور التصنيف المختار، أو صور الجوال
+  const pool = draft.scene === 'photos' ? photoIds : galleryIds(draft.galleryCat)
   return (
     <>
-      <h2>مشاهد الشاشة</h2>
-      <p className="tv-muted">مشاهد حيّة مرسومة داخل التطبيق (لا تحتاج إنترنت). اختر مشهدًا واحدًا، أو دع الشاشة تتنقل بين مشاهدك المفضلة بتلاشٍ ناعم.</p>
-      <Choices label="طريقة العرض" cols={photos ? 5 : 4} value={draft.scene === 'rotate' || draft.scene === 'classic' || draft.scene === 'photos' || draft.scene === 'gallery' ? draft.scene : 'one'}
-        onChange={(v) => set({ scene: v === 'one' ? (focus ?? SCENES[0].id) : v as 'rotate' | 'classic' | 'photos' | 'gallery' })}
-        options={[{ id: 'gallery', label: 'صور جاهزة' }, { id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي (طيور وغيوم)' }, ...(photos ? [{ id: 'photos' as const, label: 'صوري من الجوال' }] : [])]} />
-      {draft.scene === 'gallery' && (
-        <Choices label="تصنيف الصور" cols={6} value={draft.galleryCat} onChange={(c) => set({ galleryCat: c })}
-          options={GALLERY_CATS.map((c) => ({ id: c.id, label: `${c.label} (${galleryIds(c.id).length})` }))} />
+      <h2>خلفية الشاشة</h2>
+      <p className="tv-muted">صورة واحدة ثابتة، أو تنقل بين الصور بتلاشٍ ناعم. والمشاهد المرسومة اختيار إضافي لمن يريدها.</p>
+      <Choices label="نوع الخلفية" cols={3} value={bgMode} onChange={(m) => {
+        if (m === 'scenes') set({ scene: draft.scene === 'gallery' || draft.scene === 'photos' ? 'rotate' : draft.scene, fixedPhoto: '' })
+        else set({ scene: draft.scene === 'gallery' || draft.scene === 'photos' ? draft.scene : 'gallery', fixedPhoto: m === 'fixed' ? (draft.fixedPhoto || pool[0] || '') : '' })
+      }} options={[{ id: 'fixed', label: '🖼 صورة ثابتة' }, { id: 'rotate', label: '🔁 تنقل بين الصور' }, { id: 'scenes', label: '🌌 مشاهد مرسومة' }]} />
+      {bgMode !== 'scenes' && (
+        <>
+          {photos && <Choices label="مصدر الصور" cols={2} value={draft.scene === 'photos' ? 'photos' : 'gallery'} onChange={(v) => set({ scene: v, fixedPhoto: '' })} options={[{ id: 'gallery' as const, label: 'صور جاهزة' }, { id: 'photos' as const, label: 'صوري من الجوال' }]} />}
+          {draft.scene === 'gallery' && (
+            <Choices label="تصنيف الصور" cols={6} value={draft.galleryCat} onChange={(c) => set({ galleryCat: c, fixedPhoto: '' })}
+              options={GALLERY_CATS.map((c) => ({ id: c.id, label: `${c.label} (${galleryIds(c.id).length})` }))} />
+          )}
+          {bgMode === 'fixed' && (
+            pool.length ? (
+              <>
+                <p className="tv-muted">اختر الصورة التي تبقى على الشاشة:</p>
+                <div className="tv-photo-grid pick" role="radiogroup" aria-label="الصورة الثابتة">
+                  {pool.map((id) => (
+                    <button key={id} role="radio" aria-checked={draft.fixedPhoto === id} aria-label={`الصورة ${pool.indexOf(id) + 1}`} className={'tv-photo-pick' + (draft.fixedPhoto === id ? ' on' : '')} onClick={() => set({ fixedPhoto: id })}>
+                      <img src={draft.scene === 'photos' ? photos!.load(id) : `./tv-photos/${id}.jpg`} alt="" loading="lazy" />
+                      {draft.fixedPhoto === id && <b>✓</b>}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : <p className="tv-muted">لا صور بعد: أرسلها من الجوال (التحكم بالتلفاز ← خلفيات من صورك).</p>
+          )}
+          {bgMode === 'rotate' && (
+            <>
+              <Choices label="مدة كل صورة" cols={5} value={draft.rotateMin} onChange={(m) => set({ rotateMin: m })}
+                options={[{ id: 5, label: '5 دقائق' }, { id: 10, label: '10 دقائق' }, { id: 20, label: '20 دقيقة' }, { id: 30, label: '30 دقيقة' }, { id: 60, label: 'ساعة' }]} />
+              <Toggle on={draft.shuffle} onChange={(v) => set({ shuffle: v })} label="ترتيب عشوائي" />
+            </>
+          )}
+          {photos && draft.scene === 'photos' && <TvPhotosPanel src={photos} on />}
+        </>
       )}
-      {photos && <TvPhotosPanel src={photos} on={draft.scene === 'photos'} />}
+      {bgMode === 'scenes' && (
+        <>
+          <h2>المشاهد المرسومة</h2>
+          <p className="tv-muted">مشاهد حيّة مرسومة داخل التطبيق (لا تحتاج إنترنت). اختر مشهدًا واحدًا، أو دع الشاشة تتنقل بين مشاهدك المفضلة.</p>
+          <Choices label="طريقة عرض المشاهد" cols={3} value={draft.scene === 'rotate' || draft.scene === 'classic' ? draft.scene : 'one'}
+            onChange={(v) => set({ scene: v === 'one' ? (focus ?? SCENES[0].id) : v as 'rotate' | 'classic' })}
+            options={[{ id: 'one', label: 'مشهد واحد' }, { id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'classic', label: 'الرسم الأصلي (طيور وغيوم)' }]} />
       {cats.map((cat) => (
         <div key={cat}>
           <h3 className="tv-muted" style={{ margin: '0.6rem 0 0.3rem' }}>{cat}</h3>
@@ -522,21 +561,23 @@ function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSe
           </div>
         </div>
       ))}
-      {focus && <p className="tv-muted">{sceneInfo(focus)?.note}</p>}
-      {(draft.scene === 'rotate' || draft.scene === 'photos' || draft.scene === 'gallery') && (
-        <>
-          {draft.scene === 'rotate' && <p className="tv-muted">{draft.playlist.length ? `قائمة التنقل: ${draft.playlist.map((id) => sceneInfo(id)?.name).join('، ')}` : 'لم تختر مفضلة: تتنقل الشاشة بين كل المشاهد.'}</p>}
-          <Choices label="مدة كل مشهد" cols={5} value={draft.rotateMin} onChange={(m) => set({ rotateMin: m })}
-            options={[{ id: 5, label: '5 دقائق' }, { id: 10, label: '10 دقائق' }, { id: 20, label: '20 دقيقة' }, { id: 30, label: '30 دقيقة' }, { id: 60, label: 'ساعة' }]} />
-          <Toggle on={draft.shuffle} onChange={(v) => set({ shuffle: v })} label="ترتيب عشوائي" />
-          {draft.playlist.length > 1 && <button className="tv-btn" onClick={() => set({ playlist: [] })}>مسح قائمة التنقل (العودة لكل المشاهد)</button>}
+          {focus && <p className="tv-muted">{sceneInfo(focus)?.note}</p>}
+          {draft.scene === 'rotate' && (
+            <>
+              <p className="tv-muted">{draft.playlist.length ? `قائمة التنقل: ${draft.playlist.map((id) => sceneInfo(id)?.name).join('، ')}` : 'لم تختر مفضلة: تتنقل الشاشة بين كل المشاهد.'}</p>
+              <Choices label="مدة كل مشهد" cols={5} value={draft.rotateMin} onChange={(m) => set({ rotateMin: m })}
+                options={[{ id: 5, label: '5 دقائق' }, { id: 10, label: '10 دقائق' }, { id: 20, label: '20 دقيقة' }, { id: 30, label: '30 دقيقة' }, { id: 60, label: 'ساعة' }]} />
+              <Toggle on={draft.shuffle} onChange={(v) => set({ shuffle: v })} label="ترتيب عشوائي" />
+              {draft.playlist.length > 1 && <button className="tv-btn" onClick={() => set({ playlist: [] })}>مسح قائمة التنقل (العودة لكل المشاهد)</button>}
+            </>
+          )}
         </>
       )}
       <Choices label="الجودة" cols={3} value={draft.quality} onChange={(q) => set({ quality: q })}
         options={[{ id: 'auto', label: 'تلقائي (Full HD)' }, { id: 'eco', label: 'اقتصادي (تلفاز ضعيف)' }, { id: 'high', label: 'عالية (حتى 4K)' }]} />
       <Toggle on={draft.animate} onChange={(v) => set({ animate: v })} label="الحركة (أوقفها في التلفزيونات البطيئة جدًا)" />
       <Toggle on={draft.phrases} onChange={(v) => set({ phrases: v })} label="«عبارة اليوم» مع الآية والحديث والذكر والدعاء (تتغير كل يوم)" />
-      <button className="tv-btn" onClick={() => set({ scene: DEFAULT_TV.scene, playlist: [], rotateMin: DEFAULT_TV.rotateMin, shuffle: true, quality: 'auto', animate: true })}>إعادة الإعداد الافتراضي للمشاهد</button>
+      <button className="tv-btn" onClick={() => set({ scene: DEFAULT_TV.scene, fixedPhoto: '', playlist: [], rotateMin: DEFAULT_TV.rotateMin, shuffle: true, quality: 'auto', animate: true })}>إعادة الإعداد الافتراضي للخلفية</button>
     </>
   )
 }
@@ -594,7 +635,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
     { id: 'city', label: '📍 المدينة' },
     { id: 'prayer', label: '🕌 الصلاة والأذان' },
     { id: 'iqama', label: '⏱ الإقامة' },
-    { id: 'scenes', label: '🌌 المشاهد' },
+    { id: 'scenes', label: '🖼 الخلفية' },
     ...(b?.startPairing ? [{ id: 'remote' as const, label: '📱 التحكم من الجوال' }] : []),
     { id: 'recite', label: '📖 القراءة' },
     { id: 'voice', label: '🎙 القارئ والصوت' },

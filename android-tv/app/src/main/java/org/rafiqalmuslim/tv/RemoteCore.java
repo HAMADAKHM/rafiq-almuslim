@@ -228,6 +228,10 @@ final class RemoteCore {
                     screen.put(k, v); break;
                 case "clockShift": screen.put(k, intIn(v, k, -60, 60, new int[] { -60, 0, 60 })); break;
                 case "studio": screen.put(k, validStudio(v)); break;
+                case "fixedPhoto":
+                    // صورة ثابتة: معرّف صورة جاهزة (nature-03) أو صورة من الجوال، أو فارغ = تنقل بين الصور
+                    if (!(v instanceof String) || !((String) v).matches("[a-z0-9-]{0,24}")) throw new IllegalArgumentException(k);
+                    screen.put(k, v); break;
                 case "idleMinutes": nat.put(k, intIn(v, k, 0, 30, new int[] { 0, 5, 10, 15, 30 })); break;
                 case "idleTakeover": case "autostart":
                     if (!(v instanceof Boolean)) throw new IllegalArgumentException(k);

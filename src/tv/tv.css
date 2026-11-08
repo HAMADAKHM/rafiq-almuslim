@@ -228,3 +228,10 @@ button, input, select { font: inherit; }
 .tv-premium.st-no-card .tv-clock { text-align: center; }
 .tv-pair-qr { display: flex; flex-direction: column; align-items: center; gap: 0.6vw; margin-top: 0.8vw; }
 .tv-pair-qr svg { width: 13vw; height: 13vw; border-radius: 0.6vw; }
+/* اختيار الصورة الثابتة بجهاز التحكم */
+.tv-photo-grid.pick { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.8vw; }
+.tv-photo-pick { position: relative; padding: 0; border-radius: 0.8vw; overflow: hidden; border: 0.25vw solid transparent; background: #000; cursor: pointer; height: 7.4vw; }
+.tv-photo-pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tv-photo-pick.on { border-color: #E2C27E; }
+.tv-photo-pick b { position: absolute; top: 0.4vw; right: 0.4vw; background: #E2C27E; color: #2a2208; border-radius: 50%; width: 2vw; height: 2vw; display: flex; align-items: center; justify-content: center; font-size: 1.2vw; }
+.tv-photo-pick:focus { outline: 0.3vw solid #fff; outline-offset: 0.15vw; }
