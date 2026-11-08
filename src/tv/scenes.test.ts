@@ -48,12 +48,17 @@ describe('إعدادات المشاهد', () => {
 describe('الصور الجاهزة لشاشة التلفاز', async () => {
   const { GALLERY, galleryIds, gallerySource } = await import('./gallery')
   const { existsSync } = await import('node:fs')
-  it('ستة وثمانون صورة مصنفة، ولكل منها ملف، والتصنيف يرشّح القائمة', () => {
-    expect(GALLERY).toHaveLength(86)
-    for (const p of GALLERY) expect(existsSync(`tv-photos/${p.id}.jpg`), p.id).toBe(true)
-    expect(galleryIds('islamic')).toHaveLength(14)
-    expect(galleryIds('all')).toHaveLength(86)
-    expect(galleryIds('clubs')).toHaveLength(11)
+  it('141 صورة مصنفة، ولكل منها ملف ومصغّرة، والتصنيف يرشّح القائمة', () => {
+    expect(GALLERY).toHaveLength(141)
+    for (const p of GALLERY) {
+      expect(existsSync(`tv-photos/${p.id}.jpg`), p.id).toBe(true)
+      expect(existsSync(`tv-photos/thumbs/${p.id}.jpg`), `مصغّرة ${p.id}`).toBe(true)
+    }
+    expect(galleryIds('islamic')).toHaveLength(24)
+    expect(galleryIds('nature')).toHaveLength(59)
+    expect(galleryIds('sport')).toHaveLength(22)
+    expect(galleryIds('all')).toHaveLength(141)
+    expect(galleryIds('clubs')).toHaveLength(16)
     expect(gallerySource('space').load('space-01')).toBe('./tv-photos/space-01.jpg')
   })
   it('الإعداد يقبل وضع الصور الجاهزة وتصنيفه، ويرفض التصنيف المجهول', () => {

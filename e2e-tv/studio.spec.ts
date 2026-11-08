@@ -71,3 +71,11 @@ test('النسخة الجديدة: رمز الربط بالأرقام كما ه�
   await expect(page.locator('.tv-pair-code')).toHaveText('048 213')
   await expect(page.getByRole('img', { name: 'رمز QR للربط' })).toHaveCount(0)
 })
+
+test('زر «التحكم من الجوال» على الشاشة الرئيسية يفتح صفحة الربط مباشرة (تطبيق Android TV)', async ({ page }) => {
+  await fakeBridge(page, [])
+  await open(page, '/tv.html?app=1', { city: CITY })
+  await page.getByRole('button', { name: '📱 التحكم من الجوال' }).click()
+  await expect(page.getByRole('heading', { name: 'التحكم من الجوال' })).toBeVisible()
+  await expect(page.locator('.tv-pair-code')).toHaveText('048 213')
+})
