@@ -72,20 +72,15 @@ test('النسخة الجديدة: رمز الربط بالأرقام كما ه�
   await expect(page.getByRole('img', { name: 'رمز QR للربط' })).toHaveCount(0)
 })
 
-test('زر «التحكم من الجوال» على الشاشة الرئيسية يفتح صفحة الربط مباشرة (تطبيق Android TV)', async ({ page }) => {
+test('الشريط السفلي كما كان: تشغيل القراءة، وواجهة التلفاز، والإعدادات — وكل أقسام الإعدادات وزر الحفظ ظاهرة', async ({ page }) => {
   await fakeBridge(page, [])
+  await page.addInitScript(() => { const w = window as unknown as { RafiqTV: Record<string, unknown> }; w.RafiqTV.openOriginalHome = () => true; w.RafiqTV.getApps = () => '[]' })
   await open(page, '/tv.html?app=1', { city: CITY })
-  await page.getByRole('button', { name: '📱 التحكم من الجوال' }).click()
-  await expect(page.getByRole('heading', { name: 'التحكم من الجوال' })).toBeVisible()
-  await expect(page.locator('.tv-pair-code')).toHaveText('048 213')
-})
-
-test('زر «التشغيل التلقائي» على الشاشة الرئيسية يفتح صفحته، وكل أقسام الإعدادات وزر الحفظ ظاهرة', async ({ page }) => {
-  await fakeBridge(page, [])
-  await open(page, '/tv.html?app=1', { city: CITY })
-  await page.getByRole('button', { name: '⚡ التشغيل التلقائي' }).click()
-  await expect(page.getByRole('button', { name: /⚡ التشغيل التلقائي/ })).toHaveAttribute('aria-current', 'page')
+  const bar = page.locator('.tv-actions')
+  for (const n of ['تشغيل القراءة', 'واجهة التلفاز', 'الإعدادات']) await expect(bar.getByRole('button', { name: new RegExp(n) })).toBeInViewport()
+  await expect(bar.getByRole('button')).toHaveCount(3)
+  await page.getByRole('button', { name: 'الإعدادات' }).click()
   const nav = page.getByRole('navigation', { name: 'أقسام الإعدادات' })
-  for (const n of ['المدينة', 'الخلفية', 'التحكم من الجوال', 'القارئ والصوت', 'التشغيل التلقائي']) await expect(nav.getByRole('button', { name: new RegExp(n) })).toBeAttached()
+  for (const n of ['المدينة', 'المشاهد', 'التحكم من الجوال', 'القارئ والصوت', 'التشغيل التلقائي']) await expect(nav.getByRole('button', { name: new RegExp(n) })).toBeAttached()
   await expect(nav.getByRole('button', { name: /حفظ وعرض الشاشة/ })).toBeInViewport()
 })

@@ -69,8 +69,7 @@ export const DEFAULT_TV: TvSettings = {
   fixedPhoto: '',
   clockShift: 0,
   animate: true,
-  // الافتراضي: تنقل بين الصور الجاهزة (المشاهد المرسومة اختيار إضافي)
-  scene: 'gallery',
+  scene: 'rotate',
   playlist: [],
   rotateMin: 10,
   shuffle: true,

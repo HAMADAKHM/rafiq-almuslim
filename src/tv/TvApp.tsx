@@ -104,7 +104,6 @@ function useRotating(data: QuranData | null, day: string, phrases: boolean) {
 export function TvApp() {
   const [s, setS] = useState<TvSettings>(() => loadTv())
   const [setup, setSetup] = useState(() => !loadTv().city)
-  const [setupPage, setSetupPage] = useState<SetupPage | null>(null)
   const [data, setData] = useState<QuranData | null>(null)
   const [unlocked, setUnlocked] = useState(IN_APP)
   const [slide, setSlide] = useState(0)
@@ -252,7 +251,7 @@ export function TvApp() {
   }, [s.reciteOn]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (DREAM && (!city || !times || !np)) return <div className="tv tv-dream-empty"><p>افتح تطبيق «شاشة رفيق المسلم» واختر مدينتك لتظهر المواقيت هنا.</p></div>
-  if (setup || !city || !times || !np) return <TvSetup s={s} data={data} startPage={setupPage} onSave={(next) => { saveTv(next); setS(next); setSetup(false) }} canCancel={!!city} onCancel={() => setSetup(false)} />
+  if (setup || !city || !times || !np) return <TvSetup s={s} data={data} onSave={(next) => { saveTv(next); setS(next); setSetup(false) }} canCancel={!!city} onCancel={() => setSetup(false)} />
 
   const playingText = rec.current && data ? {
     title: 'تلاوة الآن',
@@ -340,9 +339,7 @@ export function TvApp() {
           {bridge()?.openOriginalHome
             ? <button className="tv-btn" onClick={() => { const b = bridge()!; if (!b.openOriginalHome!()) { try { setApps(JSON.parse(b.getApps?.() ?? '[]') as TvAppEntry[]) } catch { setApps([]) } } }}>واجهة التلفاز</button>
             : bridge()?.getApps && <button className="tv-btn" onClick={() => { try { setApps(JSON.parse(bridge()!.getApps!()) as TvAppEntry[]) } catch { setApps([]) } }}>التطبيقات</button>}
-          {bridge()?.startPairing && <button className="tv-btn" onClick={() => { setSetupPage('remote'); setSetup(true) }}>📱 التحكم من الجوال</button>}
-          {bridge() && <button className="tv-btn" onClick={() => { setSetupPage('auto'); setSetup(true) }}>⚡ التشغيل التلقائي</button>}
-          <button className="tv-btn" onClick={() => { setSetupPage(null); setSetup(true) }}>الإعدادات</button>
+          <button className="tv-btn" onClick={() => setSetup(true)}>الإعدادات</button>
           <span className="tv-hint">{TV_VERSION}</span>
         </span>}
       </footer>
@@ -622,9 +619,9 @@ export function quickCities(cities: City[]): City[] {
 }
 
 /** إعدادات الشاشة: صفحات قصيرة بأزرار كبيرة تُستخدم بأسهم جهاز التحكم وزر الموافقة، بلا تمرير */
-function TvSetup({ s, data, startPage, onSave, canCancel, onCancel }: { s: TvSettings; data: QuranData | null; startPage?: SetupPage | null; onSave: (s: TvSettings) => void; canCancel: boolean; onCancel: () => void }) {
+function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data: QuranData | null; onSave: (s: TvSettings) => void; canCancel: boolean; onCancel: () => void }) {
   const [draft, setDraft] = useState<TvSettings>(s)
-  const [page, setPage] = useState<SetupPage>(s.city ? startPage ?? 'prayer' : 'city')
+  const [page, setPage] = useState<SetupPage>(s.city ? 'prayer' : 'city')
   const [q, setQ] = useState('')
   const [cities, setCities] = useState<City[] | null>(null)
   useEffect(() => { loadCities().then(setCities).catch(() => {}) }, [])
@@ -636,7 +633,7 @@ function TvSetup({ s, data, startPage, onSave, canCancel, onCancel }: { s: TvSet
     { id: 'city', label: '📍 المدينة' },
     { id: 'prayer', label: '🕌 الصلاة والأذان' },
     { id: 'iqama', label: '⏱ الإقامة' },
-    { id: 'scenes', label: '🖼 الخلفية' },
+    { id: 'scenes', label: '🌌 المشاهد' },
     ...(b?.startPairing ? [{ id: 'remote' as const, label: '📱 التحكم من الجوال' }] : []),
     { id: 'recite', label: '📖 القراءة' },
     { id: 'voice', label: '🎙 القارئ والصوت' },
