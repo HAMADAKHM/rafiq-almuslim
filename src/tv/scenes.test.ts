@@ -40,19 +40,22 @@ describe('إعدادات المشاهد', () => {
 })
 
 describe('الصور الجاهزة لشاشة التلفاز', async () => {
-  const { GALLERY, galleryIds, gallerySource } = await import('./gallery')
+  const { GALLERY, GALLERY_CATS, galleryIds, gallerySource } = await import('./gallery')
   const { existsSync } = await import('node:fs')
-  it('ستة وثمانون صورة مصنفة، ولكل منها ملف، والتصنيف يرشّح القائمة', () => {
-    expect(GALLERY).toHaveLength(86)
+  it('الصور الجاهزة عالية الدقة فقط، ولكل منها ملف، والتصنيف الفارغ يعرض الكل ولا يظهر في القائمة', () => {
+    expect(GALLERY).toHaveLength(1)
     for (const p of GALLERY) expect(existsSync(`tv-photos/${p.id}.jpg`), p.id).toBe(true)
-    expect(galleryIds('islamic')).toHaveLength(14)
-    expect(galleryIds('all')).toHaveLength(86)
-    expect(galleryIds('clubs')).toHaveLength(11)
-    expect(gallerySource('space').load('space-01')).toBe('./tv-photos/space-01.jpg')
+    expect(galleryIds('islamic')).toEqual(['islamic-01'])
+    expect(galleryIds('all')).toEqual(['islamic-01'])
+    expect(galleryIds('nature')).toEqual(['islamic-01'])
+    expect(GALLERY_CATS.map((c) => c.id)).toEqual(['all', 'islamic'])
+    expect(gallerySource('islamic').load('islamic-01')).toBe('./tv-photos/islamic-01.jpg')
   })
-  it('الإعداد يقبل وضع الصور الجاهزة وتصنيفه، ويرفض التصنيف المجهول', () => {
+  it('الإعداد يقبل وضع الصور الجاهزة وتصنيفه، والتصنيف الفارغ أو المجهول يصير «الكل»', () => {
+    localStorage.setItem('rafiq-tv:settings', JSON.stringify({ scene: 'gallery', galleryCat: 'islamic' }))
+    expect(loadTv()).toMatchObject({ scene: 'gallery', galleryCat: 'islamic' })
     localStorage.setItem('rafiq-tv:settings', JSON.stringify({ scene: 'gallery', galleryCat: 'nature' }))
-    expect(loadTv()).toMatchObject({ scene: 'gallery', galleryCat: 'nature' })
+    expect(loadTv().galleryCat).toBe('all')
     localStorage.setItem('rafiq-tv:settings', JSON.stringify({ scene: 'gallery', galleryCat: 'x' }))
     expect(loadTv().galleryCat).toBe('all')
   })
