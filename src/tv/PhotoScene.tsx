@@ -1,6 +1,6 @@
 // «صوري من الجوال»: خلفيات أرسلها المستخدم من تطبيق رفيق المسلم بلس، تُعرض بتلاشٍ ناعم وتقريب بطيء.
 // الصور محفوظة داخل تطبيق التلفاز فقط (Backgrounds.java)، وتُقرأ عبر الجسر عند الحاجة.
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export interface PhotoSource {
   /** معرّفات الصور بترتيب إضافتها */
@@ -52,24 +52,28 @@ export function PhotoScene({ src, minutes, shuffle, animate, className }: { src:
   const ids = usePhotoIds(src)
   // طبقتان تتبادلان: الظاهرة والقادمة
   const [layers, setLayers] = useState<{ id: string; url: string; key: number }[]>([])
+  const prevIds = useRef<string[] | null>(null)
+  const keyRef = useRef(0)
   useEffect(() => {
     let alive = true
     let cur: string | null = null
-    let k = 0
-    const show = () => {
-      const id = nextPhoto(ids, cur, shuffle)
+    // صورة وصلت الآن من الجوال: تظهر فورًا بدل انتظار دورها في التنقل
+    const prev = prevIds.current
+    prevIds.current = ids
+    const added = prev ? ids.filter((x) => !prev.includes(x)) : []
+    const show = (force?: string) => {
+      const id = force && ids.includes(force) ? force : nextPhoto(ids, cur, shuffle)
       if (!id) { setLayers([]); return }
-      if (id === cur && k > 0) return
+      if (id === cur) return
       const url = src.load(id)
       if (!url || !alive) return
       cur = id
-      k += 1
-      const key = k
+      const key = ++keyRef.current
       setLayers((l) => [...l.slice(-1), { id, url, key }])
     }
-    show()
+    show(added[added.length - 1])
     // صورة كل دقيقة على الأقل حتى مع مدة طويلة (التنقل بين الصور أسرع من المشاهد)
-    const t = setInterval(show, Math.max(1, Math.min(minutes, 10)) * 60_000)
+    const t = setInterval(() => show(), Math.max(1, Math.min(minutes, 10)) * 60_000)
     const onNext = () => show()
     window.addEventListener('rafiq-next-scene', onNext)
     return () => { alive = false; clearInterval(t); window.removeEventListener('rafiq-next-scene', onNext) }

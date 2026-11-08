@@ -145,7 +145,11 @@ function TvPhotos({ tv, showing, onShow, disabled }: { tv: PairedTv; showing: bo
     }
     setProgress(null)
     if (input.current) input.current.value = ''
-    if (done) toast(done === 1 ? 'وصلت الصورة إلى التلفاز' : `وصلت ${done} صور إلى التلفاز`)
+    if (done) {
+      // تظهر الصورة على الشاشة مباشرة: إن لم تكن «صوري» هي المعروضة تُختار تلقائيًا
+      if (!showing) onShow()
+      toast(done === 1 ? 'وصلت الصورة إلى التلفاز وتظهر الآن على الشاشة' : `وصلت ${done} صور إلى التلفاز وتظهر الآن على الشاشة`)
+    }
     if (files.length > pick.length) toast(`أُرسلت ${pick.length} فقط: الحد ${MAX_TV_BACKGROUNDS} صورة على التلفاز`)
   }
   const del = async (id: string) => {
