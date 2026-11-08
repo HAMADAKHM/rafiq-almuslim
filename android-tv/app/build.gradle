@@ -20,11 +20,26 @@ android {
     namespace 'org.rafiqalmuslim.tv'
     compileSdk 36
     defaultConfig {
-        applicationId 'org.rafiqalmuslim.tv.next'
         minSdk 21
         targetSdk 36
         versionCode((System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger())
         versionName pkg.version
+    }
+    buildFeatures { buildConfig true }
+    // نسختان مستقلتان من الكود نفسه: «الجديدة» كما هي، و«بريميوم» بمعرّف مختلف تُثبَّت بجانبها ولا تمسها.
+    // مزايا بريميوم في الواجهة لا تظهر إلا في نسختها (BuildConfig.PREMIUM ← الرابط ?ed=premium).
+    flavorDimensions 'edition'
+    productFlavors {
+        next {
+            dimension 'edition'
+            applicationId 'org.rafiqalmuslim.tv.next'
+            buildConfigField 'boolean', 'PREMIUM', 'false'
+        }
+        premium {
+            dimension 'edition'
+            applicationId 'org.rafiqalmuslim.tv.premium'
+            buildConfigField 'boolean', 'PREMIUM', 'true'
+        }
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

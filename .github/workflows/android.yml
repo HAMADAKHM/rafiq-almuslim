@@ -119,11 +119,13 @@ jobs:
         run: |
           chmod +x gradlew
           set -o pipefail
-          ./gradlew testDebugUnitTest assembleDebug 2>&1 | tee tv-build.log || { grep -E "error:|FAILED|Exception|expected" tv-build.log | head -20 | sed 's/^/::error::/'; exit 1; }
+          ./gradlew testNextDebugUnitTest assembleNextDebug assemblePremiumDebug 2>&1 | tee tv-build.log || { grep -E "error:|FAILED|Exception|expected" tv-build.log | head -20 | sed 's/^/::error::/'; exit 1; }
       - uses: actions/upload-artifact@v4
         with:
           name: rafiq-almuslim-tv-apk
-          path: android-tv/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            android-tv/app/build/outputs/apk/next/debug/app-next-debug.apk
+            android-tv/app/build/outputs/apk/premium/debug/app-premium-debug.apk
       # على الفرع الرئيسي فقط: يُنشر الملف كإصدار (Release) برابط ثابت:
       # https://github.com/<المالك>/<المستودع>/releases/latest/download/RafiqAlMuslim.apk
       # معطّل في فرع النسخة الجديدة: الرابط الثابت releases/latest/download/RafiqAlMuslim.apk يخص
@@ -133,7 +135,7 @@ jobs:
         run: |
           WANT=$(keytool -list -v -keystore ~/.android/debug.keystore -storepass android | grep -m1 "SHA256:" | sed 's/.*SHA256: //' | tr -d ':' | tr 'A-F' 'a-f')
           SIGNER=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
-          for apk in android/app/build/outputs/apk/debug/app-debug.apk android-tv/app/build/outputs/apk/debug/app-debug.apk; do
+          for apk in android/app/build/outputs/apk/debug/app-debug.apk android-tv/app/build/outputs/apk/next/debug/app-next-debug.apk android-tv/app/build/outputs/apk/premium/debug/app-premium-debug.apk; do
             GOT=$("$SIGNER" verify --print-certs "$apk" | grep -m1 "SHA-256 digest" | sed 's/.*: //')
             echo "$apk $GOT"
             [ "$GOT" = "$WANT" ] || { echo "::error::$apk signed with a different key"; exit 1; }
@@ -158,8 +160,9 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           cp android/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslimNew.apk
-          cp android-tv/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslimTVNew.apk
-          gh release create "new-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslimNew.apk RafiqAlMuslimTVNew.apk \
+          cp android-tv/app/build/outputs/apk/next/debug/app-next-debug.apk RafiqAlMuslimTVNew.apk
+          cp android-tv/app/build/outputs/apk/premium/debug/app-premium-debug.apk RafiqAlMuslimTVPremium.apk
+          gh release create "new-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslimNew.apk RafiqAlMuslimTVNew.apk RafiqAlMuslimTVPremium.apk \
             --target "${{ github.sha }}" --prerelease \
             --title "رفيق المسلم الجديد $VERSION — نسخة معاينة (${{ github.ref_name }})" \
-            --notes "النسخة الجديدة المستقلة — تُثبَّت بجانب النسخ الأصلية دون أن تمسها (معرّف مختلف وبيانات منفصلة). للهاتف: RafiqAlMuslimNew.apk. لشاشة Android TV: RafiqAlMuslimTVNew.apk. لا دفع حقيقي في هذه النسخة."
+            --notes "النسخة الجديدة المستقلة — تُثبَّت بجانب النسخ الأصلية دون أن تمسها (معرّف مختلف وبيانات منفصلة). للهاتف: RafiqAlMuslimNew.apk. لشاشة Android TV: RafiqAlMuslimTVNew.apk، ونسخة التلفاز المستقلة «بريميوم» (معرّف مختلف): RafiqAlMuslimTVPremium.apk. لا دفع حقيقي في هذه النسخة."

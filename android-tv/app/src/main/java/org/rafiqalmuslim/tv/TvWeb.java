@@ -62,7 +62,7 @@ final class TvWeb {
         web.addJavascriptInterface(new Photos(ctx.getApplicationContext()), "RafiqPhotos");
         if (!dream) web.addJavascriptInterface(new Speech(ctx.getApplicationContext(), web), "RafiqVoice");
         // app=1: الصوت مسموح دون ضغطة؛ dream=1: وضع شاشة التوقف (بلا أزرار)
-        web.loadUrl(BASE + (dream ? "?app=1&dream=1" : "?app=1"));
+        web.loadUrl(BASE + (dream ? "?app=1&dream=1" : "?app=1") + (BuildConfig.PREMIUM ? "&ed=premium" : ""));
         return web;
     }
 
