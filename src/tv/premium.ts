@@ -1,5 +1,5 @@
 // «رفيق المسلم TV بريميوم»: مزايا تظهر في نسخة بريميوم المستقلة فقط (org.rafiqalmuslim.tv.premium)،
-// فوق الشاشة الحالية دون إعادة بناء ما فيها: جداول العرض الذكية، وحماية شاشات OLED، وإضافات التلاوة، والإهداء.
+// فوق الشاشة الحالية دون إعادة بناء ما فيها: جداول العرض الذكية، وحماية شاشات OLED، وإضافات التلاوة.
 // منطق نقي هنا ليُختبر (premium.test.ts)، والواجهة في TvApp.
 import type { DayTimes } from '../services/prayer'
 import type { HijriDate } from '../services/calendar'
@@ -49,8 +49,6 @@ export interface PremiumSettings {
   oled: { shift: boolean; swap: boolean; dim: boolean; dimLevel: number; eco: boolean }
   /** التلاوة: القراء المفضلون، وقائمة سور، وسرعة التشغيل */
   quran: { fav: string[]; playlist: number[]; speed: number }
-  /** إهداء صدقة جارية باسم يختاره المستخدم، ويمكن إخفاؤه */
-  dedication: { on: boolean; name: string; deceased: boolean }
 }
 
 export const DEFAULT_PREMIUM: PremiumSettings = {
@@ -58,7 +56,6 @@ export const DEFAULT_PREMIUM: PremiumSettings = {
   transition: { style: 'fade', seconds: 3 },
   oled: { shift: true, swap: false, dim: false, dimLevel: 0.35, eco: false },
   quran: { fav: [], playlist: [], speed: 1 },
-  dedication: { on: false, name: '', deceased: true },
 }
 
 export const SPEEDS = [0.75, 1, 1.25, 1.5]
@@ -93,7 +90,6 @@ export function normalizePremium(raw: unknown): PremiumSettings {
   const q = r.quran ?? {}
   const t = r.transition ?? {}
   const o = r.oled ?? {}
-  const ded = r.dedication ?? {}
   return {
     schedule: { on: r.schedule?.on === true, rules },
     transition: { style: t.style === 'zoom' || t.style === 'none' ? t.style : 'fade', seconds: clamp(t.seconds, 0.5, 10, d.transition.seconds) },
@@ -106,7 +102,6 @@ export function normalizePremium(raw: unknown): PremiumSettings {
       playlist: Array.isArray(q.playlist) ? (q.playlist as unknown[]).filter((x): x is number => Number.isInteger(x) && (x as number) >= 1 && (x as number) <= 114).slice(0, 114) : [],
       speed: SPEEDS.includes(q.speed as number) ? (q.speed as number) : 1,
     },
-    dedication: { on: ded.on === true, name: typeof ded.name === 'string' ? ded.name.slice(0, 60) : '', deceased: ded.deceased !== false },
   }
 }
 
@@ -204,10 +199,3 @@ export function nextFromPlaylist(cur: number, playlist: number[], fallback: (s: 
 
 /** القراء بترتيب العرض: المفضلون أولًا */
 export const orderReciters = (ids: string[], fav: string[]) => [...ids.filter((x) => fav.includes(x)), ...ids.filter((x) => !fav.includes(x))]
-
-// ---------- الإهداء ----------
-export function dedicationText(d: PremiumSettings['dedication']): string | null {
-  const name = d.name.trim()
-  if (!d.on || !name) return null
-  return d.deceased ? `صدقة جارية عن روح ${name} — نسألكم الدعاء` : `صدقة جارية عن ${name}`
-}

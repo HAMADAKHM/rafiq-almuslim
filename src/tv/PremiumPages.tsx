@@ -1,4 +1,4 @@
-// صفحات إعدادات «رفيق المسلم TV بريميوم» (تظهر في نسخة بريميوم فقط): جداول العرض، وحماية الشاشة، والإهداء،
+// صفحات إعدادات «رفيق المسلم TV بريميوم» (تظهر في نسخة بريميوم فقط): جداول العرض، وحماية الشاشة،
 // وإضافات التلاوة. كلها بأزرار كبيرة تناسب جهاز التحكم، وتُحفظ مع إعدادات الشاشة.
 import { GALLERY_CATS, type GalleryCat } from './gallery'
 import { SCENES } from './scenes'
@@ -7,7 +7,7 @@ import { reciterById } from '../content/reciters'
 import { TV_RECITERS } from './recite'
 import type { TvSettings } from './state'
 import {
-  dedicationText, describeWhen, DAY_NAMES, normalizePremium, OCCASIONS, orderReciters, RULE_PRESETS, SPEEDS,
+  describeWhen, DAY_NAMES, normalizePremium, OCCASIONS, orderReciters, RULE_PRESETS, SPEEDS,
   type PremiumSettings, type ScenePick, type ScheduleRule, type ScheduleWhen, type SceneChoice, type TvPrayerName,
 } from './premium'
 
@@ -120,24 +120,6 @@ export function OledPage(props: Props) {
       <h2>الوضع الاقتصادي</h2>
       <Toggle on={o.eco} onChange={(eco) => setO({ eco })} label="وضع اقتصادي للشاشات والأجهزة الضعيفة" />
       <p className="tv-muted">يوقف الحركة في الخلفية ويخفض جودة الرسم، فيقل استهلاك المعالج والذاكرة وتبقى المواقيت والأذان كما هي.</p>
-    </>
-  )
-}
-
-/** إهداء صدقة جارية باسم يختاره المستخدم */
-export function GiftPage(props: Props) {
-  const [p, setP] = usePremium(props)
-  const d = p.dedication
-  const setD = (x: Partial<PremiumSettings['dedication']>) => setP({ dedication: { ...d, ...x } })
-  const preview = dedicationText({ ...d, on: true })
-  return (
-    <>
-      <h2>إهداء صدقة جارية</h2>
-      <p className="tv-muted">يظهر سطر صغير هادئ أعلى الشاشة باسم من تهدي إليه هذه الشاشة، ويمكن إخفاؤه في أي وقت.</p>
-      <Toggle on={d.on} onChange={(on) => setD({ on })} label="إظهار الإهداء على الشاشة" />
-      <input className="tv-input" value={d.name} maxLength={60} onChange={(e) => setD({ name: e.target.value })} placeholder="الاسم، مثال: والدي فلان" aria-label="اسم المهدى إليه" />
-      <Choices label="صيغة الإهداء" cols={2} value={d.deceased ? 'dead' : 'alive'} onChange={(v) => setD({ deceased: v === 'dead' })} options={[{ id: 'dead', label: 'عن روح المتوفى' }, { id: 'alive', label: 'عن حيّ' }]} />
-      {preview && <p className="tv-dedication-preview">{preview}</p>}
     </>
   )
 }

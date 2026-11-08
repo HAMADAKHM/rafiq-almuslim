@@ -1,4 +1,4 @@
-// شاشة التلفاز: نسخة بريميوم تضيف جداول العرض وحماية الشاشة والإهداء وإضافات التلاوة، والنسخة الجديدة كما هي
+// شاشة التلفاز: نسخة بريميوم تضيف جداول العرض وحماية الشاشة وإضافات التلاوة، والنسخة الجديدة كما هي
 import { expect, test, type Page } from '@playwright/test'
 
 const CITY = { name: 'Nablus', nameAr: 'نابلس', country: 'PS', lat: 32.2211, lng: 35.2544, tz: 'Asia/Hebron' }
@@ -12,10 +12,9 @@ async function open(page: Page, url: string, settings: Record<string, unknown> |
 
 const base = (premium: Record<string, unknown>) => ({ city: CITY, scene: 'rotate', animate: true, premium })
 
-test('النسخة الجديدة لا تتغير: لا إهداء ولا صفحات بريميوم، والمشهد كما اختاره المستخدم', async ({ page }) => {
-  await open(page, '/tv.html', base({ dedication: { on: true, name: 'أبو محمد', deceased: true }, schedule: { on: true, rules: [rule('n', { kind: 'night' }, 'kaaba')] } }), '2026-11-08T21:00:00+02:00')
+test('النسخة الجديدة لا تتغير: لا صفحات بريميوم، والمشهد كما اختاره المستخدم', async ({ page }) => {
+  await open(page, '/tv.html', base({ schedule: { on: true, rules: [rule('n', { kind: 'night' }, 'kaaba')] } }), '2026-11-08T21:00:00+02:00')
   await expect(page.locator('.tv-clock')).toBeVisible()
-  await expect(page.locator('.tv-gift')).toHaveCount(0)
   await expect(page.locator('.tv-art-wrap')).toHaveAttribute('data-scene', 'rotate:all')
   await page.getByRole('button', { name: 'الإعدادات' }).click()
   await expect(page.getByRole('button', { name: /جداول العرض/ })).toHaveCount(0)
@@ -32,9 +31,8 @@ test('جداول العرض: الليل يعرض مشهده، والنهار ي�
   await expect(page.locator('.tv-art-wrap')).toHaveClass(/tr-fade/)
 })
 
-test('حماية الشاشة: إزاحة العناصر وتعتيم الليل والإهداء الظاهر', async ({ page }) => {
-  await open(page, '/tv.html?ed=premium', base({ oled: { shift: true, dim: true, dimLevel: 0.35 }, dedication: { on: true, name: 'أبو محمد', deceased: true } }), '2026-11-08T23:00:00+02:00')
-  await expect(page.locator('.tv-gift')).toHaveText('صدقة جارية عن روح أبو محمد — نسألكم الدعاء')
+test('حماية الشاشة: إزاحة العناصر وتعتيم الليل', async ({ page }) => {
+  await open(page, '/tv.html?ed=premium', base({ oled: { shift: true, dim: true, dimLevel: 0.35 } }), '2026-11-08T23:00:00+02:00')
   await expect(page.locator('.tv-dim')).toHaveCSS('opacity', '0.35')
   const sx = await page.locator('.tv').evaluate((el) => (el as HTMLElement).style.getPropertyValue('--sx'))
   expect(sx).toMatch(/vw$/)
@@ -42,26 +40,23 @@ test('حماية الشاشة: إزاحة العناصر وتعتيم الليل
   await expect(page.locator('.tv-dim')).toHaveCount(0, { timeout: 5000 })
 })
 
-test('إعدادات بريميوم بجهاز التحكم: إضافة جدول، والقراء المفضلون، وقائمة السور، والإهداء، ثم الحفظ', async ({ page }) => {
+test('إعدادات بريميوم بجهاز التحكم: إضافة جدول، والقراء المفضلون، وقائمة السور، ثم الحفظ', async ({ page }) => {
   await open(page, '/tv.html?ed=premium', base({}), '2026-11-08T10:00:00+02:00')
   await page.getByRole('button', { name: 'الإعدادات' }).click()
+  // لا زر «الإهداء» في الإعدادات (أُلغي بطلب صاحب التطبيق)
+  await expect(page.getByRole('button', { name: /الإهداء/ })).toHaveCount(0)
   await page.getByRole('button', { name: /جداول العرض/ }).click()
   await page.getByRole('button', { name: '+ يوم الجمعة' }).click()
   await expect(page.locator('.tv-rule')).toHaveCount(1)
   await expect(page.locator('.tv-rule-head')).toContainText('الجمعة')
   await page.getByRole('button', { name: /حماية الشاشة/ }).click()
   await page.getByRole('switch', { name: /تخفيض الإضاءة ليلًا/ }).click()
-  await page.getByRole('button', { name: /الإهداء/ }).click()
-  await page.getByRole('switch', { name: /إظهار الإهداء/ }).click()
-  await page.getByLabel('اسم المهدى إليه').fill('والدي')
-  await expect(page.locator('.tv-dedication-preview')).toContainText('صدقة جارية عن روح والدي')
   await page.getByRole('button', { name: /القارئ والصوت/ }).click()
   await page.getByRole('checkbox', { name: /المنشاوي/ }).first().click()
   await page.getByRole('radio', { name: '×1.25' }).click()
   await page.getByRole('button', { name: /القراءة/ }).first().click()
   await page.getByRole('button', { name: '+ الكهف' }).click()
   await page.getByRole('button', { name: /حفظ وعرض الشاشة/ }).click()
-  await expect(page.locator('.tv-gift')).toContainText('والدي')
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('rafiq-tv:settings') || '{}').premium)
   expect(saved.schedule.rules).toHaveLength(1)
   expect(saved.oled.dim).toBe(true)

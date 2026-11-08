@@ -20,8 +20,8 @@ import { resetRecitePos, useRecitation } from './useRecitation'
 import { voiceStatus } from './voice'
 import { reciterById } from '../content/reciters'
 import { Choices, Stepper, Toggle } from './controls'
-import { activeRule, dedicationText, orderReciters, nightDim, occasionsOn, pixelShift, PREMIUM, swapSides } from './premium'
-import { GiftPage, OledPage, PlaylistExtras, ReciterExtras, SmartDisplayPage } from './PremiumPages'
+import { activeRule, orderReciters, nightDim, occasionsOn, pixelShift, PREMIUM, swapSides } from './premium'
+import { OledPage, PlaylistExtras, ReciterExtras, SmartDisplayPage } from './PremiumPages'
 import { fontCss, pairLink, qrMatrix, qrSvgPath } from './studio'
 import { toHijri } from '../services/calendar'
 
@@ -275,7 +275,6 @@ export function TvApp() {
   const view = { scene: rule ? rule.show.scene : s.scene, galleryCat: rule ? rule.show.galleryCat : s.galleryCat, animate: s.animate && !eco, quality: eco ? 'eco' as const : s.quality }
   const shift = PREMIUM ? pixelShift(now, pm.oled.shift) : { x: 0, y: 0 }
   const dim = PREMIUM && phase.kind === 'normal' ? nightDim(now, times, pm.oled.dim, pm.oled.dimLevel) : 0
-  const gift = PREMIUM ? dedicationText(pm.dedication) : null
   const tr = PREMIUM ? pm.transition : null
   const sceneKey = `${view.scene}:${view.galleryCat}`
   // استوديو الشاشة من الجوال (بريميوم)
@@ -294,7 +293,6 @@ export function TvApp() {
         ? <><PaintedScene tone={tone} variant="hero" className="tv-art" /><div className="tv-veil" />{view.animate && <SkyLife night={tone === 'night'} />}</>
         : <><SceneCanvas scene={view.scene === 'rotate' || view.scene === 'photos' ? null : view.scene} playlist={s.playlist} rotateMin={s.rotateMin} shuffle={s.shuffle} quality={view.quality} className="tv-art" /><div className="tv-veil scene" /></>}
       </div>
-      {gift && <div className="tv-gift">{gift}</div>}
       {dim > 0 && <div className="tv-dim" style={{ opacity: dim }} aria-hidden="true" />}
 
       <header className="tv-top">
@@ -421,7 +419,7 @@ function VoiceNote() {
   )
 }
 
-type SetupPage = 'city' | 'prayer' | 'iqama' | 'scenes' | 'remote' | 'recite' | 'voice' | 'auto' | 'smart' | 'oled' | 'gift'
+type SetupPage = 'city' | 'prayer' | 'iqama' | 'scenes' | 'remote' | 'recite' | 'voice' | 'auto' | 'smart' | 'oled'
 
 /** الإعدادات التي يقرؤها الجوال ويستطيع تعديلها (RemoteCore.validate في Java يقبل هذه فقط) */
 function remoteView(s: TvSettings) {
@@ -639,7 +637,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
     ...(b?.startPairing ? [{ id: 'remote' as const, label: '📱 التحكم من الجوال' }] : []),
     { id: 'recite', label: '📖 القراءة' },
     { id: 'voice', label: '🎙 القارئ والصوت' },
-    ...(PREMIUM ? [{ id: 'smart' as const, label: '🗓 جداول العرض' }, { id: 'oled' as const, label: '🛡 حماية الشاشة' }, { id: 'gift' as const, label: '🤲 الإهداء' }] : []),
+    ...(PREMIUM ? [{ id: 'smart' as const, label: '🗓 جداول العرض' }, { id: 'oled' as const, label: '🛡 حماية الشاشة' }] : []),
     ...(b ? [{ id: 'auto' as const, label: '⚡ التشغيل التلقائي' }] : []),
   ]
   const surahs = data?.meta.surahs ?? []
@@ -650,7 +648,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
       <div className="tv-setup-body">
         <h1><LogoMark size={40} /> إعدادات شاشة رفيق المسلم</h1>
         <div className="tv-setup-layout">
-          <nav className={'tv-setup-nav' + (pages.length > 8 ? ' compact' : '')} aria-label="أقسام الإعدادات">
+          <nav className={'tv-setup-nav' + (PREMIUM || pages.length > 8 ? ' compact' : '')} aria-label="أقسام الإعدادات">
             {pages.map((p) => <button key={p.id} className={'tv-nav' + (page === p.id ? ' on' : '')} aria-current={page === p.id ? 'page' : undefined} onClick={() => setPage(p.id)} autoFocus={page === p.id}>{p.label}</button>)}
             <button className={'tv-nav save' + (draft.city ? '' : ' wait')} onClick={() => {
               // بلا مدينة لا تُحسب المواقيت: ينتقل إلى صفحة المدينة مع توضيح بدل زر معطل لا يستجيب
@@ -739,7 +737,6 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
             {page === 'auto' && b && <TvAutoStart />}
             {page === 'smart' && <SmartDisplayPage draft={draft} set={set} />}
             {page === 'oled' && <OledPage draft={draft} set={set} />}
-            {page === 'gift' && <GiftPage draft={draft} set={set} />}
           </section>
         </div>
         <p className="tv-muted tv-setup-foot">{SADAQAH_LINE} • الإصدار {TV_VERSION}</p>

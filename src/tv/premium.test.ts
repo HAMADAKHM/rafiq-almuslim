@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activeRule, dedicationText, DEFAULT_PREMIUM, describeWhen, nextFromPlaylist, nightDim, normalizePremium, occasionsOn, orderReciters, pixelShift, ruleMatches, swapSides, type ScheduleCtx, type ScheduleRule } from './premium'
+import { activeRule, DEFAULT_PREMIUM, describeWhen, nextFromPlaylist, nightDim, normalizePremium, occasionsOn, orderReciters, pixelShift, ruleMatches, swapSides, type ScheduleCtx, type ScheduleRule } from './premium'
 import type { DayTimes } from '../services/prayer'
 
 const d = (h: number, m = 0) => new Date(2026, 10, 8, h, m)
@@ -67,7 +67,7 @@ describe('حماية الشاشة (OLED)', () => {
   })
 })
 
-describe('التلاوة والإهداء', () => {
+describe('التلاوة', () => {
   it('قائمة السور تدور، ودونها السورة التالية', () => {
     const next = (s: number) => s + 1
     expect(nextFromPlaylist(18, [], next)).toBe(19)
@@ -77,11 +77,6 @@ describe('التلاوة والإهداء', () => {
   })
   it('المفضلون أولًا دون حذف أي قارئ', () => {
     expect(orderReciters(['a', 'b', 'c', 'd'], ['c', 'a'])).toEqual(['a', 'c', 'b', 'd'])
-  })
-  it('الإهداء يظهر بالاسم ويُخفى', () => {
-    expect(dedicationText({ on: true, name: ' أبو محمد ', deceased: true })).toBe('صدقة جارية عن روح أبو محمد — نسألكم الدعاء')
-    expect(dedicationText({ on: false, name: 'x', deceased: true })).toBeNull()
-    expect(dedicationText({ on: true, name: '  ', deceased: true })).toBeNull()
   })
   it('الإعدادات الناقصة أو الخاطئة تعود للقيم الآمنة', () => {
     expect(normalizePremium(null)).toEqual(DEFAULT_PREMIUM)
