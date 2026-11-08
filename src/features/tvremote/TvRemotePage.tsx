@@ -14,7 +14,6 @@ import { SCENES } from '../../tv/scenes'
 import { RECITE_MODES, TV_RECITERS } from '../../tv/recite'
 import { GALLERY_CATS } from '../../tv/gallery'
 import { reciterById } from '../../content/reciters'
-import { QrPair, TvStudio } from './TvStudio'
 
 const send = tvRequest
 const errMsg = (e: unknown) => (e instanceof TvRemoteError ? e.message : 'تعذر تنفيذ الطلب')
@@ -75,21 +74,8 @@ function AddTv({ onDone }: { onDone: (tv: PairedTv) => void }) {
       </section>
     )
   }
-  // رمز QR من التلفاز: العنوان والمنفذ والرمز معًا، فيُربط مباشرة
-  const pairQr = async (q: { host: string; port: number; code: string }) => {
-    setBusy(true)
-    try {
-      const tv = await pairTv(send, q.host, q.port, q.code, 'رفيق المسلم بلس — جوالي')
-      toast(`رُبط الجوال بـ «${tv.name}»`)
-      onDone(tv)
-    } catch (e) { toast(errMsg(e)) }
-    setBusy(false)
-  }
   return (
     <section className="card">
-      <h2 style={{ marginTop: 0 }}>الربط برمز QR</h2>
-      {busy ? <Spinner label="جارٍ الربط" /> : <QrPair onFound={pairQr} />}
-      <hr className="sep" />
       <div className="spread">
         <h2 style={{ margin: 0 }}>إضافة تلفاز</h2>
         <button className="btn btn-sm" onClick={scan} disabled={scanning}><Search size={14} /> {scanning ? 'يبحث…' : 'بحث مجددًا'}</button>
@@ -124,7 +110,7 @@ function AddTv({ onDone }: { onDone: (tv: PairedTv) => void }) {
 const fmtDay = (t: number) => new Intl.DateTimeFormat('ar-u-nu-latn', { day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' }).format(new Date(t))
 
 /** «خلفيات من صورك»: صور من معرض الجوال تُصغَّر وتُرسل إلى التلفاز لتكون خلفية الشاشة */
-function TvPhotos({ tv, showing, onShow, disabled, fixed, onFix }: { tv: PairedTv; showing: boolean; onShow: () => void; disabled: boolean; fixed?: string; onFix: (id: string) => void }) {
+function TvPhotos({ tv, showing, onShow, disabled }: { tv: PairedTv; showing: boolean; onShow: () => void; disabled: boolean }) {
   const [list, setList] = useState<TvBackground[] | null>(null)
   const [err, setErr] = useState('')
   const [progress, setProgress] = useState<string | null>(null)
@@ -139,25 +125,13 @@ function TvPhotos({ tv, showing, onShow, disabled, fixed, onFix }: { tv: PairedT
     const pick = [...files].slice(0, Math.max(0, room))
     if (!pick.length) { toast(errMsg(new TvRemoteError('too_many', 'too_many'))); return }
     let done = 0
-    let newest = ''
     for (const f of pick) {
       setProgress(`جارٍ إرسال الصورة ${done + 1} من ${pick.length}…`)
-      try {
-        const before = new Set((list ?? []).map((x) => x.id))
-        const next = await addTvBackground(send, tv, await prepareBackground(f))
-        newest = next.find((x) => !before.has(x.id))?.id ?? newest
-        setList(next); done++
-      } catch (e) { toast(e instanceof TvRemoteError ? e.message : 'تعذر إرسال الصورة'); break }
+      try { setList(await addTvBackground(send, tv, await prepareBackground(f))); done++ } catch (e) { toast(e instanceof TvRemoteError ? e.message : 'تعذر إرسال الصورة'); break }
     }
     setProgress(null)
     if (input.current) input.current.value = ''
-    if (done) {
-      // تظهر الصورة على الشاشة مباشرة: إن لم تكن «صوري» هي المعروضة تُختار تلقائيًا
-      if (!showing) onShow()
-      // في وضع «صورة ثابتة» تصير الصورة المرسلة هي الثابتة
-      if (fixed && newest) onFix(newest)
-      toast(done === 1 ? 'وصلت الصورة إلى التلفاز وتظهر الآن على الشاشة' : `وصلت ${done} صور إلى التلفاز وتظهر الآن على الشاشة`)
-    }
+    if (done) toast(done === 1 ? 'وصلت الصورة إلى التلفاز' : `وصلت ${done} صور إلى التلفاز`)
     if (files.length > pick.length) toast(`أُرسلت ${pick.length} فقط: الحد ${MAX_TV_BACKGROUNDS} صورة على التلفاز`)
   }
   const del = async (id: string) => {
@@ -181,10 +155,7 @@ function TvPhotos({ tv, showing, onShow, disabled, fixed, onFix }: { tv: PairedT
               {list.map((b, i) => (
                 <li key={b.id} className="spread small">
                   <span>صورة {i + 1} • {fmtDay(b.at)} • {Math.max(1, Math.round(b.size / 1024))} ك.ب</span>
-                  <span className="row" style={{ gap: 4 }}>
-                    <button className={'btn btn-sm' + (showing && fixed === b.id ? ' btn-primary' : '')} disabled={disabled} aria-pressed={showing && fixed === b.id} onClick={() => onFix(b.id)}>{showing && fixed === b.id ? '✓ الخلفية الثابتة' : 'اجعلها خلفية ثابتة'}</button>
-                    <button className="btn btn-ghost btn-sm icon-btn" aria-label={`حذف الصورة ${i + 1}`} disabled={disabled} onClick={() => del(b.id)}><Trash2 size={14} /></button>
-                  </span>
+                  <button className="btn btn-ghost btn-sm icon-btn" aria-label={`حذف الصورة ${i + 1}`} disabled={disabled} onClick={() => del(b.id)}><Trash2 size={14} /></button>
                 </li>
               ))}
             </ul>
@@ -320,16 +291,11 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
         <>
           <section className="card stack" style={{ gap: 10 }}>
             <h2 style={{ margin: 0 }}>المشاهد</h2>
-            <Chips label="طريقة العرض" value={mode} disabled={busy} onPick={(v) => set({ scene: v === 'one' ? (SCENES.some((x) => x.id === st.scene) ? st.scene : SCENES[0].id) : v, fixedPhoto: '' })}
-              options={[{ id: 'gallery', label: 'صور جاهزة' }, { id: 'photos', label: 'صوري' }, { id: 'one', label: 'مشهد مرسوم' }, { id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'classic', label: 'الرسم الأصلي' }]} />
-            {(mode === 'gallery' || mode === 'photos') && (
-              <Chips label="صورة ثابتة أو تنقل" value={st.fixedPhoto ? 'fixed' : 'rotate'} disabled={busy} onPick={(v) => set(v === 'rotate' ? { fixedPhoto: '' } : { fixedPhoto: st.fixedPhoto || (mode === 'gallery' ? `${st.galleryCat && st.galleryCat !== 'all' ? st.galleryCat : 'islamic'}-01` : '') })}
-                options={[{ id: 'rotate', label: '🔁 تنقل بين الصور' }, { id: 'fixed', label: '🖼 صورة ثابتة' }]} />
-            )}
-            {(mode === 'gallery' || mode === 'photos') && st.fixedPhoto ? <p className="small muted" style={{ margin: 0 }}>{mode === 'photos' ? 'اختر الصورة الثابتة من «خلفيات من صورك» أدناه.' : 'الصورة الثابتة تُختار من التلفاز (الإعدادات ← المشاهد) لترى الصور، أو تبقى أول صورة في التصنيف.'}</p> : null}
-            {mode === 'gallery' && <Chips label="تصنيف الصور" value={st.galleryCat ?? 'all'} disabled={busy} onPick={(v) => set({ galleryCat: v, ...(st.fixedPhoto ? { fixedPhoto: `${v === 'all' ? 'islamic' : v}-01` } : {}) })} options={GALLERY_CATS.map((c) => ({ id: c.id, label: c.label }))} />}
+            <Chips label="طريقة العرض" value={mode} disabled={busy} onPick={(v) => set({ scene: v === 'one' ? (SCENES.some((x) => x.id === st.scene) ? st.scene : SCENES[0].id) : v })}
+              options={[{ id: 'gallery', label: 'صور جاهزة' }, { id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي' }, { id: 'photos', label: 'صوري' }]} />
+            {mode === 'gallery' && <Chips label="تصنيف الصور" value={st.galleryCat ?? 'all'} disabled={busy} onPick={(v) => set({ galleryCat: v })} options={GALLERY_CATS.map((c) => ({ id: c.id, label: c.label }))} />}
             {mode === 'one' && <Chips label="المشهد" value={st.scene} disabled={busy} onPick={(v) => set({ scene: v })} options={SCENES.map((x) => ({ id: x.id, label: x.name }))} />}
-            {(mode === 'photos' || mode === 'gallery') && !st.fixedPhoto && (
+            {(mode === 'photos' || mode === 'gallery') && (
               <>
                 <Chips label="مدة كل صورة" value={st.rotateMin} disabled={busy} onPick={(v) => set({ rotateMin: v })} options={[5, 10].map((m) => ({ id: m, label: `${m} د` }))} />
                 <Switch on={st.shuffle} disabled={busy} label="ترتيب عشوائي" onChange={(v) => set({ shuffle: v })} />
@@ -352,10 +318,7 @@ function Controls({ tv, onRemoved }: { tv: PairedTv; onRemoved: () => void }) {
             <Switch on={st.animate} disabled={busy} label="الحركة" onChange={(v) => set({ animate: v })} />
             <Switch on={st.phrases ?? true} disabled={busy} label="«عبارة اليوم» على الشاشة (تتغير كل يوم)" onChange={(v) => set({ phrases: v })} />
           </section>
-          <TvPhotos tv={tv} showing={st.scene === 'photos'} disabled={!online} fixed={st.fixedPhoto} onShow={() => set({ scene: 'photos' })} onFix={(id) => set({ scene: 'photos', fixedPhoto: id })} />
-          {st.premium ? <TvStudio send={send} tv={tv} st={st} set={set} busy={busy} /> : (
-            <section className="card small muted">استوديو الشاشة (أحجام العناصر وأماكنها والخط والألوان، والمعاينة، والتصاميم المحفوظة) متاح حين يكون على التلفاز تطبيق «رفيق المسلم TV بريميوم».</section>
-          )}
+          <TvPhotos tv={tv} showing={st.scene === 'photos'} disabled={!online} onShow={() => set({ scene: 'photos' })} />
           <section className="card stack" style={{ gap: 10 }}>
             <h2 style={{ margin: 0 }}>الشاشة والأذان</h2>
             <Switch on={st.adhan} disabled={busy} label="رفع الأذان عند دخول الوقت" onChange={(v) => set({ adhan: v })} />

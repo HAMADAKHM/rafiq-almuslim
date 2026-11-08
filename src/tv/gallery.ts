@@ -12,7 +12,7 @@ export const GALLERY_CATS: { id: GalleryCat; label: string }[] = [
   { id: 'space', label: 'فضاء' },
   { id: 'other', label: 'متنوعة' },
 ]
-const COUNTS: Record<Exclude<GalleryCat, 'all'>, number> = { islamic: 24, nature: 59, sport: 22, clubs: 16, space: 6, other: 14 }
+const COUNTS: Record<Exclude<GalleryCat, 'all'>, number> = { islamic: 14, nature: 29, sport: 12, clubs: 11, space: 6, other: 14 }
 
 export const GALLERY: { id: string; cat: Exclude<GalleryCat, 'all'> }[] = (Object.keys(COUNTS) as Exclude<GalleryCat, 'all'>[])
   .flatMap((cat) => Array.from({ length: COUNTS[cat] }, (_, i) => ({ id: `${cat}-${String(i + 1).padStart(2, '0')}`, cat })))

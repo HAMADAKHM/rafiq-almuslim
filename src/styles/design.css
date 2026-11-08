@@ -636,35 +636,3 @@ ul.plain { list-style: none; padding: 0; margin: 0; }
 .wd-gallery img { width: 100%; height: auto; border-radius: 18px; display: block; box-shadow: 0 6px 16px rgba(0,0,0,0.22); }
 .wd-gallery figcaption { display: flex; flex-direction: column; gap: 0.2rem; }
 .wd-extra p { margin: 0.2rem 0 0; }
-
-/* استوديو شاشة التلفاز (التحكم بالتلفاز) */
-.sep { border: 0; border-top: 1px solid var(--line, rgba(0,0,0,0.1)); margin: 0.9rem 0; }
-.tvp { aspect-ratio: 16 / 9; width: 100%; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; gap: 3%; padding: 3% 4%; background: radial-gradient(120% 90% at 70% 10%, #1d4a5f, #0a1f2a 60%, #06121a); font-family: var(--tvp-font); font-size: clamp(6px, 1.9vw, 11px); box-shadow: 0 6px 18px rgba(0,0,0,0.25); direction: rtl; }
-.tvp-top { display: flex; align-items: baseline; gap: 0.6em; }
-.tvp-top b { font-size: 1.3em; color: #E9CF8E; }
-.tvp-top small { opacity: 0.8; }
-.tvp-scene { margin-inline-start: auto; font-size: 0.85em; opacity: 0.7; border: 1px solid rgba(255,255,255,0.25); border-radius: 99px; padding: 0 0.6em; }
-.tvp-main { flex: 1; min-height: 0; display: flex; gap: 4%; }
-.tvp-clock-col { display: flex; flex-direction: column; justify-content: center; gap: 0.4em; align-items: stretch; }
-.tvp-clock { font-size: 3.4em; font-weight: 700; line-height: 1; direction: ltr; text-align: center; font-family: 'IBM Plex Sans Arabic', sans-serif; }
-.tvp-next { display: flex; flex-direction: column; padding: 0.5em 0.7em; border-radius: 0.7em; background: rgba(11,74,62,0.9); border: 1px solid rgba(226,194,126,0.45); }
-.tvp-next small { opacity: 0.8; font-size: 0.8em; }
-.tvp-next b { font-size: 1.5em; line-height: 1.2; }
-.tvp-next span { font-weight: 700; font-size: 1.2em; }
-.tvp-card { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 0.3em; padding: 0.6em 0.9em; border-radius: 0.8em; background: rgba(255,253,248,0.07); border: 1px solid rgba(226,194,126,0.4); text-align: center; }
-.tvp-card small { font-weight: 700; }
-.tvp-card p { margin: 0; font-family: 'Amiri', serif; font-size: 1.4em; line-height: 1.7; }
-.tvp-prayers { display: flex; gap: 2%; }
-.tvp-prayer { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0.35em 0; border-radius: 0.6em; background: rgba(255,253,248,0.92); color: #26352F; border: 1px solid transparent; }
-.tvp-prayer span { font-size: 0.8em; }
-.tvp-prayer b { font-size: 1.15em; direction: ltr; }
-.tvp-prayer.next { background: #0B4A3E; color: #fff; border-width: 2px; }
-.tvp-shot { position: relative; margin: 0; }
-.tvp-shot img { width: 100%; border-radius: 12px; display: block; }
-.tvp-shot button { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.5); color: #fff; }
-.tvp-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
-.tvp-swatch { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.15); cursor: pointer; }
-.tvp-swatch.on { outline: 3px solid var(--primary, #0B4A3E); outline-offset: 2px; }
-.tvp-design { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 10px; border-radius: 12px; background: var(--surface-2, rgba(0,0,0,0.04)); }
-.tvp-design small { display: block; }
-.tvp-camera { width: 100%; max-height: 50vh; border-radius: 12px; background: #000; object-fit: cover; }

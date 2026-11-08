@@ -9,7 +9,7 @@ button, input, select { font: inherit; }
 .tv-veil { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; background: linear-gradient(to bottom, rgba(3, 18, 15, 0.78), rgba(3, 18, 15, 0.45) 40%, rgba(3, 18, 15, 0.85)); }
 .tv-veil.strong { background: linear-gradient(to bottom, rgba(3, 18, 15, 0.85), rgba(3, 18, 15, 0.7) 50%, rgba(3, 18, 15, 0.92)); }
 .tv-veil.solid { background: radial-gradient(circle at 50% 40%, #0B4A3E, #04120f 75%); }
-.tv > *:not(.tv-art):not(.tv-veil):not(.tv-overlay):not(.tv-art-wrap):not(.tv-dim) { position: relative; z-index: 1; }
+.tv > *:not(.tv-art):not(.tv-veil):not(.tv-overlay) { position: relative; z-index: 1; }
 
 .tv-top { display: flex; justify-content: space-between; align-items: center; }
 .tv-brand { display: flex; align-items: center; gap: 1vw; }
@@ -173,61 +173,3 @@ button, input, select { font: inherit; }
 .tv-photo-card { border-radius: 0.8vw; overflow: hidden; background: rgba(255, 255, 255, 0.06); }
 .tv-photo-card img { display: block; width: 100%; height: 8vw; object-fit: cover; }
 .tv-photo-card .tv-btn { width: 100%; border-radius: 0; margin: 0; }
-
-/* ===== رفيق المسلم TV بريميوم ===== */
-.tv-art-wrap { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; }
-.tv-art-wrap.tr-fade { animation: tv-tr-fade 3s ease both; }
-.tv-art-wrap.tr-zoom { animation: tv-tr-zoom 3s ease both; }
-@keyframes tv-tr-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes tv-tr-zoom { from { opacity: 0; transform: scale(1.06); } to { opacity: 1; transform: scale(1); } }
-/* حماية الشاشة: إزاحة دورية صغيرة للعناصر الثابتة، وتبديل الأماكن */
-.tv-premium .tv-top, .tv-premium .tv-main, .tv-premium .tv-prayers { transform: translate(var(--sx, 0), var(--sy, 0)); transition: transform 6s ease-in-out; }
-.tv.swap .tv-main { flex-direction: row-reverse; }
-.tv-dim { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 50; background: #000; pointer-events: none; transition: opacity 30s linear; }
-.tv-rule { display: flex; flex-direction: column; gap: 0.6vw; padding: 1vw 1.2vw; margin-bottom: 1vw; border-radius: 1.2vw; background: rgba(255, 255, 255, 0.06); border: 0.1vw solid rgba(226, 194, 126, 0.3); }
-.tv-rule-head { display: flex; gap: 1vw; align-items: baseline; flex-wrap: wrap; font-size: 1.3vw; }
-.tv-choice.danger { border-color: rgba(255, 120, 120, 0.6); color: #FFD5D0; }
-/* قائمة الإعدادات: أزرار أصغر قليلًا حتى تتسع كل الأقسام (ومنها التحكم من الجوال والتشغيل التلقائي) وزر الحفظ دون تمرير — يعمل على متصفحات التلفاز القديمة */
-.tv-setup-nav.compact .tv-nav { padding: 0.5vw 1.1vw; margin-bottom: 0.35vw; font-size: 1.2vw; line-height: 1.25; }
-.tv-setup-page { overflow-y: auto; }
-/* النصوص الطويلة (آية أو حديث) تصغر لتظهر كاملة داخل البطاقة بدل قصّ آخرها */
-.tv-card-text.long { font-size: 2.1vw; line-height: 1.8; -webkit-line-clamp: 8; }
-.tv-card-text.quran.long { font-size: 2.3vw; line-height: 1.95; }
-.tv-card-text.xlong { font-size: 1.75vw; line-height: 1.75; -webkit-line-clamp: 11; }
-.tv-card-text.quran.xlong { font-size: 1.9vw; line-height: 1.85; }
-/* ===== استوديو الشاشة من الجوال (بريميوم) ===== */
-.tv-premium { color: var(--st-text, #F5F0E6); }
-.tv-premium .tv-next-name, .tv-premium .tv-card-title, .tv-premium .tv-next-label, .tv-premium .tv-prayer span, .tv-premium .tv-brand small, .tv-premium .tv-dates { font-family: var(--st-font, inherit); }
-.tv-premium .tv-clock { font-size: calc(7.4vw * var(--st-clock, 1)); }
-.tv-premium .tv-next-name { font-size: calc(3.6vw * var(--st-clock, 1)); }
-.tv-premium .tv-next-time { font-size: calc(2.8vw * var(--st-clock, 1)); color: var(--st-accent, #E2C27E); }
-.tv-premium .tv-next-left b { font-size: calc(2.2vw * var(--st-clock, 1)); }
-.tv-premium .tv-hijri, .tv-premium .tv-card-title, .tv-premium .tv-prayer.next small { color: var(--st-accent, #E2C27E); }
-.tv-premium .tv-prayer.next { border-color: var(--st-accent, #E2C27E); }
-.tv-premium .tv-prayer span { font-size: calc(1.5vw * var(--st-prayers, 1)); }
-.tv-premium .tv-prayer b { font-size: calc(2.4vw * var(--st-prayers, 1)); }
-.tv-premium .tv-card-text { font-size: calc(2.5vw * var(--st-card, 1)); }
-.tv-premium .tv-card-text.quran { font-size: calc(2.8vw * var(--st-card, 1)); }
-.tv-premium .tv-card-text.long { font-size: calc(2.1vw * var(--st-card, 1)); }
-.tv-premium .tv-card-text.quran.long { font-size: calc(2.3vw * var(--st-card, 1)); }
-.tv-premium .tv-card-text.xlong { font-size: calc(1.75vw * var(--st-card, 1)); }
-.tv-premium .tv-card-text.quran.xlong { font-size: calc(1.9vw * var(--st-card, 1)); }
-/* الأماكن: شريط المواقيت أعلى أو مخفي، والبطاقة مخفية (الساعة تتوسط) */
-.tv-premium .tv-top { order: 0; }
-.tv-premium .tv-main { order: 2; }
-.tv-premium .tv-prayers { order: 3; }
-.tv-premium .tv-foot { order: 4; }
-.tv-premium.st-prayers-top .tv-prayers { order: 1; }
-.tv-premium.st-prayers-hidden .tv-prayers { display: none; }
-.tv-premium.st-no-card .tv-card { display: none; }
-.tv-premium.st-no-card .tv-clock-col { flex: 1; align-items: center; }
-.tv-premium.st-no-card .tv-clock { text-align: center; }
-.tv-pair-qr { display: flex; flex-direction: column; align-items: center; gap: 0.6vw; margin-top: 0.8vw; }
-.tv-pair-qr svg { width: 13vw; height: 13vw; border-radius: 0.6vw; }
-/* اختيار الصورة الثابتة بجهاز التحكم */
-.tv-photo-grid.pick { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.8vw; }
-.tv-photo-pick { position: relative; padding: 0; border-radius: 0.8vw; overflow: hidden; border: 0.25vw solid transparent; background: #000; cursor: pointer; height: 7.4vw; }
-.tv-photo-pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.tv-photo-pick.on { border-color: #E2C27E; }
-.tv-photo-pick b { position: absolute; top: 0.4vw; right: 0.4vw; background: #E2C27E; color: #2a2208; border-radius: 50%; width: 2vw; height: 2vw; display: flex; align-items: center; justify-content: center; font-size: 1.2vw; }
-.tv-photo-pick:focus { outline: 0.3vw solid #fff; outline-offset: 0.15vw; }

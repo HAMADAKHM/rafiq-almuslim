@@ -1,6 +1,6 @@
 // «صوري من الجوال»: خلفيات أرسلها المستخدم من تطبيق رفيق المسلم بلس، تُعرض بتلاشٍ ناعم وتقريب بطيء.
 // الصور محفوظة داخل تطبيق التلفاز فقط (Backgrounds.java)، وتُقرأ عبر الجسر عند الحاجة.
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export interface PhotoSource {
   /** معرّفات الصور بترتيب إضافتها */
@@ -48,38 +48,32 @@ export function usePhotoIds(src: PhotoSource | null): string[] {
   return ids
 }
 
-/** fixed: صورة ثابتة لا تتبدل (إن كانت موجودة)، وإلا تنقل بين الصور */
-export function PhotoScene({ src, minutes, shuffle, animate, className, fixed }: { src: PhotoSource; minutes: number; shuffle: boolean; animate: boolean; className?: string; fixed?: string }) {
+export function PhotoScene({ src, minutes, shuffle, animate, className }: { src: PhotoSource; minutes: number; shuffle: boolean; animate: boolean; className?: string }) {
   const ids = usePhotoIds(src)
   // طبقتان تتبادلان: الظاهرة والقادمة
   const [layers, setLayers] = useState<{ id: string; url: string; key: number }[]>([])
-  const prevIds = useRef<string[] | null>(null)
-  const keyRef = useRef(0)
   useEffect(() => {
     let alive = true
     let cur: string | null = null
-    // صورة وصلت الآن من الجوال: تظهر فورًا بدل انتظار دورها في التنقل
-    const prev = prevIds.current
-    prevIds.current = ids
-    const added = prev ? ids.filter((x) => !prev.includes(x)) : []
-    const still = !!fixed && ids.includes(fixed)
-    const show = (force?: string) => {
-      const id = still ? fixed! : force && ids.includes(force) ? force : nextPhoto(ids, cur, shuffle)
+    let k = 0
+    const show = () => {
+      const id = nextPhoto(ids, cur, shuffle)
       if (!id) { setLayers([]); return }
-      if (id === cur) return
+      if (id === cur && k > 0) return
       const url = src.load(id)
       if (!url || !alive) return
       cur = id
-      const key = ++keyRef.current
+      k += 1
+      const key = k
       setLayers((l) => [...l.slice(-1), { id, url, key }])
     }
-    show(added[added.length - 1])
-    // صورة كل دقيقة على الأقل حتى مع مدة طويلة (التنقل بين الصور أسرع من المشاهد)؛ والثابتة لا تتبدل
-    const t = still ? 0 : setInterval(() => show(), Math.max(1, Math.min(minutes, 10)) * 60_000)
+    show()
+    // صورة كل دقيقة على الأقل حتى مع مدة طويلة (التنقل بين الصور أسرع من المشاهد)
+    const t = setInterval(show, Math.max(1, Math.min(minutes, 10)) * 60_000)
     const onNext = () => show()
     window.addEventListener('rafiq-next-scene', onNext)
     return () => { alive = false; clearInterval(t); window.removeEventListener('rafiq-next-scene', onNext) }
-  }, [ids.join(','), minutes, shuffle, fixed]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ids.join(','), minutes, shuffle]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className={className} aria-hidden="true" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden', background: '#000' }}>
