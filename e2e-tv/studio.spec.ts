@@ -84,3 +84,15 @@ test('الشريط السفلي كما كان: تشغيل القراءة، وو�
   for (const n of ['المدينة', 'المشاهد', 'التحكم من الجوال', 'القارئ والصوت', 'التشغيل التلقائي']) await expect(nav.getByRole('button', { name: new RegExp(n) })).toBeAttached()
   await expect(nav.getByRole('button', { name: /حفظ وعرض الشاشة/ })).toBeInViewport()
 })
+
+for (const [ed, label] of [['', 'النسخة الجديدة'], ['&ed=premium', 'بريميوم']] as const) {
+  test(`${label}: «التحكم من الجوال» و«التشغيل التلقائي» وكل الأقسام وزر الحفظ ظاهرة في القائمة دون تمرير`, async ({ page }) => {
+    await fakeBridge(page, [])
+    await open(page, `/tv.html?app=1${ed}`, { city: CITY })
+    await page.getByRole('button', { name: 'الإعدادات' }).click()
+    const nav = page.getByRole('navigation', { name: 'أقسام الإعدادات' })
+    expect(await nav.evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true)
+    for (const n of ['المدينة', 'المشاهد', 'التحكم من الجوال', 'القراءة', 'القارئ والصوت', 'التشغيل التلقائي', 'حفظ وعرض الشاشة', 'إلغاء']) await expect(nav.getByRole('button', { name: new RegExp(n) }).first()).toBeInViewport({ ratio: 1 })
+    await expect(nav).toHaveClass(/compact/)
+  })
+}

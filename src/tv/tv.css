@@ -187,10 +187,8 @@ button, input, select { font: inherit; }
 .tv-rule { display: flex; flex-direction: column; gap: 0.6vw; padding: 1vw 1.2vw; margin-bottom: 1vw; border-radius: 1.2vw; background: rgba(255, 255, 255, 0.06); border: 0.1vw solid rgba(226, 194, 126, 0.3); }
 .tv-rule-head { display: flex; gap: 1vw; align-items: baseline; flex-wrap: wrap; font-size: 1.3vw; }
 .tv-choice.danger { border-color: rgba(255, 120, 120, 0.6); color: #FFD5D0; }
-/* قائمة إعدادات أطول (نسخة بريميوم): أزرار أصغر قليلًا، وتمرير بالتركيز، وزر الحفظ ظاهر دائمًا */
-.tv-setup-nav.compact { overflow-y: auto; min-height: 0; padding: 0.3vw; }
-.tv-setup-nav.compact .tv-nav { padding: 0.75vw 1.2vw; margin-bottom: 0.5vw; font-size: 1.35vw; }
-.tv-setup-nav.compact .tv-nav.save { position: sticky; bottom: 0; z-index: 2; box-shadow: 0 -0.6vw 1.2vw rgba(0, 0, 0, 0.45); }
+/* قائمة الإعدادات: أزرار أصغر قليلًا حتى تتسع كل الأقسام (ومنها التحكم من الجوال والتشغيل التلقائي) وزر الحفظ دون تمرير — يعمل على متصفحات التلفاز القديمة */
+.tv-setup-nav.compact .tv-nav { padding: 0.5vw 1.1vw; margin-bottom: 0.35vw; font-size: 1.2vw; line-height: 1.25; }
 .tv-setup-page { overflow-y: auto; }
 /* النصوص الطويلة (آية أو حديث) تصغر لتظهر كاملة داخل البطاقة بدل قصّ آخرها */
 .tv-card-text.long { font-size: 2.1vw; line-height: 1.8; -webkit-line-clamp: 8; }

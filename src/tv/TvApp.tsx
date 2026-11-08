@@ -648,7 +648,7 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
       <div className="tv-setup-body">
         <h1><LogoMark size={40} /> إعدادات شاشة رفيق المسلم</h1>
         <div className="tv-setup-layout">
-          <nav className={'tv-setup-nav' + (PREMIUM || pages.length > 7 ? ' compact' : '')} aria-label="أقسام الإعدادات">
+          <nav className="tv-setup-nav compact" aria-label="أقسام الإعدادات">
             {pages.map((p) => <button key={p.id} className={'tv-nav' + (page === p.id ? ' on' : '')} aria-current={page === p.id ? 'page' : undefined} onClick={() => setPage(p.id)} autoFocus={page === p.id}>{p.label}</button>)}
             <button className={'tv-nav save' + (draft.city ? '' : ' wait')} onClick={() => {
               // بلا مدينة لا تُحسب المواقيت: ينتقل إلى صفحة المدينة مع توضيح بدل زر معطل لا يستجيب
