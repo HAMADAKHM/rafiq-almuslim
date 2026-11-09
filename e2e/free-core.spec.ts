@@ -16,8 +16,8 @@ const FREE_ROUTES = [
   '/adhkar-audio', '/date-tools', '/kids-adhkar', '/plus/features', '/terms',
 ]
 
-/** الصفحات الوحيدة التي يُسمح فيها بإعلان (شريطي) لغير المشتركين — بموافقة صاحب التطبيق */
-const AD_ALLOWED = new Set(['/more', '/mosques', '/calendar', '/settings'])
+/** التطبيق بلا إعلانات في أي صفحة */
+const AD_ALLOWED = new Set<string>()
 
 async function expectNone(page: Page, selector: string, route: string) {
   await expect(page.locator('main, #root').first()).toBeVisible()

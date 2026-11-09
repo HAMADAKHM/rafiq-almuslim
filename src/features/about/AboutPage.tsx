@@ -15,7 +15,7 @@ export function AboutPage() {
       </article>
 
       <section className="card" style={{ maxWidth: 820, margin: '1rem auto 0' }}>
-        <h2>مجاني بالكامل</h2>
+        <h2>مجاني — صدقة جارية</h2>
         <ul>{FREE_PROMISE.map((x) => <li key={x}>{x}</li>)}</ul>
       </section>
 

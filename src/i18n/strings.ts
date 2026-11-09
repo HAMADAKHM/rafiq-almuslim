@@ -61,7 +61,7 @@ const STRINGS = {
   favorites: { ar: 'المفضلة والعلامات', en: 'Favorites & bookmarks' },
   menu: { ar: 'القائمة', en: 'Menu' },
   appName: { ar: 'رفيق المسلم', en: 'Islamic Companion' },
-  tagline: { ar: 'مجاني بالكامل • بلا إعلانات', en: 'Completely free • No ads' },
+  tagline: { ar: 'مجاني • صدقة جارية • بلا إعلانات', en: 'Free • Sadaqah jariyah • No ads' },
 } as const
 
 export type StringKey = keyof typeof STRINGS

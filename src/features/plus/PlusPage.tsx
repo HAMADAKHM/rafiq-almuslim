@@ -2,7 +2,7 @@
 // ويمكن إغلاقها والاستمرار مجانًا. لا إعلانات في هذه الصفحة أبدًا.
 import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
-import { Gem, BookOpenText, Check, RotateCcw, ExternalLink, X, Palette, BellPlus, ChartNoAxesColumn, Clapperboard, MoonStar, BrainCircuit, UsersRound, HardDriveDownload, CloudSun, LayoutGrid, Ban, BellRing, MonitorSmartphone } from 'lucide-react'
+import { Gem, BookOpenText, Check, RotateCcw, ExternalLink, X, Palette, BellPlus, ChartNoAxesColumn, Clapperboard, MoonStar, BrainCircuit, UsersRound, HardDriveDownload, CloudSun, LayoutGrid, BellRing, MonitorSmartphone } from 'lucide-react'
 import { PageHead } from '../../components/Common'
 import { usePlus } from '../../billing/PlusContext'
 import { isEntitled } from '../../billing/entitlement'
@@ -23,7 +23,6 @@ const BENEFITS = [
   { icon: Palette, to: '/plus/themes', title: 'ألوان وخلفيات وتصاميم', text: 'خمس لوحات ألوان للتطبيق كله، وست خلفيات إضافية في استوديو التصاميم.' },
   { icon: BellPlus, to: '/plus/reminders', title: 'تذكيرات خاصة', text: 'حتى عشرة تذكيرات تكتبها بنفسك، بالأيام والأوقات التي تختارها.' },
   { icon: ChartNoAxesColumn, to: '/plus/insights', title: 'إحصاءاتي', text: 'أيامك المتتالية، وخريطة ١٢ أسبوعًا، ونسبة ما قرأت من القرآن — على جهازك فقط.' },
-  { icon: Ban, to: '/plus', title: 'بلا إعلانات', text: 'لا يظهر أي إعلان للمشتركين.' },
 ]
 
 const fmtDate = (t: number) => new Intl.DateTimeFormat('ar-u-nu-latn', { dateStyle: 'long', timeStyle: 'short' }).format(new Date(t))

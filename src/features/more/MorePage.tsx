@@ -7,7 +7,6 @@ import { ESSENTIAL_LABELS, MORE_ESSENTIALS, NAV, type NavItem } from '../../app/
 import { t } from '../../i18n/strings'
 import { useSettings } from '../../state/SettingsContext'
 import { usePlus } from '../../billing/PlusContext'
-import { AdSlot } from '../../ads/AdSlot'
 import { appIconUrl } from '../../themes/appIcons'
 import { searchSkeleton } from '../../lib/arabic'
 
@@ -87,7 +86,6 @@ export function MorePage() {
         {!groups.length && <p className="muted" style={{ textAlign: 'center' }}>لا يوجد قسم بهذا الاسم.</p>}
         {!q && <DedicationCard />}
       </div>
-      <AdSlot placement="more" />
     </>
   )
 }
