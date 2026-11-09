@@ -55,7 +55,7 @@ export function WidgetsPage() {
           <div className="wd-gallery">
             {WIDGET_DESIGNS.map((d) => (
               <figure key={d.id} className="wd-item">
-                <img src={`/widgets/w-${d.id}.jpg`} alt={'ودجت ' + d.name} loading="lazy" />
+                <img src={`${import.meta.env.BASE_URL}widgets/w-${d.id}.jpg`} alt={'ودجت ' + d.name} loading="lazy" />
                 <figcaption><strong>{d.name} <span className="fx-badge free">{d.size}</span>{d.id === 'tasbih' && <span className="fx-badge plus">بلس</span>}</strong><span className="small muted">{d.desc}</span></figcaption>
               </figure>
             ))}

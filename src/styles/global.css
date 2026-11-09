@@ -125,8 +125,11 @@ p { margin: 0 0 0.75rem; }
 .page-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.75rem; margin-bottom: 1.25rem; }
 .page-head p { color: var(--text-muted); margin: 0; }
 .grid { display: grid; gap: 1rem; }
-.grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-.grid-3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr)); }
+/* لا يتجاوز أي عنصر عرض الشاشة في الجوالات الصغيرة (320px) */
+.grid > *, .row > *, .spread > * { min-width: 0; }
+input, select, textarea, img, video, canvas, svg { max-width: 100%; }
 .card {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 1.1rem 1.2rem; box-shadow: var(--shadow); min-width: 0;

@@ -159,7 +159,23 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           cp android/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslimNew.apk
           cp android-tv/app/build/outputs/apk/debug/app-debug.apk RafiqAlMuslimTVNew.apk
-          gh release create "new-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslimNew.apk RafiqAlMuslimTVNew.apk \
+          # نسخة الكمبيوتر: ملف واحد يُفتح بالنقر المزدوج في أي متصفح دون تثبيت
+          npm run build:standalone
+          cp dist-standalone/index.html RafiqAlMuslimNew-PC.html
+          gh release create "new-v$VERSION-build.${{ github.run_number }}" RafiqAlMuslimNew.apk RafiqAlMuslimTVNew.apk RafiqAlMuslimNew-PC.html \
             --target "${{ github.sha }}" --prerelease \
             --title "رفيق المسلم الجديد $VERSION — نسخة معاينة (${{ github.ref_name }})" \
-            --notes "النسخة الجديدة المستقلة — تُثبَّت بجانب النسخ الأصلية دون أن تمسها (معرّف مختلف وبيانات منفصلة). للهاتف: RafiqAlMuslimNew.apk. لشاشة Android TV: RafiqAlMuslimTVNew.apk. لا دفع حقيقي في هذه النسخة."
+            --notes "النسخة الجديدة المستقلة — تُثبَّت بجانب النسخ الأصلية دون أن تمسها (معرّف مختلف وبيانات منفصلة). للهاتف: RafiqAlMuslimNew.apk. لشاشة Android TV: RafiqAlMuslimTVNew.apk. للكمبيوتر: RafiqAlMuslimNew-PC.html (يُفتح في المتصفح)، أو الموقع https://hamadakhm.github.io/rafiq-almuslim/ . لا دفع حقيقي في هذه النسخة."
+      # نسخة الكمبيوتر على الويب (GitHub Pages): نفس تطبيق الجوال في المتصفح، بروابط نسبية وتنقل بعلامة #
+      - name: Build web app for computers
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_beta && startsWith(github.ref, 'refs/heads/feature/')
+        run: VITE_HASH_ROUTER=1 npx vite build --base=./ --outDir dist-web && touch dist-web/.nojekyll
+      - name: Publish web app (gh-pages)
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_beta && startsWith(github.ref, 'refs/heads/feature/')
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./dist-web
+          force_orphan: true
+          commit_message: رفيق المسلم — نسخة الويب للكمبيوتر

@@ -22,7 +22,8 @@ export default defineConfig({
         theme_color: '#073B32',
         background_color: '#F5F0E6',
         display: 'standalone',
-        start_url: '/',
+        start_url: './',
+        scope: './',
         icons: [
           { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
@@ -32,7 +33,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        navigateFallback: '/index.html',
+        navigateFallback: 'index.html',
         runtimeCaching: [
           {
             urlPattern: AUDIO_HOST,
