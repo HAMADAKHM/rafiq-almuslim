@@ -636,3 +636,6 @@ ul.plain { list-style: none; padding: 0; margin: 0; }
 .wd-gallery img { width: 100%; height: auto; border-radius: 18px; display: block; box-shadow: 0 6px 16px rgba(0,0,0,0.22); }
 .wd-gallery figcaption { display: flex; flex-direction: column; gap: 0.2rem; }
 .wd-extra p { margin: 0.2rem 0 0; }
+/* منشور المناسبات الشخصية: المعاينة والتعديل في نافذة واحدة قابلة للتمرير */
+.card-viewer.occ-post { z-index: 200; justify-content: flex-start; overflow-y: auto; padding-top: calc(60px + env(safe-area-inset-top, 0px)); padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+.card-viewer.occ-post .poster-viewer-canvas { width: min(92vw, 480px, calc(55vh * 0.8)); flex: none; }

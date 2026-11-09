@@ -41,7 +41,13 @@ public class TasbihWidgetProvider extends AppWidgetProvider {
         SharedPreferences p = c.getSharedPreferences(PrayerWidgetProvider.PREFS, Context.MODE_PRIVATE);
         int id = intent.getIntExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
         String k = countKey(p, id);
-        if (ACTION_INC.equals(a)) { p.edit().putInt(k, p.getInt(k, 0) + 1).apply(); WidgetKit.tick(c); }
+        if (ACTION_INC.equals(a)) {
+            int n = p.getInt(k, 0) + 1;
+            p.edit().putInt(k, n).apply();
+            // اكتمال الدورة (33 في التسبيح بعد الصلاة، أو العدد المختار) بصوت واهتزاز مختلفين
+            int target = id >= 0 && modeOf(c, id) == 0 ? 33 : targetOf(c);
+            WidgetKit.tick(c, n % target == 0);
+        }
         else if (ACTION_RESET.equals(a)) p.edit().putInt(k, 0).apply();
         else if (ACTION_MODE.equals(a) && id >= 0) p.edit().putInt("ts_mode_" + id, (modeOf(c, id) + 1) % MODES.length).putInt(k, 0).apply();
         else return;
@@ -59,6 +65,12 @@ public class TasbihWidgetProvider extends AppWidgetProvider {
         String k = "ts_n_" + id;
         if (!p.contains(k)) p.edit().putInt(k, p.getInt(KEY_COUNT, 0)).apply();
         return k;
+    }
+
+    /** عدد الدورة للذكر الواحد: من «استوديو الودجت» (33 أو 99 أو 100 أو 1000) */
+    static int targetOf(Context c) {
+        int t = WidgetKit.prefs(c).optInt("tasbihTarget", 100);
+        return t == 33 || t == 99 || t == 100 || t == 1000 ? t : 100;
     }
 
     static int modeOf(Context c, int id) {
@@ -96,7 +108,8 @@ public class TasbihWidgetProvider extends AppWidgetProvider {
             int round = total % 99, idx = Math.min(2, round / 33);
             phrase = PHRASES[idx]; count = String.valueOf(round - idx * 33); target = "/ 33";
         } else {
-            phrase = MODE_TEXT[mode]; count = String.valueOf(total % 100); target = "/ 100";
+            int tg = targetOf(c);
+            phrase = MODE_TEXT[mode]; count = String.valueOf(total % tg); target = "/ " + tg;
         }
         t.text(count, 82, 62, 182, 138, 66, Tile.WHITE, Tile.CENTER, Tile.BOLD, 1);
         t.text(Tile.ltr(target), 94, 136, 172, 166, 23, Tile.WHITE, Tile.CENTER, Tile.BOLD, 1);

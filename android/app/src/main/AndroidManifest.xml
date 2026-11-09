@@ -246,6 +246,28 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/dadhkar_widget_info" />
         </receiver>
 
+        <!-- منبّه الصحوة: الجدولة (وإعادتها بعد إعادة التشغيل)، وخدمة الرنين، وشاشة المنبه فوق القفل -->
+        <receiver android:name=".WakeAlarms" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".AlarmActions" android:exported="false" />
+        <service android:name=".AlarmService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
+        <activity
+            android:name=".AlarmActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity="org.rafiqalmuslim.alarm"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -279,6 +301,14 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!-- الموقع التقريبي يكفي لحساب المواقيت والقبلة؛ يُطلب فقط عند ضغط «استخدم موقعي الحالي» -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- منبّه الصحوة -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-feature android:name="android.hardware.location" android:required="false" />

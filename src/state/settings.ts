@@ -109,8 +109,10 @@ export const DEFAULT_AUDIO_STUDIO: AudioStudioSettings = {
   reciters: {},
 }
 
-export interface WidgetPrefs { hijri: boolean; greg: boolean; city: boolean; countdown: boolean; font: number; adhkar: 'morning' | 'evening' | 'sleep' | 'auto'; vibrate: boolean; tasbih: string }
-export const DEFAULT_WIDGET_PREFS: WidgetPrefs = { hijri: true, greg: true, city: true, countdown: true, font: 100, adhkar: 'auto', vibrate: true, tasbih: 'seq' }
+export interface WidgetPrefs { hijri: boolean; greg: boolean; city: boolean; countdown: boolean; font: number; adhkar: 'morning' | 'evening' | 'sleep' | 'auto'; vibrate: boolean; tasbih: string
+  /** صوت نقرة عند الضغط على المسبحة والأذكار (يحترم الصامت)، وقوة الاهتزاز، وعدد دورة الذكر الواحد */
+  tapSound?: boolean; vibrateLevel?: 'light' | 'strong'; tasbihTarget?: number }
+export const DEFAULT_WIDGET_PREFS: WidgetPrefs = { hijri: true, greg: true, city: true, countdown: true, font: 100, adhkar: 'auto', vibrate: true, tasbih: 'seq', tapSound: true, vibrateLevel: 'light', tasbihTarget: 100 }
 
 export interface Settings {
   /** gold: أسود وذهبي (مبني على الوضع الداكن مع لون ذهبي بدل الأخضر) */
@@ -175,8 +177,51 @@ export interface Settings {
   fasting: { enabled: boolean; time: string; beed: boolean; monThu: boolean; arafah: boolean; ashura: boolean; shawwal: boolean }
   /** أقسام المكتبة التي أخفاها المستخدم من القائمة (تبقى متاحة في البحث وبالرابط المباشر) */
   hiddenCats: string[]
+  /** منبّه الصحوة (Android): منبهات يحددها المستخدم */
+  wakeAlarms?: WakeAlarm[]
+  /** مناسبات شخصية سنوية (عيد ميلاد، ذكرى زواج…) بتذكير ومنشور للمشاركة */
+  personalOccasions?: PersonalOccasion[]
   /** رفيق بلس — «رفيقي يذكّرني»: الذكر الدوري، و«موعدي مع القرآن»، وقرب خروج وقت الصلاة (تُجدول فقط مع اشتراك ساري) */
   companion: CompanionSettings
+}
+
+export type WakeVoice = 'asbahna' | 'salawat' | 'tone'
+export interface WakeAlarm {
+  id: number
+  on: boolean
+  h: number
+  m: number
+  /** أيام الأسبوع 0 الأحد … 6 السبت (فارغة = كل يوم) */
+  days: number[]
+  voice: WakeVoice
+  /** اسم ملف النغمة في موارد Android (rafiq_chime / snd_t_*) أو none */
+  tone: string
+  vibrate: boolean
+  /** دقائق الغفوة */
+  snooze: number
+  label?: string
+}
+
+export type OccasionType = 'birthday' | 'wedding' | 'custom'
+export interface PersonalOccasion {
+  id: number
+  type: OccasionType
+  /** اسم صاحب المناسبة (يظهر في المنشور) */
+  name: string
+  /** عنوان المناسبة إن كانت مخصصة */
+  title?: string
+  month: number
+  day: number
+  /** سنة البداية (اختيارية) لحساب العمر أو عدد السنوات */
+  year?: number
+  /** تذكير قبل المناسبة بأيام (0 = يومها) */
+  daysBefore: number
+  time: string
+  /** عنوان المنشور ونصه كما عدّلهما المستخدم، والتوقيع أسفله */
+  headline?: string
+  post?: string
+  sign?: string
+  on: boolean
 }
 
 export interface CompanionSettings {

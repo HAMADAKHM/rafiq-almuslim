@@ -14,7 +14,8 @@ import { HISN_AUDIO } from '../content/hisnAudio'
 import { channelFlags, heardText, hisnClipChannel, SLOT_DEFS, voiceFor, type VoiceSlot } from './voiceSlots'
 import { amountText, hisnChannel, companionPool, dhikrBody, intervalId, intervalMinutes, pickForSlot, positionRoute, positionText, prayerEnds, PRAYER_END_NOTE, travelActive, type QuranPosition } from './companion'
 
-export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end' | 'wake' | 'after-prayer' | 'share'
+import { MAX_PERSONAL, isOccasionDay, occasionTitle, yearsAt } from './personalOccasions'
+export type ReminderKind = 'prayer' | 'prayer-before' | 'morning' | 'evening' | 'sleep' | 'ayah' | 'dhikr' | 'wird' | 'memorize' | 'occasion' | 'summary' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end' | 'wake' | 'after-prayer' | 'share' | 'personal'
 
 export interface Reminder {
   /** معرّف رقمي ثابت لنفس التذكير في نفس اليوم (يمنع التكرار ويسمح بالاستبدال) */
@@ -58,7 +59,7 @@ export const MAX_SCHEDULED = 60
 /** أقصى عدد للتذكيرات الخاصة (رفيق بلس) */
 export const MAX_CUSTOM = 10
 
-const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end' | 'after-prayer' | 'share'>, { title: string; body: string }[]> = {
+const MESSAGES: Record<Exclude<ReminderKind, 'prayer' | 'prayer-before' | 'occasion' | 'custom' | 'ramadan' | 'fasting' | 'dhikr-interval' | 'quran-time' | 'prayer-end' | 'after-prayer' | 'share' | 'personal'>, { title: string; body: string }[]> = {
   morning: [{ title: SLOT_DEFS.morning.title, body: SLOT_DEFS.morning.body }],
   evening: [{ title: SLOT_DEFS.evening.title, body: SLOT_DEFS.evening.body }],
   sleep: [{ title: SLOT_DEFS.sleep.title, body: SLOT_DEFS.sleep.body }],
@@ -121,7 +122,7 @@ export function inQuietHours(d: Date, tz: string, quiet: Settings['notifications
   return s <= e ? t >= s && t < e : t >= s || t < e
 }
 
-const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12, ramadan: 13, fasting: 14, 'dhikr-interval': 15, 'quran-time': 16, 'prayer-end': 17, wake: 18, 'after-prayer': 19, share: 20 }
+const KIND_CODE: Record<ReminderKind, number> = { prayer: 1, 'prayer-before': 2, morning: 3, evening: 4, sleep: 5, ayah: 6, dhikr: 7, wird: 8, memorize: 9, occasion: 10, summary: 11, custom: 12, ramadan: 13, fasting: 14, 'dhikr-interval': 15, 'quran-time': 16, 'prayer-end': 17, wake: 18, 'after-prayer': 19, share: 20, personal: 21 }
 const PRAYER_CODE: Record<PrayerKey, number> = { fajr: 1, dhuhr: 2, asr: 3, maghrib: 4, isha: 5 }
 
 function makeId(day: { y: number; m: number; d: number }, kind: ReminderKind, slot = 0): number {
@@ -143,7 +144,7 @@ export function shareOfDay(seed: number): { title: string; body: string; route: 
 const ROUTES: Record<ReminderKind, string> = {
   prayer: '/prayer', 'prayer-before': '/prayer', morning: '/adhkar-alert/morning', evening: '/adhkar-alert/evening', sleep: '/adhkar-alert/sleep',
   ayah: '/', dhikr: '/', wird: '/wird', memorize: '/memorize', occasion: '/calendar', summary: '/progress', custom: '/', share: '/studio', ramadan: '/ramadan', fasting: '/calendar',
-  'dhikr-interval': '/companion', 'quran-time': '/quran', 'prayer-end': '/prayer', wake: SLOT_DEFS.wake.route, 'after-prayer': SLOT_DEFS.afterPrayer.route,
+  'dhikr-interval': '/companion', 'quran-time': '/quran', 'prayer-end': '/prayer', wake: SLOT_DEFS.wake.route, 'after-prayer': SLOT_DEFS.afterPrayer.route, personal: '/my-occasions',
 }
 
 /**
@@ -229,6 +230,21 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
       const main = occ.find((o) => !o.title.startsWith('يوم الاثنين') && !o.title.startsWith('يوم الخميس')) ?? occ[0]
       if (main) add({ id: makeId(day, 'occasion'), at: atLocalTime(day, n.occasions, loc.tz), kind: 'occasion', title: `غدًا: ${main.title}`, body: main.note ? `${main.note} — بحسب التقويم المحسوب، وقد يختلف بحسب الرؤية` : 'بحسب التقويم المحسوب', route: ROUTES.occasion })
     }
+    // المناسبات الشخصية (مجانية): تذكير قبلها بأيام أو يومها، يفتح المنشور الجاهز للمشاركة
+    ;(settings.personalOccasions ?? []).slice(0, MAX_PERSONAL).forEach((o, slot) => {
+      if (!o.on || !/^\d{2}:\d{2}$/.test(o.time)) return
+      const before = Math.max(0, Math.min(30, o.daysBefore | 0))
+      const target = addDays(new Date(Date.UTC(day.y, day.m - 1, day.d, 12)), before)
+      const tp = { y: target.getUTCFullYear(), m: target.getUTCMonth() + 1, d: target.getUTCDate() }
+      if (!isOccasionDay(o, tp)) return
+      const who = o.name.trim() ? ` ${o.name.trim()}` : ''
+      const what = occasionTitle(o)
+      const yrs = yearsAt(o, tp.y)
+      const yrsTxt = yrs ? (o.type === 'birthday' ? ` — يتم ${yrs} سنة` : o.type === 'wedding' ? ` — ${yrs} سنة` : '') : ''
+      const when = before === 0 ? 'اليوم' : before === 1 ? 'غدًا' : before === 2 ? 'بعد يومين' : `بعد ${before} أيام`
+      // معرّف خاص: اليوم × 1000 + 500 + الفتحة (خارج نطاق أنواع makeId التي تنتهي عند 219)
+      add({ id: ((day.y % 100) * 10000 + day.m * 100 + day.d) * 1000 + 500 + slot, at: atLocalTime(day, o.time, loc.tz), kind: 'personal', title: `${when}: ${what}${who}${yrsTxt}`, body: 'منشور التهنئة جاهز — اضغط لتعديله ومشاركته', route: `/my-occasions?post=${o.id}` })
+    })
     // رفيق بلس: وضع رمضان (السحور والإفطار) وتذكيرات الصيام في الليلة السابقة
     if (plusActive() && !n.reduce) {
       const noon = atLocalTime(day, '12:00', loc.tz)

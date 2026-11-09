@@ -20,6 +20,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(NarrationPlugin.class);
         // التحكم بشاشة التلفاز عبر الشبكة المنزلية
         registerPlugin(TvLinkPlugin.class);
+        // منبّه الصحوة
+        registerPlugin(AlarmPlugin.class);
         super.onCreate(savedInstanceState);
         // حجم خط النظام الكبير جدًا يكسر تخطيط الصفحات: يُحترم حتى 115٪ (التطبيق فيه تكبير خط خاص للقراءة)
         try {

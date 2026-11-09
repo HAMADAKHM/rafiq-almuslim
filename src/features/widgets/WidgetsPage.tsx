@@ -77,7 +77,21 @@ export function WidgetsPage() {
               <select className="select" value={wp.tasbih} onChange={(e) => setWp({ tasbih: e.target.value })}>
                 <option value="seq">التسبيح بعد الصلاة (٣٣ × ٣)</option><option value="subhan">سبحان الله</option><option value="hamd">الحمد لله</option><option value="akbar">الله أكبر</option><option value="tahlil">لا إله إلا الله</option><option value="istighfar">أستغفر الله</option><option value="salawat">الصلاة على النبي ﷺ</option><option value="hawqala">لا حول ولا قوة إلا بالله</option>
               </select></label>
-            <label className="check switch"><input type="checkbox" className="switch-input" checked={wp.vibrate} onChange={(e) => setWp({ vibrate: e.target.checked })} /> اهتزاز خفيف عند الضغط (المسبحة والأذكار)</label>
+            {wp.tasbih !== 'seq' && (
+              <label className="field"><span>عدد الدورة في ودجت المسبحة</span>
+                <select className="select" value={wp.tasbihTarget ?? 100} onChange={(e) => setWp({ tasbihTarget: Number(e.target.value) })} aria-label="عدد الدورة في ودجت المسبحة">
+                  <option value={33}>33</option><option value={99}>99</option><option value={100}>100</option><option value={1000}>1000</option>
+                </select></label>
+            )}
+            <h3 style={{ margin: '0.6rem 0 0' }}>عند الضغط على المسبحة والأذكار</h3>
+            <label className="check switch"><input type="checkbox" className="switch-input" checked={wp.tapSound ?? true} onChange={(e) => setWp({ tapSound: e.target.checked })} /> صوت نقرة (لا يعمل والجوال على الصامت)</label>
+            <label className="check switch"><input type="checkbox" className="switch-input" checked={wp.vibrate} onChange={(e) => setWp({ vibrate: e.target.checked })} /> اهتزاز</label>
+            {wp.vibrate && (
+              <div className="chips" role="radiogroup" aria-label="قوة الاهتزاز">
+                {([['light', 'اهتزاز خفيف'], ['strong', 'اهتزاز قوي']] as const).map(([id, n]) => <button key={id} type="button" role="radio" aria-checked={(wp.vibrateLevel ?? 'light') === id} className={'chip' + ((wp.vibrateLevel ?? 'light') === id ? ' active' : '')} onClick={() => setWp({ vibrateLevel: id })}>{n}</button>)}
+              </div>
+            )}
+            <p className="small muted" style={{ margin: 0 }}>عند اكتمال الدورة (33 أو العدد المختار) يُسمع صوت «تمام» واهتزاز أطول. ولتكبير الودجت أو تصغيره: اضغط عليه مطولًا ثم اسحب المقابض حول حدوده.</p>
             <div className="spread"><span className="small">المدينة: <strong>{settings.location ? cityLabel(settings.location) : 'لم تُختر'}</strong></span><Link className="btn btn-sm" to="/prayer">تغيير المدينة</Link></div>
           </div>
         </section>

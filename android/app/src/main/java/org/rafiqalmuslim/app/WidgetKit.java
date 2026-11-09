@@ -84,15 +84,58 @@ final class WidgetKit {
     static String ar(int n) { return TasbihWidgetProvider.ar(n); }
 
     /** اهتزاز قصير اختياري (من الاستوديو) */
-    static void tick(Context c) {
-        if (!prefs(c).optBoolean("vibrate", true)) return;
-        try {
-            android.os.Vibrator vib = (android.os.Vibrator) c.getSystemService(Context.VIBRATOR_SERVICE);
-            if (vib == null || !vib.hasVibrator()) return;
-            if (android.os.Build.VERSION.SDK_INT >= 26) vib.vibrate(android.os.VibrationEffect.createOneShot(18, 120));
-            else vib.vibrate(18);
-        } catch (Exception ignored) {}
+    static void tick(Context c) { tick(c, false); }
+
+    /**
+     * ردّ فعل الضغط على المسبحة والأذكار: اهتزاز (خفيف أو قوي) وصوت نقرة، أو صوت «تمام» عند اكتمال الدورة.
+     * الصوت يحترم وضع الصامت والاهتزاز في الجوال، والإعدادات من «استوديو الودجت».
+     */
+    static void tick(Context c, boolean round) {
+        JSONObject p = prefs(c);
+        if (p.optBoolean("vibrate", true)) {
+            try {
+                android.os.Vibrator vib = (android.os.Vibrator) c.getSystemService(Context.VIBRATOR_SERVICE);
+                if (vib != null && vib.hasVibrator()) {
+                    boolean strong = "strong".equals(p.optString("vibrateLevel", "light"));
+                    long ms = round ? 160 : strong ? 40 : 18;
+                    int amp = round || strong ? 255 : 120;
+                    if (android.os.Build.VERSION.SDK_INT >= 26) vib.vibrate(android.os.VibrationEffect.createOneShot(ms, amp));
+                    else vib.vibrate(ms);
+                }
+            } catch (Exception ignored) {}
+        }
+        if (p.optBoolean("tapSound", true)) {
+            try {
+                android.media.AudioManager am = (android.media.AudioManager) c.getSystemService(Context.AUDIO_SERVICE);
+                if (am == null || am.getRingerMode() == android.media.AudioManager.RINGER_MODE_NORMAL) playTap(c, round ? R.raw.w_round : R.raw.w_tick);
+            } catch (Exception ignored) {}
+        }
     }
+
+    private static android.media.SoundPool pool;
+    private static int tickId, roundId;
+    private static final java.util.Set<Integer> loaded = new java.util.HashSet<>();
+
+    /** صوت قصير بزمن استجابة منخفض (SoundPool محمَّل مرة واحدة) */
+    private static synchronized void playTap(Context c, int res) {
+        if (pool == null) {
+            android.media.AudioAttributes aa = new android.media.AudioAttributes.Builder()
+                .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build();
+            pool = new android.media.SoundPool.Builder().setMaxStreams(3).setAudioAttributes(aa).build();
+            pool.setOnLoadCompleteListener((sp, id, status) -> {
+                if (status != 0) return;
+                synchronized (WidgetKit.class) { loaded.add(id); }
+                if (id == pending) { sp.play(id, 0.8f, 0.8f, 1, 0, 1f); pending = -1; }
+            });
+            tickId = pool.load(c.getApplicationContext(), R.raw.w_tick, 1);
+            roundId = pool.load(c.getApplicationContext(), R.raw.w_round, 1);
+        }
+        int id = res == R.raw.w_round ? roundId : tickId;
+        if (loaded.contains(id)) pool.play(id, 0.8f, 0.8f, 1, 0, 1f);
+        else pending = id;
+    }
+    private static int pending = -1;
 
     /** آخر موضع قراءة فعلية (يحفظه التطبيق) — لزر «متابعة القراءة» في ودجت القرآن */
     static final String RESUME = "resume";
