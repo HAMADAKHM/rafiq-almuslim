@@ -119,5 +119,20 @@ public class WakeAlarms extends BroadcastReceiver {
         }
         // بعد إعادة تشغيل الجوال أو تحديث التطبيق أو تغيير الوقت
         scheduleAll(c);
+        // بعد تحديث التطبيق: إعادة رسم كل الودجتات الموضوعة بالتصاميم الجديدة فورًا (لا تبقى بصورتها القديمة)
+        if (Intent.ACTION_MY_PACKAGE_REPLACED.equals(a) || Intent.ACTION_BOOT_COMPLETED.equals(a)) refreshWidgets(c);
+    }
+
+    static void refreshWidgets(Context c) {
+        Class<?>[] providers = { PrayerWidgetProvider.class, PrayerCardWidgetProvider.class, DailyWidgetProvider.class, TasbihWidgetProvider.class,
+            AdhkarWidgetProvider.class, DuaWidgetProvider.class, AllInOneWidgetProvider.class, GreetWidgetProvider.class, DailyAdhkarWidgetProvider.class };
+        android.appwidget.AppWidgetManager m = android.appwidget.AppWidgetManager.getInstance(c);
+        for (Class<?> p : providers) {
+            try {
+                int[] ids = m.getAppWidgetIds(new android.content.ComponentName(c, p));
+                if (ids == null || ids.length == 0) continue;
+                c.sendBroadcast(new Intent(c, p).setAction(android.appwidget.AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(android.appwidget.AppWidgetManager.EXTRA_APPWIDGET_IDS, ids));
+            } catch (Exception ignored) {}
+        }
     }
 }
