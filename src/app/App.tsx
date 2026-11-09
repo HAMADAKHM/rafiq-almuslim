@@ -51,6 +51,7 @@ const SurahInfoPage = page(() => import('../features/quran/SurahInfoPage'), 'Sur
 const TasbihPage = page(() => import('../features/tasbih/TasbihPage'), 'TasbihPage')
 const CalendarPage = page(() => import('../features/calendar/CalendarPage'), 'CalendarPage')
 const RemindersPage = page(() => import('../features/reminders/RemindersPage'), 'RemindersPage')
+const TafsirVideoPage = page(() => import('../features/tafsirvideo/TafsirVideoPage'), 'TafsirVideoPage')
 const AlarmPage = page(() => import('../features/alarm/AlarmPage'), 'AlarmPage')
 const MyOccasionsPage = page(() => import('../features/occasions/MyOccasionsPage'), 'MyOccasionsPage')
 const MorePage = page(() => import('../features/more/MorePage'), 'MorePage')
@@ -103,6 +104,7 @@ export function AppRoutes() {
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="reminders" element={<RemindersPage />} />
         <Route path="alarm" element={<AlarmPage />} />
+        <Route path="tafsir-video" element={<TafsirVideoPage />} />
         <Route path="my-occasions" element={<MyOccasionsPage />} />
         <Route path="memorize" element={<MemorizePage />} />
         <Route path="prayer" element={<PrayerPage />} />

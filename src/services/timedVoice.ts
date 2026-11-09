@@ -43,6 +43,12 @@ async function arabicVoiceReady(): Promise<boolean> {
   return false
 }
 
+/** أي نص عربي بصوت الهاتف (WAV بترميز Base64) — لقراءة المعنى في التفسير المصوّر */
+export async function synthesizeText(text: string, rate = 0.9): Promise<string | null> {
+  if (platformName() !== 'android' || !(await arabicVoiceReady())) return null
+  return (await Narration.synthesize({ text, rate })).data
+}
+
 /** جملة الذكر بصوت الهاتف (WAV بترميز Base64) */
 export async function synthesizeSlot(slot: VoiceSlot): Promise<string | null> {
   if (platformName() !== 'android' || !(await arabicVoiceReady())) return null

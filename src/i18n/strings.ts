@@ -35,6 +35,7 @@ const STRINGS = {
   plusFamily: { ar: 'ختمة العائلة', en: 'Family Khatma' },
   companion: { ar: 'رفيقي يذكّرني', en: 'My Companion Reminds Me' },
   tvRemote: { ar: 'التحكم بالتلفاز', en: 'TV Remote' },
+  tafsirVideo: { ar: 'التفسير المصوّر', en: 'Illustrated tafsir' },
   wakeAlarm: { ar: 'منبّه الصحوة', en: 'Wake alarm' },
   myOccasions: { ar: 'مناسباتي الشخصية', en: 'My occasions' },
   plusFeatures: { ar: 'مزايا رفيق بلس', en: 'Plus Features' },

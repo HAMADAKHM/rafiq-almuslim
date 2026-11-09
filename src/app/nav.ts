@@ -1,6 +1,6 @@
 import {
   House, CalendarCheck, BookOpen, Brain, Headphones, Clock, Compass, Sparkles, HandHeart, GraduationCap,
-  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, AlarmClock, Cake, Baby, LayoutDashboard, Library, Star, GalleryHorizontal, Music,
+  ChartColumn, Route, Search, Settings, Heart, Gem, BookOpenText, Palette as PaletteIcon, BellPlus, ChartNoAxesColumn, CloudSun, MoonStar, HardDriveDownload, BrainCircuit, UsersRound, HeartHandshake, CircleDot, CalendarDays, Bell, LayoutGrid, PenLine, Palette, Landmark, ScrollText, MessageCircleQuestion, BellRing, MonitorSmartphone, Crown, Users, BookMarked, ArrowLeftRight, AlarmClock, Cake, Film, Baby, LayoutDashboard, Library, Star, GalleryHorizontal, Music,
 } from 'lucide-react'
 import type { StringKey } from '../i18n/strings'
 
@@ -44,6 +44,7 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
     { to: '/listen', key: 'listen', icon: Headphones },
     { to: '/learn', key: 'learn', icon: GraduationCap },
     { to: '/studio', key: 'studio', icon: Palette },
+    { to: '/tafsir-video', key: 'tafsirVideo', icon: Film },
   ] },
   { group: 'groupWorship', items: [
     { to: '/prayer', key: 'prayer', icon: Clock },
@@ -80,7 +81,7 @@ export const NAV: { group: StringKey; items: NavItem[] }[] = [
 /** شريط التنقل السفلي على الجوال: الأقسام الأكثر استخدامًا، والباقي في «المزيد» */
 export const TABS: (NavItem & { short: string; match: RegExp })[] = [
   { to: '/', key: 'home', icon: House, short: 'الرئيسية', match: /^\/$/ },
-  { to: '/quran', key: 'quran', icon: BookOpen, short: 'القرآن', match: /^\/(quran|mushaf|memorize|listen|learn|stories|studio)/ },
+  { to: '/quran', key: 'quran', icon: BookOpen, short: 'القرآن', match: /^\/(quran|mushaf|memorize|listen|learn|stories|studio|tafsir-video)/ },
   { to: '/prayer', key: 'prayer', icon: Clock, short: 'الصلاة', match: /^\/(prayer|qibla|calendar|mosques|date-tools)/ },
   { to: '/adhkar', key: 'adhkar', icon: Sparkles, short: 'الأذكار', match: /^\/(adhkar|duas|hadith|tasbih|my-adhkar|for-the-deceased|kids-adhkar|beloved|booklet)/ },
   { to: '/more', key: 'groupMore', icon: LayoutGrid, short: 'المزيد', match: /^\/(more|wird|progress|journey|assistant|search|reminders|alarm|my-occasions|settings|plus|weather|ramadan|about|terms|widgets)/ },

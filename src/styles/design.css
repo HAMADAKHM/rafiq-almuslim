@@ -636,3 +636,6 @@ ul.plain { list-style: none; padding: 0; margin: 0; }
 /* منشور المناسبات الشخصية: المعاينة والتعديل في نافذة واحدة قابلة للتمرير */
 .card-viewer.occ-post { z-index: 200; justify-content: flex-start; overflow-y: auto; padding-top: calc(60px + env(safe-area-inset-top, 0px)); padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
 .card-viewer.occ-post .poster-viewer-canvas { width: min(92vw, 480px, calc(55vh * 0.8)); flex: none; }
+/* التفسير المصوّر: معاينة الفيديو العمودي */
+.ink-stage { display: flex; justify-content: center; }
+.ink-canvas { width: min(100%, 360px, calc(62vh * 0.5625)); aspect-ratio: 9 / 16; border-radius: 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); background: #f6efdf; }
