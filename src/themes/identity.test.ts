@@ -68,7 +68,9 @@ describe('أيقونات التطبيق', () => {
 
 describe('تصميم الودجت', () => {
   it('كل تصميم معتمد له صورته (من لوحة صاحب التطبيق) ويُرسم بها ودجت Android', () => {
-    expect(WIDGET_DESIGNS).toHaveLength(9)
+    // التسعة من لوحة صاحب التطبيق، وثلاثة «مواقيت الصلاة الليلي» (صغير ومتوسط وكبير) بطلبه
+    expect(WIDGET_DESIGNS).toHaveLength(12)
+    for (const k of ['s', 'm', 'l']) expect(readFileSync(`android/app/src/main/res/xml/night_prayer_${k}_info.xml`, 'utf8')).toContain('@drawable/wp_night_')
     for (const d of WIDGET_DESIGNS) expect(existsSync(`public/widgets/w-${d.id}.jpg`), d.id).toBe(true)
     const dir = 'android/app/src/main/'
     const tiles: Record<string, string> = { PrayerWidgetProvider: 'wt_prayer', PrayerCardWidgetProvider: 'wt_prayer_l', DailyWidgetProvider: 'wt_quran', AdhkarWidgetProvider: 'wt_adhkar_m', TasbihWidgetProvider: 'wt_tasbih', DuaWidgetProvider: 'wt_dua', AllInOneWidgetProvider: 'wt_all', GreetWidgetProvider: 'wt_greet', DailyAdhkarWidgetProvider: 'wt_dadhkar' }
