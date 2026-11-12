@@ -10,8 +10,13 @@ import { PRAYERS, PRAYER_LABELS, nextPrayer, prayerTimesFor, todayTimes, type Pr
 import { addDays, dateParts, dayKey, formatHijri, formatTime } from '../../lib/dates'
 import { ramadanStatus } from '../../services/ramadan'
 import { toArabicDigits } from '../../lib/arabic'
+// صور وضع رمضان من تصميم صاحب التطبيق (لهذا الثيم فقط): الشعار الرمضاني، وأفق المسجد، والفانوس، وبطاقة «رمضان كريم»، والمصحف والفانوس
+import brandImg from '../../assets/ramadan/brand.webp'
+import skylineImg from '../../assets/ramadan/skyline.webp'
+import lanternImg from '../../assets/ramadan/lantern.webp'
+import bannerImg from '../../assets/ramadan/banner.webp'
+import tableImg from '../../assets/ramadan/table.webp'
 
-const asset = (f: string) => `${import.meta.env.BASE_URL}golden/${f}`
 const ICONS: Record<PrayerName, typeof Sun> = { fajr: Sunrise, sunrise: CloudSun, dhuhr: Sun, asr: SunMedium, maghrib: Sunset, isha: Moon }
 
 /** عبارات إيمانية قصيرة بنصها من صحيح البخاري (مع رقم الحديث)، تتجدد كل يوم */
@@ -62,16 +67,15 @@ export function RamadanHome({ now, loc, prayer, hijriOffset }: { now: Date; loc:
   return (
     <div className="rm-home">
       <header className="rm-hero">
-        <RamadanSky />
+        <RamadanSky skyline={false} />
+        <img className="rm-skyline" src={skylineImg} alt="" />
         <nav className="rm-btns" aria-label="اختصارات">
           <Link to="/settings" aria-label="الإعدادات"><Cog size={22} /></Link>
           <Link to="/reminders" aria-label="التذكيرات"><Bell size={22} /></Link>
         </nav>
         <div className="rm-brand">
-          <img className="rm-logo" src={asset('logo-night.png')} alt="" />
-          <h1>رفيق المسلم</h1>
-          <p>معاً .. نحو حياة أرقى بالإيمان</p>
-          <span className="rm-divider" aria-hidden="true"><i /><b>✦</b><i /></span>
+          <h1 className="sr-only">رفيق المسلم</h1>
+          <img className="rm-brand-img" src={brandImg} alt="رفيق المسلم — دليلك في دينك ورفيقك في حياتك" />
         </div>
       </header>
 
@@ -85,7 +89,7 @@ export function RamadanHome({ now, loc, prayer, hijriOffset }: { now: Date; loc:
                 <b className="rm-now-name">{PRAYER_LABELS[shown]}</b>
                 <span className="rm-now-time" dir="ltr"><b>{big}</b> <small>{suf}</small></span>
               </span>
-              <LanternIcon className="rm-now-lantern" />
+              <img className="rm-now-lantern" src={lanternImg} alt="" />
             </Link>
             <div className="rm-left" aria-live="polite">
               <span><Clock size={16} /> متبقي على {PRAYER_LABELS[np.name]}</span>
@@ -110,9 +114,9 @@ export function RamadanHome({ now, loc, prayer, hijriOffset }: { now: Date; loc:
       </section>
 
       <Link to="/ramadan" className="rm-card rm-ramadan" aria-label="رمضان: الإفطار والسحور">
-        <RamadanBannerArt />
+        <img className="rm-banner" src={bannerImg} alt="رمضان كريم — تقبّل الله منا ومنكم" />
         <div className="rm-ramadan-body">
-          <h2 className="rm-greet">رمضان كريم</h2>
+          <h2 className="sr-only">رمضان كريم</h2>
           <p className="rm-sub">{rs.inRamadan && rs.day ? `اليوم ${toArabicDigits(rs.day)} من رمضان · ${formatHijri(now, loc?.tz, hijriOffset)}` : rs.daysUntil ? `بقي نحو ${toArabicDigits(rs.daysUntil)} يومًا على رمضان` : 'تقبّل الله منا ومنكم'}</p>
           {loc && times && ev && (
             <>
@@ -133,12 +137,13 @@ export function RamadanHome({ now, loc, prayer, hijriOffset }: { now: Date; loc:
         <Link to="/qibla"><Compass size={22} /><span>القبلة</span></Link>
         <Link to="/ramadan"><Moon size={22} /><span>إمساكية رمضان</span></Link>
       </nav>
+      <img className="rm-table" src={tableImg} alt="" />
     </div>
   )
 }
 
 /** سماء رمضان: نجوم خافتة، وهلال بتوهج ذهبي، وفانوسان معلّقان يتأرجحان بهدوء، وأفق مسجد بنوافذ مضيئة */
-export function RamadanSky() {
+export function RamadanSky({ skyline = true }: { skyline?: boolean }) {
   return (
     <svg className="rm-sky" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
@@ -164,12 +169,12 @@ export function RamadanSky() {
         <Lamp x={362} y={104} s={0.72} />
       </g>
       {/* أفق المسجد */}
-      <g fill="#081127">
+      {skyline && <><g fill="#081127">
         <path d="M0 300V262h40v-8h10v8h30v-14q0-22 26-30 26 8 26 30v14h24v-40h6v-14l3-8 3 8v14h6v40h30v-24q0-34 46-48 46 14 46 48v24h30v-40h6v-14l3-8 3 8v14h6v40h24v-14q0-22 26-30 26 8 26 30v14h28V300z" />
       </g>
       <g fill="#ffcf7a" opacity="0.75">
         {[[118, 262], [126, 262], [205, 262], [213, 262], [221, 262], [229, 262], [300, 262], [308, 262]].map(([x, y]) => <rect key={x} x={x} y={y} width="4" height="8" rx="2" />)}
-      </g>
+      </g></>}
     </svg>
   )
 }
@@ -186,21 +191,6 @@ function Lamp({ x, y, s }: { x: number; y: number; s: number }) {
   )
 }
 
-function LanternIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 80 120" aria-hidden="true">
-      <defs><radialGradient id="rmLi" cx="0.5" cy="0.55" r="0.5"><stop offset="0" stopColor="#ffd38a" stopOpacity="0.9" /><stop offset="1" stopColor="#ffb44f" stopOpacity="0" /></radialGradient></defs>
-      <circle cx="40" cy="66" r="40" fill="url(#rmLi)" />
-      <g stroke="#d6b46a" strokeWidth="1.6" strokeLinejoin="round">
-        <circle cx="40" cy="8" r="4" fill="none" />
-        <path d="M32 14h16l5 10H27z" fill="#2a2216" />
-        <path d="M24 24h32l-5 60H29z" fill="#ffcf7a" fillOpacity="0.9" />
-        <path d="M33 24l-2 60M47 24l2 60M40 24v60" stroke="#a8823a" strokeWidth="1.1" />
-        <path d="M27 84h26l-7 12H34z" fill="#2a2216" />
-      </g>
-    </svg>
-  )
-}
 
 function MosqueIcon() {
   return (
@@ -210,19 +200,3 @@ function MosqueIcon() {
   )
 }
 
-/** بطاقة رمضان: هلال كبير وأفق خافت بألوان الليل (بلا صور) */
-function RamadanBannerArt() {
-  return (
-    <svg className="rm-banner-art" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs>
-        <linearGradient id="rmBn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#13234a" /><stop offset="1" stopColor="#0a142c" /></linearGradient>
-        <radialGradient id="rmBg2" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stopColor="#f6d58e" stopOpacity="0.35" /><stop offset="1" stopColor="#f6d58e" stopOpacity="0" /></radialGradient>
-        <mask id="rmCres2"><rect width="400" height="200" fill="#fff" /><circle cx="346" cy="54" r="26" fill="#000" /></mask>
-      </defs>
-      <rect width="400" height="200" fill="url(#rmBn)" />
-      <circle cx="334" cy="62" r="56" fill="url(#rmBg2)" />
-      <circle cx="334" cy="62" r="28" fill="#e9c779" mask="url(#rmCres2)" />
-      <path d="M0 200v-26h60v-10q0-16 18-22 18 6 18 22v10h40v-30h4v-10l2-6 2 6v10h4v30h180v-14q0-14 16-20 16 6 16 20v14h40v26z" fill="#081127" opacity="0.9" />
-    </svg>
-  )
-}
