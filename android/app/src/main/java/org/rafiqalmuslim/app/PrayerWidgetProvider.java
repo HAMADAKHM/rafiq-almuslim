@@ -43,7 +43,8 @@ public class PrayerWidgetProvider extends AppWidgetProvider {
         for (int id : ids) render(context, manager, id);
         int[] cards = manager.getAppWidgetIds(new ComponentName(context, PrayerCardWidgetProvider.class));
         for (int id : cards) PrayerCardWidgetProvider.render(context, manager, id);
-        if (ids.length > 0 || cards.length > 0) scheduleNext(context);
+        boolean night = NightPrayerWidget.refreshAll(context);
+        if (ids.length > 0 || cards.length > 0 || night) scheduleNext(context);
         PlusWidgets.refreshAll(context);
         LockNotif.update(context);
         AllInOneWidgetProvider.refreshAll(context);

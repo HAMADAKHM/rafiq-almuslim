@@ -57,7 +57,7 @@ final class Tile {
         out = Bitmap.createBitmap(Math.round(rw * bs), Math.round(rh * bs), Bitmap.Config.ARGB_8888);
         cv = new Canvas(out);
         int alpha = WidgetStyle.alphaFor(c, widgetId);
-        if (alpha > 0) {
+        if (alpha > 0 && res != 0) {
             BitmapFactory.Options o = new BitmapFactory.Options(); o.inScaled = false;
             Bitmap bg = BitmapFactory.decodeResource(c.getResources(), res, o);
             Paint p = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);

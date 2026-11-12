@@ -19,7 +19,8 @@ const FIVE: PrayerKey[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']
 export interface WidgetData {
   v: 1
   city: string | null
-  days: { hijri: string; prayers: { key: PrayerKey; label: string; at: number; time: string }[] }[]
+  /** sunrise: الشروق (للعرض فقط في ودجتات المواقيت الكاملة؛ ليس صلاة) */
+  days: { hijri: string; prayers: { key: PrayerKey; label: string; at: number; time: string }[]; sunrise?: { at: number; time: string } }[]
 }
 
 export function buildWidgetData(settings: Settings, now = new Date()): WidgetData {
@@ -31,6 +32,7 @@ export function buildWidgetData(settings: Settings, now = new Date()): WidgetDat
     return {
       hijri: formatHijri(date, loc.tz, settings.hijriOffset),
       prayers: FIVE.map((key) => ({ key, label: PRAYER_LABELS[key], at: times[key].getTime(), time: formatTime(times[key], loc.tz) })),
+      sunrise: { at: times.sunrise.getTime(), time: formatTime(times.sunrise, loc.tz) },
     }
   })
   return { v: 1, city: loc.nameAr ?? loc.name, days }

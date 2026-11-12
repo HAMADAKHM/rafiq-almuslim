@@ -186,9 +186,12 @@ function SkinApplier({ entitled }: { entitled: boolean }) {
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', settings.theme === 'gold' ? '#0a0a0a' : dark ? '#0c1512' : '#073B32')
       }
     }
+    // وضع رمضان الفاخر: تصميم خاص فوق ألوان «فوانيس رمضان» (src/styles/ramadan.css)
+    if (ramadan && !preview) root.dataset.ramadanMode = ''
+    else delete root.dataset.ramadanMode
     if (settings.skinStill) root.dataset.skinStill = ''
     else delete root.dataset.skinStill
-  }, [skin, settings.skinStill, settings.theme])
+  }, [skin, settings.skinStill, settings.theme, ramadan, preview])
   // إيقاف الحركة مؤقتًا حين يكون التطبيق في الخلفية (توفير البطارية)
   useEffect(() => {
     const vis = () => { if (document.visibilityState === 'hidden') document.documentElement.dataset.hidden = ''; else delete document.documentElement.dataset.hidden }

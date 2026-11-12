@@ -217,6 +217,34 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/all_widget_info" />
         </receiver>
+        <!-- مواقيت الصلاة بالهوية الليلية: صغير ومتوسط وكبير -->
+        <receiver
+            android:name=".NightPrayerSmall"
+            android:exported="false"
+            android:label="@string/night_prayer_s">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/night_prayer_s_info" />
+        </receiver>
+        <receiver
+            android:name=".NightPrayerMedium"
+            android:exported="false"
+            android:label="@string/night_prayer_m">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/night_prayer_m_info" />
+        </receiver>
+        <receiver
+            android:name=".NightPrayerLarge"
+            android:exported="false"
+            android:label="@string/night_prayer_l">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/night_prayer_l_info" />
+        </receiver>
         <!-- نسخ نص من الودجت إلى الحافظة -->
         <activity android:name=".CopyActivity" android:exported="false" android:excludeFromRecents="true" android:noHistory="true" android:taskAffinity="" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <receiver

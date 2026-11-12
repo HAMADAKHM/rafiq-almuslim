@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Moon, Sunrise, BookOpen } from 'lucide-react'
 import { PageHead } from '../../components/Common'
-import { PaintedScene } from '../../components/Scene'
 import { PlusGate } from '../../billing/PlusGate'
 import { useSettings } from '../../state/SettingsContext'
 import { EMPTY_QADA, QADA_KEY, markQada, nextRamadanEvent, qadaLeft, ramadanStatus, ramadanTable, type QadaState } from '../../services/ramadan'
@@ -16,6 +15,7 @@ import { createPlan, loadKhatmas, saveKhatmas } from '../../services/khatma'
 import { dayKey, formatCountdown, formatTime } from '../../lib/dates'
 import { toArabicDigits } from '../../lib/arabic'
 import type { Settings } from '../../state/settings'
+import { RamadanSky } from '../home/RamadanHome'
 
 function useNowTick(ms = 1000) {
   const [n, setN] = useState(() => new Date())
@@ -87,7 +87,7 @@ export function RamadanPage() {
       <PageHead title="وضع رمضان" subtitle="السحور والإفطار، وختمة رمضان، وتذكيرات الصيام" />
       <PlusGate feature="ramadan" title="وضع رمضان">
         <section className="ramadan-hero">
-          <PaintedScene tone={next?.kind === 'iftar' ? 'sunset' : 'night'} variant="hero" className="ramadan-art" />
+          <RamadanSky />
           <div className="ramadan-hero-body">
             {st.inRamadan ? (
               <>
@@ -120,7 +120,7 @@ export function RamadanPage() {
 
         <section className="card">
           <h2><Palette size={18} /> ثيم رمضان للتطبيق كله</h2>
-          <p className="muted small">عند تفعيله يتحول التطبيق كله إلى «فوانيس رمضان»، وتظهر بطاقة السحور والإفطار في الرئيسية.</p>
+          <p className="muted small">عند تفعيله يتحول التطبيق كله إلى تصميم رمضان الفاخر (ليلي كحلي وذهبي)، وتصبح الرئيسية بطاقة المواقيت وبطاقة رمضان: الإفطار والسحور وعدّهما.</p>
           <div className="chips" role="radiogroup" aria-label="ثيم رمضان">
             {([['auto', 'تلقائي في شهر رمضان'], ['on', 'مفعّل الآن'], ['off', 'متوقف']] as const).map(([id, label]) => (
               <button key={id} type="button" role="radio" aria-checked={(r.theme ?? 'auto') === id} className={'chip' + ((r.theme ?? 'auto') === id ? ' active' : '')} onClick={() => setR({ theme: id })}>{label}</button>

@@ -27,6 +27,9 @@
     <string name="tasbih_description">رفيق بلس: المسبحة على الشاشة — اضغط للعدّ</string>
     <string name="tasbih_reset">تصفير</string>
     <string name="ramadan_description">رفيق بلس: رمضان — العدّ التنازلي للسحور والإفطار</string>
+    <string name="night_prayer_s">مواقيت الصلاة (صغير): الصلاة القادمة ووقتها والوقت المتبقي</string>
+    <string name="night_prayer_m">مواقيت الصلاة (متوسط): الصلاة الحالية والمتبقي ومواقيت اليوم</string>
+    <string name="night_prayer_l">مواقيت الصلاة (كبير): كل المواقيت والحالية مميزة والعدّ والمدينة</string>
     <string name="widget_card_description">بطاقة الصلاة القادمة: الوقت والعدّ التنازلي والمواقيت الخمس</string>
     <string name="widget_left">باقي على الأذان</string>
     <string name="adhkar_description">الأذكار: الذكر مباشرة مع عدّاد التكرار (صباح، مساء، نوم)</string>

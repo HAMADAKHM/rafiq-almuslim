@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { usePlus } from '../../billing/PlusContext'
 import { activeSkin, skinById } from '../../themes/skins'
 import { ramadanModeActive } from '../../services/ramadan'
+import { RamadanHome } from './RamadanHome'
 import { useThemePreview } from '../../themes/preview'
 import { DailyCompanionCard } from '../companion/DailyCompanionCard'
 import { Link } from 'react-router-dom'
@@ -266,6 +267,8 @@ export function HomePage() {
   // كل ثيمات الهوية تعرض المظهر الجديد بألوانها
   const golden = !!skinNow?.identity
   const visible = settings.homeCards.filter((c) => c.visible && (!designed || c.id !== 'continue') && (!golden || c.id !== 'sections') && (c.id !== 'companion' || plusEntitled))
+    // وضع رمضان: واجهة هادئة — آية اليوم والإهداء و«كل الأقسام» فقط (بقية الأقسام في «المزيد»)
+    .filter((c) => !ramadanOn || ['ayah', 'continue', 'dedication', 'shortcuts'].includes(c.id))
   const move = (i: number, d: -1 | 1) => {
     const list = [...settings.homeCards]
     const j = i + d
@@ -282,7 +285,9 @@ export function HomePage() {
 
   return (
     <div className={'home' + (golden ? ' home-golden' : '')}>
-      {skinNow?.id === 'e-night' ? (
+      {ramadanOn ? (
+        <RamadanHome now={now} loc={loc} prayer={settings.prayer} hijriOffset={settings.hijriOffset} />
+      ) : skinNow?.id === 'e-night' ? (
         <NightHome now={now} loc={loc} prayer={settings.prayer} rest={null} />
       ) : golden ? (
         <GoldenHome now={now} loc={loc} prayer={settings.prayer} hijriOffset={settings.hijriOffset} last={last} resumeTo={resumeTo} plusEntitled={plusEntitled} rest={null} />
@@ -398,12 +403,6 @@ export function HomePage() {
         </>
       )}
 
-      {ramadanOn && loc && times && (
-        <Link to="/ramadan" className="home-ramadan" aria-label="مواعيد رمضان اليوم">
-          <div className="rt-tile suhoor"><small>السحور ينتهي</small><b>{formatTime(times.fajr, loc.tz)}</b><small>الفجر</small></div>
-          <div className="rt-tile iftar"><small>الإفطار</small><b>{formatTime(times.maghrib, loc.tz)}</b><small>المغرب</small></div>
-        </Link>
-      )}
 
       <div className="home-grid">
         {visible.map((c) => <div key={c.id} className={`home-cell home-${c.id}`}>{cards[c.id]}</div>)}

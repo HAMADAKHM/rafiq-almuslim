@@ -125,7 +125,8 @@ public class WakeAlarms extends BroadcastReceiver {
 
     static void refreshWidgets(Context c) {
         Class<?>[] providers = { PrayerWidgetProvider.class, PrayerCardWidgetProvider.class, DailyWidgetProvider.class, TasbihWidgetProvider.class,
-            AdhkarWidgetProvider.class, DuaWidgetProvider.class, AllInOneWidgetProvider.class, GreetWidgetProvider.class, DailyAdhkarWidgetProvider.class };
+            AdhkarWidgetProvider.class, DuaWidgetProvider.class, AllInOneWidgetProvider.class, GreetWidgetProvider.class, DailyAdhkarWidgetProvider.class,
+            NightPrayerSmall.class, NightPrayerMedium.class, NightPrayerLarge.class };
         android.appwidget.AppWidgetManager m = android.appwidget.AppWidgetManager.getInstance(c);
         for (Class<?> p : providers) {
             try {
