@@ -42,3 +42,14 @@ describe('التوقيت الصيفي/الشتوي اليدوي', () => {
     expect(shiftedTz('Asia/Kolkata', 60, winter)).toBe('Asia/Kolkata')
   })
 })
+
+describe('إعدادات الاستماع والصور', () => {
+  it('قائمة السور تُنقّى، والصورة المثبتة تُحفظ', async () => {
+    const { normalizeTv } = await import('./state')
+    const s = normalizeTv({ reciteMode: 'list', reciteList: [18, 18, 0, 200, 36] as number[], galleryPin: 'islamic-03' })
+    expect(s.reciteMode).toBe('list')
+    expect(s.reciteList).toEqual([18, 36])
+    expect(s.galleryPin).toBe('islamic-03')
+    expect(normalizeTv({ reciteMode: 'bad' as never }).reciteMode).toBe('surah')
+  })
+})

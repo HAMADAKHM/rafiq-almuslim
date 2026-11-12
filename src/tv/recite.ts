@@ -4,7 +4,7 @@ import { ADHKAR } from '../content/adhkar'
 import { ayahOfDay, adhkarForNow } from '../services/daily'
 import type { QuranMeta } from '../services/quran'
 
-export type ReciteMode = 'ayah' | 'surah' | 'adhkar'
+export type ReciteMode = 'ayah' | 'surah' | 'one' | 'list' | 'adhkar'
 /** ayah = 0 تعني البسملة قبل بداية السورة (تُتلى من ملف الفاتحة 1:1) */
 export interface AyahRef { surah: number; ayah: number }
 export const BASMALA_AYAH = 0
@@ -17,7 +17,9 @@ export const TV_RECITERS = [
 ]
 
 export const RECITE_MODES: { id: ReciteMode; label: string; hint: string }[] = [
-  { id: 'surah', label: 'تلاوة متواصلة', hint: 'سورة تختارها ثم ما بعدها، ويُحفظ الموضع' },
+  { id: 'surah', label: 'من سورة وما بعدها', hint: 'تبدأ من السورة التي تختارها وتكمل المصحف بالترتيب، ويُحفظ الموضع' },
+  { id: 'one', label: 'سورة واحدة تتكرر', hint: 'السورة التي تختارها فقط، تُعاد من أولها كلما انتهت' },
+  { id: 'list', label: 'سور أختارها', hint: 'قائمة سور تختارها (مثل الكهف ويس والملك) تُتلى بالترتيب ثم تُعاد' },
   { id: 'ayah', label: 'آية اليوم', hint: 'تُتلى آية اليوم ثم تتكرر كل بضع دقائق' },
   { id: 'adhkar', label: 'الأذكار بالصوت', hint: 'أذكار الصباح أو المساء أو النوم بحسب الوقت: الآيات بصوت القارئ، والأذكار بتسجيل بشري من حصن المسلم' },
 ]
@@ -42,3 +44,10 @@ export function reciteQueue(mode: ReciteMode, meta: Pick<QuranMeta, 'surahs'>, o
 
 /** السورة التالية بعد ختم سورة في التلاوة المتواصلة (بعد الناس تعود إلى الفاتحة) */
 export const nextSurah = (s: number) => (s >= 114 ? 1 : s + 1)
+
+/** السورة التالية بحسب الوضع: المصحف بالترتيب، أو السورة نفسها، أو التالية في القائمة المختارة */
+export function followingSurah(mode: ReciteMode, current: number, list: number[]): number {
+  if (mode === 'one') return current
+  if (mode === 'list' && list.length) { const i = list.indexOf(current); return list[(i + 1) % list.length] ?? list[0] }
+  return nextSurah(current)
+}

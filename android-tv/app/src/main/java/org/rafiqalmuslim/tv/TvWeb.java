@@ -131,6 +131,19 @@ final class TvWeb {
                 new Intent(Settings.ACTION_SETTINGS));
         }
 
+        /** النسخة القديمة من التطبيق (org.rafiqalmuslim.tv) مثبتة أيضًا؟ قد تفتح هي عند تشغيل التلفاز بدل هذه */
+        @JavascriptInterface
+        public boolean otherEdition() {
+            try { ctx.getPackageManager().getPackageInfo("org.rafiqalmuslim.tv", 0); return !ctx.getPackageName().equals("org.rafiqalmuslim.tv"); } catch (Exception e) { return false; }
+        }
+
+        /** يفتح نافذة حذف النسخة القديمة (بموافقة المستخدم)، أو صفحة معلوماتها إن تعذر */
+        @JavascriptInterface
+        public void removeOtherEdition() {
+            Uri pkg = Uri.parse("package:org.rafiqalmuslim.tv");
+            if (!tryStart(new Intent(Intent.ACTION_DELETE, pkg))) tryStart(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, pkg));
+        }
+
         /** نسخة Android ونوع الجهاز (للتشخيص) */
         @JavascriptInterface
         public String getDevice() {

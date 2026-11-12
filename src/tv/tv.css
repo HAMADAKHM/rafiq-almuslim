@@ -175,3 +175,76 @@ button, input, select { font: inherit; }
 .tv-photo-card .tv-btn { width: 100%; border-radius: 0; margin: 0; }
 /* قائمة الإعدادات: أزرار أصغر قليلًا حتى تتسع كل الأقسام (ومنها التحكم من الجوال والتشغيل التلقائي) وزر الحفظ دون تمرير — يعمل على متصفحات التلفاز القديمة */
 .tv-setup-nav.compact .tv-nav { padding: 0.5vw 1.1vw; margin-bottom: 0.35vw; font-size: 1.2vw; line-height: 1.25; }
+
+/* ═══════════ التصميم الفاخر: ليل كحلي وزجاج داكن وخطوط ذهبية دقيقة ═══════════
+   (يعمل في متصفحات التلفاز القديمة: لا يعتمد على تمويه الخلفية، والألوان معتمة بما يكفي للقراءة) */
+html, body, #root { background: #060c1c; }
+body { color: #f4efe3; }
+.tv { padding: 2.2vw 3.2vw 1.5vw; }
+.tv-veil.scene, .tv-veil { background: linear-gradient(to bottom, rgba(5, 10, 26, 0.72) 0%, rgba(5, 10, 26, 0.18) 34%, rgba(5, 10, 26, 0.22) 58%, rgba(5, 10, 26, 0.88) 100%); }
+.tv::after { content: ''; position: absolute; inset: 1vw; border: 0.08vw solid rgba(214, 180, 106, 0.28); border-radius: 1.6vw; pointer-events: none; z-index: 1; }
+
+.tv-logo { background: radial-gradient(circle at 50% 35%, rgba(36, 54, 96, 0.95), rgba(10, 18, 40, 0.95)); border-color: rgba(214, 180, 106, 0.7); box-shadow: 0 0 1.4vw rgba(214, 180, 106, 0.18); }
+.tv-brand strong { font-size: 2.3vw; background: linear-gradient(180deg, #fbefd0, #d6b46a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tv-brand small { color: #c9cfdd; letter-spacing: 0.02em; }
+.tv-dates span:first-child { color: #e9e3d3; }
+.tv-hijri { color: #e3c27f; }
+
+.tv-clock { display: flex; align-items: baseline; justify-content: flex-end; gap: 0.8vw; white-space: nowrap; font-size: 7.6vw; text-shadow: 0 0.4vw 2vw rgba(0, 0, 0, 0.55); }
+.tv-clock b { font-weight: 700; letter-spacing: 0.03em; background: linear-gradient(180deg, #ffffff 30%, #e9dcc0); -webkit-background-clip: text; background-clip: text; color: transparent; font-variant-numeric: tabular-nums; }
+.tv-clock small { font-size: 2.4vw; color: #e3c27f; font-weight: 700; }
+
+.tv-next { position: relative; overflow: hidden; background: linear-gradient(160deg, rgba(24, 38, 76, 0.94), rgba(9, 16, 36, 0.95)); border: 0.1vw solid rgba(214, 180, 106, 0.55); border-radius: 1.8vw; box-shadow: 0 1.2vw 3vw rgba(0, 0, 0, 0.45), inset 0 0.08vw 0 rgba(255, 255, 255, 0.06); }
+.tv-next::before { content: ''; position: absolute; top: -40%; left: -20%; width: 60%; height: 140%; background: radial-gradient(closest-side, rgba(255, 196, 102, 0.18), transparent); pointer-events: none; }
+.tv-next-label { color: #c9cfdd; opacity: 1; }
+.tv-next-label i { color: #d6b46a; font-style: normal; }
+.tv-next-name { font-family: 'Amiri', serif; font-size: 4vw; color: #fbf3df; }
+.tv-next-time { color: #e3c27f; }
+.tv-next-left { color: #c9cfdd; }
+.tv-next-left b { color: #f6d58e; font-variant-numeric: tabular-nums; }
+
+.tv-card { background: linear-gradient(165deg, rgba(18, 30, 62, 0.72), rgba(8, 14, 32, 0.78)); border: 0.1vw solid rgba(214, 180, 106, 0.4); border-radius: 2vw; box-shadow: 0 1.2vw 3vw rgba(0, 0, 0, 0.4); position: relative; }
+.tv-card::before, .tv-card::after { content: '✦'; position: absolute; top: 1vw; color: rgba(214, 180, 106, 0.65); font-size: 1.1vw; }
+.tv-card::before { right: 1.2vw; } .tv-card::after { left: 1.2vw; }
+.tv-card-title { color: #e3c27f; text-align: center; letter-spacing: 0.02em; }
+.tv-card-text { color: #fbf6ea; text-shadow: 0 0.15vw 0.8vw rgba(0, 0, 0, 0.45); }
+.tv-card-ref { color: #c9cfdd; opacity: 1; }
+.tv-card.playing { border-color: rgba(227, 194, 127, 0.85); box-shadow: 0 0 2.4vw rgba(227, 194, 127, 0.2), 0 1.2vw 3vw rgba(0, 0, 0, 0.4); }
+
+.tv-prayers { gap: 1.1vw; }
+.tv-prayer { position: relative; background: linear-gradient(170deg, rgba(20, 32, 66, 0.86), rgba(8, 14, 32, 0.9)); color: #e9e3d3; border: 0.08vw solid rgba(214, 180, 106, 0.28); border-radius: 1.5vw; box-shadow: 0 0.8vw 2vw rgba(0, 0, 0, 0.35); padding: 1.1vw 0.5vw; }
+.tv-prayer span { color: #c9cfdd; font-size: 1.45vw; }
+.tv-prayer b { color: #fbf6ea; font-size: 2.5vw; font-variant-numeric: tabular-nums; }
+.tv-prayer small { color: #d6b46a; }
+.tv-prayer.sunrise { opacity: 0.72; }
+.tv-prayer.next { background: linear-gradient(170deg, rgba(58, 46, 18, 0.92), rgba(24, 20, 10, 0.94)); border: 0.14vw solid #e3c27f; color: #fff; box-shadow: 0 0 2vw rgba(227, 194, 127, 0.28), 0 0.8vw 2vw rgba(0, 0, 0, 0.4); transform: translateY(-0.5vw); }
+.tv-prayer.next span { color: #f6d58e; }
+.tv-prayer.next b { color: #fff6dc; }
+.tv-prayer.next::after { content: ''; position: absolute; bottom: 0.5vw; left: 30%; right: 30%; height: 0.22vw; border-radius: 0.2vw; background: #e3c27f; box-shadow: 0 0 0.8vw rgba(227, 194, 127, 0.8); }
+
+.tv-sadaqah { color: #d8c79f; }
+.tv-btn { background: rgba(14, 24, 50, 0.7); border: 0.1vw solid rgba(214, 180, 106, 0.45); color: #f4efe3; }
+.tv-btn.on, .tv-btn.primary { background: linear-gradient(180deg, #ecd08f, #c9a24a); color: #1a1406; border-color: #ecd08f; }
+.tv-btn:focus { outline-color: #f6d58e; box-shadow: 0 0 1.2vw rgba(246, 213, 142, 0.45); }
+
+/* معرض الصور الجاهزة: صور مصغرة تُختار للتثبيت */
+.tv-photo-grid.gallery { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.9vw; margin: 0.6vw 0 1vw; }
+.tv-photo-pick { position: relative; padding: 0; border: 0.15vw solid rgba(214, 180, 106, 0.25); border-radius: 0.9vw; overflow: hidden; background: #0a1226; cursor: pointer; aspect-ratio: 16 / 9; }
+.tv-photo-pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tv-photo-pick.on { border-color: #e3c27f; box-shadow: 0 0 1.4vw rgba(227, 194, 127, 0.45); }
+.tv-photo-pick span { position: absolute; bottom: 0.4vw; right: 0.4vw; padding: 0.15vw 0.7vw; border-radius: 999px; background: #e3c27f; color: #1a1406; font-size: 0.95vw; font-weight: 700; }
+.tv-photo-pick:focus { outline: 0.3vw solid #f6d58e; outline-offset: 0.15vw; }
+.tv-btn { white-space: nowrap; }
+/* الإعدادات بالهوية نفسها: ليل كحلي وذهبي */
+.tv-veil.solid { background: radial-gradient(circle at 70% 20%, #1a2a55, #0a1226 55%, #050a18); }
+.tv-dream-empty { background: #0a1226; }
+.tv-setup-page, .tv-setup-grid > section { background: linear-gradient(165deg, rgba(20, 32, 66, 0.72), rgba(8, 14, 32, 0.8)); border-color: rgba(214, 180, 106, 0.35); }
+.tv-nav { background: rgba(14, 24, 50, 0.6); border-color: rgba(214, 180, 106, 0.22); color: #e9e3d3; }
+.tv-nav.on { background: linear-gradient(170deg, rgba(58, 46, 18, 0.9), rgba(24, 20, 10, 0.92)); border-color: #e3c27f; color: #f6d58e; }
+.tv-nav.save { background: linear-gradient(180deg, #ecd08f, #c9a24a); color: #1a1406; border-color: #ecd08f; }
+.tv-choice { background: rgba(14, 24, 50, 0.6); border-color: rgba(214, 180, 106, 0.25); color: #e9e3d3; }
+.tv-choice.on { background: linear-gradient(180deg, #ecd08f, #c9a24a); color: #1a1406; border-color: #ecd08f; }
+.tv-toggle { background: rgba(14, 24, 50, 0.6); border-color: rgba(214, 180, 106, 0.25); }
+.tv-nav:focus, .tv-choice:focus, .tv-toggle:focus, .tv-step:focus { outline-color: #f6d58e; box-shadow: 0 0 1.2vw rgba(246, 213, 142, 0.4); }
+.tv-veil.strong { background: linear-gradient(to bottom, rgba(6, 12, 30, 0.9), rgba(10, 18, 42, 0.84) 50%, rgba(5, 10, 24, 0.95)); }
+.tv-setup-page { overflow-y: auto; scrollbar-width: thin; }

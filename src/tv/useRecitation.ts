@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { ayahAudioSources, reciterById, type Reciter } from '../content/reciters'
 import type { QuranData } from '../services/quran'
-import { BASMALA_AYAH, nextSurah, reciteQueue, REPEAT_GAP_MS, type AyahRef } from './recite'
+import { BASMALA_AYAH, followingSurah, reciteQueue, REPEAT_GAP_MS, type AyahRef } from './recite'
 import type { TvSettings } from './state'
 import { ADHKAR } from '../content/adhkar'
 import { hisnAudioUrl } from '../content/hisnAudio'
@@ -113,15 +113,19 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
     }
     ;(async () => {
       if (s.reciteMode === 'adhkar') return adhkarLoop()
-      let surah = s.reciteSurah
+      const surahMode = s.reciteMode === 'surah' || s.reciteMode === 'one' || s.reciteMode === 'list'
+      const list = s.reciteList.length ? s.reciteList : [s.reciteSurah]
+      let surah = s.reciteMode === 'list' ? list[0] : s.reciteSurah
       let from: number | undefined
-      if (s.reciteMode === 'surah') {
+      if (surahMode) {
+        // الموضع المحفوظ (يُستأنف منه) ما دام يناسب الوضع: في «سورة واحدة» السورة نفسها، وفي القائمة سورة منها
         const pos = loadPos()
-        if (pos && pos.surah >= 1 && pos.surah <= 114) { surah = pos.surah; from = Math.max(1, pos.ayah) }
+        const fits = pos && pos.surah >= 1 && pos.surah <= 114 && (s.reciteMode === 'surah' || (s.reciteMode === 'one' && pos.surah === s.reciteSurah) || (s.reciteMode === 'list' && list.includes(pos.surah)))
+        if (pos && fits) { surah = pos.surah; from = Math.max(1, pos.ayah) }
       }
       let misses = 0
       while (alive()) {
-        const queue = reciteQueue(s.reciteMode, data.meta, { day: ctx.day, hour: hourRef.current, surah, from })
+        const queue = reciteQueue(surahMode ? 'surah' : s.reciteMode, data.meta, { day: ctx.day, hour: hourRef.current, surah, from })
         let next: Prepared | null = queue.length ? prepare(sourcesFor(reciter, queue[0]), vol) : null
         for (let k = 0; k < queue.length; k++) {
           if (!alive()) return
@@ -131,7 +135,7 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
           next = k + 1 < queue.length ? prepare(sourcesFor(reciter, queue[k + 1]), vol) : null
           pending = next
           setCurrent(a)
-          if (s.reciteMode === 'surah' && a.ayah !== BASMALA_AYAH) savePos(a)
+          if (surahMode && a.ayah !== BASMALA_AYAH) savePos(a)
           const ok = await playPrepared(cur, audio, alive)
           if (!alive()) return
           misses = ok ? 0 : misses + 1
@@ -139,7 +143,7 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
           // تعذر التحميل (انقطاع الإنترنت): انتظار ثم المتابعة دون ضغط على الشبكة
           if (misses >= 3) await sleep(60_000, alive)
         }
-        if (s.reciteMode === 'surah') { surah = nextSurah(surah); from = 1; savePos({ surah, ayah: 1 }) }
+        if (surahMode) { surah = followingSurah(s.reciteMode, surah, list); from = 1; savePos({ surah, ayah: 1 }) }
         else { setCurrent(null); await sleep(REPEAT_GAP_MS, alive) }
       }
     })()
@@ -149,7 +153,7 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
       stopVoice()
       if (pending) { pending.el.removeAttribute('src'); pending.el.load(); pending = null }
     }
-  }, [active, s.reciteMode, s.reciterId, s.reciteSurah, s.adhkarVoice, ctx.day, data]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active, s.reciteMode, s.reciterId, s.reciteSurah, s.reciteList.join(','), s.adhkarVoice, ctx.day, data]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // تغيير مستوى الصوت أثناء التلاوة
   useEffect(() => { if (audio.current) audio.current.volume = s.reciteVolume }, [s.reciteVolume])

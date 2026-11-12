@@ -21,8 +21,11 @@ export function galleryIds(cat: GalleryCat): string[] {
   return GALLERY.filter((p) => cat === 'all' || p.cat === cat).map((p) => p.id)
 }
 
-/** مصدر الصور الجاهزة لعرضها بتلاشٍ كصور الجوال */
-export function gallerySource(cat: GalleryCat): PhotoSource {
-  const ids = galleryIds(cat)
+export const galleryThumb = (id: string) => `./tv-photos/thumbs/${id}.jpg`
+export const galleryPhoto = (id: string) => `./tv-photos/${id}.jpg`
+
+/** مصدر الصور الجاهزة لعرضها بتلاشٍ كصور الجوال؛ pin = صورة واحدة مثبّتة */
+export function gallerySource(cat: GalleryCat, pin?: string | null): PhotoSource {
+  const ids = pin && GALLERY.some((p) => p.id === pin) ? [pin] : galleryIds(cat)
   return { ids: () => ids, load: (id) => `./tv-photos/${id}.jpg` }
 }

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:installLocation="internalOnly">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- تحديث تطبيق الشاشة من الجوال المربوط (بموافقة المستخدم على التلفاز) -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- حذف النسخة القديمة من التطبيق (بموافقة المستخدم في نافذة النظام) -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- منبه دقيق عند دخول وقت الصلاة (يعمل ولو أغلق النظام التطبيق) -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" android:maxSdkVersion="32" />

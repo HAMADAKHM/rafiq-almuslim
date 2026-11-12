@@ -213,7 +213,7 @@ final class RemoteCore {
                     screen.put(k, d); break;
                 }
                 case "reciteMode":
-                    if (!(v instanceof String) || !oneOf((String) v, new String[] { "ayah", "surah", "adhkar" })) throw new IllegalArgumentException(k);
+                    if (!(v instanceof String) || !oneOf((String) v, new String[] { "ayah", "surah", "one", "list", "adhkar" })) throw new IllegalArgumentException(k);
                     screen.put(k, v); break;
                 case "galleryCat":
                     if (!(v instanceof String) || !oneOf((String) v, new String[] { "all", "islamic", "nature", "sport", "clubs", "space", "other" })) throw new IllegalArgumentException(k);

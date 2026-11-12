@@ -24,3 +24,20 @@ describe('تلاوة شاشة التلفاز', () => {
     expect(q).toContainEqual({ surah: 2, ayah: 255 })
   })
 })
+
+describe('خيارات الاستماع', () => {
+  it('من سورة وما بعدها: التالية بالترتيب، وبعد الناس الفاتحة', async () => {
+    const { followingSurah } = await import('./recite')
+    expect(followingSurah('surah', 18, [])).toBe(19)
+    expect(followingSurah('surah', 114, [])).toBe(1)
+  })
+  it('سورة واحدة تتكرر', async () => {
+    const { followingSurah } = await import('./recite')
+    expect(followingSurah('one', 67, [])).toBe(67)
+  })
+  it('سور مختارة: بالترتيب ثم تعود لأولها', async () => {
+    const { followingSurah } = await import('./recite')
+    expect(followingSurah('list', 18, [18, 36, 67])).toBe(36)
+    expect(followingSurah('list', 67, [18, 36, 67])).toBe(18)
+  })
+})

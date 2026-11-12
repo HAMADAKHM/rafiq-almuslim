@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { PaintedScene, type PaintTone } from '../components/Scene'
 import { SceneCanvas, ScenePreview } from './SceneCanvas'
 import { PhotoScene, photoSource, usePhotoIds } from './PhotoScene'
-import { GALLERY_CATS, galleryIds, gallerySource } from './gallery'
+import { GALLERY_CATS, galleryIds, gallerySource, galleryThumb } from './gallery'
 import { SCENES, sceneInfo, type SceneId } from './scenes'
 import { LogoMark } from '../components/Art'
 import { SADAQAH_LINE, HOME_CARD } from '../content/dedication'
@@ -35,7 +35,7 @@ type Bridge = {
   openScreensaverSettings(): boolean; getAutostart(): boolean; setAutostart(on: boolean): void
   canOpenFromBackground?(): boolean; openOverlaySettings?(): boolean; getIdleTakeover?(): boolean; setIdleTakeover?(on: boolean): void; setSchedule?(json: string): void
   getStatus?(): string; stopAdhan?(): void; openAccessibilitySettings?(): boolean; setIdleMinutes?(m: number): void; startService?(): void; setQuietIdle?(on: boolean): void; clearSnooze?(): void
-  openAndroidSettings?(): boolean; getDevice?(): string; getHomeMode?(): boolean; setHomeMode?(on: boolean): void; pressHome?(): void
+  openAndroidSettings?(): boolean; getDevice?(): string; otherEdition?(): boolean; removeOtherEdition?(): void; getHomeMode?(): boolean; setHomeMode?(on: boolean): void; pressHome?(): void
   getApps?(): string; launchApp?(pkg: string): boolean; openOriginalHome?(): boolean
   startPairing?(): string; stopPairing?(): void; getRemoteStatus?(): string; removeRemoteDevice?(id: string): void; setRemoteSnapshot?(json: string): void; takeRemotePatch?(): string
 }
@@ -267,7 +267,7 @@ export function TvApp() {
   return (
     <div className="tv">
       {s.scene === 'gallery'
-        ? <><PhotoScene key={s.galleryCat} src={gallerySource(s.galleryCat)} minutes={s.rotateMin} shuffle={s.shuffle} animate={s.animate} className="tv-art" /><div className="tv-veil scene" /></>
+        ? <><PhotoScene key={`${s.galleryCat}:${s.galleryPin ?? ''}`} src={gallerySource(s.galleryCat, s.galleryPin)} minutes={s.rotateMin} shuffle={s.shuffle} animate={s.animate} className="tv-art" /><div className="tv-veil scene" /></>
         : s.scene === 'photos' && photos && photoCount > 0
         ? <><PhotoScene src={photos} minutes={s.rotateMin} shuffle={s.shuffle} animate={s.animate} className="tv-art" /><div className="tv-veil scene" /></>
         : s.scene === 'classic' || !s.animate
@@ -281,9 +281,9 @@ export function TvApp() {
 
       <main className="tv-main">
         <section className="tv-clock-col">
-          <div className="tv-clock">{clock(now, city.tz, s.hour12, true)}</div>
+          {(() => { const c = clock(now, city.tz, s.hour12, true); const m = c.match(/^(.*?)\s*([^\d\s:٠-٩]+)$/); return <div className="tv-clock"><b>{m ? m[1] : c}</b>{m && <small>{m[2]}</small>}</div> })()}
           <div className="tv-next">
-            <span className="tv-next-label">الصلاة القادمة</span>
+            <span className="tv-next-label"><i aria-hidden="true">✦</i> الصلاة القادمة</span>
             <span className="tv-next-name">{PRAYER_LABELS[np.name]}</span>
             <span className="tv-next-time">{clock(np.time, city.tz, s.hour12)}</span>
             <span className="tv-next-left">بعد <b>{formatCountdown(left)}</b></span>
@@ -454,8 +454,6 @@ function TvRemotePage() {
 function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSettings>) => void }) {
   const [focus, setFocus] = useState<SceneId | null>(null)
   const [photos] = useState(photoSource)
-  const inList = (id: SceneId) => draft.playlist.includes(id)
-  const toggleList = (id: SceneId) => set({ playlist: inList(id) ? draft.playlist.filter((x) => x !== id) : [...draft.playlist, id] })
   const cats = [...new Set(SCENES.map((x) => x.category))]
   return (
     <>
@@ -465,8 +463,21 @@ function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSe
         onChange={(v) => set({ scene: v === 'one' ? (focus ?? SCENES[0].id) : v as 'rotate' | 'classic' | 'photos' | 'gallery' })}
         options={[{ id: 'gallery', label: 'صور جاهزة' }, { id: 'rotate', label: 'تنقل بين المشاهد' }, { id: 'one', label: 'مشهد واحد' }, { id: 'classic', label: 'الرسم الأصلي (طيور وغيوم)' }, ...(photos ? [{ id: 'photos' as const, label: 'صوري من الجوال' }] : [])]} />
       {draft.scene === 'gallery' && (
-        <Choices label="تصنيف الصور" cols={6} value={draft.galleryCat} onChange={(c) => set({ galleryCat: c })}
-          options={GALLERY_CATS.map((c) => ({ id: c.id, label: `${c.label} (${galleryIds(c.id).length})` }))} />
+        <>
+          <Choices label="الصور" cols={2} value={draft.galleryPin ? 'pin' : 'rotate'} onChange={(v) => set({ galleryPin: v === 'pin' ? (draft.galleryPin ?? galleryIds(draft.galleryCat)[0]) : null })}
+            options={[{ id: 'pin', label: 'صورة واحدة ثابتة' }, { id: 'rotate', label: 'تنقل بين الصور' }]} />
+          <Choices label="تصنيف الصور" cols={7} value={draft.galleryCat} onChange={(c) => set({ galleryCat: c })}
+            options={GALLERY_CATS.map((c) => ({ id: c.id, label: `${c.label} (${galleryIds(c.id).length})` }))} />
+          <p className="tv-muted">{draft.galleryPin ? 'اضغط أي صورة لتثبيتها خلفيةً للشاشة.' : 'تتنقل الشاشة بين صور هذا التصنيف. اضغط أي صورة لتثبيتها بدل التنقل.'}</p>
+          <div className="tv-photo-grid gallery">
+            {galleryIds(draft.galleryCat).map((id) => (
+              <button key={id} className={'tv-photo-pick' + (draft.galleryPin === id ? ' on' : '')} onClick={() => set({ galleryPin: id })} aria-pressed={draft.galleryPin === id} aria-label={`تثبيت الصورة ${id}`}>
+                <img src={galleryThumb(id)} alt="" loading="lazy" decoding="async" />
+                {draft.galleryPin === id && <span>✓ مثبّتة</span>}
+              </button>
+            ))}
+          </div>
+        </>
       )}
       {photos && <TvPhotosPanel src={photos} on={draft.scene === 'photos'} />}
       {cats.map((cat) => (
@@ -475,24 +486,21 @@ function TvScenesPage({ draft, set }: { draft: TvSettings; set: (p: Partial<TvSe
           <div className="tv-scene-grid">
             {SCENES.filter((x) => x.category === cat).map((x) => (
               <div key={x.id} className={'tv-scene-card' + (draft.scene === x.id ? ' on' : '')}>
-                <button className="tv-scene-main" onFocus={() => setFocus(x.id)} onMouseEnter={() => setFocus(x.id)} onClick={() => set({ scene: x.id })} aria-label={`عرض مشهد ${x.name}`}>
+                <button className="tv-scene-main" onFocus={() => setFocus(x.id)} onMouseEnter={() => setFocus(x.id)} onClick={() => set({ scene: x.id, playlist: [] })} aria-label={`عرض مشهد ${x.name}`}>
                   <ScenePreview id={x.id} live={focus === x.id} />
                   <span className="tv-scene-name">{draft.scene === x.id ? '✓ ' : ''}{x.name}</span>
                 </button>
-                <button className={'tv-scene-fav' + (inList(x.id) ? ' on' : '')} onClick={() => toggleList(x.id)} aria-pressed={inList(x.id)}>{inList(x.id) ? '★ في القائمة' : '☆ أضف للتنقل'}</button>
               </div>
             ))}
           </div>
         </div>
       ))}
       {focus && <p className="tv-muted">{sceneInfo(focus)?.note}</p>}
-      {(draft.scene === 'rotate' || draft.scene === 'photos' || draft.scene === 'gallery') && (
+      {(draft.scene === 'rotate' || draft.scene === 'photos' || (draft.scene === 'gallery' && !draft.galleryPin)) && (
         <>
-          {draft.scene === 'rotate' && <p className="tv-muted">{draft.playlist.length ? `قائمة التنقل: ${draft.playlist.map((id) => sceneInfo(id)?.name).join('، ')}` : 'لم تختر مفضلة: تتنقل الشاشة بين كل المشاهد.'}</p>}
           <Choices label="مدة كل مشهد" cols={5} value={draft.rotateMin} onChange={(m) => set({ rotateMin: m })}
             options={[{ id: 5, label: '5 دقائق' }, { id: 10, label: '10 دقائق' }, { id: 20, label: '20 دقيقة' }, { id: 30, label: '30 دقيقة' }, { id: 60, label: 'ساعة' }]} />
           <Toggle on={draft.shuffle} onChange={(v) => set({ shuffle: v })} label="ترتيب عشوائي" />
-          {draft.playlist.length > 1 && <button className="tv-btn" onClick={() => set({ playlist: [] })}>مسح قائمة التنقل (العودة لكل المشاهد)</button>}
         </>
       )}
       <Choices label="الجودة" cols={3} value={draft.quality} onChange={(q) => set({ quality: q })}
@@ -596,13 +604,19 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
       <div className="tv-veil strong" />
       <div className="tv-setup-body">
         <h1><LogoMark size={40} /> إعدادات شاشة رفيق المسلم</h1>
+        {(() => { try { return bridge()?.otherEdition?.() } catch { return false } })() && (
+          <div className="tv-alert" role="alert">
+            يوجد على التلفاز أيضًا <b>النسخة القديمة</b> من رفيق المسلم، وقد تفتح هي عند تشغيل التلفاز بدل هذه النسخة (فتظهر مشكلاتها القديمة).
+            <button className="tv-btn primary" style={{ marginInlineStart: '1vw' }} onClick={() => bridge()?.removeOtherEdition?.()}>حذف النسخة القديمة</button>
+          </div>
+        )}
         <div className="tv-setup-layout">
           <nav className="tv-setup-nav compact" aria-label="أقسام الإعدادات">
             {pages.map((p) => <button key={p.id} className={'tv-nav' + (page === p.id ? ' on' : '')} aria-current={page === p.id ? 'page' : undefined} onClick={() => setPage(p.id)} autoFocus={page === p.id}>{p.label}</button>)}
             <button className={'tv-nav save' + (draft.city ? '' : ' wait')} onClick={() => {
               // بلا مدينة لا تُحسب المواقيت: ينتقل إلى صفحة المدينة مع توضيح بدل زر معطل لا يستجيب
               if (!draft.city) { setNeedCity(true); setPage('city'); return }
-              if (draft.reciteSurah !== s.reciteSurah) resetRecitePos()
+              if (draft.reciteSurah !== s.reciteSurah || draft.reciteMode !== s.reciteMode || draft.reciteList.join() !== s.reciteList.join()) resetRecitePos()
               onSave(draft)
             }}>✓ حفظ وعرض الشاشة</button>
             {!draft.city && <p className="tv-muted small">اختر مدينتك أولًا ليعمل الحفظ</p>}
@@ -655,17 +669,32 @@ function TvSetup({ s, data, onSave, canCancel, onCancel }: { s: TvSettings; data
               <>
                 <Toggle on={draft.reciteOn} onChange={(v) => set({ reciteOn: v })} label="القراءة على الشاشة (تتوقف وقت الأذان وتُستأنف بعده)" />
                 <h2>ما يُقرأ</h2>
-                <Choices label="ما يُقرأ" cols={3} value={draft.reciteMode} onChange={(v) => set({ reciteMode: v })} options={RECITE_MODES.map((m) => ({ id: m.id, label: m.label }))} />
+                <Choices label="ما يُقرأ" cols={5} value={draft.reciteMode} onChange={(v) => set({ reciteMode: v })} options={RECITE_MODES.map((m) => ({ id: m.id, label: m.label }))} />
                 {draft.reciteMode === 'adhkar' && <VoiceNote />}
-                {draft.reciteMode === 'surah' && (
+                {(draft.reciteMode === 'surah' || draft.reciteMode === 'one') && (
                   <>
-                    <div className="tv-stepper wide" aria-label="سورة البدء">
-                      <span className="tv-stepper-label">البدء من</span>
+                    <p className="tv-muted">{RECITE_MODES.find((m) => m.id === draft.reciteMode)?.hint}</p>
+                    <div className="tv-stepper wide" aria-label="السورة">
+                      <span className="tv-stepper-label">{draft.reciteMode === 'one' ? 'السورة' : 'البدء من'}</span>
                       <button className="tv-step" onClick={() => set({ reciteSurah: draft.reciteSurah <= 1 ? 114 : draft.reciteSurah - 1 })} aria-label="السورة السابقة">−</button>
                       <b>{draft.reciteSurah}. سورة {surahs[draft.reciteSurah - 1]?.name ?? ''}</b>
                       <button className="tv-step" onClick={() => set({ reciteSurah: draft.reciteSurah >= 114 ? 1 : draft.reciteSurah + 1 })} aria-label="السورة التالية">+</button>
                     </div>
                     <Choices label="سور مختارة" cols={4} value={draft.reciteSurah} onChange={(v) => set({ reciteSurah: v })} options={QUICK_SURAHS.map((n) => ({ id: n, label: surahs[n - 1]?.name ?? String(n) }))} />
+                    <h2>كل السور</h2>
+                    <Choices label="كل السور" cols={6} value={draft.reciteSurah} onChange={(v) => set({ reciteSurah: v })} options={surahs.map((x, i) => ({ id: i + 1, label: `${i + 1}. ${x.name}` }))} />
+                  </>
+                )}
+                {draft.reciteMode === 'list' && (
+                  <>
+                    <p className="tv-muted">اختر السور التي تريد سماعها (تُتلى بالترتيب الذي تختاره ثم تُعاد). المختارة الآن: {draft.reciteList.map((n) => surahs[n - 1]?.name ?? n).join('، ') || '—'}</p>
+                    <div className="tv-choices" role="group" aria-label="السور المختارة" style={{ gridTemplateColumns: 'repeat(6, minmax(0, 1fr))' }}>
+                      {surahs.map((x, i) => {
+                        const n = i + 1, on = draft.reciteList.includes(n)
+                        return <button key={n} aria-pressed={on} className={'tv-choice' + (on ? ' on' : '')} onClick={() => set({ reciteList: on ? draft.reciteList.filter((v) => v !== n) : [...draft.reciteList, n] })}>{on ? `✓ ${draft.reciteList.indexOf(n) + 1}. ` : `${n}. `}{x.name}</button>
+                      })}
+                    </div>
+                    {draft.reciteList.length > 0 && <button className="tv-btn" onClick={() => set({ reciteList: [] })}>مسح القائمة</button>}
                   </>
                 )}
               </>

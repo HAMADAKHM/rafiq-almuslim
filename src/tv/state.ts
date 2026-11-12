@@ -18,7 +18,10 @@ export interface TvSettings {
   hour12: boolean
   /** التلاوة: مشغّلة أم لا، ووضعها، والقارئ، وسورة البدء، ومستوى الصوت (0–1) */
   reciteOn: boolean
-  reciteMode: 'ayah' | 'surah' | 'adhkar'
+  /** surah = من سورة وما بعدها، one = سورة واحدة تتكرر، list = سور يختارها المستخدم بالترتيب */
+  reciteMode: 'ayah' | 'surah' | 'one' | 'list' | 'adhkar'
+  /** قائمة السور المختارة (للوضع list) */
+  reciteList: number[]
   reciterId: string
   reciteSurah: number
   reciteVolume: number
@@ -35,6 +38,8 @@ export interface TvSettings {
   scene: SceneId | 'rotate' | 'classic' | 'photos' | 'gallery'
   /** تصنيف الصور الجاهزة */
   galleryCat: GalleryCat
+  /** صورة جاهزة مثبّتة خلفيةً (null = تنقل بين صور التصنيف) */
+  galleryPin: string | null
   /** قائمة المشاهد المفضلة للتنقل (فارغة = كل المشاهد) */
   playlist: SceneId[]
   /** دقائق كل مشهد في التنقل */
@@ -54,10 +59,12 @@ export const DEFAULT_TV: TvSettings = {
   reciteMode: 'surah',
   reciterId: 'husary',
   reciteSurah: 2,
+  reciteList: [18, 36, 67, 55, 56],
   reciteVolume: 0.5,
   adhkarVoice: 'human',
   phrases: true,
   galleryCat: 'all',
+  galleryPin: null,
   clockShift: 0,
   animate: true,
   scene: 'rotate',
@@ -82,7 +89,9 @@ export function normalizeTv(raw: Partial<TvSettings>): TvSettings {
     const playlist = Array.isArray(raw.playlist) ? raw.playlist.filter((x): x is SceneId => SCENES.some((sc) => sc.id === x)) : []
     const scene = raw.scene === 'rotate' || raw.scene === 'classic' || raw.scene === 'photos' || raw.scene === 'gallery' || SCENES.some((sc) => sc.id === raw.scene) ? raw.scene! : DEFAULT_TV.scene
     const galleryCat = GALLERY_CATS.some((c) => c.id === raw.galleryCat) ? raw.galleryCat! : 'all'
-    return { ...DEFAULT_TV, ...raw, scene, playlist, galleryCat, prayer: { ...DEFAULT_TV.prayer, ...raw.prayer, adjustments: { ...DEFAULT_TV.prayer.adjustments, ...raw.prayer?.adjustments } }, iqama: { ...DEFAULT_TV.iqama, ...raw.iqama } }
+    const reciteList = Array.isArray(raw.reciteList) ? [...new Set(raw.reciteList.filter((n) => Number.isInteger(n) && n >= 1 && n <= 114))] : DEFAULT_TV.reciteList
+    const reciteMode = (['ayah', 'surah', 'one', 'list', 'adhkar'] as const).includes(raw.reciteMode as never) ? raw.reciteMode! : DEFAULT_TV.reciteMode
+    return { ...DEFAULT_TV, ...raw, reciteMode, reciteList: reciteList.length ? reciteList : DEFAULT_TV.reciteList, galleryPin: typeof raw.galleryPin === 'string' ? raw.galleryPin : null, scene, playlist, galleryCat, prayer: { ...DEFAULT_TV.prayer, ...raw.prayer, adjustments: { ...DEFAULT_TV.prayer.adjustments, ...raw.prayer?.adjustments } }, iqama: { ...DEFAULT_TV.iqama, ...raw.iqama } }
   } catch { return DEFAULT_TV }
 }
 export function saveTv(s: TvSettings) { try { localStorage.setItem(KEY, JSON.stringify(s)) } catch { /* التخزين غير متاح */ } }
