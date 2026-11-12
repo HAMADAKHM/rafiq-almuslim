@@ -47,13 +47,17 @@ final class TvWeb {
         web.setWebViewClient(new WebViewClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-                return withMime(request.getUrl(), loader.shouldInterceptRequest(request.getUrl()));
+                Uri u = request.getUrl();
+                // ملفات التلاوة والأذكار: عبر شبكة Android مع جذور Let's Encrypt (لأجهزة التلفاز القديمة)
+                if ("GET".equals(request.getMethod()) && AudioFetch.handles(u)) { WebResourceResponse r = AudioFetch.fetch(ctx, u); if (r != null) return r; }
+                return withMime(u, loader.shouldInterceptRequest(u));
             }
 
             @Override
             @SuppressWarnings("deprecation")
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
                 Uri u = Uri.parse(url);
+                if (AudioFetch.handles(u)) { WebResourceResponse r = AudioFetch.fetch(ctx, u); if (r != null) return r; }
                 return withMime(u, loader.shouldInterceptRequest(u));
             }
         });

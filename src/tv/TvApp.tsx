@@ -294,7 +294,7 @@ export function TvApp() {
             <div className="tv-card-title">{item.title}</div>
             <p className={'tv-card-text' + (item.quran ? ' quran' : '')}>{item.quran ? `﴿${item.text}﴾` : 'plain' in item && item.plain ? item.text : `«${item.text}»`}</p>
             {item.ref && <div className="tv-card-ref">{item.ref}</div>}
-            {rec.failed && <div className="tv-card-ref">تعذر تحميل التلاوة — تحقق من اتصال التلفاز بالإنترنت</div>}
+            {rec.failed && <div className="tv-card-ref">تعذر تحميل التلاوة من خادم القارئ — تحقق من الاتصال، أو اختر قارئًا آخر من الإعدادات</div>}
           </section>
         )}
       </main>
