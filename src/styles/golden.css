@@ -266,3 +266,9 @@
   .app.golden .topbar-title h1 { font-size: 1.2rem; white-space: normal; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .topbar-title h1 { white-space: normal; line-height: 1.25; }
 }
+
+/* وضع القراءة: لا رأس صورة، فلا مسافة له (كانت تترك شريطًا داكنًا أعلى المصحف وتدفع الصفحة تحت الشريط السفلي) */
+@media (max-width: 900px) {
+  .app.golden.reading .content { padding-top: 0 !important; }
+  .app.golden.reading .topbar { display: none; }
+}

@@ -235,8 +235,8 @@
   background: var(--paper); color: var(--ink); padding: 6px 8px 16px;
   border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
 }
-.frame-classic .mp-page { border: 22px solid transparent; border-image: url('../assets/mushaf-frame.svg') 32 round; padding: 4px 6px 14px; }
-@media (min-width: 600px) { .frame-classic .mp-page { border-width: 28px; } }
+.frame-classic .mp-page { border: 32px solid transparent; border-image: url('../assets/mushaf-frame2.svg') 40 round; padding: 6px 8px 22px; background: #fffefb; }
+@media (min-width: 600px) { .frame-classic .mp-page { border-width: 40px; } }
 .mp-content { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; }
 .mp-content .q-text { font-size: calc(var(--mp-size, 22px) * var(--mp-zoom, 1)); line-height: 1.95; word-spacing: 0; }
 .mp-content.zoomed { overflow-y: auto; justify-content: flex-start; overscroll-behavior: contain; }
@@ -247,10 +247,11 @@
 .mp-content .surah-cartouche.small { height: calc(var(--mp-size, 22px) * 2); margin: 0.15em auto; max-width: 92%; }
 .mp-content .surah-cartouche.small .cartouche-text { font-size: calc(var(--mp-size, 22px) * 0.85); }
 .mp-num { position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); }
-.frame-classic .mp-num { bottom: -26px; }
+.frame-classic .mp-num { bottom: -34px; }
+/* رقم الصفحة في ميدالية بيضاوية على الإطار السفلي */
 .mp-num span {
-  display: inline-block; min-width: 52px; text-align: center; padding: 1px 12px; border-radius: 999px; font-size: 0.95rem;
-  background: var(--paper); color: var(--ink); border: 1.5px solid #b48a3c; box-shadow: 0 0 0 3px #e9dcc0;
+  display: inline-block; min-width: 64px; text-align: center; padding: 3px 16px; border-radius: 999px; font-size: 1.05rem; font-family: var(--font-classic);
+  background: #fffefb; color: #3a2a18; border: 2px solid #a8823e; box-shadow: 0 0 0 3px #d9c29a, 0 0 0 5px #6b4c2c;
 }
 .mp-dock { position: fixed; bottom: 0; inset-inline: 0; z-index: 35; }
 @media (min-width: 901px) { .mp-dock { inset-inline-start: var(--sidebar-w); } }
