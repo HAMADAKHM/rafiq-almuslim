@@ -193,7 +193,7 @@ export function buildSchedule(settings: Settings, from: Date, days = 7, ctx: Sch
         add({ id: makeId(day, 'prayer', PRAYER_CODE[p]), at: times[p], kind: 'prayer', prayer: p, title: `حان الآن وقت صلاة ${PRAYER_LABELS[p]}`, body: `«${m.text}»`, bigText: `«${m.text}» — ${m.source}\n${place}`, route: ROUTES.prayer })
       }
       if (n.minutesBefore > 0 && !n.reduce) {
-        add({ id: makeId(day, 'prayer-before', PRAYER_CODE[p]), at: new Date(times[p].getTime() - n.minutesBefore * 60_000), kind: 'prayer-before', title: `اقترب وقت صلاة ${PRAYER_LABELS[p]}`, body: `بعد ${n.minutesBefore} دقيقة — ${place}`, route: ROUTES.prayer })
+        add({ id: makeId(day, 'prayer-before', PRAYER_CODE[p]), at: new Date(times[p].getTime() - n.minutesBefore * 60_000), kind: 'prayer-before', title: `اقترب وقت صلاة ${PRAYER_LABELS[p]}`, body: `بعد ${n.minutesBefore} دقيقة — ${place}`, route: ROUTES.prayer, ...(n.beforeVoice ? { channelId: soundChannel('v_before', flags) } : {}) })
       }
     }
     const timed: [ReminderKind, string | null][] = n.reduce

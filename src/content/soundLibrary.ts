@@ -43,6 +43,8 @@ export const BUNDLED: StudioSound[] = [
   { id: 't_morning', cat: 'tones', name: 'إشراقة الصباح', desc: 'تغريد عصافير قصير — لأذكار الصباح', file: f('t_morning'), notify: true, plus: true, credit: ORIGINAL },
   { id: 't_evening', cat: 'tones', name: 'نسيم المساء', desc: 'نسيم هادئ وجرس خافت — لأذكار المساء', file: f('t_evening'), notify: true, plus: true, credit: ORIGINAL },
   { id: 't_sleep', cat: 'tones', name: 'سكينة الليل', desc: 'همس هادئ جدًا — لأذكار النوم', file: f('t_sleep'), notify: true, plus: true, credit: ORIGINAL },
+  // تنبيه صوتي باقتراب وقت الصلاة (تسجيل أرسله صاحب التطبيق) — يُفعَّل من «التذكيرات»
+  { id: 'v_before', cat: 'tones', name: 'تنبيه باقتراب الصلاة', desc: 'تنبيه صوتي قبل دخول وقت الصلاة', file: f('v_before'), notify: true, credit: 'تسجيل من صاحب التطبيق' },
   // أصوات السبحة
   { id: 'k_click', cat: 'tasbih', name: 'نقرة خرز خشبي', desc: 'نقرة خفيفة عند كل تسبيحة', file: f('k_click'), credit: ORIGINAL },
   { id: 'k_tap', cat: 'tasbih', name: 'لمسة ناعمة', desc: 'نقرة منخفضة هادئة', file: f('k_tap'), plus: true, credit: ORIGINAL },

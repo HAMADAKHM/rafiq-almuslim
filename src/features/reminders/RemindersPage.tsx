@@ -85,6 +85,18 @@ export function RemindersPage() {
               </select>
             </label>
           </div>
+          {/* صوت «اقتراب وقت الصلاة»: اختياري، يعمل مع التنبيه قبل الأذان */}
+          <div className="spread" style={{ marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
+            <label className="check">
+              <input type="checkbox" className="switch-input" checked={!!n.beforeVoice} disabled={n.minutesBefore === 0}
+                onChange={(e) => set({ beforeVoice: e.target.checked })} aria-label="تنبيه صوتي باقتراب وقت الصلاة" />
+              تنبيه صوتي باقتراب وقت الصلاة
+            </label>
+            <button type="button" className="btn btn-sm" onClick={() => { try { void new Audio(`${import.meta.env.BASE_URL}sounds/studio/v_before.mp3`).play() } catch { /* لا صوت */ } }}>استمع</button>
+          </div>
+          {n.minutesBefore === 0
+            ? <p className="small muted" style={{ margin: '4px 0 0' }}>اختر أولًا مدة «تنبيه قبل الأذان» ليُسمع هذا الصوت قبل دخول كل صلاة.</p>
+            : n.beforeVoice && <p className="small muted" style={{ margin: '4px 0 0' }}>يُسمع قبل الأذان بـ{n.minutesBefore} دقيقة للصلوات المختارة أعلاه (ويحترم وضع الصامت).</p>}
         </section>
 
         <AdhanVoiceSection />

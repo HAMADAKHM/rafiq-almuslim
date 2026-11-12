@@ -65,3 +65,22 @@ describe('منبّه الصحوة', () => {
     expect(daysLabel([5])).toBe('الجمعة')
   })
 })
+
+describe('صوت اقتراب وقت الصلاة', () => {
+  const loc = { name: 'Nablus', nameAr: 'نابلس', country: 'PS', lat: 32.2211, lng: 35.2544, tz: 'Asia/Hebron' } as never
+  const from = new Date('2026-10-29T09:00:00Z')
+  it('بلا تفعيل: تنبيه ما قبل الأذان بنغمته العادية', () => {
+    const s = mergeSettings({ location: loc, notifications: { ...mergeSettings(null).notifications, enabled: true, minutesBefore: 10 } })
+    const r = buildSchedule(s, from, 1).filter((x) => x.kind === 'prayer-before')
+    expect(r.length).toBeGreaterThan(0)
+    expect(r.every((x) => !x.channelId?.includes('v_before'))).toBe(true)
+  })
+  it('مع التفعيل: كل تنبيه قبل الأذان بصوت «اقتراب وقت الصلاة»', () => {
+    const s = mergeSettings({ location: loc, notifications: { ...mergeSettings(null).notifications, enabled: true, minutesBefore: 10, beforeVoice: true } })
+    const r = buildSchedule(s, from, 1).filter((x) => x.kind === 'prayer-before')
+    expect(r.length).toBeGreaterThan(0)
+    expect(r.every((x) => x.channelId === 'rafiq-snd-v_before-v1')).toBe(true)
+    // الأذان نفسه لا يتأثر
+    expect(buildSchedule(s, from, 1).filter((x) => x.kind === 'prayer').every((x) => !x.channelId?.includes('v_before'))).toBe(true)
+  })
+})

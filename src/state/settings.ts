@@ -23,6 +23,8 @@ export interface NotificationSettings {
   atAdhan: boolean
   /** دقائق التنبيه قبل الأذان (0 = بدون تنبيه مسبق) */
   minutesBefore: number
+  /** صوت «اقتراب وقت الصلاة» لتنبيه ما قبل الأذان (برغبة المستخدم) */
+  beforeVoice?: boolean
   morningAdhkar: string | null // "HH:MM"
   eveningAdhkar: string | null
   sleepAdhkar: string | null
