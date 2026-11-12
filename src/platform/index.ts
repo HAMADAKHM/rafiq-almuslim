@@ -2,7 +2,7 @@
 // - في المتصفح: واجهات الويب.
 // - في Android/iOS (Capacitor): الإضافات الأصلية (إشعارات محلية مجدولة، موقع، مشاركة، اهتزاز).
 // الصفحات لا تعرف على أي منصة تعمل.
-import { Capacitor } from '@capacitor/core'
+import { registerPlugin, Capacitor } from '@capacitor/core'
 import type { Reminder } from '../services/reminders'
 import { HISN_SOUND_NAME_RE, HISN_SOUND_PREFIX, SNOOZE_ID_BASE } from '../services/companion'
 import { HISN_CLIPS } from '../content/hisnAudio'
@@ -28,31 +28,46 @@ function webPosition(high: boolean, timeout: number): Promise<GeoResult> {
   })
 }
 
-/** يصنّف أخطاء إضافة الموقع (رموز OS-PLUG-GLOC) إلى: رفض الإذن، أو خدمة الموقع متوقفة، أو غيره */
+/** يصنّف أخطاء إضافة الموقع (رموز OS-PLUG-GLOC): رفض الإذن، أو «الموقع متوقف» (يُتحقق منه من النظام قبل إظهاره)، أو غيره.
+ *  0016 (خطأ فحص إعدادات Google) و0009 (رفض نافذة الدقة) لا تعنيان أن الموقع متوقف: نجرّب الطرق الأخرى. */
 export function classifyGeoError(e: unknown): 'denied' | 'off' | 'other' {
   const code = String((e as { code?: unknown })?.code ?? '')
   const msg = String((e as Error)?.message ?? e ?? '').toLowerCase()
-  if (code === 'OS-PLUG-GLOC-0003' || msg.includes('permission') && msg.includes('denied') || msg === 'denied') return 'denied'
-  if (['OS-PLUG-GLOC-0007', 'OS-PLUG-GLOC-0009', 'OS-PLUG-GLOC-0016'].includes(code) || msg.includes('not enabled') || msg.includes('turned off') || msg.includes('enable location was denied')) return 'off'
+  if (code === 'OS-PLUG-GLOC-0003' || code === 'DENIED' || msg.includes('permission') && msg.includes('denied') || msg === 'denied') return 'denied'
+  if (['OS-PLUG-GLOC-0007', 'OS-PLUG-GLOC-0017', 'OFF'].includes(code) || msg.includes('not enabled') || msg.includes('turned off')) return 'off'
   return 'other'
+}
+
+/** خدمة الموقع في Android نفسها (NativeLocationPlugin): حالة الموقع، وقراءة دون خدمات Google */
+const NativeLocation = registerPlugin<{
+  status(): Promise<{ enabled: boolean; granted: boolean }>
+  get(o: { timeout?: number; maxAge?: number }): Promise<GeoResult>
+}>('NativeLocation')
+
+async function locationOn(): Promise<boolean> {
+  try { return (await NativeLocation.status()).enabled } catch { return true }
 }
 
 export async function getCurrentPosition(): Promise<GeoResult> {
   if (isNative()) {
     const { Geolocation } = await import('@capacitor/geolocation')
+    const android = platformName() === 'android'
+    // الموقع متوقف فعلًا في الجوال؟ (من النظام نفسه، لا من فحص إعدادات Google)
+    if (android && !(await locationOn())) throw new Error(MSG_OFF)
     // 1) الإذن: يُطلب «الموقع» (التقريبي والدقيق) فيختار المستخدم ما يريد
     let perm
     try {
       perm = await Geolocation.checkPermissions()
       if (perm.location !== 'granted' && perm.coarseLocation !== 'granted') perm = await Geolocation.requestPermissions({ permissions: ['location', 'coarseLocation'] })
     } catch (e) {
-      if (classifyGeoError(e) === 'off') throw new Error(MSG_OFF)
+      if (classifyGeoError(e) === 'denied') throw new Error(MSG_DENIED)
       perm = null
     }
     if (perm && perm.location !== 'granted' && perm.coarseLocation !== 'granted') throw new Error(MSG_DENIED)
-    // 2) محاولات متدرجة: سريعة تقريبية، ثم دقيقة بمهلة أطول (GPS)، ثم موقع WebView نفسه
+    // 2) محاولات متدرجة: سريعة تقريبية، ثم خدمة Android مباشرة، ثم دقيقة (GPS)، ثم موقع WebView
     const tries: (() => Promise<GeoResult>)[] = [
       async () => { const p = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 12000, maximumAge: 30 * 60_000, enableLocationFallback: true }); return { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy } },
+      ...(android ? [() => NativeLocation.get({ timeout: 20000, maxAge: 30 * 60_000 })] : []),
       async () => { const p = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 30000, maximumAge: 30 * 60_000, enableLocationFallback: true }); return { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy } },
       () => webPosition(true, 25000),
     ]
@@ -62,10 +77,11 @@ export async function getCurrentPosition(): Promise<GeoResult> {
         last = e
         const k = classifyGeoError(e)
         if (k === 'denied') throw new Error(MSG_DENIED)
-        if (k === 'off') throw new Error(MSG_OFF)
+        // «متوقف» فقط إن أكده النظام؛ وإلا نكمل بالطريقة التالية
+        if (k === 'off' && android && !(await locationOn())) throw new Error(MSG_OFF)
       }
     }
-    throw new Error(classifyGeoError(last) === 'off' ? MSG_OFF : MSG_FAIL)
+    throw new Error(classifyGeoError(last) === 'off' && !(await locationOn()) ? MSG_OFF : MSG_FAIL)
   }
   try {
     try { return await webPosition(false, 12000) } catch (e) {

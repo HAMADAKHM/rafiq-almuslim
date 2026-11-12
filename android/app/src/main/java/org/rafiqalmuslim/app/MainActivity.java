@@ -22,6 +22,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(TvLinkPlugin.class);
         // منبّه الصحوة
         registerPlugin(AlarmPlugin.class);
+        // الموقع من خدمة Android مباشرة (بديل حين يفشل فحص خدمات Google)
+        registerPlugin(NativeLocationPlugin.class);
         super.onCreate(savedInstanceState);
         // حجم خط النظام الكبير جدًا يكسر تخطيط الصفحات: يُحترم حتى 115٪ (التطبيق فيه تكبير خط خاص للقراءة)
         try {
