@@ -1,0 +1,1 @@
+import{t as e}from"./adhkar-ob-oP7jU.js";import{t}from"./duas-Cty8iOVR.js";function n(e,t){return t.text?t.text:!e||!t.quran?``:t.quran.flatMap(t=>Array.from({length:t.to-t.from+1},(n,r)=>e.verses[t.surah-1][t.from+r-1])).join(` ۝ `)}function r(n){for(let r of[...e,...t]){let e=r.items.find(e=>e.id===n);if(e)return e}return null}export{n,r as t};
