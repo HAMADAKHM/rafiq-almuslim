@@ -228,8 +228,9 @@
    الصفحة تملأ الشاشة داخل إطار زخرفي، ويُختار الخط آليًا لتتسع الصفحة كلها دون تمرير. */
 .reader-app.immersive { --dock-h: calc(66px + env(safe-area-inset-bottom, 0px)); background: #fff; height: 100dvh; min-height: 0; overflow: hidden; }
 .reader-app.immersive.reader-bg-cream, .reader-app.immersive.reader-bg-ivory { background: var(--paper-2); }
-.reader-app.immersive .rd-body { padding: calc(6px + env(safe-area-inset-top, 0px)) 6px 0; display: flex; }
-.mp-stage { flex: 1; height: calc(100dvh - var(--dock-h) - 10px - env(safe-area-inset-top, 0px)); display: flex; justify-content: center; }
+.reader-app.immersive .rd-body { padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); display: flex; }
+/* ملء الشاشة: الصفحة بطول الشاشة وعرضها كاملين في كل الأحجام، والأشرطة تطفو فوقها وتختفي */
+.mp-stage { flex: 1; height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); display: flex; justify-content: center; }
 .mp-page {
   position: relative; width: min(100%, 760px); height: 100%; display: flex; flex-direction: column;
   background: var(--paper); color: var(--ink); padding: 6px 8px 16px;
@@ -253,7 +254,10 @@
   display: inline-block; min-width: 64px; text-align: center; padding: 3px 16px; border-radius: 999px; font-size: 1.05rem; font-family: var(--font-classic);
   background: #fffefb; color: #3a2a18; border: 2px solid #a8823e; box-shadow: 0 0 0 3px #d9c29a, 0 0 0 5px #6b4c2c;
 }
-.mp-dock { position: fixed; bottom: 0; inset-inline: 0; z-index: 35; }
+.mp-dock { position: fixed; bottom: 0; inset-inline: 0; z-index: 35; transition: transform 0.28s ease, opacity 0.28s ease; }
+.mp-dock.hidden { transform: translateY(110%); opacity: 0; pointer-events: none; }
+.mp-show { position: fixed; z-index: 34; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); inset-inline-end: 10px; width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(168, 130, 62, 0.5); background: rgba(255, 254, 251, 0.7); color: #6b4c2c; display: grid; place-items: center; opacity: 0.55; }
+.reader-app.immersive .rd-bar.over { transition: transform 0.28s ease; }
 @media (min-width: 901px) { .mp-dock { inset-inline-start: var(--sidebar-w); } }
 .mp-bar {
   display: flex; align-items: center; gap: 0.6rem; height: var(--dock-h); padding: 0 0.9rem env(safe-area-inset-bottom, 0px);
@@ -272,3 +276,7 @@
 .reader-app.immersive .rd-bar.over { bottom: var(--dock-h); padding-bottom: 0.35rem; }
 .reader-app.immersive .mp-dock:has(.mp-nav) ~ .rd-bar.over, .reader-app.immersive .rd-bar.over:has(~ .mp-dock .mp-nav) { bottom: calc(var(--dock-h) + 52px); }
 .mp-nav { flex-wrap: wrap; row-gap: 0.4rem; }
+/* ملء الشاشة على الجوال: صفحة المصحف مثبتة على حواف الشاشة تمامًا مهما كان المقاس */
+@media (max-width: 900px) {
+  .reader-app.immersive { position: fixed; inset: 0; margin: 0; z-index: 30; height: 100dvh; }
+}

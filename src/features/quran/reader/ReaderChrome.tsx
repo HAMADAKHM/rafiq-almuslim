@@ -21,7 +21,7 @@ export interface ReaderChromeProps {
   onTafsir: (surah: number, ayah: number) => void
   children: ReactNode
   /** وضع الصفحة الكاملة: بلا رأس، وشريط سفلي مختصر، وأدوات القراءة تظهر عند الطلب أو أثناء التلاوة */
-  immersive?: { bar: ReactNode; toolsOpen: boolean }
+  immersive?: { bar: ReactNode; toolsOpen: boolean; hidden?: boolean }
 }
 
 /**
@@ -55,7 +55,7 @@ export function ReaderChrome({ title, subtitle, infoHref, current, onModeChange,
 
       <main className="rd-body">{children}</main>
 
-      {(!immersive || immersive.toolsOpen || active) && <footer className={'rd-bar' + (immersive ? ' over' : '')} aria-label="أدوات القراءة">
+      {(!immersive || (!immersive.hidden && (immersive.toolsOpen || active))) && <footer className={'rd-bar' + (immersive ? ' over' : '')} aria-label="أدوات القراءة">
         {active && (
           <div className="rd-progress">
             <span className="small">{p.playingBasmala ? 'البسملة' : `الآية ${p.ayah} من ${p.to}`}</span>

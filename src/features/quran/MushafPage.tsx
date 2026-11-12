@@ -13,6 +13,7 @@ import { ReaderChrome } from './reader/ReaderChrome'
 import { AyahNum, SurahTitle } from './reader/Ornaments'
 import { ReaderSheets, useReaderSheets } from './reader/ReaderSheets'
 import { useActualReading } from './useActualReading'
+import { enterImmersive, exitImmersive } from '../../platform/immersive'
 
 /**
  * وضع صفحات المصحف: صفحة كاملة من مصحف المدينة (604 صفحات) بترتيبها، مع الانتقال بين الصفحات.
@@ -33,6 +34,15 @@ export function MushafPage() {
   const ha = Number(sp.get('a')) || 0
   const touch = useRef<number | null>(null)
   const [toolsOpen, setToolsOpen] = useState(false)
+  // ملء الشاشة: الأشرطة تظهر عند الفتح ثم تختفي، وتعود بلمسة على الصفحة (خارج الآيات) أو زر الزاوية
+  const [bars, setBars] = useState(true)
+  const hideTimer = useRef<number | undefined>(undefined)
+  const showBars = (on: boolean) => {
+    setBars(on)
+    window.clearTimeout(hideTimer.current)
+    if (on) hideTimer.current = window.setTimeout(() => setBars(false), 4000)
+  }
+  useEffect(() => { enterImmersive(); showBars(true); return () => { window.clearTimeout(hideTimer.current); exitImmersive() } }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const contentRef = useRef<HTMLDivElement>(null)
   // التكبير: بإصبعين على الصفحة أو بالأزرار؛ عند التكبير تُمرَّر الصفحة عموديًا
   const [zoom, setZoomState] = useState(() => { try { return Math.min(3, Math.max(1, Number(localStorage.getItem('mushaf:zoom')) || 1)) } catch { return 1 } })
@@ -116,7 +126,7 @@ export function MushafPage() {
   }
 
   const bar = (
-    <div className="mp-dock">
+    <div className={'mp-dock' + (bars || toolsOpen ? '' : ' hidden')} onPointerDown={() => showBars(true)}>
       {toolsOpen && (
         <div className="q-page-nav mp-nav">
           <button className="btn btn-sm" onClick={() => go(page - 1)} disabled={page === 1} aria-label="الصفحة السابقة"><ChevronRight size={16} /> السابقة</button>
@@ -147,7 +157,7 @@ export function MushafPage() {
     <ReaderChrome title={`سورة ${names}`} subtitle={`الصفحة ${page} • الجزء ${m.juz} • الحزب ${m.hizb}`} infoHref={`/quran/${first.surah}/info`}
       current={{ surah: first.surah, ayah: first.from, surahName: firstName, count: data.meta.surahs[first.surah - 1].count }}
       onModeChange={changeMode} onTafsir={(s, a) => sheets.setTafsir({ surah: s, ayah: a })}
-      immersive={{ bar, toolsOpen }}>
+      immersive={{ bar, toolsOpen, hidden: !(bars || toolsOpen) }}>
       <div className="mp-stage"
         onTouchStart={(e) => {
           if (e.touches.length === 2) {
@@ -160,6 +170,7 @@ export function MushafPage() {
           const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY)
           setZoom(pinch.current.z * (d / pinch.current.d))
         }}
+        onClick={(e) => { if (!(e.target as HTMLElement).closest('.q-ayah,button,a,input')) showBars(!(bars || toolsOpen)) }}
         onTouchEnd={(e) => {
           if (pinch.current) { if (e.touches.length === 0) pinch.current = null; return }
           if (touch.current == null) return
@@ -195,6 +206,7 @@ export function MushafPage() {
           <footer className="mp-num"><span>{toArabicDigits(page)}</span></footer>
         </article>
       </div>
+      {!(bars || toolsOpen) && <button type="button" className="mp-show" onClick={() => showBars(true)} aria-label="إظهار أدوات القراءة"><BookOpen size={18} /></button>}
       <ReaderSheets data={data} s={sheets} />
     </ReaderChrome>
   )

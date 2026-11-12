@@ -24,6 +24,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(AlarmPlugin.class);
         // الموقع من خدمة Android مباشرة (بديل حين يفشل فحص خدمات Google)
         registerPlugin(NativeLocationPlugin.class);
+        // ملء الشاشة أثناء قراءة المصحف
+        registerPlugin(ImmersivePlugin.class);
         super.onCreate(savedInstanceState);
         // حجم خط النظام الكبير جدًا يكسر تخطيط الصفحات: يُحترم حتى 115٪ (التطبيق فيه تكبير خط خاص للقراءة)
         try {
