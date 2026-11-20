@@ -48,8 +48,8 @@ final class TvWeb {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 Uri u = request.getUrl();
-                // ملفات التلاوة والأذكار: عبر شبكة Android مع جذور Let's Encrypt (لأجهزة التلفاز القديمة)
-                if ("GET".equals(request.getMethod()) && AudioFetch.handles(u)) { WebResourceResponse r = AudioFetch.fetch(ctx, u); if (r != null) return r; }
+                WebResourceResponse r = proxied(ctx, u);
+                if (r != null) return r;
                 return withMime(u, loader.shouldInterceptRequest(u));
             }
 
@@ -57,7 +57,8 @@ final class TvWeb {
             @SuppressWarnings("deprecation")
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
                 Uri u = Uri.parse(url);
-                if (AudioFetch.handles(u)) { WebResourceResponse r = AudioFetch.fetch(ctx, u); if (r != null) return r; }
+                WebResourceResponse r = proxied(ctx, u);
+                if (r != null) return r;
                 return withMime(u, loader.shouldInterceptRequest(u));
             }
         });
@@ -339,6 +340,7 @@ final class TvWeb {
             TvService.prefs(ctx).edit().putString(TvService.KEY_SCHEDULE, json).commit();
             TvService.start(ctx);
             Alarms.schedule(ctx);
+            TvService.prefetchAdhan(ctx);
         }
 
         @JavascriptInterface
@@ -352,6 +354,20 @@ final class TvWeb {
      * بعض أجهزة التلفاز (Android قديم) لا تعرف نوع ملفات ‎.js‎، فيرفض المتصفح تشغيل الواجهة (شاشة سوداء):
      * نحدد النوع صراحة من امتداد الملف.
      */
+    /**
+     * طريق بديل للصوت فقط حين يفشل الطريق العادي: الواجهة تجرّب الرابط المباشر أولًا (كما في النسخ السابقة)،
+     * ثم ‎/__audio?u=…‎ فيُحمَّل الملف عبر شبكة Android مع جذور الشهادات الحديثة (وللأذان من نسخته المحفوظة).
+     */
+    static WebResourceResponse proxied(Context ctx, Uri u) {
+        if (u == null || !"/__audio".equals(u.getPath())) return null;
+        String target = u.getQueryParameter("u");
+        if (target == null) return null;
+        Uri t = Uri.parse(target);
+        if (!AudioFetch.handles(t)) return null;
+        WebResourceResponse r = AudioFetch.fetch(ctx, t);
+        return r != null ? r : new WebResourceResponse("text/plain", "utf-8", 502, "Bad Gateway", new java.util.HashMap<>(), new java.io.ByteArrayInputStream(new byte[0]));
+    }
+
     static WebResourceResponse withMime(Uri uri, WebResourceResponse r) {
         if (r == null || uri.getPath() == null) return r;
         String p = uri.getPath().toLowerCase();

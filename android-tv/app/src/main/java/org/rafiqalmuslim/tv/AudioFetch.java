@@ -30,7 +30,7 @@ final class AudioFetch {
     static boolean handles(Uri u) {
         String h = u.getHost();
         if (h == null || !"https".equals(u.getScheme())) return false;
-        return h.equals("everyayah.com") || h.equals("www.everyayah.com") || h.equals("cdn.islamic.network") || h.endsWith("hisnmuslim.com");
+        return h.equals("everyayah.com") || h.equals("www.everyayah.com") || h.equals("cdn.islamic.network") || h.endsWith("hisnmuslim.com") || h.equals("cdn.aladhan.com");
     }
 
     private static javax.net.ssl.SSLSocketFactory socketFactory(Context c) throws Exception {
@@ -41,7 +41,8 @@ final class AudioFetch {
         KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
         ks.load(null, null);
         CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        int[] roots = { R.raw.isrg_root_x1, R.raw.isrg_root_x2 };
+        // جذور حديثة تنقص أجهزة التلفاز القديمة: Let's Encrypt، وGoogle Trust Services، وAmazon
+        int[] roots = { R.raw.isrg_root_x1, R.raw.isrg_root_x2, R.raw.gts_root_r1, R.raw.gts_root_r3, R.raw.gts_root_r4, R.raw.amazon_root_ca_1, R.raw.amazon_root_ca_2, R.raw.amazon_root_ca_3, R.raw.amazon_root_ca_4 };
         for (int i = 0; i < roots.length; i++) {
             try (InputStream in = c.getResources().openRawResource(roots[i])) { ks.setCertificateEntry("isrg" + i, cf.generateCertificate(in)); }
         }
@@ -66,8 +67,43 @@ final class AudioFetch {
         throw new IllegalStateException("no X509TrustManager");
     }
 
+    /** ملف الأذان المحفوظ على التلفاز (يعمل دون إنترنت بعد أول تحميل) */
+    static java.io.File adhanFile(Context c) { return new java.io.File(c.getFilesDir(), "adhan.mp3"); }
+    static boolean hasAdhan(Context c) { java.io.File f = adhanFile(c); return f.exists() && f.length() > 50_000; }
+
+    /** يحمّل ملفًا إلى القرص عبر هذا الاتصال الموثوق؛ يعيد true عند النجاح */
+    static boolean download(Context c, String url, java.io.File out) {
+        HttpsURLConnection con = null;
+        java.io.File tmp = new java.io.File(out.getPath() + ".part");
+        try {
+            con = (HttpsURLConnection) new URL(url).openConnection();
+            con.setSSLSocketFactory(socketFactory(c));
+            con.setConnectTimeout(15000);
+            con.setReadTimeout(60000);
+            con.setRequestProperty("User-Agent", "RafiqAlMuslimTV");
+            if (con.getResponseCode() != 200) return false;
+            try (InputStream in = con.getInputStream(); java.io.FileOutputStream fo = new java.io.FileOutputStream(tmp)) {
+                byte[] buf = new byte[16384]; int n;
+                while ((n = in.read(buf)) > 0) fo.write(buf, 0, n);
+            }
+            if (tmp.length() < 50_000) { tmp.delete(); return false; }
+            return tmp.renameTo(out);
+        } catch (Exception e) {
+            tmp.delete();
+            return false;
+        } finally { if (con != null) try { con.disconnect(); } catch (Exception ignored) {} }
+    }
+
     /** يعيد استجابة الملف، أو null فيتولى WebView الطلب كالمعتاد */
     static WebResourceResponse fetch(Context c, Uri u) {
+        // الأذان: من النسخة المحفوظة على التلفاز إن وُجدت
+        if ("cdn.aladhan.com".equals(u.getHost()) && hasAdhan(c)) {
+            try {
+                Map<String, String> h = new HashMap<>();
+                h.put("Access-Control-Allow-Origin", "*");
+                return new WebResourceResponse("audio/mpeg", null, 200, "OK", h, new java.io.FileInputStream(adhanFile(c)));
+            } catch (Exception ignored) { /* نكمل من الشبكة */ }
+        }
         HttpsURLConnection con = null;
         try {
             con = (HttpsURLConnection) new URL(u.toString()).openConnection();

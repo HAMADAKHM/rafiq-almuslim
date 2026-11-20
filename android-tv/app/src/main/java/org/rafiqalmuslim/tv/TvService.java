@@ -133,6 +133,13 @@ public class TvService extends Service {
         } catch (Exception ignored) { /* لا شيء */ }
     }
 
+    /** بعد حفظ جدول جديد: حفظ ملف الأذان على التلفاز إن لم يكن محفوظًا */
+    static void prefetchAdhan(Context c) {
+        TvService s = instance;
+        if (s == null || AudioFetch.hasAdhan(c)) return;
+        try { final String url = new JSONObject(prefs(c).getString(KEY_SCHEDULE, "{}")).optString("url", null); s.handler.post(() -> s.cacheAdhan(url, null)); } catch (Exception ignored) { /* لا شيء */ }
+    }
+
     static void requestStopAdhan(Context c) {
         TvService s = instance;
         if (s != null) s.handler.post(s::stopAdhan);
@@ -188,6 +195,8 @@ public class TvService extends Service {
         f.addAction(Intent.ACTION_USER_PRESENT);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(dreamRx, f, Context.RECEIVER_EXPORTED); else registerReceiver(dreamRx, f);
         handler.post(tick);
+        // حفظ الأذان على التلفاز مسبقًا (مرة واحدة) ليُرفع في وقته ولو انقطع الإنترنت
+        try { cacheAdhan(new JSONObject(prefs(this).getString(KEY_SCHEDULE, "{}")).optString("url", null), null); } catch (Exception ignored) { /* لا جدول بعد */ }
         // «التحكم من الجوال» عبر الشبكة المنزلية
         try { RemoteServer.get(this).start(); } catch (Exception ignored) { /* لا شيء */ }
     }
@@ -362,17 +371,37 @@ public class TvService extends Service {
     private View overlay;
     private MediaSession session;
 
-    private void playAdhan(String url, String prayer) {
+    /** تحميل الأذان مرة وحفظه على التلفاز (في الخلفية)، ليُرفع بعدها دون إنترنت ودون مشكلات الشهادات */
+    private void cacheAdhan(final String url, final Runnable then) {
+        if (url == null || url.isEmpty() || !url.startsWith("https://")) { if (then != null) handler.post(then); return; }
+        new Thread(() -> {
+            boolean ok = AudioFetch.hasAdhan(this) || AudioFetch.download(this, url, AudioFetch.adhanFile(this));
+            log(this, ok ? "adhan_cached" : "adhan_cache_failed");
+            if (then != null) handler.post(then);
+        }, "rafiq-adhan-cache").start();
+    }
+
+    private void playAdhan(String url, String prayer) { playAdhan(url, prayer, false); }
+
+    private void playAdhan(String url, String prayer, boolean retried) {
         if (url == null || url.isEmpty()) return;
         stopAdhan();
         try {
             requestFocus();
             player = new MediaPlayer();
             player.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());
-            player.setDataSource(url);
+            // النسخة المحفوظة أولًا (لا تحتاج إنترنت)، وإلا البث من الرابط
+            if (AudioFetch.hasAdhan(this)) player.setDataSource(AudioFetch.adhanFile(this).getPath());
+            else player.setDataSource(url);
             player.setOnPreparedListener(MediaPlayer::start);
             player.setOnCompletionListener(mp -> stopAdhan());
-            player.setOnErrorListener((mp, what, extra) -> { stopAdhan(); return true; });
+            // تعذر البث: نحمّل الأذان عبر الاتصال الموثوق ثم نرفعه من الملف (مرة واحدة)
+            player.setOnErrorListener((mp, what, extra) -> {
+                stopAdhan();
+                log(this, "adhan_stream_error");
+                if (!retried) cacheAdhan(url, () -> { if (AudioFetch.hasAdhan(this)) playAdhan(url, prayer, true); });
+                return true;
+            });
             player.prepareAsync();
             adhanActive = true;
             log(this, "adhan_background");

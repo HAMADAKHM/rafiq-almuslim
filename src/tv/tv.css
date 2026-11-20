@@ -182,7 +182,7 @@ html, body, #root { background: #060c1c; }
 body { color: #f4efe3; }
 .tv { padding: 2.2vw 3.2vw 1.5vw; }
 .tv-veil.scene, .tv-veil { background: linear-gradient(to bottom, rgba(5, 10, 26, 0.72) 0%, rgba(5, 10, 26, 0.18) 34%, rgba(5, 10, 26, 0.22) 58%, rgba(5, 10, 26, 0.88) 100%); }
-.tv::after { content: ''; position: absolute; inset: 1vw; border: 0.08vw solid rgba(214, 180, 106, 0.28); border-radius: 1.6vw; pointer-events: none; z-index: 1; }
+.tv::after { content: ''; position: absolute; top: 1vw; right: 1vw; bottom: 1vw; left: 1vw; border: 0.08vw solid rgba(214, 180, 106, 0.28); border-radius: 1.6vw; pointer-events: none; z-index: 1; }
 
 .tv-logo { background: radial-gradient(circle at 50% 35%, rgba(36, 54, 96, 0.95), rgba(10, 18, 40, 0.95)); border-color: rgba(214, 180, 106, 0.7); box-shadow: 0 0 1.4vw rgba(214, 180, 106, 0.18); }
 .tv-brand strong { font-size: 2.3vw; background: linear-gradient(180deg, #fbefd0, #d6b46a); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -229,7 +229,7 @@ body { color: #f4efe3; }
 
 /* معرض الصور الجاهزة: صور مصغرة تُختار للتثبيت */
 .tv-photo-grid.gallery { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.9vw; margin: 0.6vw 0 1vw; }
-.tv-photo-pick { position: relative; padding: 0; border: 0.15vw solid rgba(214, 180, 106, 0.25); border-radius: 0.9vw; overflow: hidden; background: #0a1226; cursor: pointer; aspect-ratio: 16 / 9; }
+.tv-photo-pick { position: relative; padding: 0; border: 0.15vw solid rgba(214, 180, 106, 0.25); border-radius: 0.9vw; overflow: hidden; background: #0a1226; cursor: pointer; height: 8.6vw; }
 .tv-photo-pick img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .tv-photo-pick.on { border-color: #e3c27f; box-shadow: 0 0 1.4vw rgba(227, 194, 127, 0.45); }
 .tv-photo-pick span { position: absolute; bottom: 0.4vw; right: 0.4vw; padding: 0.15vw 0.7vw; border-radius: 999px; background: #e3c27f; color: #1a1406; font-size: 0.95vw; font-weight: 700; }
@@ -248,3 +248,7 @@ body { color: #f4efe3; }
 .tv-nav:focus, .tv-choice:focus, .tv-toggle:focus, .tv-step:focus { outline-color: #f6d58e; box-shadow: 0 0 1.2vw rgba(246, 213, 142, 0.4); }
 .tv-veil.strong { background: linear-gradient(to bottom, rgba(6, 12, 30, 0.9), rgba(10, 18, 42, 0.84) 50%, rgba(5, 10, 24, 0.95)); }
 .tv-setup-page { overflow-y: auto; scrollbar-width: thin; }
+/* تنبيه على الشاشة الرئيسية: ما يمنع التشغيل التلقائي (إذن ناقص أو نسخة قديمة) */
+.tv-warn { display: flex; align-items: center; justify-content: space-between; gap: 1.2vw; padding: 0.7vw 1.2vw; border-radius: 1vw; background: rgba(58, 46, 18, 0.88); border: 0.12vw solid #e3c27f; color: #f6e7c0; font-size: 1.25vw; }
+.tv-warn .tv-btn { flex-shrink: 0; }
+.tv-warn .row { display: flex; gap: 0.6vw; flex-shrink: 0; }

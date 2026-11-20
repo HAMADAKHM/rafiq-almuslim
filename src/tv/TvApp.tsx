@@ -16,6 +16,7 @@ import { dayKey, daysBetween, formatGregorian, formatHijri, formatCountdown } fr
 import { toArabicDigits } from '../lib/arabic'
 import { DEFAULT_TV, loadTv, normalizeTv, saveTv, shiftedTz, tvPhase, TV_PRAYERS, type TvPrayer, type TvSettings } from './state'
 import { RECITE_MODES, TV_RECITERS } from './recite'
+import { withFallback } from './audioSources'
 import { resetRecitePos, useRecitation } from './useRecitation'
 import { voiceStatus } from './voice'
 import { reciterById } from '../content/reciters'
@@ -103,6 +104,21 @@ export function TvApp() {
   const [unlocked, setUnlocked] = useState(IN_APP)
   const [slide, setSlide] = useState(0)
   const [apps, setApps] = useState<TvAppEntry[] | null>(null)
+  // التشغيل التلقائي مفعّل لكن ينقصه إذن «الظهور فوق التطبيقات» (يُطلب مرة لكل تطبيق على كل تلفاز)
+  const [autoBlocked, setAutoBlocked] = useState(false)
+  const [otherOld, setOtherOld] = useState(false)
+  useEffect(() => {
+    const b = bridge()
+    if (!b || DREAM) return
+    const check = () => {
+      try { setAutoBlocked(!!b.getAutostart() && b.canOpenFromBackground?.() === false) } catch { setAutoBlocked(false) }
+      try { setOtherOld(!!b.otherEdition?.()) } catch { setOtherOld(false) }
+    }
+    check()
+    const t = setInterval(check, 20_000)
+    document.addEventListener('visibilitychange', check)
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', check) }
+  }, [])
   const now = useNow()
   const audio = useRef<HTMLAudioElement | null>(null)
   const playedFor = useRef<string>('')
@@ -172,13 +188,15 @@ export function TvApp() {
     playedFor.current = key
     if (hidden && bridge()?.setSchedule) return
     let tries = 0
+    // الرابط المباشر ثم الطريق البديل (النسخة المحفوظة على التلفاز أو التحميل الموثوق)، بالتناوب
+    const adhanSrc = withFallback([ADHAN_URL])
     const start = () => {
-      const a = new Audio(ADHAN_URL)
+      const a = new Audio(adhanSrc[tries % adhanSrc.length])
       a.volume = 1
       audio.current = a
       setAdhanPlaying(true)
       a.onended = () => { setAdhanPlaying(false); audio.current = null }
-      const retry = () => { if (audio.current !== a) return; if (++tries < 4) setTimeout(start, 8000); else setAdhanPlaying(false) }
+      const retry = () => { if (audio.current !== a) return; if (++tries < 6) setTimeout(start, tries % adhanSrc.length ? 300 : 8000); else setAdhanPlaying(false) }
       a.onerror = retry
       a.play().catch(retry)
     }
@@ -308,6 +326,14 @@ export function TvApp() {
           </div>
         ))}
       </section>
+
+      {(autoBlocked || otherOld) && !DREAM && (
+        <div className="tv-warn" role="alert">
+          {otherOld
+            ? <><span>النسخة القديمة من رفيق المسلم ما زالت مثبتة، وقد تفتح هي عند تشغيل التلفاز بدل هذه النسخة.</span><button className="tv-btn primary" onClick={() => bridge()?.removeOtherEdition?.()}>حذف النسخة القديمة</button></>
+            : <><span>لن تفتح الشاشة وحدها عند تشغيل التلفاز: اسمح لهذا التطبيق بـ«الظهور فوق التطبيقات الأخرى».</span><span className="row"><button className="tv-btn primary" onClick={() => bridge()?.openOverlaySettings?.()}>منح الإذن</button><button className="tv-btn" onClick={() => bridge()?.openAccessibilitySettings?.()}>أو: إمكانية الوصول</button></span></>}
+        </div>
+      )}
 
       <footer className="tv-foot">
         <span className="tv-sadaqah">{SADAQAH_LINE} — {HOME_CARD.prayer}</span>

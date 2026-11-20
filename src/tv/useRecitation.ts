@@ -7,6 +7,7 @@ import { ADHKAR } from '../content/adhkar'
 import { hisnAudioUrl } from '../content/hisnAudio'
 import { adhkarForNow } from '../services/daily'
 import { speak, stopVoice } from './voice'
+import { withFallback } from './audioSources'
 
 /** الذكر المقروء الآن بالصوت (نصوص الأذكار غير القرآنية) */
 export interface SpokenDhikr { title: string; text: string; source: string; count?: number; voice: boolean }
@@ -17,7 +18,7 @@ const POS_KEY = 'rafiq-tv:recite-pos'
 function loadPos(): AyahRef | null { try { return JSON.parse(localStorage.getItem(POS_KEY) || 'null') } catch { return null } }
 function savePos(p: AyahRef) { try { localStorage.setItem(POS_KEY, JSON.stringify(p)) } catch { /* اختياري */ } }
 
-const sourcesFor = (r: Reciter, a: AyahRef) => (a.ayah === BASMALA_AYAH ? ayahAudioSources(r, 1, 1) : ayahAudioSources(r, a.surah, a.ayah))
+const sourcesFor = (r: Reciter, a: AyahRef) => withFallback(a.ayah === BASMALA_AYAH ? ayahAudioSources(r, 1, 1) : ayahAudioSources(r, a.surah, a.ayah))
 
 /** ملف آية مُحمَّل مسبقًا (يبدأ تحميله أثناء تلاوة الآية السابقة) لتتصل القراءة دون فجوات */
 interface Prepared { el: HTMLAudioElement; sources: string[]; i: number }
@@ -99,7 +100,7 @@ export function useRecitation(s: TvSettings, data: QuranData | null, ctx: { day:
             const human = hisnAudioUrl(it.id)
             for (let k = 0; k < reps && alive() && voice; k++) {
               setDhikr({ title: which.title, text: it.text, source: it.source, count: it.count, voice })
-              const played = human ? await playPrepared(prepare([human], vol), audio, alive) : false
+              const played = human ? await playPrepared(prepare(withFallback([human]), vol), audio, alive) : false
               if (!played) voice = humanOnly ? false : await speak(it.text, vol, alive)
               if (voice && alive()) await sleep(1200, alive)
             }
