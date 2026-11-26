@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { HISN_AUDIO, hisnAudioUrl } from './hisnAudio'
 import { ADHKAR } from './adhkar'
 import { DUAS } from './duas'
+import { DECEASED_CATEGORY } from './deceased'
 
-const items = new Map([...ADHKAR, ...DUAS].flatMap((c) => c.items).map((x) => [x.id, x]))
+const items = new Map([...ADHKAR, ...DUAS, DECEASED_CATEGORY].flatMap((c) => c.items).map((x) => [x.id, x]))
 
 describe('تسجيلات حصن المسلم', () => {
   it('كل ذكر مربوط موجود في التطبيق وله نص، وأرقام الملفات صحيحة', () => {

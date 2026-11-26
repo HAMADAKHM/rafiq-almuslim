@@ -83,6 +83,8 @@ export async function getCurrentPosition(): Promise<GeoResult> {
     }
     throw new Error(classifyGeoError(last) === 'off' && !(await locationOn()) ? MSG_OFF : MSG_FAIL)
   }
+  // المتصفح لا يعطي الموقع إلا لصفحة آمنة (https): الملف المفتوح من الجهاز (file://) لا يمكنه ذلك أبدًا
+  if (typeof window !== 'undefined' && window.isSecureContext === false) throw new Error(webGeoMessage('insecure'))
   try {
     try { return await webPosition(false, 12000) } catch (e) {
       if ((e as { code?: number }).code === 1) throw e
@@ -90,8 +92,26 @@ export async function getCurrentPosition(): Promise<GeoResult> {
     }
   } catch (e) {
     const c = (e as { code?: number }).code
-    throw new Error(c === 1 ? 'لم يُسمح بالوصول إلى الموقع. اسمح به من إعدادات المتصفح، أو اختر مدينتك من القائمة.' : c === 0 ? 'المتصفح لا يدعم تحديد الموقع. اختر مدينتك من القائمة.' : MSG_FAIL)
+    throw new Error(webGeoMessage(c === 1 ? 'denied' : c === 0 ? 'unsupported' : 'fail'))
   }
+}
+
+/** هل الجهاز آيفون/آيباد؟ (آيباد الحديث يعرّف نفسه «Macintosh» مع شاشة لمس) */
+export function isAppleMobile(ua = typeof navigator !== 'undefined' ? navigator.userAgent : '', touch = typeof navigator !== 'undefined' ? navigator.maxTouchPoints : 0): boolean {
+  return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && touch > 1)
+}
+
+/** رسالة خطأ الموقع في المتصفح، بخطوات الآيفون حين يكون الجهاز آيفون */
+export function webGeoMessage(kind: 'insecure' | 'denied' | 'unsupported' | 'fail', apple = isAppleMobile()): string {
+  const pick = ' أو اختر مدينتك من القائمة أدناه.'
+  if (kind === 'insecure') return 'تحديد الموقع لا يعمل حين تُفتح الصفحة كملف من الجهاز. افتح الموقع hamadakhm.github.io/rafiq-almuslim من المتصفح،' + pick
+  if (kind === 'denied') return apple
+    ? 'لم يُسمح بالوصول إلى الموقع. في الآيفون: الإعدادات ← الخصوصية والأمان ← خدمات الموقع (مفعّلة) ← مواقع Safari ← «أثناء الاستخدام»، ثم الإعدادات ← Safari ← الموقع ← «اسأل» أو «سماح». بعدها أعد تحميل الصفحة وحاول مرة أخرى،' + pick
+    : 'لم يُسمح بالوصول إلى الموقع. اسمح به من إعدادات المتصفح (رمز القفل بجانب العنوان) ثم حاول مرة أخرى،' + pick
+  if (kind === 'unsupported') return 'المتصفح لا يدعم تحديد الموقع.' + pick
+  return apple
+    ? 'تعذر تحديد موقعك الآن. تأكد أن «خدمات الموقع» مفعّلة في الإعدادات ← الخصوصية والأمان، وأن Safari مسموح له، ثم حاول مرة أخرى،' + pick
+    : MSG_FAIL
 }
 
 export function deviceTimeZone(): string {

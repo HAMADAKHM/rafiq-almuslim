@@ -3,6 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { usePlus } from '../../billing/PlusContext'
 import { Share2, Film, ImageIcon, Upload, X, Bookmark, Trash2 } from 'lucide-react'
 import { PageHead, Spinner, Tabs, ProgressBar } from '../../components/Common'
+import { MicRecorder } from '../../components/MicRecorder'
+import { hisnAudioUrl } from '../../content/hisnAudio'
 import { MosqueScene } from '../../components/Art'
 import { toast, useLive, useQuran } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
@@ -210,7 +212,7 @@ export function StudioPage() {
               </label>
               <label className="field"><span>{source === 'hadith' ? 'الحديث' : source === 'duas' ? 'الدعاء' : 'الذكر'}</span>
                 <select className="select" value={item.id} onChange={(e) => setItemId(e.target.value)}>
-                  {cat.items.map((i) => <option key={i.id} value={i.id}>{(i.text ?? '').split(/\s+/).slice(0, 8).join(' ')}…</option>)}
+                  {cat.items.map((i) => <option key={i.id} value={i.id}>{hisnAudioUrl(i.id) ? '🔊 ' : ''}{(i.text ?? '').split(/\s+/).slice(0, 8).join(' ')}…</option>)}
                 </select>
               </label>
               <p className="small muted" style={{ margin: 0 }}>المصدر: {item.source}{item.grade ? ` • ${item.grade}` : ''}. يُكتب بخط النسخ تمييزًا له عن نص المصحف، والنص من المكتبة الموثقة كما هو دون تعديل.</p>
@@ -350,9 +352,10 @@ export function StudioPage() {
               <input ref={voiceInput} type="file" accept="audio/*" hidden aria-label="اختيار صوت من الجوال" onChange={(e) => { const f = e.target.files?.[0]; if (f) setVoice(f); e.target.value = '' }} />
               <div className="row">
                 <button className="btn btn-sm" disabled={busy} onClick={() => voiceInput.current?.click()}><Upload size={14} /> {voice ? 'تغيير الصوت' : 'اختر تسجيلًا أو ملفًا صوتيًا'}</button>
+                <MicRecorder disabled={busy} onDone={(f) => { setVoice(f); toast('تم التسجيل — سيُستخدم صوتك في الفيديو') }} onError={(m) => toast(m)} />
                 {voice && <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => setVoice(null)}><X size={14} /> إزالة</button>}
               </div>
-              <p className="small muted" style={{ margin: 0 }}>{voice ? `الصوت: ${voice.name}` : 'يُضاف تلقائيًا تسجيل «حصن المسلم» المطابق لنص هذا الذكر أو الدعاء (أو تسجيلك المحفوظ له). ولصوت آخر: اختر تسجيلًا من جوالك (حتى دقيقتين).'}</p>
+              <p className="small muted" style={{ margin: 0 }}>{voice ? `الصوت: ${voice.name}` : item && hisnAudioUrl(item.id) ? 'يُضاف تلقائيًا تسجيل «حصن المسلم» المطابق لهذا النص. ولصوت آخر: سجّل بصوتك أو اختر ملفًا (حتى دقيقتين).' : 'لا يوجد تسجيل جاهز يطابق هذا النص (النصوص التي لها تسجيل عليها 🔊). سجّل بصوتك أو اختر ملفًا صوتيًا (حتى دقيقتين)، وإلا يخرج الفيديو بلا صوت.'}</p>
             </div>
           )}
           {mode === 'video' && withAudio && !textOnly && (
