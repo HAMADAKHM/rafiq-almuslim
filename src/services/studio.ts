@@ -4,11 +4,13 @@
 import { toArabicDigits } from '../lib/arabic'
 import { THEMES, drawTheme, type ThemeId } from './sceneThemes'
 
-export type StudioFormat = 'square' | 'story' | 'landscape'
-export const FORMATS: Record<StudioFormat, { w: number; h: number; label: string }> = {
-  square: { w: 1080, h: 1080, label: 'مربع — منشور' },
-  story: { w: 1080, h: 1920, label: 'طولي — قصة وريلز' },
-  landscape: { w: 1920, h: 1080, label: 'عرضي — يوتيوب' },
+export type StudioFormat = 'square' | 'portrait' | 'story' | 'landscape'
+/** المقاسات الموصى بها في منصات التواصل (بالبكسل) */
+export const FORMATS: Record<StudioFormat, { w: number; h: number; label: string; ratio: string; for: string }> = {
+  story: { w: 1080, h: 1920, label: 'قصة وريلز', ratio: '9:16', for: 'حالة واتساب، قصص إنستغرام وفيسبوك، ريلز، تيك توك، سناب شات، يوتيوب شورتس' },
+  portrait: { w: 1080, h: 1350, label: 'منشور عمودي', ratio: '4:5', for: 'منشورات إنستغرام وفيسبوك (يأخذ أكبر مساحة في الصفحة الرئيسية)' },
+  square: { w: 1080, h: 1080, label: 'مربع', ratio: '1:1', for: 'منشورات إنستغرام وفيسبوك ولينكد إن، وصورة واتساب' },
+  landscape: { w: 1920, h: 1080, label: 'عرضي', ratio: '16:9', for: 'يوتيوب، إكس (تويتر)، تيليغرام، وشاشات العرض' },
 }
 
 export type StudioBg = 'scene-sunset' | 'scene-night' | 'scene-dawn' | 'scene-day' | `theme-${ThemeId}` | 'emerald' | 'night' | 'gold' | 'ivory' | 'parchment' | 'photo' | 'video' | PlusBg
@@ -318,4 +320,21 @@ export function svgToImage(svg: SVGSVGElement, w: number, h: number): Promise<HT
 
 export function canvasToBlob(c: HTMLCanvasElement, type = 'image/png'): Promise<Blob> {
   return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('تعذر إنشاء الصورة'))), type, 0.95))
+}
+
+/** وسوم مقترحة لكل نوع محتوى عند النشر */
+const TAGS: Record<string, string> = {
+  ayah: '#قرآن #آية #تدبر', adhkar: '#أذكار #ذكر_الله', duas: '#دعاء #أدعية', hisn: '#حصن_المسلم #دعاء #أذكار',
+  deceased: '#دعاء_للميت #صدقة_جارية', hadith: '#حديث #السنة_النبوية', custom: '',
+}
+
+/**
+ * نص المنشور المرافق للصورة أو الفيديو: النص كما هو مع مصدره، ثم السطر الشخصي، ثم وسوم مقترحة.
+ * النص القرآني يأتي من المصحف المعتمد (لا يُكتب يدويًا)، ويوضع بين قوسين مزخرفين مع اسم السورة.
+ */
+export function buildCaption(o: { source: string; text: string; reference?: string; note?: string; withTags?: boolean }): string {
+  const body = o.source === 'ayah' ? `﴿${o.text.trim()}﴾` : o.text.trim()
+  const lines = [o.note?.trim(), body, o.reference?.trim() ? `— ${o.reference.trim()}` : '']
+  const tags = o.withTags === false ? '' : [TAGS[o.source] ?? '', '#رفيق_المسلم'].filter(Boolean).join(' ')
+  return [...lines, tags].filter(Boolean).join('\n\n')
 }

@@ -300,6 +300,7 @@ input.switch-input:disabled { opacity: 0.5; cursor: not-allowed; }
 @media (max-width: 900px) { .studio-preview { position: static; } }
 .studio-canvas { display: block; margin: 0 auto; max-width: 100%; border-radius: 14px; box-shadow: var(--shadow-lg); background: #0e2a22; }
 .studio-canvas.fmt-square { width: min(100%, 560px); aspect-ratio: 1; }
+.studio-canvas.fmt-portrait { width: min(100%, 480px); aspect-ratio: 4 / 5; }
 .studio-canvas.fmt-story { height: min(70vh, 720px); aspect-ratio: 9 / 16; width: auto; }
 .studio-canvas.fmt-landscape { width: min(100%, 760px); aspect-ratio: 16 / 9; }
 .bg-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 0.4rem; }

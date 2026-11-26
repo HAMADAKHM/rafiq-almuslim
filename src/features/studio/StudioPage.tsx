@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { usePlus } from '../../billing/PlusContext'
-import { Share2, Film, ImageIcon, Upload, X, Bookmark, Trash2 } from 'lucide-react'
+import { Share2, Film, ImageIcon, Upload, X, Bookmark, Trash2, Copy, Search } from 'lucide-react'
 import { PageHead, Spinner, Tabs, ProgressBar } from '../../components/Common'
 import { MicRecorder } from '../../components/MicRecorder'
 import { hisnAudioUrl } from '../../content/hisnAudio'
@@ -12,7 +12,7 @@ import { RECITERS, reciterById } from '../../content/reciters'
 import { shareImage } from '../../platform'
 import { isEmbeddedPreview } from '../../services/audio'
 import {
-  AYAH_FONTS, TEXT_FONTS, studioFont, BACKGROUNDS, PLUS_BACKGROUNDS, FORMATS, canvasToBlob, drawStudioFrame, isScene, loadStudioFonts, referenceText, sceneTone, svgToImage, versesText,
+  AYAH_FONTS, TEXT_FONTS, studioFont, buildCaption, BACKGROUNDS, PLUS_BACKGROUNDS, FORMATS, canvasToBlob, drawStudioFrame, isScene, loadStudioFonts, referenceText, sceneTone, svgToImage, versesText,
   type StudioBg, type StudioFormat, type StudioStyle, type Verse,
 } from '../../services/studio'
 import { MAX_VIDEO_AYAHS, decodeUserAudio, loadDhikrVoice, extFor, loadRecitation, pickVideoMime, recordVideo, silentDurations } from '../../services/studioVideo'
@@ -24,7 +24,9 @@ import { Sparkles } from 'lucide-react'
 import { ADHKAR } from '../../content/adhkar'
 import { DUAS } from '../../content/duas'
 import { HADITH } from '../../content/hadith'
-import type { ContentCategory } from '../../content/types'
+import type { ContentCategory, DhikrItem } from '../../content/types'
+import { loadHisnLibrary } from '../../content/hisnLibrary'
+import { copyText } from '../../platform'
 import { DECEASED_CATEGORY, DECEASED_NAMES_KEY } from '../../content/deceased'
 import { kv } from '../../db/repos'
 import { ayahOfDay } from '../../services/daily'
@@ -32,8 +34,12 @@ import { dayKey } from '../../lib/dates'
 import { SAVED_KEY, addSaved, loadSaved, saveDesigns, type SavedDesign, type StudioSource } from '../../services/studioSaved'
 
 // لا تُعرض في الاستوديو إلا العناصر ذات النص (عناصر القرآن في الأذكار تُصمَّم من «آية» بنص المصحف)
-const LIBS: Record<Exclude<StudioSource, 'ayah'>, ContentCategory[]> = { adhkar: ADHKAR, duas: DUAS, hadith: HADITH, deceased: [DECEASED_CATEGORY] }
-const SOURCES: { id: StudioSource; label: string }[] = [{ id: 'ayah', label: 'آية' }, { id: 'adhkar', label: 'ذكر' }, { id: 'duas', label: 'دعاء' }, { id: 'deceased', label: 'دعاء لمتوفى' }, { id: 'hadith', label: 'حديث' }]
+const LIBS: Record<'adhkar' | 'duas' | 'hadith' | 'deceased', ContentCategory[]> = { adhkar: ADHKAR, duas: DUAS, hadith: HADITH, deceased: [DECEASED_CATEGORY] }
+const SOURCES: { id: StudioSource; label: string }[] = [
+  { id: 'ayah', label: 'آية' }, { id: 'adhkar', label: 'ذكر' }, { id: 'duas', label: 'دعاء' }, { id: 'hisn', label: 'حصن المسلم' },
+  { id: 'deceased', label: 'دعاء لمتوفى' }, { id: 'hadith', label: 'حديث' }, { id: 'custom', label: 'نصّي ✍' },
+]
+const MAX_CUSTOM = 500
 const textCats = (lib: ContentCategory[]) => lib.map((c) => ({ ...c, items: c.items.filter((i) => i.text) })).filter((c) => c.items.length)
 
 const MAX_IMAGE_AYAHS = 15
@@ -66,6 +72,12 @@ export function StudioPage() {
   const [catId, setCatId] = useState(() => params.get('cat') ?? '')
   const [itemId, setItemId] = useState(() => params.get('item') ?? '')
   const [voice, setVoice] = useState<File | null>(null)
+  // «نصّي»: نص يكتبه المستخدم بنفسه، ومصدر أو توقيع اختياري
+  const [customText, setCustomText] = useState(() => params.get('text') ?? '')
+  const [customRef, setCustomRef] = useState('')
+  const [hisnCats, setHisnCats] = useState<ContentCategory[] | null>(null)
+  const [hisnErr, setHisnErr] = useState(false)
+  const [libQuery, setLibQuery] = useState('')
   const voiceInput = useRef<HTMLInputElement>(null)
   const names = useLive(() => kv.get<string[]>(DECEASED_NAMES_KEY, []), ['kv:' + DECEASED_NAMES_KEY], [] as string[])
   const saved = useLive(() => loadSaved(), ['kv:' + SAVED_KEY], [] as SavedDesign[])
@@ -86,9 +98,21 @@ export function StudioPage() {
   const b = Math.min(Math.max(to, a), count, a + max - 1)
   const verses: Verse[] = useMemo(() => (data ? Array.from({ length: b - a + 1 }, (_, i) => ({ surah, ayah: a + i, text: data.verses[surah - 1][a + i - 1] })) : []), [data, surah, a, b])
   const ayahHits = useMemo(() => (data && searchSkeleton(ayahQuery).length >= 3 ? matchSpokenAyah(data, ayahQuery, 6) : []), [data, ayahQuery])
-  const cats = useMemo(() => (source === 'ayah' ? [] : textCats(LIBS[source])), [source])
+  useEffect(() => {
+    if (source !== 'hisn' || hisnCats) return
+    loadHisnLibrary().then(setHisnCats).catch(() => setHisnErr(true))
+  }, [source, hisnCats])
+  const isCustom = source === 'custom'
+  const cats = useMemo(() => (source === 'ayah' || isCustom ? [] : source === 'hisn' ? (hisnCats ?? []) : textCats(LIBS[source])), [source, isCustom, hisnCats])
   const cat = cats.find((c) => c.id === catId) ?? cats[0]
-  const item = cat?.items.find((i) => i.id === itemId) ?? cat?.items[0]
+  const customItem = useMemo<DhikrItem>(() => ({ id: 'custom', text: customText.trim(), kind: 'personal', source: customRef.trim() }), [customText, customRef])
+  const item = isCustom ? customItem : cat?.items.find((i) => i.id === itemId) ?? cat?.items[0]
+  // البحث في نصوص القسم المختار وعناوين أبوابه (الأذكار والأدعية والأحاديث وحصن المسلم)
+  const libHits = useMemo(() => {
+    const q = searchSkeleton(libQuery)
+    if (q.length < 2) return []
+    return cats.flatMap((c) => { const inTitle = searchSkeleton(c.title).includes(q); return c.items.filter((i) => inTitle || searchSkeleton(i.text ?? '').includes(q)).map((i) => ({ c, i })) }).slice(0, 12)
+  }, [cats, libQuery])
   const isAyah = source === 'ayah'
   const font = studioFont(style, isAyah)
   const pick = (s: number, a: number) => { setSurah(s); setFrom(a); setTo(a); setAyahQuery('') }
@@ -135,15 +159,22 @@ export function StudioPage() {
     const r = await shareImage(blob, isAyah ? `ayah-${surah}-${a}.png` : `${source}-${item?.id}.png`, isAyah ? referenceText(meta.name, verses) : item?.source)
     toast(r === 'shared' ? 'تمت المشاركة' : r === 'downloaded' ? 'حُفظت الصورة' : 'تعذرت المشاركة في هذه البيئة')
   }
-  const designTitle = () => (isAyah ? referenceText(meta.name, verses) : `${cat?.title}: ${(item?.text ?? '').split(/\s+/).slice(0, 6).join(' ')}…`)
+  const designTitle = () => (isAyah ? referenceText(meta.name, verses) : `${isCustom ? 'نصّي' : cat?.title}: ${(item?.text ?? '').split(/\s+/).slice(0, 6).join(' ')}…`)
+  const caption = () => buildCaption({ source, text: isAyah ? versesText(verses) : item?.text ?? '', reference: style.showRef ? (isAyah ? referenceText(meta.name, verses) : item?.source) : '', note: style.note })
+  const copyCaption = async () => toast((await copyText(caption())) ? 'نُسخ نص المنشور — الصقه مع الصورة أو الفيديو' : 'تعذر النسخ')
   const saveDesign = async () => {
-    const d = isAyah ? { title: designTitle(), source: 'ayah' as const, surah, from: a, to: b, style } : { title: designTitle(), source, category: cat?.id, item: item?.id, style }
+    if (isCustom && !customText.trim()) { toast('اكتب نصك أولًا'); return }
+    const d = isAyah ? { title: designTitle(), source: 'ayah' as const, surah, from: a, to: b, style }
+      : isCustom ? { title: designTitle(), source, customText: customText.trim(), customRef: customRef.trim(), style }
+      : { title: designTitle(), source, category: cat?.id, item: item?.id, style }
     await saveDesigns(addSaved(saved, d))
     toast(style.bg === 'photo' || style.bg === 'video' ? 'حُفظ التصميم (بخلفية افتراضية بدل صورتك)' : 'حُفظ في «تصاميمي»')
   }
   const openDesign = (d: SavedDesign) => {
     setMode('image'); setVideo({ phase: 'idle' }); setStyle(d.style); setSource(d.source)
-    if (d.source === 'ayah') { setSurah(d.surah ?? 1); setFrom(d.from ?? 1); setTo(d.to ?? d.from ?? 1) } else { setCatId(d.category ?? ''); setItemId(d.item ?? '') }
+    if (d.source === 'ayah') { setSurah(d.surah ?? 1); setFrom(d.from ?? 1); setTo(d.to ?? d.from ?? 1) }
+    else if (d.source === 'custom') { setCustomText(d.customText ?? ''); setCustomRef(d.customRef ?? '') }
+    else { setCatId(d.category ?? ''); setItemId(d.item ?? '') }
   }
 
   const makeVideo = async () => {
@@ -153,6 +184,7 @@ export function StudioPage() {
     abortRef.current = ctrl
     const actx = new AudioContext()
     try {
+      if (isCustom && !customText.trim()) { setVideo({ phase: 'error', message: 'اكتب نصك أولًا ثم أنشئ الفيديو.' }); return }
       const items = isAyah || !item ? undefined : [{ text: item.text ?? '', reference: item.source }]
       await loadStudioFonts(items ? items[0].text + ' ' + items[0].reference : versesText(verses) + ' ' + referenceText(meta.name, verses), reciterById(reciterId).name, style.note ?? '')
       setVideo({ phase: 'loading', done: 0, total: items ? 1 : verses.length })
@@ -199,23 +231,56 @@ export function StudioPage() {
           {(
             <div className="row" role="radiogroup" aria-label="محتوى التصميم">
               {SOURCES.map((x) => (
-                <button key={x.id} role="radio" aria-checked={source === x.id} className={'btn btn-sm' + (source === x.id ? ' btn-primary' : '')} onClick={() => { setSource(x.id); setCatId(''); setItemId('') }}>{x.label}</button>
+                <button key={x.id} role="radio" aria-checked={source === x.id} className={'btn btn-sm' + (source === x.id ? ' btn-primary' : '')} onClick={() => { setSource(x.id); setCatId(''); setItemId(''); setLibQuery('') }}>{x.label}</button>
               ))}
             </div>
           )}
-          {!isAyah && cat && item && (
+          {isCustom && (
+            <div className="stack" style={{ gap: '0.6rem' }}>
+              <label className="field"><span>اكتب نصك ({toArabicDigits(customText.length)} / {toArabicDigits(MAX_CUSTOM)})</span>
+                <textarea className="input" rows={5} maxLength={MAX_CUSTOM} value={customText} disabled={busy} onChange={(e) => setCustomText(e.target.value)} placeholder="مثال: رحم الله والدي، وجعل قبره روضة من رياض الجنة" aria-label="نصك" style={{ resize: 'vertical', lineHeight: 1.8 }} />
+              </label>
+              <label className="field"><span>المصدر أو التوقيع (اختياري)</span>
+                <input className="input" value={customRef} maxLength={80} disabled={busy} onChange={(e) => setCustomRef(e.target.value)} placeholder="مثال: رواه مسلم، أو: ابنك محمد" aria-label="المصدر أو التوقيع" />
+              </label>
+              <p className="small muted" style={{ margin: 0 }}>النص من كتابتك ويُنشر باسمك. إن نقلت آية فاختر «آية» ليُكتب من المصحف المعتمد، وإن نقلت حديثًا فاذكر مصدره.</p>
+            </div>
+          )}
+          {source === 'hisn' && !hisnCats && (hisnErr
+            ? <p className="alert alert-error small" role="alert">تعذر تحميل حصن المسلم. <button className="btn btn-sm" onClick={() => { setHisnErr(false); loadHisnLibrary().then(setHisnCats).catch(() => setHisnErr(true)) }}>إعادة المحاولة</button></p>
+            : <Spinner label="جارٍ تحميل حصن المسلم" />)}
+          {!isAyah && !isCustom && cats.length > 0 && (
+            <div className="stack" style={{ gap: 6 }}>
+              <div style={{ position: 'relative' }}>
+                <input className="input" value={libQuery} disabled={busy} onChange={(e) => setLibQuery(e.target.value)} placeholder={`ابحث في ${source === 'hisn' ? 'حصن المسلم (267 ذكرًا ودعاءً)' : 'هذا القسم'}: اكتب كلمة`} aria-label="ابحث في النصوص" />
+                <Search size={16} aria-hidden="true" style={{ position: 'absolute', insetInlineEnd: 12, top: 13, opacity: 0.5 }} />
+              </div>
+              {libHits.length > 0 && (
+                <div className="studio-hits" role="list" aria-label="نتائج البحث في النصوص">
+                  {libHits.map(({ c, i }) => (
+                    <button key={i.id} role="listitem" className="voice-hit" onClick={() => { setCatId(c.id); setItemId(i.id); setLibQuery('') }}>
+                      <span className="small"><strong>{c.title}</strong>{hisnAudioUrl(i.id) ? ' 🔊' : ''}</span>
+                      <span className="voice-hit-text">{(i.text ?? '').split(/\s+/).slice(0, 14).join(' ')}…</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              {searchSkeleton(libQuery).length >= 2 && libHits.length === 0 && <p className="small muted" style={{ margin: 0 }}>لا نتائج — جرّب كلمة أخرى.</p>}
+            </div>
+          )}
+          {!isAyah && !isCustom && cat && item && (
             <div className="stack" style={{ gap: '0.6rem' }}>
               <label className="field"><span>القسم</span>
                 <select className="select" value={cat.id} onChange={(e) => { setCatId(e.target.value); setItemId('') }}>
                   {cats.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
                 </select>
               </label>
-              <label className="field"><span>{source === 'hadith' ? 'الحديث' : source === 'duas' ? 'الدعاء' : 'الذكر'}</span>
+              <label className="field"><span>{source === 'hadith' ? 'الحديث' : source === 'duas' || source === 'hisn' ? 'الدعاء أو الذكر' : 'الذكر'}</span>
                 <select className="select" value={item.id} onChange={(e) => setItemId(e.target.value)}>
                   {cat.items.map((i) => <option key={i.id} value={i.id}>{hisnAudioUrl(i.id) ? '🔊 ' : ''}{(i.text ?? '').split(/\s+/).slice(0, 8).join(' ')}…</option>)}
                 </select>
               </label>
-              <p className="small muted" style={{ margin: 0 }}>المصدر: {item.source}{item.grade ? ` • ${item.grade}` : ''}. يُكتب بخط النسخ تمييزًا له عن نص المصحف، والنص من المكتبة الموثقة كما هو دون تعديل.</p>
+              <p className="small muted" style={{ margin: 0 }}>المصدر: {item.source}{item.grade ? ` • ${item.grade}` : ''}{item.count && item.count > 1 ? ` • يقال ${toArabicDigits(item.count)} مرات` : ''}. يُكتب بخط النسخ تمييزًا له عن نص المصحف، والنص {source === 'hisn' ? 'من «حصن المسلم» (hisnmuslim.com)' : 'من المكتبة الموثقة'} كما هو دون تعديل.</p>
             </div>
           )}
           {isAyah && <>
@@ -257,12 +322,13 @@ export function StudioPage() {
           </>}
 
           <div>
-            <div className="small muted" style={{ marginBottom: 4 }}>المقاس</div>
+            <div className="small muted" style={{ marginBottom: 4 }}>المقاس — اختر حسب المنصة التي ستنشر فيها</div>
             <div className="row" role="radiogroup" aria-label="مقاس التصميم">
               {(Object.keys(FORMATS) as StudioFormat[]).map((f) => (
-                <button key={f} role="radio" aria-checked={style.format === f} disabled={busy} className={'btn btn-sm' + (style.format === f ? ' btn-primary' : '')} onClick={() => set({ format: f })}>{FORMATS[f].label}</button>
+                <button key={f} role="radio" aria-checked={style.format === f} disabled={busy} className={'btn btn-sm' + (style.format === f ? ' btn-primary' : '')} onClick={() => set({ format: f })}>{FORMATS[f].label} <span dir="ltr" style={{ opacity: 0.75 }}>{FORMATS[f].ratio}</span></button>
               ))}
             </div>
+            <p className="small muted" style={{ margin: '4px 0 0' }}>مناسب لـ: {FORMATS[style.format].for} — <span dir="ltr">{FORMATS[style.format].w}×{FORMATS[style.format].h}</span></p>
           </div>
 
           {(() => {
@@ -373,9 +439,10 @@ export function StudioPage() {
               <canvas ref={canvasRef} className={'studio-canvas fmt-' + style.format} role="img" aria-label={`معاينة التصميم: ${isAyah ? referenceText(meta.name, verses) : item?.source}`} />
               {overflow && <p className="alert alert-gold small" role="alert">النص أطول من أن يتسع بخط مقروء. قلّل عدد الآيات أو اختر المقاس الطولي.</p>}
               <div className="row" style={{ justifyContent: 'center' }}>
-                <button className="btn btn-primary" disabled={overflow} onClick={shareImg}><Share2 size={16} /> مشاركة الصورة</button>
+                <button className="btn btn-primary" disabled={overflow || (isCustom && !customText.trim())} onClick={shareImg}><Share2 size={16} /> مشاركة الصورة</button>
                 <button className="btn" onClick={saveDesign}><Bookmark size={16} /> حفظ التصميم</button>
               </div>
+              <CaptionBox text={caption()} onCopy={copyCaption} />
               {saved.length > 0 && (
                 <div className="card stack" style={{ gap: 6 }}>
                   <strong className="small">تصاميمي ({saved.length})</strong>
@@ -426,6 +493,7 @@ export function StudioPage() {
                     }}><Share2 size={16} /> مشاركة الفيديو</button>
                     <button className="btn" onClick={() => setVideo({ phase: 'idle' })}><ImageIcon size={16} /> فيديو جديد</button>
                   </div>
+                  <CaptionBox text={caption()} onCopy={copyCaption} />
                   {video.blob.type.includes('webm') && <p className="small muted">صيغة الفيديو WebM (ما يدعمه هذا المتصفح). بعض التطبيقات تفضّل MP4، ونسخة الجوال تنشئ MP4 حين يدعمه الجهاز.</p>}
                 </div>
               )}
@@ -435,5 +503,19 @@ export function StudioPage() {
         </section>
       </div>
     </>
+  )
+}
+
+/** نص المنشور: يُنسخ ويُلصق مع الصورة أو الفيديو في أي تطبيق تواصل */
+function CaptionBox({ text, onCopy }: { text: string; onCopy: () => void }) {
+  return (
+    <div className="card stack" style={{ gap: 6 }}>
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <strong className="small">نص المنشور</strong>
+        <button className="btn btn-sm" onClick={onCopy}><Copy size={14} /> نسخ</button>
+      </div>
+      <p className="small" style={{ margin: 0, whiteSpace: 'pre-line', lineHeight: 1.8 }}>{text}</p>
+      <p className="small muted" style={{ margin: 0 }}>انسخه والصقه مع الصورة أو الفيديو عند النشر. الوسوم اقتراح، احذف منها ما لا تريد.</p>
+    </div>
   )
 }

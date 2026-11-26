@@ -89,7 +89,11 @@ export const HISN_CLIPS: Record<string, { src: number; from: number; to: number;
   p66: { src: 66, from: 12.3, to: 20.4, label: 'أذكار ما بعد الصلاة', text: 'اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام', itemId: 'p-istighfar' },
 }
 
+/** تسجيلات مكتبة «حصن المسلم» الكاملة (src/content/hisnLibrary.ts): كل ذكر ونصه من المشروع نفسه، فالتسجيل يطابقه */
+const LIBRARY_AUDIO = new Map<string, number>()
+export function registerHisnAudio(itemId: string, n: number) { LIBRARY_AUDIO.set(itemId, n) }
+
 export function hisnAudioUrl(itemId: string): string | null {
-  const n = HISN_AUDIO[itemId]
+  const n = HISN_AUDIO[itemId] ?? LIBRARY_AUDIO.get(itemId)
   return n ? `https://www.hisnmuslim.com/audio/ar/${n}.mp3` : null
 }

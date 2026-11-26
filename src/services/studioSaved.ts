@@ -5,7 +5,7 @@ import type { StudioStyle } from './studio'
 
 export const SAVED_KEY = 'studio:saved'
 export const MAX_SAVED = 40
-export type StudioSource = 'ayah' | 'adhkar' | 'duas' | 'hadith' | 'deceased'
+export type StudioSource = 'ayah' | 'adhkar' | 'duas' | 'hisn' | 'hadith' | 'deceased' | 'custom'
 
 export interface SavedDesign {
   id: string
@@ -19,6 +19,9 @@ export interface SavedDesign {
   /** للأذكار والأدعية والأحاديث */
   category?: string
   item?: string
+  /** «نصّي»: نص يكتبه المستخدم بنفسه (يُحفظ لأنه نصه هو، لا نص من المكتبة) */
+  customText?: string
+  customRef?: string
   style: StudioStyle
 }
 
