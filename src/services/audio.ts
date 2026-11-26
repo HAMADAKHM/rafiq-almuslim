@@ -53,19 +53,54 @@ class AudioPlayer {
     this.listeners.forEach((l) => l())
   }
 
+  /** عنصر ثانٍ تُحمَّل فيه الآية التالية مسبقًا أثناء تشغيل الحالية، فتبدأ فور انتهائها دون انتظار التحميل */
+  private nextEl: HTMLAudioElement | null = null
+  private nextKey = ''
+
+  private makeEl(): HTMLAudioElement {
+    const el = new Audio()
+    el.preload = 'auto'
+    // الأحداث تُحتسب للعنصر المشغَّل فقط، لا للعنصر الذي يُحمَّل مسبقًا
+    el.addEventListener('playing', () => { if (el === this.el) { this.set({ status: 'playing', error: undefined }); this.prepareNext() } })
+    el.addEventListener('pause', () => { if (el === this.el && this.state.status === 'playing') this.set({ status: 'paused' }) })
+    el.addEventListener('waiting', () => { if (el === this.el) this.set({ status: 'loading' }) })
+    el.addEventListener('ended', () => { if (el === this.el) this.onEnded() })
+    el.addEventListener('error', () => { if (el === this.el) this.onError(); else if (el === this.nextEl) this.nextKey = '' })
+    return el
+  }
+
   private audio(): HTMLAudioElement {
     if (!this.el) {
-      const el = new Audio()
-      el.preload = 'auto'
-      el.addEventListener('playing', () => this.set({ status: 'playing', error: undefined }))
-      el.addEventListener('pause', () => { if (this.state.status === 'playing') this.set({ status: 'paused' }) })
-      el.addEventListener('waiting', () => this.set({ status: 'loading' }))
-      el.addEventListener('ended', () => this.onEnded())
-      el.addEventListener('error', () => this.onError())
-      this.el = el
+      this.el = this.makeEl()
       this.setupMediaSession()
     }
     return this.el
+  }
+
+  /** ما سيُشغَّل بعد الآية الحالية (نفس منطق onEnded دون تنفيذ) */
+  private upcoming(): { ayah: number; basmala: boolean } | null {
+    const s = this.state
+    if (s.playingBasmala) return { ayah: s.ayah, basmala: false }
+    if (this.repeatCounter + 1 < s.repeatEach) return null // تكرار الآية نفسها: الملف محمَّل أصلًا
+    if (s.ayah < s.to) return { ayah: s.ayah + 1, basmala: false }
+    if (s.repeatRange) return { ayah: s.from, basmala: s.from === 1 && !BASMALA_SURAH_EXCEPTIONS.has(s.surah) }
+    return null
+  }
+
+  private sourcesFor(ayah: number, basmala: boolean): string[] {
+    const rec = reciterById(this.state.reciterId)
+    return basmala ? ayahAudioSources(rec, 1, 1) : ayahAudioSources(rec, this.state.surah, ayah)
+  }
+
+  private prepareNext() {
+    const up = this.upcoming()
+    if (!up) return
+    const src = this.sourcesFor(up.ayah, up.basmala)[0]
+    if (this.nextKey === src) return
+    if (!this.nextEl) this.nextEl = this.makeEl()
+    this.nextKey = src
+    this.nextEl.src = src
+    this.nextEl.load()
   }
 
   /** تشغيل نطاق من الآيات في سورة. */
@@ -98,11 +133,22 @@ class AudioPlayer {
   }
 
   private load(ayah: number, basmala = false) {
-    const el = this.audio()
-    const rec = reciterById(this.state.reciterId)
-    this.sources = basmala ? ayahAudioSources(rec, 1, 1) : ayahAudioSources(rec, this.state.surah, ayah)
+    let el = this.audio()
+    this.sources = this.sourcesFor(ayah, basmala)
     this.sourceIdx = 0
-    el.src = this.sources[0]
+    if (this.nextEl && this.nextKey && this.nextKey === this.sources[0]) {
+      // الآية التالية محمَّلة مسبقًا: تبديل العنصرين فتبدأ فورًا
+      const old = el
+      el = this.nextEl
+      this.el = el
+      this.nextEl = old
+      this.nextKey = ''
+      old.pause()
+    } else if (el.src === this.sources[0] && el.readyState >= 2) {
+      el.currentTime = 0 // تكرار الآية نفسها دون إعادة تحميل
+    } else {
+      el.src = this.sources[0]
+    }
     el.playbackRate = this.state.rate
     el.volume = this.state.volume
     this.set({ ayah, playingBasmala: basmala, status: 'loading', error: undefined })
@@ -150,6 +196,8 @@ class AudioPlayer {
   stop() {
     clearTimeout(this.gapTimer); this.gapPending = false
     if (this.el) { this.el.pause(); this.el.removeAttribute('src'); this.el.load() }
+    if (this.nextEl) { this.nextEl.removeAttribute('src'); this.nextEl.load() }
+    this.nextKey = ''
     this.set({ status: 'idle' })
   }
   next() { clearTimeout(this.gapTimer); this.gapPending = false; if (this.state.ayah < this.state.to) { this.repeatCounter = 0; this.load(this.state.ayah + 1) } }
