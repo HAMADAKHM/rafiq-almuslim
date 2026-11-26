@@ -1,18 +1,19 @@
 import { useSettings } from '../state/SettingsContext'
 import { useThemePreview } from './preview'
 import { skinById } from './skins'
+import { DEFAULT_SKIN } from '../state/settings'
 
 /** هل المظهر الجديد (تخطيط التصميم الذهبي) هو المعروض الآن */
 export function useGolden(): boolean {
   const { settings } = useSettings()
   const preview = useThemePreview()
   // كل ثيمات الهوية تعرض المظهر الجديد بألوانها؛ «الذهبي الإسلامي» هو التصميم المعتمد نفسه
-  return !!skinById(preview ?? settings.skin)?.identity
+  return !!skinById(preview ?? settings.skin)?.identity || (!preview && !skinById(settings.skin) && !!skinById(DEFAULT_SKIN)?.identity)
 }
 
 /** معرّف الثيم المعروض الآن (مع المعاينة) */
 export function useSkinId(): string {
   const { settings } = useSettings()
   const preview = useThemePreview()
-  return preview ?? settings.skin ?? ''
+  return preview ?? (skinById(settings.skin) ? settings.skin : DEFAULT_SKIN)
 }

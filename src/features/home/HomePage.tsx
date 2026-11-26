@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { usePlus } from '../../billing/PlusContext'
-import { activeSkin, skinById } from '../../themes/skins'
+import { effectiveSkin, skinById } from '../../themes/skins'
 import { ramadanModeActive } from '../../services/ramadan'
 import { RamadanHome } from './RamadanHome'
 import { useThemePreview } from '../../themes/preview'
@@ -20,7 +20,7 @@ import { HOME_CARD_LABELS, LOCKED_HOME_CARDS, MAX_QUICK_LINKS, QUICK_LINK_CHOICE
 import { LINK_META } from '../../app/nav'
 import { ADHKAR } from '../../content/adhkar'
 import { catIcon } from '../adhkar/AdhkarPage'
-import { MAX_DAILY_ADHKAR } from '../../state/settings'
+import { DEFAULT_SKIN, MAX_DAILY_ADHKAR } from '../../state/settings'
 import { LogoMark } from '../../components/Art'
 import { WeatherChip } from '../weather/WeatherPage'
 import { PaintedScene, type PaintTone } from '../../components/Scene'
@@ -261,7 +261,7 @@ export function HomePage() {
   // «رفيقي اليومي» من مزايا بلس: لا خانة فارغة ولا قفل في الرئيسية دون اشتراك
   // التصاميم التسعة المعتمدة (ثيمات الهوية): رأس التحية وبطاقة الصلاة وشريط «متابعة القراءة» الثابت تحتها
   const ramadanOn = plusEntitled && ramadanModeActive(settings.ramadan?.theme, now, loc?.tz, settings.hijriOffset)
-  const skinNow = preview ? skinById(preview) : activeSkin(settings.skin, plusEntitled)
+  const skinNow = preview ? skinById(preview) : effectiveSkin(settings.skin, plusEntitled, DEFAULT_SKIN)
   const designed = !!skinNow?.identity
   // التصميم الذهبي المعتمد: «آخر قراءة» و«الأقسام» جزء من تصميمه نفسه
   // كل ثيمات الهوية تعرض المظهر الجديد بألوانها
@@ -287,7 +287,7 @@ export function HomePage() {
     <div className={'home' + (golden ? ' home-golden' : '')}>
       {ramadanOn ? (
         <RamadanHome now={now} loc={loc} prayer={settings.prayer} hijriOffset={settings.hijriOffset} />
-      ) : skinNow?.id === 'e-night' ? (
+      ) : skinNow?.identity ? (
         <NightHome now={now} loc={loc} prayer={settings.prayer} rest={null} />
       ) : golden ? (
         <GoldenHome now={now} loc={loc} prayer={settings.prayer} hijriOffset={settings.hijriOffset} last={last} resumeTo={resumeTo} plusEntitled={plusEntitled} rest={null} />

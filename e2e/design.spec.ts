@@ -14,10 +14,9 @@ test('الشريط السفلي خمسة عناصر بالترتيب، و«ال�
   await page.getByRole('button', { name: 'معاينة ثيم الكلاسيكي الراقي' }).click()
   await page.getByRole('region', { name: /معاينة ثيم/ }).getByRole('button', { name: 'تطبيق' }).click()
   await page.evaluate(() => { history.pushState({}, '', '/'); dispatchEvent(new PopStateEvent('popstate')) })
-  // ثيمات الهوية تعرض المظهر الجديد (تخطيط التصميم الذهبي) بألوانها
-  await expect(page.locator('.gd-head')).toBeVisible()
+  // كل الثيمات تعرض تصميم «الليلي الذهبي» (الثيم الأصلي) بألوانها
+  await expect(page.locator('.app.night .nh-home')).toBeVisible()
   await expect(page.getByRole('navigation', { name: 'الأقسام' })).toBeVisible()
-  await expect(page.getByText('آخر قراءة')).toBeVisible()
   await page.goto('/more')
   const first = page.locator('.more-list').first().locator('.mr-title')
   await expect(first).toHaveText(['القبلة', 'مكتبة المسلم', 'التسبيح الإلكتروني', 'التقويم الهجري', 'خطط ختم القرآن', 'المفضلة والإشارات المرجعية', 'التنزيلات والمحتوى دون إنترنت', 'إنجازاتي وإحصائياتي', 'الإشعارات', 'إعدادات التطبيق', 'حول التطبيق ومصادر المحتوى'])
@@ -41,6 +40,8 @@ test('المفضلة الموحدة: فارغة أولًا، ثم تظهر في�
   const sheet = page.getByRole('dialog')
   await sheet.getByLabel('اسم العلامة').fill('التوحيد')
   await sheet.getByRole('button', { name: 'إضافة علامة' }).click()
+  // يُحفظ في قاعدة الجهاز بعد الضغط: ننتظر اكتمال الحفظ قبل إعادة التحميل
+  await page.waitForTimeout(800)
   await page.goto('/favorites')
   await expect(page.getByRole('region', { name: 'علامات القرآن' })).toContainText('التوحيد')
 })

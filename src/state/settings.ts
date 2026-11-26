@@ -348,7 +348,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
  * العرض الافتراضي: التصميم الذهبي المعتمد. يُطبَّق مرة واحدة على من كان على الثيم الأصلي، ثم يبقى اختياره.
  * VITE_DEFAULT_SKIN='' يُبقي الأصلي افتراضيًا (تستعمله اختبارات الواجهة القديمة التي تفحص الشكل الأصلي).
  */
-const DEFAULT_SKIN: string = (import.meta.env?.VITE_DEFAULT_SKIN as string | undefined) ?? 'e-night'
+export const DEFAULT_SKIN: string = (import.meta.env?.VITE_DEFAULT_SKIN as string | undefined) ?? 'e-night'
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',

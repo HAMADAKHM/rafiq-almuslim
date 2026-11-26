@@ -5,7 +5,7 @@ import { PageHead } from '../../components/Common'
 import { PlusGate } from '../../billing/PlusGate'
 import { PLUS_PALETTES } from '../../billing/palettes'
 import { usePlus } from '../../billing/PlusContext'
-import { activeSkin, SKINS, type ArtSkinId, type IdentityId, type Skin } from '../../themes/skins'
+import { effectiveSkin, SKINS, type ArtSkinId, type IdentityId, type Skin } from '../../themes/skins'
 import { SkinScene } from '../../themes/SkinScene'
 import { IdentityScene } from '../../themes/IdentityScene'
 import { setThemePreview, useThemePreview } from '../../themes/preview'
@@ -14,7 +14,7 @@ import { ScenePreview } from '../../tv/SceneCanvas'
 import { Link } from 'react-router-dom'
 import { toast } from '../../hooks'
 import { useSettings } from '../../state/SettingsContext'
-import type { CustomReminder } from '../../state/settings'
+import { DEFAULT_SKIN, type CustomReminder } from '../../state/settings'
 import { MAX_CUSTOM } from '../../services/reminders'
 import { computeInsights, TOTAL_AYAT, type Insights } from '../../services/insights'
 import { adhkarLog, listening, memo, reading } from '../../db/repos'
@@ -33,8 +33,10 @@ export function PlusThemesPage() {
   const plus = usePlus()
   const previewing = useThemePreview()
   const [hover, setHover] = useState<string | null>(null)
-  const current = activeSkin(settings.skin, plus.entitled)
-  const reset = () => { setThemePreview(null); update({ skin: '' }); toast('عاد التطبيق إلى ثيمه الأصلي') }
+  // الثيم الأصلي «الليلي الذهبي»: يُعرض حين لا يُختار ثيم آخر
+  const current = effectiveSkin(settings.skin, plus.entitled, DEFAULT_SKIN)
+  const isBase = !current || current.id === DEFAULT_SKIN
+  const reset = () => { setThemePreview(null); update({ skin: DEFAULT_SKIN }); toast('عاد التطبيق إلى ثيمه الأصلي: الليلي الذهبي') }
   const card = (s: Skin) => {
     const locked = !s.free && !plus.entitled
     const on = current?.id === s.id
@@ -60,8 +62,8 @@ export function PlusThemesPage() {
       <PageHead title="الثيمات والمظهر" subtitle="هوية بصرية كاملة لكل صفحات التطبيق — اضغط أي ثيم لمعاينته في التطبيق كله قبل تطبيقه" />
       <section className="card theme-current">
         <span className="tc-dot" style={{ background: current?.swatch?.[2] ?? 'var(--primary)' }} />
-        <div style={{ flex: 1 }}><strong>الثيم الحالي: {current?.name ?? 'الأصلي'}</strong><p className="small muted" style={{ margin: 0 }}>يتغير مظهر الرئيسية والقرآن والأذكار والمواقيت والإعدادات والقوائم معًا، والنصوص كما هي.</p></div>
-        {current && <button className="btn btn-sm" onClick={reset}><RotateCcw size={14} /> الأصلي</button>}
+        <div style={{ flex: 1 }}><strong>الثيم الحالي: {current?.name ?? 'الأصلي'}{isBase && current ? ' (الأصلي)' : ''}</strong><p className="small muted" style={{ margin: 0 }}>يتغير مظهر الرئيسية والقرآن والأذكار والمواقيت والإعدادات والقوائم معًا، والنصوص كما هي.</p></div>
+        {!isBase && <button className="btn btn-sm" onClick={reset}><RotateCcw size={14} /> الأصلي</button>}
       </section>
       <section className="card" aria-labelledby="base-h">
         <h2 id="base-h">الثيمات الأساسية</h2>

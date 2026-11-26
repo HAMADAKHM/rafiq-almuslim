@@ -11,7 +11,7 @@ import { FOOTER_LINE } from '../content/dedication'
 import { MiniPlayer } from '../components/MiniPlayer'
 import { useLive, useOnline, useToastMessage } from '../hooks'
 import { activeKidId, kidPathAllowed } from '../services/kids'
-import { useGolden, useSkinId } from '../themes/useGolden'
+import { useGolden } from '../themes/useGolden'
 import { goldenPhoto, heroFor, landmarkFor } from '../themes/golden'
 import { startReminderLoop } from '../services/notifications'
 import { LogoMark } from '../components/Art'
@@ -71,7 +71,8 @@ export function Layout() {
   const isHome = loc.pathname === '/'
   const kidMode = useKidGuard(loc.pathname, navigate)
   const golden = useGolden()
-  const night = useSkinId() === 'e-night'
+  // تصميم «الليلي الذهبي» (الرئيسية والشريط السفلي وأزرار الرأس) لكل الثيمات، بألوان كل ثيم
+  const night = golden
   // التصميم الذهبي: رأس بصورة حقيقية لكل صفحة؛ صفحة المواقيت تعرض معلم دولة المستخدم إن توفرت صورته
   const land = landmarkFor(settings.location?.country, settings.location?.name)
   const heroImg = goldenPhoto(loc.pathname.startsWith('/prayer') && land ? land.photo : heroFor(loc.pathname))

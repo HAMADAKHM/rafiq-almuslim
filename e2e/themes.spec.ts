@@ -53,8 +53,10 @@ test('مع اشتراك: التصاميم الثمانية تُطبَّق ويت
     await bar(page).getByRole('button', { name: 'تطبيق' }).click()
     await expect(page.locator('html')).toHaveAttribute('data-skin', id)
   }
-  // لون خلفية البطاقات من الثيم في صفحة داخلية
+  // لون خلفية البطاقات من الثيم في صفحة داخلية (بعد اكتمال حفظ آخر ثيم، فإعادة التحميل تقرأ المحفوظ)
+  await page.waitForTimeout(800)
   await page.goto('/prayer')
+  await expect(page.locator('html')).toHaveAttribute('data-skin', 't-royal')
   const bg = await page.locator('.card').first().evaluate((el) => { const c = getComputedStyle(el); return c.backgroundImage + ' ' + c.backgroundColor })
   expect(bg).toMatch(/rgba?\(26, 22, 15/)
   await page.goto('/plus/themes')
@@ -81,7 +83,7 @@ test('أيقونة التطبيق والودجتات: البديلة مقفلة 
   await expect(icons.getByRole('radio')).toHaveCount(9)
   await expect(icons.getByRole('radio', { name: 'أيقونة الأصلية' })).toHaveAttribute('aria-checked', 'true')
   await page.goto('/widgets')
-  await expect(page.locator('.wd-gallery .wd-item')).toHaveCount(9)
+  await expect(page.locator('.wd-gallery .wd-item')).toHaveCount(12)
   await expect(page.getByRole('img', { name: 'ودجت البطاقات العصرية' })).toBeVisible()
   await expect(page.getByRole('radiogroup', { name: 'تصميم الودجت' })).toHaveCount(0)
   await page.goto('/more')

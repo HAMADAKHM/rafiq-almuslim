@@ -81,3 +81,11 @@ export function activeSkin(id: string | undefined | null, entitled: boolean): Sk
   const s = skinById(id)
   return s && (s.free || entitled) ? s : null
 }
+
+/**
+ * الثيم الأصلي للتطبيق: «الليلي الذهبي». يُعرض حين لا يختار المستخدم ثيمًا، أو يختار ثيمًا من بلس انتهى اشتراكه.
+ * base = '' يعيد السلوك القديم (ألوان التطبيق الأولى) — تستعمله اختبارات الواجهة القديمة.
+ */
+export function effectiveSkin(id: string | undefined | null, entitled: boolean, base: string): Skin | null {
+  return activeSkin(id, entitled) ?? skinById(base)
+}
